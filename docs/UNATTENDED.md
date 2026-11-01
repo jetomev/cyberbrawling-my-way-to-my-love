@@ -42,6 +42,16 @@ his accounts without him.
    - *Use:* only if the PC can't be left on. Not recommended to start.
 3. **Both.** Not worth it yet: double the usage for work that can't be checked any better.
 
+## As set up (2026-11-01)
+- Scheduled task **"Cyberbrawling: weekday morning run"** in the Claude app (`cyberbrawling-morning-run`), Mon–Fri at
+  about 9:10, saved in Auto mode (Javier can change the mode by editing the task in the app). Start nothing new after
+  11:30, done by 12:00. The app must be open; if it is closed at 9:10, the run happens when it opens.
+- It works in its own copy of the project (a git worktree at `~/.cache/cyberbrawling-daily/<date>`), so the Claude
+  chats Javier leaves open in the main folder never see files change under them.
+- It builds on the newest unmerged `daily/` branch, so unreviewed days stack instead of colliding.
+- It does **not** edit `TODO.md` or touch the board and Gantt: the evening session ticks them after Javier's review,
+  so the pages never show unreviewed work as done.
+
 ## The rules every unattended run follows
 - **Only (solo) items.** Anything unmarked waits for a session with Javier.
 - **Its own branch, never `main`.** Each run works on `daily/YYYY-MM-DD`; Javier's yes merges it.
