@@ -11,6 +11,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Javier approves the name, licence and README for the public GitHub repo (2026-11-01)
 - [x] Public GitHub repo jetomev/cyberbrawling-my-way-to-my-love: README, About, topics, issues #1–#5
 - [x] Vault entry (1) for the first push
+- [x] Top-down Gantt: docs/schedule.json + scripts/gantt.py, its page beside the board (2026-11-01)
 - [ ] Javier answers the open questions in docs/DESIGN.md (level 9, lane depth, health, lives, two players) (#1)
 - [ ] Javier says yes or no to the unattended plan (and his working hours)
 - [x] Title decided: "Cyberbrawling my way to my love!" (D-7); no blood, pain on both sides (D-9); team roles (D-11)

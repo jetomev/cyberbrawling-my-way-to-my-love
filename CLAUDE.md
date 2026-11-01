@@ -49,7 +49,9 @@ project's role-play, ever.
 branch, never pushed, fenced, timed, one report in `reports/`. Not scheduled until Javier's yes.
 
 ## Documentation, at every step
-- `TODO.md` after every step, and the board re-sent in the same step.
+- `TODO.md` after every step, and **both pages re-sent in the same step**: the board (mindForge `board.py build`)
+  and the Gantt (`scripts/gantt.py scratch/gantt` → its `status.json` as the page's `gantt/status`; republish
+  `gantt.html` only when `docs/schedule.json` changes). Links in `.board` and `.gantt`.
 - README accurate top to bottom; roadmap and changelog newest first.
 - Every push gets its Vault entry in `Cyberbrawling my way to my love/`, numbered `(N) YYYY-MM-DD — title.md`.
 - Findings from Javier's plays: `F-n`, a GitHub issue each, results in `testing/`.

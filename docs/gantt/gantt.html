@@ -1,0 +1,187 @@
+<title>Cyberbrawling Timeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600&display=swap">
+<style>
+/* Layout: a top-down Gantt. Stages and their tasks run down the page, the weeks run across; the label column stays
+   put while the timeline scrolls sideways. One deliberate look: the game's night street — dark asphalt, neon signs. */
+:root {
+  --bg: #15131d; --panel: #1d1a28; --line: #2e2a3d; --fg: #ece7f5; --muted: #9a93ad;
+  --claude: #ff3d8b; --javier: #3fd9ff; --team: #ffb23f; --done: #6a6480; --risk: #ff3d8b; --today: #ffe14d;
+  --display: "Bungee", "Impact", system-ui, sans-serif;
+  --body: "Barlow", "Noto Sans", system-ui, sans-serif;
+  --label: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --day: 6.4px; --labelw: 236px; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; }
+.wrap { max-width: 1400px; margin: 0 auto; padding-block: 22px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(1.4rem, 4vw, 2.2rem); margin: 0; line-height: 1.1;
+  color: var(--fg); text-shadow: 0 0 12px color-mix(in srgb, var(--claude) 55%, transparent); text-wrap: balance; }
+.lede { color: var(--muted); margin: 6px 0 0; max-width: 70ch; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 16px 0 0; font-family: var(--label); font-size: 1rem; }
+.stats b { font-family: var(--display); font-weight: 400; font-size: 1.25rem; margin-right: 6px; font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 14px 0 12px; font-family: var(--label); color: var(--muted);
+  font-size: 0.95rem; letter-spacing: 0.02em; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 18px; height: 8px; border-radius: 4px; display: inline-block; }
+.sw.claude { background: var(--claude); } .sw.javier { background: var(--javier); } .sw.team { background: var(--team); }
+.sw.done { background: var(--done); } .sw.risk { background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--risk) 40%, transparent) 0 3px, transparent 3px 7px); height: 12px; }
+.dia { width: 10px; height: 10px; transform: rotate(45deg); background: var(--javier); display: inline-block; }
+.note { font-size: 0.85rem; color: var(--muted); margin: 0 0 10px; }
+.scroller { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.chart { position: relative; display: grid; grid-template-columns: var(--labelw) var(--tw); }
+.lab { position: sticky; left: 0; z-index: 3; background: var(--panel); border-right: 1px solid var(--line);
+  padding: 0 10px; display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 0.9rem; height: 30px; }
+.lab .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.lab.stage { font-family: var(--label); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85rem;
+  height: 34px; background: color-mix(in srgb, var(--panel) 80%, var(--line)); }
+.lab.stage a { color: var(--javier); text-decoration: none; font-weight: 500; margin-left: auto; }
+.lab.stage a:focus-visible, .lab.stage a:hover { text-decoration: underline; }
+.lab.done .t { color: var(--done); text-decoration: line-through; }
+.tick { flex: none; width: 14px; text-align: center; color: var(--done); font-size: 0.8rem; }
+.lane { position: relative; height: 30px; border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+.lane.stage { height: 34px; background: color-mix(in srgb, var(--panel) 80%, var(--line)); border-bottom: 1px solid var(--line); }
+.lab.head, .lane.head { height: 44px; position: sticky; top: 0; z-index: 4; background: var(--panel); border-bottom: 1px solid var(--line); }
+.lab.head { z-index: 5; font-family: var(--label); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8rem; }
+.wk { position: absolute; bottom: 4px; font-family: var(--label); font-size: 0.78rem; color: var(--muted); transform: translateX(3px);
+  font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mo { position: absolute; top: 4px; font-family: var(--label); font-weight: 600; font-size: 0.82rem; color: var(--fg);
+  text-transform: uppercase; letter-spacing: 0.08em; transform: translateX(3px); }
+.grid { position: absolute; inset: 0 0 0 var(--labelw); pointer-events: none; z-index: 0; }
+.vl { position: absolute; top: 0; bottom: 0; width: 1px; background: color-mix(in srgb, var(--line) 55%, transparent); }
+.vl.month { background: var(--line); }
+.band { position: absolute; top: 44px; bottom: 0; }
+.band.risk { background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--risk) 10%, transparent) 0 6px, transparent 6px 14px); }
+.band.quiet { background: color-mix(in srgb, var(--fg) 4%, transparent); }
+.bandname { position: absolute; top: 48px; font-family: var(--label); font-size: 0.72rem; color: var(--muted); padding: 0 4px;
+  white-space: nowrap; text-transform: uppercase; letter-spacing: 0.05em; }
+.today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--today); z-index: 2;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--today) 70%, transparent); }
+.today span { position: absolute; top: 2px; left: 5px; font-family: var(--label); font-weight: 600; font-size: 0.75rem; color: var(--today);
+  text-transform: uppercase; letter-spacing: 0.06em; background: var(--panel); padding: 0 3px; }
+.bar { position: absolute; top: 9px; height: 12px; border-radius: 6px; z-index: 1; min-width: 6px; }
+.bar.claude { background: var(--claude); box-shadow: 0 0 8px color-mix(in srgb, var(--claude) 50%, transparent); }
+.bar.javier { background: transparent; border: 2px solid var(--javier); }
+.bar.team { background: var(--team); }
+.bar.done { background: var(--done); border-color: var(--done); box-shadow: none; }
+.gate { position: absolute; top: 9px; width: 12px; height: 12px; transform: translateX(-6px) rotate(45deg); z-index: 1;
+  background: var(--javier); box-shadow: 0 0 10px color-mix(in srgb, var(--javier) 70%, transparent); }
+.gate.done { background: var(--done); box-shadow: none; }
+.span { position: absolute; top: 12px; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--fg) 22%, transparent); }
+.foot { margin-top: 12px; font-size: 0.85rem; color: var(--muted); }
+@media (max-width: 640px) { :root { --labelw: 150px; } .lab { font-size: 0.82rem; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <h1>Cyberbrawling my way to my love!</h1>
+  <p class="lede">The timeline, top to bottom: every stage, every task, and the days Javier plays it. Pink is Claude building, a cyan outline is Javier's part, amber is the assistant team's test runs on the KognogOS machines. Diamonds are the gates: nothing after one starts until Javier's play passes it.</p>
+  <div class="stats" id="stats"></div>
+  <div class="legend">
+    <span><i class="sw claude"></i>Claude builds</span>
+    <span><i class="sw javier" style="background:transparent;border:2px solid var(--javier)"></i>Javier</span>
+    <span><i class="sw team"></i>Assistant team</span>
+    <span><i class="dia"></i>Gate: Javier plays it</span>
+    <span><i class="sw done"></i>Done</span>
+    <span><i class="sw risk"></i>Busy weeks</span>
+  </div>
+  <p class="note" id="note">Ticks come from the project's TODO list.</p>
+  <div class="scroller" id="scroller"><div class="chart" id="chart"></div></div>
+  <p class="foot">Source: <code>docs/schedule.json</code> and <code>TODO.md</code> in jetomev/cyberbrawling-my-way-to-my-love, built by <code>scripts/gantt.py</code>. Javier &amp; Claude.</p>
+</div>
+
+<script>
+const PLAN = /*SCHEDULE*/null;
+const REPO = "https://github.com/jetomev/cyberbrawling-my-way-to-my-love/issues/";
+const DAY = 86400000;
+const parse = s => { const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d); };
+const t0 = parse(PLAN.start), tEnd = parse(PLAN.end);
+const days = Math.round((tEnd - t0) / DAY) + 1;
+const px = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--day")) || 6.4;
+const x = s => Math.max(0, Math.round((parse(s) - t0) / DAY)) * px;
+const now = new Date(); const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+let done = {}, updated = null;
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+function render() {
+  const chart = document.getElementById("chart");
+  chart.style.setProperty("--tw", days * px + "px");
+  chart.replaceChildren();
+  // header: months on top, Mondays below
+  chart.append(el("div", "lab head", "Stage / task"));
+  const head = el("div", "lane head");
+  const grid = el("div", "grid");
+  for (let i = 0; i < days; i++) {
+    const d = new Date(t0 + i * DAY);
+    if (d.getUTCDate() === 1 || i === 0) {
+      const m = el("span", "mo", MONTHS[d.getUTCMonth()] + (d.getUTCMonth() === 0 || i === 0 ? " " + d.getUTCFullYear() : ""));
+      m.style.left = i * px + "px"; head.append(m);
+      const v = el("i", "vl month"); v.style.left = i * px + "px"; grid.append(v);
+    }
+    if (d.getUTCDay() === 1) {
+      const w = el("span", "wk", String(d.getUTCDate())); w.style.left = i * px + "px"; head.append(w);
+      const v = el("i", "vl"); v.style.left = i * px + "px"; grid.append(v);
+    }
+  }
+  chart.append(head);
+  let total = 0, ticked = 0;
+  for (const st of PLAN.stages) {
+    const tasks = st.tasks;
+    const stDone = tasks.every(t => done[t.id]);
+    const sl = el("div", "lab stage"); sl.append(el("span", "t", st.name));
+    if (st.issue) { const a = el("a", null, "#" + st.issue); a.href = REPO + st.issue; a.target = "_blank"; a.rel = "noopener noreferrer"; sl.append(a); }
+    chart.append(sl);
+    const lane = el("div", "lane stage");
+    const s = tasks.reduce((m, t) => t.start < m ? t.start : m, tasks[0].start);
+    const e = tasks.reduce((m, t) => t.end > m ? t.end : m, tasks[0].end);
+    const sp = el("i", "span"); sp.style.left = x(s) + "px"; sp.style.width = Math.max(px, x(e) - x(s) + px) + "px";
+    if (stDone) sp.style.background = "var(--done)";
+    lane.append(sp); chart.append(lane);
+    for (const t of tasks) {
+      total++; const isDone = !!done[t.id]; if (isDone) ticked++;
+      const l = el("div", "lab" + (isDone ? " done" : ""));
+      l.append(el("span", "tick", isDone ? "✓" : ""), el("span", "t", t.name)); l.title = `${t.name} · ${t.start} → ${t.end}`;
+      chart.append(l);
+      const ln = el("div", "lane");
+      if (t.gate) { const g = el("i", "gate" + (isDone ? " done" : "")); g.style.left = x(t.end) + px / 2 + "px"; g.title = t.name + " · " + t.end; ln.append(g); }
+      else { const b = el("i", "bar " + t.who + (isDone ? " done" : "")); b.style.left = x(t.start) + "px";
+        b.style.width = Math.max(px, x(t.end) - x(t.start) + px) + "px"; b.title = `${t.name} · ${t.start} → ${t.end}`; ln.append(b); }
+      chart.append(ln);
+    }
+  }
+  for (const b of PLAN.bands) {
+    const band = el("i", "band " + b.kind); band.style.left = x(b.start) + "px"; band.style.width = x(b.end) - x(b.start) + px + "px"; grid.append(band);
+    const n = el("span", "bandname", b.name); n.style.left = x(b.start) + "px"; if (b.kind === "quiet") n.style.top = "62px"; grid.append(n);
+  }
+  if (todayUTC >= t0 && todayUTC <= tEnd) {
+    const tl = el("i", "today"); tl.style.left = Math.round((todayUTC - t0) / DAY) * px + px / 2 + "px"; tl.append(el("span", null, "Today")); grid.append(tl);
+  }
+  chart.append(grid);
+  const left = d => Math.ceil((parse(d) - todayUTC) / DAY);
+  const stats = document.getElementById("stats"); stats.replaceChildren();
+  const stat = (num, txt) => { const s = el("span"); s.append(el("b", null, String(num)), document.createTextNode(txt)); stats.append(s); };
+  stat(`${ticked}/${total}`, "tasks done");
+  stat(Math.max(0, left("2026-12-13")), "days to level 1");
+  stat(Math.max(0, left("2027-03-21")), "days to the finish line");
+  stat(Math.max(0, left("2027-04-19")), "days to KognogOS 1.0");
+  document.getElementById("note").textContent = updated
+    ? "Ticks come from the project's TODO list, last synced " + new Date(updated).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) + "."
+    : "Ticks come from the project's TODO list; they show once the page connects.";
+}
+
+render();
+const sc = document.getElementById("scroller");
+if (todayUTC > t0) sc.scrollLeft = Math.max(0, Math.round((todayUTC - t0) / DAY) * px - 3 * 7 * px);
+
+(async () => {
+  const db = window.claude ? await window.claude.use("db").catch(() => null) : null;
+  if (!db) return;
+  db.doc("gantt/status").onSnapshot(snap => {
+    const d = snap.exists ? snap.data() : null;
+    done = (d && d.done) || {}; updated = (d && d.updated) || null; render();
+  }, () => {});
+})();
+</script>

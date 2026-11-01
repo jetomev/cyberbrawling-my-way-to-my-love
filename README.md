@@ -42,6 +42,8 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 - `docs/LESSONS.md` — what our previous game project taught us, and what we do differently because of it.
 - `docs/UNATTENDED.md` — how work keeps moving on weekdays, and what always waits for Javier.
 - `TODO.md` — the live list.
+- `docs/schedule.json` — the timeline: every task's dates and the gates where Javier plays it; `scripts/gantt.py`
+  turns it and the TODO ticks into the Gantt page.
 
 ## Roadmap
 | Date | Milestone |
