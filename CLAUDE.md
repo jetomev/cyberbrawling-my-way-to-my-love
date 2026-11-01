@@ -16,7 +16,7 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   **Sun 21 Mar 2027**. Milestones in `docs/PLAN.md`.
 - **D-7** The title is **"Cyberbrawling my way to my love!"** (Javier, 2026-11-01; his name-clash check is running). Folder and repo:
   `cyberbrawling-my-way-to-my-love`. **No "Cyberpunk" anywhere in the title.**
-- **D-8** Open source (Javier, 2026-11-01). Licence *(proposed, waiting on Javier's yes)*: code **GPL-3.0-or-later** (like nog and the Forge Suite);
+- **D-8** Open source (Javier, 2026-11-01). Licence (approved with the public repo, 2026-11-01): code **GPL-3.0-or-later** (like nog and the Forge Suite);
   art, music and sound **CC BY-SA 4.0** (`assets/LICENSE.md`).
 - **D-9** **No blood. Pain shows on both sides**, hero and enemies (Javier, 2026-11-01): bruises, black eyes,
   swollen mouths, broken arms and legs, screams, cracks. Damage is drawn on the cut-out parts and heard, never bled.
