@@ -25,6 +25,18 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   research and design, tests every piece, runs it on the KognogOS machines for smoothness and lag, helps package it,
   and tallies any paid credits. Their notes reach this project **through Javier**. That project's names never appear
   in this repo: here they are "the assistant team".
+- **D-12** Level 9 = **the tower gauntlet**: up the boss's tower, three floors, no new mechanic, the hardest regular
+  fights, and the best weapon is found here (Javier, 2026-11-01).
+- **D-13** Movement = **a shallow street**: left/right plus a few steps up and down the street, enemies can surround
+  you, in front of / behind props comes naturally. The grey box still builds the flat line too, for comparison
+  (Javier, 2026-11-01).
+- **D-14** Health = **a bar**, refilled by food and first-aid kits; **weapons wear out** after a number of hits
+  (Javier, 2026-11-01).
+- **D-15** **Saves at the start of every level, three lives per level**; losing them restarts that level (Javier,
+  2026-11-01).
+- **D-16** **One player in 1.0**; the code keeps the door open for a second player after launch (Javier, 2026-11-01).
+- **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
+  at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 
 ## Names
 This is a KognogOS-side project: "Javier & Claude" in every file, commit and Vault note. No names from any other

@@ -14,8 +14,9 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Top-down Gantt: docs/schedule.json + scripts/gantt.py, its page beside the board (2026-11-01)
 - [x] Two Claude mods for this work (2026-11-01): godot-fence refuses unfenced Godot runs; pages-sync keeps the board and Gantt in step with this list
 - [x] Both mods installed for every new session (2026-11-01); a fresh session's load is still to be seen
-- [ ] Javier answers the open questions in docs/DESIGN.md (level 9, lane depth, health, lives, two players) (#1)
-- [ ] Javier says yes or no to the unattended plan (and his working hours)
+- [x] Javier answers the open questions in docs/DESIGN.md (level 9, lane depth, health, lives, two players) (#1): D-12 to D-16
+- [x] Javier says yes or no to the unattended plan (and his working hours): yes, works 8:00–17:00 (D-17)
+- [ ] First weekday morning run (Mon 2 Nov, 9:00) reviewed with Javier that evening
 - [x] Title decided: "Cyberbrawling my way to my love!" (D-7); no blood, pain on both sides (D-9); team roles (D-11)
 
 ## Stage 1 · The feel, in grey boxes (by Sun 22 Nov) — #2

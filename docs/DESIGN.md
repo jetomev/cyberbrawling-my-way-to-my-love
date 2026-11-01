@@ -28,7 +28,7 @@ is the rescue, level by level, up to the mob's boss.
 | 1–2 | one floor | the street; the boss waits on a second floor | at the end of each, upstairs |
 | 3–5 | two floors | moving between floors | level 5 |
 | 6–8 | up to three | switches upstairs open doors below | level 8 |
-| 9 | *open question* | — | — |
+| 9 | three | the tower gauntlet: hardest regular fights, the best weapon | — |
 | 10 | — | the super boss, who needs the best weapon | the super boss |
 
 ## Pain, not blood
@@ -53,14 +53,15 @@ is the rescue, level by level, up to the mob's boss.
 - Original music and sound effects.
 - Keyboard and gamepad. Linux.
 
-## Open questions (Claude's recommendation in brackets; Javier decides)
-1. **Level 9.** The spec names 1–8 and 10. [A gauntlet up the boss's tower: three floors, no new mechanic, the
-   hardest regular fights, and the best weapon found here, so level 10 is the payoff.]
-2. **How deep is the play lane?** A flat line (you only go left, right and up onto things), or a shallow street you
-   can also step up and down in, the way classic arcade brawlers work. [The shallow street: it makes "in front of /
-   behind" natural and lets enemies surround you. The grey-box build tries both so Javier can feel the difference.]
-3. **One hit or a health bar?** [A health bar with food or first-aid pickups; weapons break after a number of hits
-   so collecting matters.]
-4. **Lives and saving.** [Save at the start of every level; three lives per level.]
-5. **Two players on one screen?** [Not for 1.0. The code keeps the door open.]
+## Answered (Javier, 2026-11-01; decisions D-12 to D-16 in CLAUDE.md)
+1. **Level 9: the tower gauntlet.** Up the boss's tower: three floors, no new mechanic, the hardest regular fights,
+   and the best weapon is found here, so level 10 is the payoff.
+2. **Movement: a shallow street.** Left and right plus a few steps up and down the street, the way classic arcade
+   brawlers work: enemies can surround you, and passing in front of or behind props comes naturally. The grey box
+   also builds the flat line, so Javier can feel the difference before it's locked.
+3. **Health: a bar.** Food and first-aid kits refill it. Weapons wear out after a number of hits, so collecting
+   them matters.
+4. **Lives and saving:** the game saves at the start of every level; three lives per level; losing them restarts
+   that level, not the game.
+5. **Two players: not in 1.0.** The code keeps the door open for a second player after launch.
 6. ~~The name~~ — decided: **"Cyberbrawling my way to my love!"** (Javier, 2026-11-01).

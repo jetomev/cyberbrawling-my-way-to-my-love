@@ -1,6 +1,7 @@
 # Work while Javier is at his day job
 
-*Proposed 2026-11-01. Javier & Claude. **Nothing here is scheduled until Javier says yes.***
+*Proposed 2026-11-01. Javier & Claude. **Approved by Javier the same day (D-17): one run at 9:00 Mon–Fri, done by
+12:00; he works 8:00–17:00.***
 
 ## The short version
 One scheduled Claude session runs on this PC on weekday mornings. It picks the next items marked **(solo)** in
