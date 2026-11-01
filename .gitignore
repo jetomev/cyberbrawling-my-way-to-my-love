@@ -1,0 +1,9 @@
+# Godot
+.godot/
+*.import
+export/
+# Big scratch files (never /tmp: it is RAM here)
+scratch/
+# Script logs
+logs/
+__pycache__/
