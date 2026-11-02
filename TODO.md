@@ -28,7 +28,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] Pain system in grey boxes: damage stages per part, broken arm/leg effects, hit sounds; no blood (solo) (#3)
 - [ ] Pick up a weapon; it stays in the hand (solo)
 - [ ] Layers: foreground props, play lane, skyline; in front / behind (solo)
-- [ ] Keyboard + gamepad, dead zone, drifting-stick test (solo)
+- [x] Keyboard + gamepad, dead zone, drifting-stick test (solo) (2026-11-01: brought forward for F-1, the G13 stuck stick; 51 tests)
 - [ ] Both lane depths to try: flat line and shallow street (solo)
 - [ ] A grey level 1 with the boss upstairs; the bot plays it (solo)
 - [ ] Javier's grey-box feel test

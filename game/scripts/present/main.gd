@@ -30,6 +30,7 @@ func _ready() -> void:
 	demo = "--demo" in args
 	tune["flat_line"] = "--flat" in args
 	Controls.ensure()
+	_ready_pads()
 	if not demo or "--lab" in args:
 		# a saved feel must not change what the demo shows, so the demo's lab starts from the defaults
 		feel = FeelPanel.new(tune, "user://demo-feel-lab.json" if demo else FeelPanel.SAVE_PATH)
@@ -68,6 +69,14 @@ func _physics_process(_delta: float) -> void:
 	$Camera.zoom = Vector2.ONE * tune["camera_zoom"]
 	if demo and tick > Demo.length():
 		get_tree().quit()
+
+
+func _ready_pads() -> void:
+	Input.joy_connection_changed.connect(func(device: int, _connected: bool): Controls.guard.forget(device))
+
+
+func _input(event: InputEvent) -> void:
+	Controls.feed(event)
 
 
 func _unhandled_input(event: InputEvent) -> void:
