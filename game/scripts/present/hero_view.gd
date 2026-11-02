@@ -119,6 +119,20 @@ func sync(f, ground_y: float) -> void:
 	body.modulate = Color(1.6, 1.6, 1.9) if f.blocking() == "perfect" else Color.WHITE  # a perfect block flashes
 
 
+## Where the hips, hands and feet are drawn right now, in this view's own space (its origin is the spot under the
+## fighter's feet), for the reviewers' close-ups (D-22). Works outside the scene tree.
+func points() -> Dictionary:
+	var out := {}
+	for name in ["hip", "hand_f", "hand_b", "foot_f", "foot_b"]:
+		var t := Transform2D.IDENTITY
+		var n: Node = bones[name]
+		while n != self:
+			t = (n as Node2D).transform * t
+			n = n.get_parent()
+		out[name] = t.origin
+	return out
+
+
 func apply(pose: Dictionary, grounded := true) -> void:
 	var baked := Poses.bake(pose, grounded)
 	for name in bones:

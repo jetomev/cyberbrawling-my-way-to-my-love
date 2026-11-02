@@ -16,7 +16,9 @@ ln -sfn "$(basename "$LOG")" "$ROOT/logs/record-latest.log"
     timeout 300 "$ROOT/scripts/capped.sh" godot --headless --path "$ROOT/game" --import >/dev/null 2>&1 || true
   fi
   timeout 120 "$ROOT/scripts/capped.sh" godot --path "$ROOT/game" --write-movie "$OUT/frames/f.png" \
-    --fixed-fps 60 -- --demo "$@" 2>&1 | grep -v '^Godot Engine'
+    --fixed-fps 60 -- --demo "$@" 2>&1 | grep -v '^Godot Engine' | tee "$OUT/godot.txt"
+  # a game that fails to load still opens a window and records nothing worth seeing: stop on any script error
+  if grep -q 'SCRIPT ERROR' "$OUT/godot.txt"; then echo "FAILED the game has a script error"; exit 1; fi
   N=$(ls "$OUT/frames" | wc -l)
   echo "frames: $N"
   [ "$N" -gt 60 ] || { echo "FAILED too few frames"; exit 1; }

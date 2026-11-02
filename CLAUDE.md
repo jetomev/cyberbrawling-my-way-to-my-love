@@ -58,7 +58,8 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   motion-capture data can drive these bones and under what licence.
 - **D-22** **The team reviews every build before Javier** (Javier, 2026-11-01: "have the team critize the build,
   before I do it"): `scripts/build.sh` is the build step: tests (red = no demo), the recorded demo, a still of every
-  move as it lands, a short note, all copied to the review shelf (its folder is set outside the repo in
+  move as it lands, close-ups of the hips, hands and feet for each (the team's first ask, 2026-11-02: the hero is
+  small in the demo frame), a short note, all copied to the review shelf (its folder is set outside the repo in
   `.review-shelf`, git-ignored). Javier sees a build after the reviewers' fixes, or with their list.
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.

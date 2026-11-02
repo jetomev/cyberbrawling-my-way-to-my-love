@@ -29,6 +29,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] A fuller body: spine, neck, shoulders, hands, feet and toes; planted feet, wind-up and follow-through (solo) (2026-11-01 night, D-20: 76 tests)
 - [x] Motion from the hips: the whip, weight shifts with planted feet, shoulders swing, the back bends into kicks (solo) (2026-11-02 night, D-21: 81 tests)
 - [x] The build step: tests, demo, move stills, onto the review shelf (solo) (D-22)
+- [x] Close-ups of the hips, hands and feet in every build (the team's first ask) (solo) (D-22)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
 - [ ] That enemy's own combos; the right hit or a perfect block interrupts them and can disarm him; a block takes less pain (solo)

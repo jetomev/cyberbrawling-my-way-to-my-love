@@ -2,7 +2,9 @@ extends Node2D
 ## The grey-box street with the hero on it (Stage 1). Steps the hero's logic 60 times a second and draws it.
 ## Options after "--": --demo plays the scripted demo (scripts/sim/demo.gd) and quits when it ends (--lab shows the
 ## feel lab during it);
-## --flat uses the flat line instead of the shallow street (D-13). F1 opens the feel lab (feel_panel.gd).
+## --flat uses the flat line instead of the shallow street (D-13); --marks <file> (with --demo) writes, for every drawn
+## frame, where the hips, hands and feet are on screen, for the reviewers' close-ups (scripts/build.sh, D-22).
+## F1 opens the feel lab (feel_panel.gd).
 
 const Version := preload("res://scripts/sim/version.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
@@ -23,6 +25,8 @@ var hero_view
 var tick := 0
 var demo := false
 var feel
+var marks: FileAccess
+var frame := 0
 
 
 func _ready() -> void:
@@ -53,6 +57,11 @@ func _ready() -> void:
 	$Camera.limit_right = int(tune["street_right"])
 	$Hud/Title.text = "%s   ·   %s%s" % [Version.TITLE, Version.STAGE, "   ·   demo" if demo else ""]
 	hero_view.sync(hero, Street.GROUND_Y)
+	var at := args.find("--marks")
+	if demo and at >= 0 and at + 1 < args.size():
+		marks = FileAccess.open(args[at + 1], FileAccess.WRITE)
+		marks.store_line("# frame tick then x y in the 1920x1080 game for: hip hand_f hand_b foot_f foot_b")
+		RenderingServer.frame_pre_draw.connect(_mark)
 
 
 func _physics_process(_delta: float) -> void:
@@ -69,6 +78,19 @@ func _physics_process(_delta: float) -> void:
 	$Camera.zoom = Vector2.ONE * tune["camera_zoom"]
 	if demo and tick > Demo.length():
 		get_tree().quit()
+
+
+## One line per drawn frame (the movie's frame number), in the 1920x1080 game's pixels (the movie can be smaller: the
+## build scales them), written after the camera has moved, just before drawing.
+func _mark() -> void:
+	var to_screen: Transform2D = hero_view.get_global_transform_with_canvas()
+	var line := "%d %d" % [frame, tick]
+	for p in hero_view.points().values():
+		var s: Vector2 = to_screen * p
+		line += " %d %d" % [roundi(s.x), roundi(s.y)]
+	marks.store_line(line)
+	marks.flush()
+	frame += 1
 
 
 func _ready_pads() -> void:

@@ -124,3 +124,22 @@ func test_demo_shows_every_move() -> void:
 		var inp := Demo.input_at(i)
 		presses += int(inp.get("punch", false)) + int(inp.get("kick", false)) + int(inp.get("jump", false))
 	eq(presses, button_steps, "each button press fires once, not every tick of its step")
+
+
+func test_the_close_up_points_follow_the_drawing() -> void:
+	# the reviewers' close-ups (D-22) are cut around these points, so they must sit on the drawn hips, hands and feet
+	var t := Tuning.fresh()
+	var v = HeroView.new()
+	v.apply(Poses.angles("idle", 0, t))
+	var guard: Dictionary = v.points()
+	eq(guard.keys(), ["hip", "hand_f", "hand_b", "foot_f", "foot_b"], "hips, both hands, both feet")
+	check(absf(guard["hip"].y - Poses.BONES["hip"][1].y) < 12.0, "the hip point is at the hips (%.0f)" % guard["hip"].y)
+	for side in ["f", "b"]:
+		check(guard["foot_" + side].y > -40.0 and guard["foot_" + side].y < 4.0, "the %s foot point is on the street (%.0f)" % [side, guard["foot_" + side].y])
+		check(guard["hand_" + side].y < guard["hip"].y, "the %s hand point is above the hips in the guard" % side)
+	v.apply(Poses.angles("cross", Moves.data("cross", t)["startup"], t))
+	var hit: Dictionary = v.points()
+	check(hit["hand_b"].x > guard["hand_b"].x + 40.0, "on the cross the back hand point goes out with the fist (%.0f to %.0f)" % [guard["hand_b"].x, hit["hand_b"].x])
+	v.body.scale.x = -1.0
+	check(v.points()["hand_b"].x < 0.0, "facing left, the points turn with the body")
+	v.free()
