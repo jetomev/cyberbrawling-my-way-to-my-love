@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Close-ups of the hips, hands and feet for every move in the recorded demo (D-22). Javier & Claude.
+"""The reviewers' stills of every move in the recorded demo (D-22). Javier & Claude.
 
-The assistant team's first ask (2026-11-02): the hero is small in the demo frame, so every build also carries close-up
-stills. For each move, one row of four panels at the moment it lands: the whole body, the hips, both hands, both feet.
-The demo writes where those parts are on every frame (`--marks`, in the 1920x1080 game's pixels); this scales them to
-the movie's size and cuts the panels with ffmpeg.
+The assistant team reviews every build before Javier plays it, and reads pictures, not video. From the demo's frames
+and its marks (`--marks`: where the hips, hands, feet and the top of the head are on every frame, in the 1920x1080
+game's pixels; the movie can be smaller) this cuts, for each move:
 
-Usage: scripts/closeups.py <frames dir> <marks file> <out dir> move:frame [move:frame ...]
-Writes <out dir>/closeups/NN-<move>.png (one row each) and <out dir>/closeups.png (all rows). Prints OK and the count.
+- moves.png: the whole body as the move lands, one panel per move, framed from the marks (head to feet);
+- closeups/NN-<move>.png (and all of them in closeups.png): as it lands, the whole body, the hips, the hands, the feet;
+- strips/NN-<move>.png: the move from its first frame to its last, at fixed time steps (every STEP frames, lined up so
+  the landing frame is one of them), four rows (whole body, hips, hands, feet). Each row keeps one frame for the whole
+  move, so the parts are seen moving, not re-centred.
+
+Usage: scripts/closeups.py <frames dir> <marks file> <out dir> move:land:start:end [...]
+Prints an OK line with the counts.
 """
 import struct
 import subprocess
@@ -15,8 +20,11 @@ import sys
 from pathlib import Path
 
 GAME_W, GAME_H = 1920, 1080
-PANEL = 320  # each panel's side, in the picture the reviewers see
-PARTS = ["hip", "hand_f", "hand_b", "foot_f", "foot_b"]
+PANEL = 320  # a close-up panel's side
+STRIP_PANEL = 170  # a timed strip's panel side
+STEP = 3  # frames between stills in a timed strip (50 ms at 60 frames a second)
+PARTS = ["hip", "hand_f", "hand_b", "foot_f", "foot_b", "head"]
+ROWS = ["whole body", "hips", "hands", "feet"]
 
 
 def png_size(path):
@@ -35,63 +43,118 @@ def read_marks(path):
     return marks
 
 
-def square(points, pad, least, w, h, lift=0):
-    """A square around the points, padded, at least `least` wide, kept inside the frame (lift raises its top)."""
+def square(points, pad, least, w, h):
+    """A square around the points, padded, at least `least` wide, kept inside the frame."""
     xs = [p[0] for p in points]
     ys = [p[1] for p in points]
-    top = min(ys) - pad - lift
-    side = max(max(xs) - min(xs) + 2 * pad, max(ys) - top + pad, least)
-    side = int(min(side, w, h))
+    side = int(min(max(max(xs) - min(xs) + 2 * pad, max(ys) - min(ys) + 2 * pad, least), w, h))
     cx = (min(xs) + max(xs)) / 2
-    cy = (top + max(ys) + pad) / 2
+    cy = (min(ys) + max(ys)) / 2
     x = int(min(max(cx - side / 2, 0), w - side))
     y = int(min(max(cy - side / 2, 0), h - side))
     return side, x, y
 
 
+def boxes(points_by_frame, u, w, h):
+    """The four crops (whole body, hips, hands, feet) around the parts over the given frames."""
+    def gather(names):
+        return [at[n] for at in points_by_frame for n in names]
+    return [
+        square(gather(PARTS), 0.4 * u, 2.6 * u, w, h),
+        square(gather(["hip"]), 0.9 * u, 1.8 * u, w, h),
+        square(gather(["hand_f", "hand_b"]), 0.4 * u, 1.5 * u, w, h),
+        square(gather(["foot_f", "foot_b"]), 0.4 * u, 1.5 * u, w, h),
+    ]
+
+
+def panel(src, box, size, text):
+    side, x, y = box
+    label = f",drawtext=text='{text}':x=6:y=6:fontsize={max(14, size // 16)}:fontcolor=white:box=1:boxcolor=black@0.55" \
+        if text else ""
+    return f"[{src}]crop={side}:{side}:{x}:{y},scale={size}:{size}:flags=lanczos{label}"
+
+
+def ffmpeg(inputs, graph, out):
+    args = ["ffmpeg", "-loglevel", "error", "-y"]
+    for i in inputs:
+        args += ["-i", str(i)]
+    subprocess.run(args + ["-filter_complex", graph, "-frames:v", "1", str(out)], check=True)
+
+
+def stack(files, how, out):
+    if len(files) == 1:
+        ffmpeg(files, "null", out)
+    else:
+        ffmpeg(files, f"{how}=inputs={len(files)}", out)
+
+
 def main():
     if len(sys.argv) < 5:
         sys.exit(__doc__)
-    frames, marks_file, out = Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3])
-    marks = read_marks(marks_file)
-    rows = out / "closeups"
-    rows.mkdir(parents=True, exist_ok=True)
-    made = []
-    for n, item in enumerate(sys.argv[4:]):
-        move, frame = item.split(":")
-        frame = int(frame)
+    frames, marks, out = Path(sys.argv[1]), read_marks(sys.argv[2]), Path(sys.argv[3])
+    moves = []
+    for item in sys.argv[4:]:
+        move, land, start, end = item.split(":")
+        moves.append((move, int(land), int(start), int(end)))
+    for d in ["closeups", "strips", "moves"]:
+        (out / d).mkdir(parents=True, exist_ok=True)
+
+    def still(frame):
+        return frames / f"f{frame:08d}.png"
+
+    def at(frame, k):
         if frame not in marks:
-            sys.exit(f"FAILED no marks for {move} at frame {frame}")
-        still = frames / f"f{frame:08d}.png"
-        w, h = png_size(still)
-        k = w / GAME_W  # the movie can be smaller than the game
-        at = {p: (x * k, y * k) for p, (x, y) in marks[frame].items()}
-        u = h / GAME_H * 100  # one unit: a tenth of the fighter's height, give or take
-        panels = [
-            ("whole body", square(list(at.values()), 0.45 * u, 2.6 * u, w, h, lift=1.1 * u)),
-            ("hips", square([at["hip"]], 0.9 * u, 1.8 * u, w, h)),
-            ("hands", square([at["hand_f"], at["hand_b"]], 0.4 * u, 1.5 * u, w, h)),
-            ("feet", square([at["foot_f"], at["foot_b"]], 0.4 * u, 1.5 * u, w, h)),
-        ]
-        chains = []
-        for i, (label, (side, x, y)) in enumerate(panels):
-            text = f"{move} · {label}" if i == 0 else label
-            chains.append(
-                f"[s{i}]crop={side}:{side}:{x}:{y},scale={PANEL}:{PANEL}:flags=lanczos,"
-                f"drawtext=text='{text}':x=8:y=8:fontsize=20:fontcolor=white:box=1:boxcolor=black@0.55[p{i}]"
-            )
-        graph = "[0]split=4[s0][s1][s2][s3];" + ";".join(chains) + ";[p0][p1][p2][p3]hstack=inputs=4"
-        row = rows / f"{n:02d}-{move}.png"
-        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(still), "-filter_complex", graph,
-                        "-frames:v", "1", str(row)], check=True)
-        made.append(row)
-    inputs = []
-    for row in made:
-        inputs += ["-i", str(row)]
-    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", *inputs, "-filter_complex",
-                    f"vstack=inputs={len(made)}" if len(made) > 1 else "null", "-frames:v", "1",
-                    str(out / "closeups.png")], check=True)
-    print(f"OK {len(made)} close-up rows: {out / 'closeups.png'}")
+            sys.exit(f"FAILED no marks for frame {frame}")
+        return {p: (x * k, y * k) for p, (x, y) in marks[frame].items()}
+
+    rows, strips, tiles = [], [], []
+    for n, (move, land, start, end) in enumerate(moves):
+        w, h = png_size(still(land))
+        k = w / GAME_W
+        u = h / GAME_H * 100  # one unit: about a tenth of the fighter's height
+        # as it lands: one panel for moves.png, a row of four close-ups
+        here = boxes([at(land, k)], u, w, h)
+        tile = out / "moves" / f"{n:02d}.png"
+        ffmpeg([still(land)], panel(0, here[0], PANEL, move), tile)
+        tiles.append(tile)
+        graph = "[0]split=4[s0][s1][s2][s3];" + ";".join(
+            panel(f"s{i}", b, PANEL, f"{move} · {ROWS[i]}" if i == 0 else ROWS[i]) + f"[p{i}]" for i, b in enumerate(here)
+        ) + ";[p0][p1][p2][p3]hstack=inputs=4"
+        row = out / "closeups" / f"{n:02d}-{move}.png"
+        ffmpeg([still(land)], graph, row)
+        rows.append(row)
+        # the timed strip: every STEP frames, lined up on the landing frame
+        steps = [f for f in range(start, end + 1) if (f - land) % STEP == 0]
+        fixed = boxes([at(f, k) for f in steps], u, w, h)
+        parts = []
+        for c, f in enumerate(steps):
+            ms = round((f - land) * 1000 / 60)
+            when = "HIT" if f == land else f"{ms:+d} ms"
+            parts.append(f"[{c}]split=4[c{c}r0][c{c}r1][c{c}r2][c{c}r3]")
+            for r, b in enumerate(fixed):
+                text = (f"{move} {when}" if c == 0 else when) if r == 0 else (ROWS[r] if c == 0 else "")
+                parts.append(panel(f"c{c}r{r}", b, STRIP_PANEL, text) + f"[c{c}p{r}]")
+            parts.append(f"[c{c}p0][c{c}p1][c{c}p2][c{c}p3]vstack=inputs=4[col{c}]")
+        cols = "".join(f"[col{c}]" for c in range(len(steps)))
+        parts.append(f"{cols}hstack=inputs={len(steps)}" if len(steps) > 1 else f"{cols}null")
+        strip = out / "strips" / f"{n:02d}-{move}.png"
+        ffmpeg([still(f) for f in steps], ";".join(parts), strip)
+        strips.append(strip)
+    stack(rows, "vstack", out / "closeups.png")
+    # moves.png: four panels a row; a short last row is filled with blank panels
+    lines = []
+    for i in range(0, len(tiles), 4):
+        group = tiles[i:i + 4]
+        real = len(group)
+        group = group + [group[-1]] * (4 - real)
+        graph = ";".join(f"[{j}]" + ("drawbox=x=0:y=0:w=iw:h=ih:c=black:t=fill" if j >= real else "null") + f"[t{j}]" for j in range(4)) \
+            + ";" + "".join(f"[t{j}]" for j in range(4)) + "hstack=inputs=4"
+        line = out / "moves" / f"row{i // 4}.png"
+        ffmpeg(group, graph, line)
+        lines.append(line)
+    stack(lines, "vstack", out / "moves.png")
+    print(f"OK {len(moves)} moves: moves.png, {len(rows)} close-up rows, {len(strips)} timed strips "
+          f"(every {STEP} frames = {round(STEP * 1000 / 60)} ms)")
 
 
 if __name__ == "__main__":

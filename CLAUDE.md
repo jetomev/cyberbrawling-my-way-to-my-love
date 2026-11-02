@@ -59,8 +59,15 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
 - **D-22** **The team reviews every build before Javier** (Javier, 2026-11-01: "have the team critize the build,
   before I do it"): `scripts/build.sh` is the build step: tests (red = no demo), the recorded demo, a still of every
   move as it lands, close-ups of the hips, hands and feet for each (the team's first ask, 2026-11-02: the hero is
-  small in the demo frame), a short note, all copied to the review shelf (its folder is set outside the repo in
+  small in the demo frame), a timed strip of close-ups through each move (a still every 50 ms lined up on the hit:
+  the reviewers read pictures, not video), a short note, all copied to the review shelf (its folder is set outside the repo in
   `.review-shelf`, git-ignored). Javier sees a build after the reviewers' fixes, or with their list.
+- **D-23** **Form from the first review** (the assistant team, 2026-11-02, on build e7a5106; their notes reach the
+  project through Javier's rule D-22): the free hand guards the face while the other strikes (`cover_f`/`cover_b` in
+  `poses.gd`: the fist goes to the cheek, elbow down, and doesn't count as a reach for the shoulder swing); the hook
+  winds up low and wide and turns the hips more than the cross; the spinning kicks turn the body and pivot on the
+  standing foot (`spin`: the drawing squeezes edge-on and shows his back; `rise_f`/`rise_b`: heel off the street) — the
+  spin kick goes all the way round and lands facing, the roundhouse turns a third of the way into it.
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 

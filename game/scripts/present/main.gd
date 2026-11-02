@@ -60,7 +60,7 @@ func _ready() -> void:
 	var at := args.find("--marks")
 	if demo and at >= 0 and at + 1 < args.size():
 		marks = FileAccess.open(args[at + 1], FileAccess.WRITE)
-		marks.store_line("# frame tick then x y in the 1920x1080 game for: hip hand_f hand_b foot_f foot_b")
+		marks.store_line("# frame tick then x y in the 1920x1080 game for: hip hand_f hand_b foot_f foot_b head(top)")
 		RenderingServer.frame_pre_draw.connect(_mark)
 
 

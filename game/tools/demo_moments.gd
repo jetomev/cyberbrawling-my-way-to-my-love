@@ -1,5 +1,7 @@
 extends SceneTree
-## Prints the demo's movie frame where each move first lands ("name:frame" per line), for scripts/build.sh's strip.
+## Prints, for the first time each move shows up in the demo, "name:land:start:end" in movie frames: the frame it lands
+## (the active blow; for climb and block, 8 ticks in), its first frame and its last, for scripts/build.sh's stills,
+## close-ups and timed strips.
 ## Run headless: godot --headless --path game -s res://tools/demo_moments.gd
 
 const Fighter := preload("res://scripts/sim/fighter.gd")
@@ -18,14 +20,29 @@ func _initialize() -> void:
 	var w = StreetWorld.grey_street()
 	var f = Fighter.new(Tuning.fresh(), 400.0, 80.0, w)
 	var seen := {}
+	var start := {}
+	var land := {}
+	var last := {}
+	var prev := ""
 	for i in Demo.length():
 		f.step(Demo.input_at(i))
 		w.step_hits([f])
 		var key: String = f.state
+		var frame := i + MOVIE_OFFSET
+		if key != prev or f.t == 0:  # a new move begins (a chained move changes state; a repeat restarts t)
+			if prev != "" and land.has(prev) and not seen.has(prev):
+				seen[prev] = true
+				print("%s:%d:%d:%d" % [prev, land[prev], start[prev], last[prev]])
+			if not seen.has(key):
+				start[key] = frame
+				land.erase(key)
+		prev = key
+		last[key] = frame
 		var ready := Moves.is_move(key) and f.attack_phase() == "active"
 		if key in ["climb", "block"]:
 			ready = f.t == 8
-		if ready and not seen.has(key):
-			seen[key] = true
-			print("%s:%d" % [key, i + MOVIE_OFFSET])
+		if ready and not land.has(key) and not seen.has(key):
+			land[key] = frame
+	if land.has(prev) and not seen.has(prev):
+		print("%s:%d:%d:%d" % [prev, land[prev], start[prev], last[prev]])
 	quit(0)

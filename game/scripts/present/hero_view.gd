@@ -12,6 +12,7 @@ var bones := {}
 var body: Node2D
 var shadow: Polygon2D
 var tint := Color.WHITE
+var facing := 1.0
 
 
 func _init(body_tint := Color.WHITE) -> void:
@@ -112,24 +113,24 @@ func sync(f, ground_y: float) -> void:
 	position = Vector2(f.x, ground_y + f.z)
 	z_index = int(f.z)
 	body.position.y = -f.y
-	body.scale.x = f.facing
+	facing = f.facing
 	var height := clampf(f.y / 200.0, 0.0, 1.0)
 	shadow.scale = Vector2.ONE * (1.0 - height * 0.45)
 	apply(Poses.angles(f.state, f.t, f.tune), f.on_ground())
 	body.modulate = Color(1.6, 1.6, 1.9) if f.blocking() == "perfect" else Color.WHITE  # a perfect block flashes
 
 
-## Where the hips, hands and feet are drawn right now, in this view's own space (its origin is the spot under the
+## Where the hips, hands, feet and the top of the head are drawn right now, in this view's own space (its origin is the spot under the
 ## fighter's feet), for the reviewers' close-ups (D-22). Works outside the scene tree.
 func points() -> Dictionary:
 	var out := {}
-	for name in ["hip", "hand_f", "hand_b", "foot_f", "foot_b"]:
+	for name in ["hip", "hand_f", "hand_b", "foot_f", "foot_b", "head"]:
 		var t := Transform2D.IDENTITY
 		var n: Node = bones[name]
 		while n != self:
 			t = (n as Node2D).transform * t
 			n = n.get_parent()
-		out[name] = t.origin
+		out[name] = t * Vector2(Poses.BONES["head"][3], 0) if name == "head" else t.origin  # the head: its top
 	return out
 
 
@@ -139,6 +140,9 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		var bone: Bone2D = bones[name]
 		bone.rotation_degrees = Poses.BONES[name][2] + baked[name]
 	bones["hip"].position = Poses.BONES["hip"][1] + Vector2(baked["hip_x"], baked["hip_y"])
+	# a spin turns the body around the up axis: squeezed edge-on at 90, his back at 180 (never quite zero wide)
+	var turn := cos(deg_to_rad(baked["spin"]))
+	body.scale.x = facing * (maxf(absf(turn), 0.06) * signf(turn) if turn != 0.0 else 0.06)
 	for side in ["f", "b"]:
 		var hand: Node2D = bones["hand_" + side].get_node("Part")
 		var open: bool = baked["open_" + side] > 0.5

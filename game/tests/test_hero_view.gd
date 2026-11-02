@@ -132,7 +132,8 @@ func test_the_close_up_points_follow_the_drawing() -> void:
 	var v = HeroView.new()
 	v.apply(Poses.angles("idle", 0, t))
 	var guard: Dictionary = v.points()
-	eq(guard.keys(), ["hip", "hand_f", "hand_b", "foot_f", "foot_b"], "hips, both hands, both feet")
+	eq(guard.keys(), ["hip", "hand_f", "hand_b", "foot_f", "foot_b", "head"], "hips, both hands, both feet, the head")
+	check(guard["head"].y < guard["hip"].y - 100.0, "the head point is the top of the head (%.0f)" % guard["head"].y)
 	check(absf(guard["hip"].y - Poses.BONES["hip"][1].y) < 12.0, "the hip point is at the hips (%.0f)" % guard["hip"].y)
 	for side in ["f", "b"]:
 		check(guard["foot_" + side].y > -40.0 and guard["foot_" + side].y < 4.0, "the %s foot point is on the street (%.0f)" % [side, guard["foot_" + side].y])
