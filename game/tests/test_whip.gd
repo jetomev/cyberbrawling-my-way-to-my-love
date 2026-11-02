@@ -11,7 +11,7 @@ const Tuning := preload("res://scripts/sim/tuning.gd")
 
 func test_the_hips_lead_and_the_fist_or_foot_arrives_last() -> void:
 	var t := Tuning.fresh()
-	for m in ["punch", "cross", "hook", "elbow", "kick", "push_kick", "body_kick", "roundhouse", "spin_kick"]:
+	for m in ["punch", "cross", "hook", "power_punch", "elbow", "kick", "front_kick", "push_kick", "body_kick", "roundhouse", "spin_kick", "side_kick"]:
 		var d := Moves.data(m, t)
 		var wind := Poses.moment(m, "windup", t)
 		var hit: int = d["startup"]
@@ -65,7 +65,7 @@ func test_the_shoulders_swing() -> void:
 
 func test_the_back_bends_into_kicks() -> void:
 	var t := Tuning.fresh()
-	for m in ["kick", "body_kick", "spin_kick", "roundhouse"]:
+	for m in ["front_kick", "body_kick", "spin_kick", "roundhouse", "side_kick"]:  # (the low kick stays upright)
 		var b := Poses.bake(Poses.angles(m, Moves.data(m, t)["startup"], t), true)
 		check(b["hip"] < -5.0, "%s: the pelvis tips back (%.0f)" % [m, b["hip"]])
 		var chest: float = rad_to_deg(Poses._end("chest", b)[1])

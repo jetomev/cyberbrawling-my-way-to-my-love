@@ -85,13 +85,13 @@ func test_the_walk_is_a_shuffle() -> void:
 func test_planted_feet_stay_put_through_every_strike() -> void:
 	var t := Tuning.fresh()
 	var g := Poses.bake(Poses.angles("idle", 0, t), true)
-	for m in ["punch", "cross", "hook", "elbow", "uppercut", "kick", "push_kick", "body_kick", "knee", "block"]:
+	for m in ["punch", "cross", "hook", "elbow", "uppercut", "kick", "front_kick", "push_kick", "body_kick", "knee", "block"]:
 		var length := Moves.length(m, t) if Moves.is_move(m) else 20
 		for tt in range(0, length + 1):
 			var b := Poses.bake(Poses.angles(m, tt, t), true)
 			var striker: String = Moves.data(m, t)["limb"].split("_")[1] if Moves.is_move(m) else ""
 			for side in ["f", "b"]:
-				if side == striker and m in ["kick", "push_kick", "body_kick", "knee"]:
+				if side == striker and m in ["kick", "front_kick", "push_kick", "body_kick", "knee"]:
 					continue  # the kicking leg leaves the street; this is about the one he stands on
 				if not Poses._planted(b, side):
 					continue
@@ -111,7 +111,7 @@ func test_a_front_leg_kick_stands_tall_on_the_back_foot() -> void:
 		var foot: Vector2 = ankle(b, "b")
 		check(absf(foot.x - hip.x) < 30.0, "%s: the standing foot has stepped up under the hips (%.0f px off)" % [m, foot.x - hip.x])
 	# the snap and push kicks shift the weight back over the back foot instead (the posture sheet)
-	for m in ["kick", "push_kick"]:
+	for m in ["front_kick", "push_kick"]:
 		var hx: float = Poses.full(Poses.SHOTS[m][1][1])["hip_x"]
 		check(absf(hx - (Poses.STANCE["b"] as Vector2).x) <= 25.0, "%s: the chamber puts the hips over the back foot (%.0f px off)" % [m, hx - (Poses.STANCE["b"] as Vector2).x])
 

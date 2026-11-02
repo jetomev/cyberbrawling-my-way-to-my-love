@@ -21,10 +21,10 @@ const DEFAULTS := {
 	"punch_active": 3,
 	"punch_recovery": 8,
 	"punch_reach": 128.0,
-	"kick_startup": 7,
-	"kick_active": 4,
-	"kick_recovery": 12,
-	"kick_reach": 138.0,
+	"kick_startup": 5,  # the opening kick: the low kick, the fastest kick (Javier, 2026-11-02 18:19)
+	"kick_active": 3,
+	"kick_recovery": 9,
+	"kick_reach": 112.0,
 	"air_kick_startup": 3,  # the flying kick: pressed in the air, out until landing
 	"air_kick_active": 10,
 	"air_kick_reach": 140.0,

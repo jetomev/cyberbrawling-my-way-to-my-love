@@ -80,9 +80,11 @@ func test_drawn_blows_reach_where_they_hit() -> void:
 		check(absf(tip.x - d["reach"]) <= 15.0, "%s: drawn tip at %.0f px, reach %.0f" % [m, tip.x, d["reach"]])
 		check(-tip.y >= d["low"] and -tip.y <= d["high"], "%s: tip height %.0f inside %.0f..%.0f" % [m, -tip.y, d["low"], d["high"]])
 	var fist := Poses.tip("arm_f_lower", Poses.angles("punch", t["punch_startup"], t))
-	var foot := Poses.tip("leg_f_lower", Poses.angles("kick", t["kick_startup"], t))
+	var foot := Poses.tip("leg_f_lower", Poses.angles("front_kick", Moves.data("front_kick", t)["startup"], t))
+	var low := Poses.tip("foot_f", Poses.angles("kick", t["kick_startup"], t))
 	check(fist.y < -150.0 and fist.y > -240.0, "the jab is at head-to-chest height (%.0f)" % fist.y)
 	check(foot.y < -90.0 and foot.y > -200.0, "the front kick is at body height (%.0f)" % foot.y)
+	check(low.y > -100.0, "the low kick goes to the knee (%.0f)" % low.y)
 
 
 func test_view_follows_the_fighter() -> void:
@@ -112,7 +114,7 @@ func test_demo_shows_every_move() -> void:
 		seen[f.state] = true
 		if f.x > 2724.0 and f.y == 0.0 and f.state != "climb":
 			past_crate_two_on_ground = true
-	for s in STATES + ["cross", "hook", "push_kick", "body_kick", "spin_kick", "knee", "uppercut", "elbow", "roundhouse", "hammer_fist"]:
+	for s in STATES + ["cross", "power_punch", "push_kick", "body_kick", "side_kick", "knee", "uppercut", "elbow", "roundhouse", "hammer_fist"]:
 		check(seen.has(s), "the demo shows %s" % s)
 	check(w.objects[0]["broken"], "it smashes the first crate")
 	check(not w.objects[2]["broken"] and past_crate_two_on_ground, "it jumps the second crate")

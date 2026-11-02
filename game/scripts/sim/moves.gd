@@ -2,13 +2,18 @@ extends RefCounted
 ## Every attack and the combos that chain them (D-18, Javier 2026-11-01: "make combos to make fights fun… FUN!").
 ## Three presses in quick succession chain into a finisher; missing the window (combo_window_ticks in the tuning)
 ## starts over. The opening press is always the same move (it can't know what comes next), so P opens with the jab
-## and K with the front kick, whichever chain follows.
+## and K with the low kick, whichever chain follows. The three-punch chain ends in the power punch and the three-kick
+## chain goes low, middle, then a side kick to the face (Javier, 2026-11-02 18:19, through the assistant team: "Power
+## Button is part of the 3 punch combination, it is the last punch. The side kick (to the face) is part of the 3 kick
+## combo, the low kick could be the first kick of the 3 kick combo (down, middle, side up)."). The hook, the front
+## kick and the spinning kick keep their poses and data but no press reaches them for now (enemies may use them).
 ##
 ## Per move: start-up / active / recovery ticks, reach from the body's centre (px), the height band a blow covers
 ## above the feet (a jab flies over a low crate), damage, what a finisher does to whoever it hits, and the limb that
 ## lands it (the drawing's tip must reach where the logic says the blow lands).
 
-## The jab, front kick and flying kick take their timing and reach from the tuning table (the feel lab edits them).
+## The jab, the opening kick (now the low kick) and the flying kick take their timing and reach from the tuning table
+## (the feel lab edits them).
 const TUNED := ["punch", "kick", "air_kick"]
 
 const TABLE := {
@@ -18,17 +23,26 @@ const TABLE := {
 		"effect": "", "limb": "hand_b"},
 	"hook": {"startup": 7, "active": 4, "recovery": 14, "reach": 112.0, "low": 130.0, "high": 230.0, "damage": 2,
 		"effect": "stagger", "limb": "hand_f"},
+	# P, P, P: the power punch, from a bow stance, the rear fist straight to the chest
+	"power_punch": {"startup": 10, "active": 4, "recovery": 18, "reach": 160.0, "low": 110.0, "high": 210.0, "damage": 3,
+		"effect": "stagger", "limb": "hand_b"},
 	"push_kick": {"startup": 8, "active": 4, "recovery": 14, "reach": 140.0, "low": 60.0, "high": 180.0, "damage": 1,
 		"effect": "push", "limb": "foot_f"},
 	"knee": {"startup": 5, "active": 3, "recovery": 10, "reach": 64.0, "low": 60.0, "high": 160.0, "damage": 2,
 		"effect": "", "limb": "leg_f_upper"},
 	"uppercut": {"startup": 7, "active": 4, "recovery": 16, "reach": 72.0, "low": 140.0, "high": 280.0, "damage": 3,
 		"effect": "launch", "limb": "hand_b"},
-	# opener K: the front kick
-	"kick": {"low": 60.0, "high": 180.0, "damage": 2, "effect": "", "limb": "foot_f"},
+	# opener K: the low kick, the front foot to the knee or shin
+	"kick": {"low": 0.0, "high": 110.0, "damage": 2, "effect": "", "limb": "foot_f"},
+	# the front snap kick, kept (no press reaches it now)
+	"front_kick": {"startup": 7, "active": 4, "recovery": 12, "reach": 138.0, "low": 60.0, "high": 180.0, "damage": 2,
+		"effect": "", "limb": "foot_f"},
 	"body_kick": {"startup": 7, "active": 4, "recovery": 12, "reach": 138.0, "low": 60.0, "high": 190.0, "damage": 2,
 		"effect": "", "limb": "foot_b"},
 	"spin_kick": {"startup": 10, "active": 5, "recovery": 18, "reach": 90.0, "low": 120.0, "high": 260.0, "damage": 3,
+		"effect": "knockdown", "limb": "foot_f"},
+	# K, K, K: the side kick to the face, heel first, the whole body on the standing foot (slower: about 0.7 s)
+	"side_kick": {"startup": 14, "active": 4, "recovery": 24, "reach": 130.0, "low": 170.0, "high": 280.0, "damage": 3,
 		"effect": "knockdown", "limb": "foot_f"},
 	"elbow": {"startup": 4, "active": 3, "recovery": 10, "reach": 80.0, "low": 140.0, "high": 230.0, "damage": 2,
 		"effect": "", "limb": "arm_f_upper"},
@@ -42,8 +56,8 @@ const TABLE := {
 
 ## What each sequence of presses becomes. A sequence not listed starts a new chain with its last press.
 const COMBOS := {
-	"P": "punch", "PP": "cross", "PPP": "hook", "PPK": "push_kick", "PK": "knee", "PKP": "uppercut",
-	"K": "kick", "KK": "body_kick", "KKK": "spin_kick", "KP": "elbow", "KPK": "roundhouse",
+	"P": "punch", "PP": "cross", "PPP": "power_punch", "PPK": "push_kick", "PK": "knee", "PKP": "uppercut",
+	"K": "kick", "KK": "body_kick", "KKK": "side_kick", "KP": "elbow", "KPK": "roundhouse",
 }
 const AIR := {"P": "hammer_fist", "K": "air_kick"}
 const FINISHER_LENGTH := 3

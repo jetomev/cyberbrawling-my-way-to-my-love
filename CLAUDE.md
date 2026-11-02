@@ -97,6 +97,13 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   comes back the way it went, knees never lock but for the kicking leg at the hit, about 60% of the weight forward
   on punches. `game/tests/test_sheet.gd` holds the sheet's checks for every built move; a new move gets its row
   there before it's drawn. A move may write its own follow-through (snap back, hold) instead of carrying the hit on.
+- **D-28** **The combos Javier chose** (2026-11-02 18:19, through the assistant team: "Power Button is part of the 3
+  punch combination, it is the last punch. The side kick (to the face) is part of the 3 kick combo, the low kick could
+  be the first kick of the 3 kick combo (down, middle, side up)."): P, P, P = jab, cross, power punch (a bow-stance
+  blow to the chest, the spare fist pulled to the hip); K, K, K = low kick, body kick, side kick to the face; K opens
+  every kick chain with the low kick (it keeps the old opener's name "kick", its feel-lab dials and its damage).
+  P, P, K stays the push kick. The hook, the front kick (now "front_kick") and the spinning kick keep their poses,
+  no press reaches them; no sweep. Each new move has its posture-sheet row in `test_sheet.gd`.
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 

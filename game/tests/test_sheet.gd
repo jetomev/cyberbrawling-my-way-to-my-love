@@ -49,7 +49,7 @@ func test_the_spare_hand_stays_home() -> void:
 		for bad in dropped(poses, pair[1]):
 			check(false, "%s@%d: the spare fist stays home (%.0f px from the head)" % [pair[0], bad[0], bad[1]])
 		check(true, "%s: spare hand checked on %d frames" % [pair[0], poses.size()])
-	for m in ["kick", "push_kick", "body_kick", "spin_kick"]:
+	for m in ["kick", "front_kick", "push_kick", "body_kick", "spin_kick", "side_kick"]:
 		var b := at(m, "active", t)
 		for side in ["f", "b"]:
 			check(mid("hand_" + side, b).distance_to(mid("head", b)) < (40.0 if side == "b" else 68.0), "%s: both hands stay up at the hit (%s)" % [m, side])
@@ -141,18 +141,18 @@ func test_the_uppercut_and_the_elbow() -> void:
 
 func test_the_front_kick_chambers() -> void:
 	var t := Tuning.fresh()
-	var w := at("kick", "windup", t)
+	var w := at("front_kick", "windup", t)
 	var thigh: float = rad_to_deg(Poses._end("leg_f_upper", w)[1])
 	check(absf(thigh) <= 20.0, "the knee comes up to hip height, the thigh level (%.0f degrees)" % thigh)
 	var knee: Vector2 = Poses._end("leg_f_upper", w)[0]
 	var foot: Vector2 = Poses._end("leg_f_lower", w)[0]
 	check(absf(foot.x - knee.x) <= 18.0, "the foot hangs under the knee (%.0f px)" % (foot.x - knee.x))
 	# (written: by the drawn wind-up frame the hips are already pushing forward, three frames ahead of the leg)
-	var weight: float = written("kick", "windup")["hip_x"] - (Poses.STANCE["b"] as Vector2).x
+	var weight: float = written("front_kick", "windup")["hip_x"] - (Poses.STANCE["b"] as Vector2).x
 	check(absf(weight) <= 25.0, "the weight onto the back foot: the hips over it (%.0f px)" % weight)
-	var lean: float = written("kick", "active")["torso"]
+	var lean: float = written("front_kick", "active")["torso"]
 	check(lean >= -16.0 and lean <= 0.0, "at the hit he leans back a touch (%.0f)" % lean)
-	check(Poses.angles("kick", Poses.moment("kick", "follow", t), t)["leg_f_lower"] >= 60.0, "then the leg snaps back to the chamber")
+	check(Poses.angles("front_kick", Poses.moment("front_kick", "follow", t), t)["leg_f_lower"] >= 60.0, "then the leg snaps back to the chamber")
 	var push := at("push_kick", "windup", t)
 	check((Poses._end("leg_f_upper", push)[0] as Vector2).y < knee.y, "the push kick chambers the knee higher")
 	check(absf(Poses.angles("push_kick", Poses.moment("push_kick", "follow", t), t)["leg_f_lower"]) <= 15.0, "and holds the leg out a moment")
@@ -219,3 +219,54 @@ func test_the_spin_kick_folds_back_before_it_lowers() -> void:
 		check(absf(b["leg_f_lower"]) >= 90.0, "+%d ms: the knee is folded back (%.0f degrees)" % [ms, absf(b["leg_f_lower"])])
 		var knee: Vector2 = Poses._end("leg_f_upper", b)[0]
 		check(knee.y < (Poses._end("hip", b)[0] as Vector2).y + 10.0, "+%d ms: a high chamber, the knee up at hip height" % ms)
+
+
+func test_the_low_kick() -> void:
+	# opens every kick chain (Javier, 2026-11-02 18:19): a small knee lift, the foot to the knee or shin, upright,
+	# a quick return, the fastest kick
+	var t := Tuning.fresh()
+	check(written("kick", "windup")["leg_f_upper"] >= -60.0, "a small knee lift, not a chamber")
+	var tip := Poses.tip("foot_f", Poses.angles("kick", Moves.data("kick", t)["startup"], t))
+	check(-tip.y <= 100.0, "the foot goes to the knee or shin (%.0f px up)" % -tip.y)
+	check(written("kick", "active")["torso"] >= 0.0, "the upper body stays upright")
+	for m in ["front_kick", "body_kick", "push_kick", "roundhouse", "side_kick"]:
+		check(Moves.length("kick", t) < Moves.length(m, t), "faster than the %s" % m)
+
+
+func test_the_power_punch() -> void:
+	# ends the three-punch chain (Javier, 2026-11-02 18:19): the posture sheet's power punch, from a bow stance
+	var t := Tuning.fresh()
+	var w := at("power_punch", "windup", t)
+	check(written("power_punch", "windup")["hip_y"] >= 8.0, "the wind-up sinks into a wide stance")
+	check(mid("hand_b", w).y > mid("chest", w).y, "the rear fist drawn back to the hip")
+	var hit := at("power_punch", "active", t)
+	check(written("power_punch", "active")["step_f"] >= 20.0, "the front foot steps and plants")
+	check(absf(hit["leg_f_lower"]) >= 40.0 and absf(hit["leg_b_lower"]) <= 25.0, "a bow stance: front knee bent (%.0f), back leg straight (%.0f)" % [absf(hit["leg_f_lower"]), absf(hit["leg_b_lower"])])
+	var f: Vector2 = Poses._end("leg_f_lower", hit)[0]
+	var bk: Vector2 = Poses._end("leg_b_lower", hit)[0]
+	var share: float = ((Poses._end("hip", hit)[0] as Vector2).x - bk.x) / (f.x - bk.x)
+	check(share >= 0.62 and share <= 0.82, "about 70%% of the weight forward (%.0f%%)" % (share * 100.0))
+	var fist: Vector2 = Poses._end("hand_b", hit)[0]
+	check(fist.y > (Poses._end("shoulder_b", hit)[0] as Vector2).y, "the fist goes straight to the chest, under shoulder height")
+	check(mid("hand_f", hit).y > mid("chest", hit).y, "the spare fist pulled back to the hip")
+	var held: Vector2 = Poses._end("hand_b", at("power_punch", "follow", t))[0]
+	check(held.distance_to(fist) < 6.0, "it holds the bow stance a beat (the fist moves %.0f px)" % held.distance_to(fist))
+
+
+func test_the_side_kick() -> void:
+	# ends the three-kick chain, to the face (Javier, 2026-11-02 18:19): the posture sheet's side kick
+	var t := Tuning.fresh()
+	var ww := written("side_kick", "windup")
+	check(ww["step_b"] >= 40.0 and ww["hip_y"] < 0.0, "the back foot steps up and the body rises")
+	var w := at("side_kick", "windup", t)
+	check((Poses._end("leg_f_upper", w)[0] as Vector2).y < (Poses._end("hip", w)[0] as Vector2).y, "the kicking knee comes up above the hips")
+	var wa := written("side_kick", "active")
+	check(wa["pivot_b"] >= 150.0, "the standing foot turns its heel to the enemy")
+	var hit := at("side_kick", "active", t)
+	check(absf(hit["leg_f_lower"]) <= 10.0, "the leg drives out straight")
+	var tip := Poses.tip("foot_f", Poses.angles("side_kick", Moves.data("side_kick", t)["startup"], t))
+	check(-tip.y >= 170.0, "to the face (%.0f px up)" % -tip.y)
+	check(wa["torso"] <= -35.0, "the body leans away in one line from head to heel")
+	check(not Poses._planted(hit, "f"), "the whole body on the one standing foot")
+	check(absf(Poses.angles("side_kick", Poses.moment("side_kick", "follow", t), t)["leg_f_lower"]) >= 90.0, "then the leg folds back")
+	check(Moves.length("side_kick", t) >= 36, "slower: about two-thirds of a second (%d frames)" % Moves.length("side_kick", t))

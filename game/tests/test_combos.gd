@@ -44,24 +44,24 @@ func test_every_combo_names_a_real_move() -> void:
 
 
 func test_the_chains() -> void:
-	eq(play("PPP"), ["punch", "cross", "hook"], "jab, cross, hook")
-	eq(play("KKK"), ["kick", "body_kick", "spin_kick"], "front kick, body kick, spinning kick")
+	eq(play("PPP"), ["punch", "cross", "power_punch"], "jab, cross, power punch")
+	eq(play("KKK"), ["kick", "body_kick", "side_kick"], "low kick, body kick, side kick to the face (Javier, 2026-11-02 18:19)")
 	eq(play("PKP"), ["punch", "knee", "uppercut"], "jab, knee, uppercut")
-	eq(play("KPK"), ["kick", "elbow", "roundhouse"], "front kick, elbow, roundhouse")
+	eq(play("KPK"), ["kick", "elbow", "roundhouse"], "low kick, elbow, roundhouse")
 	eq(play("PPK"), ["punch", "cross", "push_kick"], "jab, cross, push kick")
 
 
 func test_finishers_carry_their_effect() -> void:
 	var t := Tuning.fresh()
-	eq(Moves.data("hook", t)["effect"], "stagger", "the hook staggers")
+	eq(Moves.data("power_punch", t)["effect"], "stagger", "the hook staggers")
 	eq(Moves.data("spin_kick", t)["effect"], "knockdown", "the spinning kick knocks down")
 	eq(Moves.data("uppercut", t)["effect"], "launch", "the uppercut launches")
 	eq(Moves.data("push_kick", t)["effect"], "push", "the push kick makes space")
-	check(Moves.data("hook", t)["damage"] > Moves.data("punch", t)["damage"], "a finisher hits harder than a jab")
+	check(Moves.data("power_punch", t)["damage"] > Moves.data("punch", t)["damage"], "a finisher hits harder than a jab")
 
 
 func test_a_finisher_ends_the_chain() -> void:
-	eq(play("PPPP"), ["punch", "cross", "hook", "punch"], "after the hook, a new chain")
+	eq(play("PPPP"), ["punch", "cross", "power_punch", "punch"], "after the power punch, a new chain")
 	eq(play("PKK"), ["punch", "knee", "kick"], "a press that fits no chain starts a new one")
 
 
@@ -104,7 +104,7 @@ func test_mashing_still_chains() -> void:
 		f.step({"punch": i % 3 == 0})
 		if f.t == 0 and Moves.is_move(f.state):
 			seen.append(f.state)
-	check(seen.slice(0, 3) == ["punch", "cross", "hook"], "mashing P plays jab, cross, hook (%s)" % str(seen.slice(0, 3)))
+	check(seen.slice(0, 3) == ["punch", "cross", "power_punch"], "mashing P plays jab, cross, power punch (%s)" % str(seen.slice(0, 3)))
 	var doubles := 0
 	for i in range(1, seen.size()):
 		doubles += int(seen[i] == seen[i - 1] and seen[i] != "punch")

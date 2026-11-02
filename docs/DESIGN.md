@@ -53,13 +53,18 @@ counts once. The table lives in `game/scripts/sim/moves.gd`.
 
 | Presses | Moves | The finisher |
 |---|---|---|
-| P, P, P | jab, cross, hook | staggers |
+| P, P, P | jab, cross, power punch | staggers |
 | P, P, K | jab, cross, push kick | pushes away, makes space |
 | P, K, P | jab, knee, uppercut | launches |
-| K, K, K | front kick, body kick, spinning kick to the head | knocks down |
-| K, P, K | front kick, elbow, roundhouse | staggers |
+| K, K, K | low kick, body kick, side kick to the face | knocks down |
+| K, P, K | low kick, elbow, roundhouse | staggers |
 | jump + K | flying kick | — |
 | jump + P | hammer fist | — |
+
+Javier, 2026-11-02 18:19 (through the assistant team): "Power Button is part of the 3 punch combination, it is the
+last punch. The side kick (to the face) is part of the 3 kick combo, the low kick could be the first kick of the 3
+kick combo (down, middle, side up)." So K opens with the low kick in every chain. The hook, the front kick and the
+spinning kick keep their poses but no press reaches them for now (enemies may use them); a sweep is not built.
 
 The team's starter list opened K,K,K with a low kick and K,P,K with a front kick. The first press can't know which
 chain follows, so both open with the front kick.

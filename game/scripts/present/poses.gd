@@ -105,7 +105,7 @@ const WALK_STEP := 8
 const FORE_SHORT := 0.4  # a forearm pointing straight at the camera draws at 40% of its length
 ## How far into its start-up a strike is cocked (the wind-up moment). Most cock late (0.7), so the blow reads as a
 ## snap; the swinging ones cock early, so the swing round to the target lasts long enough to be seen.
-const WINDUP_AT := {"hook": 0.4, "roundhouse": 0.45, "spin_kick": 0.6, "knee": 0.34}
+const WINDUP_AT := {"hook": 0.4, "roundhouse": 0.45, "spin_kick": 0.6, "knee": 0.34, "side_kick": 0.55, "power_punch": 0.6}
 ## Where a covering fist sits: from the middle of the head, forward and a little down, in front of the jaw. Far enough
 ## forward to show past the face: the far hand is drawn behind the head, and at (16, 16) it hid there, so all one saw
 ## of it was its forearm across the chest (the assistant team's third review, 2026-11-02).
@@ -241,15 +241,46 @@ const SHOTS := {
 	"block": [["start", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -38.0, "arm_f_lower": -140.0, "arm_b_upper": -30.0, "arm_b_lower": -145.0,
 		"torso": 4.0, "head": 12.0,
 		"hip_y": 6.0}]],
-	# the front kick (posture sheet): the weight onto the back foot and the knee straight up to hip height, the foot
+	# the front kick (posture sheet; kept, no press reaches it since the three-kick chain opens with the low kick): the
+	# weight onto the back foot and the knee straight up to hip height, the foot
 	# hanging under it (the chamber); then the hips push forward and the lower leg flicks out, leaning back a touch,
 	# hands up; then the leg snaps back to the chamber and the foot sets down where it came from
-	"kick": [["start", {}],
+	"front_kick": [["start", {}],
 		["windup", {"hip_x": -45.0, "hip_turn": -4.0, "leg_f_upper": -90.0, "leg_f_lower": 90.0, "torso": -2.0, "hip_y": 0.0}],
 		["active", {"hip_x": 4.0, "hip_turn": -12.0, "leg_f_upper": -98.0, "leg_f_lower": 0.0, "torso": -12.0, "head": 12.0, "hip_y": 0.0}],
 		["active_end", {"hip_x": 4.0, "hip_turn": -12.0, "leg_f_upper": -98.0, "leg_f_lower": 0.0, "torso": -12.0, "head": 12.0, "hip_y": 0.0}],
 		["follow", {"hip_x": -30.0, "hip_turn": -4.0, "leg_f_upper": -90.0, "leg_f_lower": 90.0, "torso": -4.0, "hip_y": 0.0}],
 		["end", {}]],
+	# the low kick, opening every kick chain (posture sheet; Javier, 2026-11-02 18:19: "the low kick could be the first
+	# kick of the 3 kick combo (down, middle, side up)"): a small knee lift, then the front foot snaps forward and down
+	# to the knee or shin, the upper body upright; a quick return. The fastest kick.
+	"kick": [["start", {}],
+		["windup", {"hip_x": -8.0, "hip_turn": -2.0, "leg_f_upper": -45.0, "leg_f_lower": 70.0, "torso": 10.0}],
+		["active", {"hip_x": -4.0, "hip_turn": -8.0, "leg_f_upper": -58.0, "leg_f_lower": 4.0, "torso": 8.0}],
+		["active_end", {"hip_x": -4.0, "hip_turn": -8.0, "leg_f_upper": -58.0, "leg_f_lower": 4.0, "torso": 8.0}],
+		["follow", {"hip_x": -6.0, "hip_turn": -2.0, "leg_f_upper": -40.0, "leg_f_lower": 65.0, "torso": 10.0}],
+		["end", {}]],
+	# the power punch, ending the three-punch chain (posture sheet; Javier, 2026-11-02 18:19: "Power Button is part of
+	# the 3 punch combination, it is the last punch"): sink into a wide stance, the rear fist drawn back to the hip; then
+	# the front foot steps and plants, the back foot drives and pivots, a bow stance (front knee bent over the toes,
+	# back leg straight, about 70% forward), the waist turns, the rear fist straight to the chest and the front fist
+	# pulled back to the hip on purpose, kung fu style; hold it a beat (the freeze), then step back to guard
+	"power_punch": [["start", {}],
+		["windup", {"hip_y": 12.0, "hip_x": -4.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 6.0}],
+		["active", {"step_f": 30.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "turn": 60.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0}],
+		["active_end", {"step_f": 30.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "turn": 60.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0}],
+		["follow", {"step_f": 30.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "turn": 62.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0}],
+		["end", {}]],
+	# the side kick to the face, ending the three-kick chain (posture sheet): the back foot steps up behind the front
+	# and the body rises, the kicking knee comes up across the body; then the standing foot turns its heel to the enemy
+	# and the leg drives straight out, heel first, the body leaning away in one line from head to heel, hands up, the
+	# whole body on the one foot; then the leg folds back. Slower: about two-thirds of a second
+	"side_kick": [["start", {}],
+		["windup", {"step_b": 50.0, "hip_y": -6.0, "hip_x": -4.0, "turn": 30.0, "pivot_b": 90.0, "leg_f_upper": -110.0, "leg_f_lower": 130.0, "torso": -8.0, "hip_turn": -8.0}],
+		["active", {"step_b": 60.0, "hip_x": 20.0, "turn": 85.0, "pivot_b": 180.0, "leg_f_upper": -116.0, "leg_f_lower": 0.0, "torso": -48.0, "head": 22.0, "hip_turn": -30.0}],
+		["active_end", {"step_b": 60.0, "hip_x": 20.0, "turn": 85.0, "pivot_b": 180.0, "leg_f_upper": -116.0, "leg_f_lower": 0.0, "torso": -48.0, "head": 22.0, "hip_turn": -30.0}],
+		["follow", {"step_b": 56.0, "hip_x": 4.0, "turn": 60.0, "pivot_b": 180.0, "leg_f_upper": -110.0, "leg_f_lower": 130.0, "torso": -20.0, "head": 10.0, "hip_turn": -12.0}],
+		["end", {}]]
 }
 
 

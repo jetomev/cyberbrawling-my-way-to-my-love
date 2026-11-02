@@ -2,6 +2,7 @@ extends "res://tests/test_case.gd"
 ## The hero's body and moves in plain logic: walking, the shallow street, jumping, punch and kick timing, reach,
 ## the input buffer, and that the same inputs always play out the same way.
 
+const Moves := preload("res://scripts/sim/moves.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
 
@@ -139,7 +140,8 @@ func test_blows_land_in_front_with_their_reach() -> void:
 	p.step({"punch": true})
 	while p.attack_phase() != "active":
 		p.step(NONE)
-	check(p.hit_box()["x1"] - p.x < p.tune["kick_reach"], "a punch reaches less than a kick")
+	# (the opening kick is the low kick since 2026-11-02, shorter than the jab; the front kick still outreaches it)
+	check(p.hit_box()["x1"] - p.x < Moves.data("front_kick", p.tune)["reach"], "a punch reaches less than a front kick")
 
 
 func test_attacking_plants_the_feet() -> void:
