@@ -29,8 +29,9 @@ func test_main_scene_runs() -> void:
 		return
 	var scene: Node = packed.instantiate()
 	check(scene is Node2D, "main scene root is a Node2D")
-	var title := scene.get_node_or_null("Title") as Label
+	var title := scene.get_node_or_null("Hud/Title") as Label
 	check(title != null, "main scene has its title label")
+	check(scene.get_node_or_null("Street") != null, "main scene has the street")
 	scene.free()
 
 

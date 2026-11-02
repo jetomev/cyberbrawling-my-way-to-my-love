@@ -6,8 +6,8 @@ sticks, knives, swords — keep it, switch between what you've collected, and sa
 
 It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 
-> **Status: Stage 1 started (2026-11-01).** The design is approved and the plan is written. The Godot project and its
-> headless test suite are in place; the grey-box hero comes next. Nothing to play yet.
+> **Status: Stage 1, the feel in grey boxes (2026-11-01).** A grey hero built from cut-out parts on bones walks the
+> shallow street, jumps, punches and kicks. No enemies yet, no art yet: this stage is about how it feels.
 > First level playable: mid-December 2026. Whole game: by 21 March 2027 at the latest. It ships with **KognogOS 1.0** (April 2027).
 
 | | |
@@ -45,6 +45,8 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 - `docs/UNATTENDED.md` — how work keeps moving on weekdays, and what always waits for Javier.
 - `game/` — the Godot 4 project. `scripts/test.sh` runs its tests headless, inside a memory and CPU fence with a
   time limit, logs to `logs/`, and fails if the number of tests ever drops below `game/tests/FLOOR`.
+- `scripts/play.sh` plays it in a window (keyboard: arrows or WASD move, J punch, K kick, Space jump; gamepad: stick
+  or d-pad, X punch, B kick, A jump); `scripts/record.sh` records the scripted demo to a contact sheet and a clip.
 - `TODO.md` — the live list.
 - `docs/schedule.json` — the timeline: every task's dates and the gates where Javier plays it; `scripts/gantt.py`
   turns it and the TODO ticks into the Gantt page.
