@@ -10,6 +10,7 @@ const SETTINGS := [
 	["depth_speed", "Up/down the street (px/tick)", 0.2, 0.5, 8.0],
 	["jump_height", "Jump height (px)", 10.0, 40.0, 400.0],
 	["jump_air_ticks", "Jump air time (ticks)", 2, 12, 90],
+	["jump_speed", "Running jump speed (px/tick)", 0.25, 0.0, 14.0],
 	["air_steer", "Steering in the air (0-1)", 0.1, 0.0, 1.0],
 	["land_ticks", "Landing pause (ticks)", 1, 0, 20],
 	["punch_startup", "Punch start-up (ticks)", 1, 1, 20],

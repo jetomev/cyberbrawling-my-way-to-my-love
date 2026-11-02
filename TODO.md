@@ -23,7 +23,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Godot project, fenced test runner, headless tests (solo) (2026-11-01: 4 tests, 16 checks; test-count floor)
 - [x] Grey-box hero on bones: walk, jump, punch, kick (solo) (2026-11-01 night: 24 tests, 237 checks; demo recorded)
 - [x] The feel lab: live settings on the F-keys (solo) (2026-11-01 night: F1 opens it, 15 settings, F8 saves; 32 tests)
-- [ ] Flying kick; climb onto objects and down; smash or jump obstacles, never walk through (solo)
+- [x] Flying kick; climb onto objects and down; smash or jump obstacles, never walk through (solo) (2026-11-01 night: 44 tests)
 - [ ] One enemy type that fights back and drops a weapon (solo)
 - [ ] Pain system in grey boxes: damage stages per part, broken arm/leg effects, hit sounds; no blood (solo) (#3)
 - [ ] Pick up a weapon; it stays in the hand (solo)

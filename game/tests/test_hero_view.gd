@@ -8,8 +8,9 @@ const HeroView := preload("res://scripts/present/hero_view.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
 const Demo := preload("res://scripts/sim/demo.gd")
+const StreetWorld := preload("res://scripts/sim/street_world.gd")
 
-const STATES := ["idle", "walk", "jump", "land", "punch", "kick"]
+const STATES := ["idle", "walk", "jump", "land", "punch", "kick", "air_kick", "climb"]
 
 
 func test_skeleton_is_whole() -> void:
@@ -92,16 +93,26 @@ func test_view_follows_the_fighter() -> void:
 
 
 func test_demo_shows_every_move() -> void:
-	var f = Fighter.new(Tuning.fresh(), 400.0, 80.0)
+	var w = StreetWorld.grey_street()
+	var f = Fighter.new(Tuning.fresh(), 400.0, 80.0, w)
 	var seen := {}
+	var past_crate_two_on_ground := false
 	for i in Demo.length():
 		f.step(Demo.input_at(i))
+		w.step_hits([f])
 		seen[f.state] = true
-		check(f.x >= f.tune["street_left"] and f.x <= f.tune["street_right"], "stays on the street") if i % 60 == 0 else null
+		if f.x > 2724.0 and f.y == 0.0 and f.state != "climb":
+			past_crate_two_on_ground = true
 	for s in STATES:
 		check(seen.has(s), "the demo shows %s" % s)
+	check(w.objects[0]["broken"], "it smashes the first crate")
+	check(not w.objects[2]["broken"] and past_crate_two_on_ground, "it jumps the second crate")
+	check(not w.objects[1]["broken"], "the car survives")
 	var presses := 0
+	var button_steps := 0
+	for st in Demo.STEPS:
+		button_steps += int(st[1].get("punch", false)) + int(st[1].get("kick", false)) + int(st[1].get("jump", false))
 	for i in Demo.length():
 		var inp := Demo.input_at(i)
 		presses += int(inp.get("punch", false)) + int(inp.get("kick", false)) + int(inp.get("jump", false))
-	eq(presses, 6, "each button press fires once, not every tick of its step")
+	eq(presses, button_steps, "each button press fires once, not every tick of its step")

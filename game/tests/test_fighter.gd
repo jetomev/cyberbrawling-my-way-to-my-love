@@ -93,7 +93,7 @@ func test_no_jump_in_the_air() -> void:
 func test_a_running_jump_carries_forward() -> void:
 	var f = Fighter.new()
 	run(f, {"mx": 1.0}, 5)
-	var x0: float = f.x
+	var x0: float = f.x  # (jump_speed carries it)
 	f.step({"mx": 1.0, "jump": true})
 	while f.state == "jump":
 		f.step(NONE)

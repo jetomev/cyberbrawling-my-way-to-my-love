@@ -51,6 +51,15 @@ const SHOTS := {
 		["active_end", {"arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 12.0, "head": -10.0, "arm_b_upper": -5.0,
 			"leg_f_upper": -24.0, "leg_b_upper": 24.0}],
 		["end", {}]],
+	"air_kick": [["start", {"leg_f_upper": -60.0, "leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0,
+		"arm_f_upper": -70.0, "arm_b_upper": -45.0, "hip_y": 0.0}],
+		["startup", {"leg_f_upper": -92.0, "leg_f_lower": -4.0, "leg_b_upper": 34.0, "leg_b_lower": 85.0, "torso": -22.0,
+			"head": 14.0, "arm_f_upper": -30.0, "arm_f_lower": -60.0, "arm_b_upper": 40.0, "arm_b_lower": -40.0, "hip_y": 0.0}]],
+	"climb": [["start", {"arm_f_upper": -165.0, "arm_f_lower": 0.0, "arm_b_upper": -150.0, "arm_b_lower": 0.0,
+			"leg_f_upper": -20.0, "leg_f_lower": 30.0, "hip_y": 0.0}],
+		["climb_mid", {"arm_f_upper": -60.0, "arm_f_lower": -30.0, "arm_b_upper": -40.0, "arm_b_lower": -30.0,
+			"torso": 35.0, "leg_f_upper": -95.0, "leg_f_lower": 100.0, "leg_b_upper": 20.0, "leg_b_lower": 40.0, "hip_y": 10.0}],
+		["end", {}]],
 	"kick": [["start", {}],
 		["startup", {"leg_f_upper": -72.0, "leg_f_lower": 105.0, "torso": -8.0, "hip_y": 0.0}],
 		["active", {"leg_f_upper": -100.0, "leg_f_lower": 0.0, "torso": -26.0, "head": 18.0, "leg_b_upper": 8.0,
@@ -66,7 +75,12 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 		"start":
 			return 0
 		"end":
-			return tune["land_ticks"] if state == "land" else tune[state + "_startup"] + tune[state + "_active"] + tune[state + "_recovery"]
+			match state:
+				"land": return tune["land_ticks"]
+				"climb": return tune["climb_ticks"]
+			return tune[state + "_startup"] + tune[state + "_active"] + tune[state + "_recovery"]
+		"climb_mid":
+			return tune["climb_ticks"] / 2
 		"startup":
 			return tune[state + "_startup"]
 		"active":

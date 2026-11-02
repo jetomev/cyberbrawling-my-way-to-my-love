@@ -1,6 +1,6 @@
 extends Node2D
 ## The grey-box street: a far wall of grey blocks, the shallow street you walk on, a curb, lane marks every few
-## steps, and a few crates so walking reads as moving. Flat shapes only; the layered art comes in Stage 3.
+## steps. Flat shapes only; the layered art comes in Stage 3. What stands on the street is obstacles_view.gd.
 
 const GROUND_Y := 760.0  # screen line of the street's far edge (z = 0)
 
@@ -37,6 +37,3 @@ func _draw() -> void:
 	while mark < length:  # lane marks every 240 px: they show speed and position
 		draw_rect(Rect2(mark, GROUND_Y + depth * 0.5 - 3, 110, 6), Color(0.52, 0.52, 0.56))
 		mark += 240.0
-	for cx in [900.0, 1700.0, 2600.0, 3300.0]:  # crates against the far wall
-		draw_rect(Rect2(cx, GROUND_Y - 96, 110, 96), Color(0.45, 0.42, 0.38))
-		draw_rect(Rect2(cx, GROUND_Y - 96, 110, 96), Color(0.1, 0.1, 0.1), false, 3.0)

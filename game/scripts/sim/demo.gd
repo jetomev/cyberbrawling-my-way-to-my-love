@@ -2,15 +2,23 @@ extends RefCounted
 ## A scripted run of inputs that shows every move once: for screenshots, clips, and the start of the bot.
 ## Each step: [ticks, input]; buttons fire on the step's first tick only.
 
+## The route on the grey street (street_world.grey_street): smash the first crate with two kicks, walk on, climb the
+## car, walk across its roof and flying-kick off the end, step down the street and jump the second crate, then a
+## punch-punch combo and a walk back.
 const STEPS := [
-	[40, {}],
-	[70, {"mx": 1.0}],
-	[1, {"punch": true}], [24, {}],
-	[1, {"kick": true}], [34, {}],
-	[40, {"mx": 1.0, "mz": 1.0}],
-	[1, {"mx": 1.0, "jump": true}], [56, {"mx": 1.0}],
+	[30, {}],
+	[150, {"mx": 1.0}],
+	[1, {"kick": true}], [30, {}],
+	[1, {"kick": true}], [30, {}],
+	[260, {"mx": 1.0}],
+	[40, {"mx": 1.0}],
+	[1, {"mx": 1.0, "jump": true}], [12, {"mx": 1.0}],
+	[1, {"kick": true}], [40, {"mx": 1.0}],
+	[16, {"mz": 1.0}],
+	[21, {"mx": 1.0}],
+	[1, {"mx": 1.0, "jump": true}], [55, {"mx": 1.0}],
 	[1, {"punch": true}], [12, {}], [1, {"punch": true}], [24, {}],
-	[50, {"mx": -1.0, "mz": -1.0}],
+	[20, {"mx": -1.0}],
 	[1, {"kick": true}], [40, {}],
 ]
 

@@ -12,8 +12,12 @@ const Controls := preload("res://scripts/present/controls.gd")
 const HeroView := preload("res://scripts/present/hero_view.gd")
 const Street := preload("res://scripts/present/street.gd")
 const FeelPanel := preload("res://scripts/present/feel_panel.gd")
+const StreetWorld := preload("res://scripts/sim/street_world.gd")
+const ObstaclesView := preload("res://scripts/present/obstacles_view.gd")
 
 var tune := Tuning.fresh()
+var world
+var obstacles_view
 var hero
 var hero_view
 var tick := 0
@@ -34,7 +38,12 @@ func _ready() -> void:
 		add_child(feel)
 		if "--flat" in args:
 			tune["flat_line"] = true  # asked for on the command line: beats a saved setting
-	hero = Fighter.new(tune, 400.0, 80.0)
+	world = StreetWorld.grey_street()
+	obstacles_view = ObstaclesView.new()
+	obstacles_view.name = "Obstacles"
+	add_child(obstacles_view)
+	obstacles_view.setup(world, Street.GROUND_Y)
+	hero = Fighter.new(tune, 400.0, 80.0, world)
 	hero_view = HeroView.new()
 	hero_view.name = "Hero"
 	add_child(hero_view)
@@ -49,7 +58,12 @@ func _physics_process(_delta: float) -> void:
 	var inp: Dictionary = Demo.input_at(tick) if demo else Controls.read()
 	hero.step(inp)
 	tick += 1
+	var crate_was: Array = world.objects.map(func(o): return o["strength"])
+	world.step_hits([hero])
+	if world.objects.map(func(o): return o["strength"]) != crate_was:
+		obstacles_view.refresh()
 	hero_view.sync(hero, Street.GROUND_Y)
+	hero_view.z_index = world.draw_order(hero)
 	$Camera.position.x = lerpf($Camera.position.x, hero.x + hero.facing * 160.0, 0.08)
 	$Camera.zoom = Vector2.ONE * tune["camera_zoom"]
 	if demo and tick > Demo.length():
