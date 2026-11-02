@@ -6,7 +6,8 @@ sticks, knives, swords — keep it, switch between what you've collected, and sa
 
 It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 
-> **Status: planning (2026-11-01).** The design is approved and the plan is written; nothing to play yet.
+> **Status: Stage 1 started (2026-11-01).** The design is approved and the plan is written. The Godot project and its
+> headless test suite are in place; the grey-box hero comes next. Nothing to play yet.
 > First level playable: mid-December 2026. Whole game: by 21 March 2027 at the latest. It ships with **KognogOS 1.0** (April 2027).
 
 | | |
@@ -24,6 +25,7 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
   - Levels 1–2: one floor, with the boss waiting upstairs.
   - Levels 3–5: two floors; a boss at level 5.
   - Levels 6–8: up to three floors, with switches that open doors below; a boss at level 8.
+  - Level 9: the tower gauntlet, three floors up the boss's tower, the hardest fights, and the best weapon.
   - Level 10: the super boss, who can only be beaten with the best weapon in the game.
 - **Melee only.** Every weapon is taken from an enemy. You collect them and switch between them.
 - **Moves:** punches, kicks, jumps, flying kicks; climb onto cars, crates and containers and jump off them.
@@ -37,10 +39,12 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 - Music and sound effects, all original.
 
 ## How it is made
-- `docs/DESIGN.md` — the game as Javier approved it, and the questions still open.
+- `docs/DESIGN.md` — the game as Javier approved it, with his answers to its open questions.
 - `docs/PLAN.md` — the engine, the art pipeline, the milestones and the quality bar.
 - `docs/LESSONS.md` — what our previous game project taught us, and what we do differently because of it.
 - `docs/UNATTENDED.md` — how work keeps moving on weekdays, and what always waits for Javier.
+- `game/` — the Godot 4 project. `scripts/test.sh` runs its tests headless, inside a memory and CPU fence with a
+  time limit, logs to `logs/`, and fails if the number of tests ever drops below `game/tests/FLOOR`.
 - `TODO.md` — the live list.
 - `docs/schedule.json` — the timeline: every task's dates and the gates where Javier plays it; `scripts/gantt.py`
   turns it and the TODO ticks into the Gantt page.

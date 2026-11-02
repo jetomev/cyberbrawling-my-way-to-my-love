@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/present/main.gd" id="1"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Title" type="Label" parent="."]
+offset_left = 160.0
+offset_top = 480.0
+offset_right = 1760.0
+offset_bottom = 600.0
+theme_override_font_sizes/font_size = 64
+text = "Cyberbrawling my way to my love!"
+horizontal_alignment = 1

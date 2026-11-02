@@ -47,7 +47,13 @@ project's role-play, ever.
 - **Every Godot run goes through `scripts/capped.sh`** (max 6 GB, no swap, 8 of 16 cores) **and a `timeout`**:
   tests, exports, recordings, probes. A run that goes long or a log that balloons is a stop signal.
 - **Big scratch files go to `scratch/` (on disk, git-ignored), never `/tmp`** (`/tmp` here is RAM).
-- Tests run headless. **Report the test count** every time; it never drops silently.
+- Tests run headless: **`scripts/test.sh`** (fenced, timed, logs to `logs/test-latest.log`, last line `OK <n> tests`).
+  A test is a `test_<name>()` method in a `game/tests/test_<topic>.gd` that extends `tests/test_case.gd`; the runner
+  finds it by name. A file that doesn't load, or a test that makes no check, fails the run.
+- **Report the test count** every time; it never drops silently: `game/tests/FLOOR` is the lowest count allowed,
+  raised by `test.sh` when tests are added (commit it); lowering it is a decision written in the commit.
+- Logic that can be tested bare lives in `game/scripts/sim/` (no nodes); what draws and plays lives in
+  `game/scripts/present/`.
 - A bot plays every finished level on several seeds as part of the test run.
 - Every script Javier runs logs to `logs/` (with a `-latest` link) and ends with an OK line.
 - Packages: `nog` first; anything missing is a KognogOS finding.

@@ -20,7 +20,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Title decided: "Cyberbrawling my way to my love!" (D-7); no blood, pain on both sides (D-9); team roles (D-11)
 
 ## Stage 1 · The feel, in grey boxes (by Sun 22 Nov) — #2
-- [ ] Godot project, fenced test runner, headless tests (solo)
+- [x] Godot project, fenced test runner, headless tests (solo) (2026-11-01: 4 tests, 16 checks; test-count floor)
 - [ ] Grey-box hero on bones: walk, jump, punch, kick (solo)
 - [ ] The feel lab: live settings on the F-keys (solo)
 - [ ] Flying kick; climb onto objects and down; smash or jump obstacles, never walk through (solo)
