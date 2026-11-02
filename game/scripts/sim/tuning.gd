@@ -27,6 +27,8 @@ const DEFAULTS := {
 	"hit_depth": 28.0,  # how far up/down the street a blow still connects
 	# a button pressed a little early still counts, so moves chain without frame-perfect timing
 	"buffer_ticks": 6,
+	# the view
+	"camera_zoom": 1.0,
 }
 
 
