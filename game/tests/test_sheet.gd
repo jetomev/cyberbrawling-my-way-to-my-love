@@ -43,16 +43,45 @@ func test_the_guard() -> void:
 func test_the_spare_hand_stays_home() -> void:
 	var t := Tuning.fresh()
 	for pair in [["punch", "b"], ["cross", "f"], ["hook", "b"], ["uppercut", "f"], ["elbow", "b"]]:
+		var poses := []
 		for tt in range(0, Moves.length(pair[0], t) + 1):
-			var b := Poses.bake(Poses.angles(pair[0], tt, t), true)
-			# home: the rear fist at the cheek; the front fist a forearm ahead of it, or tucked to the cheek
-			var d: float = mid("hand_" + pair[1], b).distance_to(mid("head", b))
-			var home: float = 40.0 if pair[1] == "b" else 68.0
-			check(d < home, "%s@%d: the spare fist stays home (%.0f px from the head)" % [pair[0], tt, d])
+			poses.append(Poses.angles(pair[0], tt, t))
+		for bad in dropped(poses, pair[1]):
+			check(false, "%s@%d: the spare fist stays home (%.0f px from the head)" % [pair[0], bad[0], bad[1]])
+		check(true, "%s: spare hand checked on %d frames" % [pair[0], poses.size()])
 	for m in ["kick", "push_kick", "body_kick", "spin_kick"]:
 		var b := at(m, "active", t)
 		for side in ["f", "b"]:
 			check(mid("hand_" + side, b).distance_to(mid("head", b)) < (40.0 if side == "b" else 68.0), "%s: both hands stay up at the hit (%s)" % [m, side])
+
+
+## The frames of a move where the spare fist has left home: [frame, how far from the middle of the head]. Home is the
+## rear fist at the cheek, or the front fist a forearm ahead of it (or tucked to the cheek).
+static func dropped(poses: Array, side: String) -> Array:
+	var out := []
+	for i in poses.size():
+		var b := Poses.bake(poses[i], true)
+		var d: float = mid("hand_" + side, b).distance_to(mid("head", b))
+		if d >= (40.0 if side == "b" else 68.0):
+			out.append([i, d])
+	return out
+
+
+func test_the_spare_hand_check_catches_a_dropped_hand() -> void:
+	# the testers asked to see it catch one: a deliberately wrong jab, the rear hand dropped to the waist
+	var t := Tuning.fresh()
+	var real := []
+	var wrong := []
+	for tt in range(0, Moves.length("punch", t) + 1):
+		var p := Poses.angles("punch", tt, t)
+		real.append(p)
+		var w := p.duplicate()
+		w["cover_b"] = 0.0
+		w["arm_b_upper"] = 10.0  # the rear arm hanging, the fist down by the waist
+		w["arm_b_lower"] = -40.0
+		wrong.append(w)
+	eq(dropped(real, "b"), [], "the real jab: the spare fist stays home every frame")
+	eq(dropped(wrong, "b").size(), wrong.size(), "the wrong jab: the check catches the dropped hand on every frame")
 
 
 func test_the_jab() -> void:
@@ -107,7 +136,7 @@ func test_the_uppercut_and_the_elbow() -> void:
 	var e := at("elbow", "active", t)
 	check(mid("hand_f", e).distance_to(mid("head", e)) < 34.0, "the elbow's fist ends by his own ear (%.0f px)" % mid("hand_f", e).distance_to(mid("head", e)))
 	var point: Vector2 = Poses._end("arm_f_upper", e)[0]
-	check(point.y < mid("head", e).y + 34.0, "the elbow is raised to head height, at the jaw (%.0f px under the middle of the head)" % (point.y - mid("head", e).y))
+	check(point.y < mid("head", e).y + 22.0, "the elbow is raised to head height, within the head (%.0f px under its middle)" % (point.y - mid("head", e).y))
 
 
 func test_the_front_kick_chambers() -> void:
@@ -167,3 +196,26 @@ func test_the_body_kick_is_a_snap_kick() -> void:
 	check(absf(rad_to_deg(Poses._end("leg_b_upper", w)[1])) <= 20.0, "the rear knee comes up to hip height, the thigh level")
 	check(Poses.angles("body_kick", Poses.moment("body_kick", "follow", t), t)["leg_b_lower"] >= 60.0, "then it snaps back to the chamber")
 	check(Moves.data("body_kick", t)["effect"] != "push", "it doesn't shove")
+
+
+func test_the_jab_comes_home_the_way_it_went_out() -> void:
+	# the testers' review of 0812a0e: the jab's fist dipped below its outward line at +33 ms and bent back at +50
+	var t := Tuning.fresh()
+	var out_from: Vector2 = Poses._end("hand_f", Poses.bake(Poses.angles("punch", 0, t), true))[0]
+	var hit: int = Moves.data("punch", t)["startup"]
+	var out_to: Vector2 = Poses._end("hand_f", Poses.bake(Poses.angles("punch", hit, t), true))[0]
+	for tt in range(hit, Moves.length("punch", t) + 1):
+		var fist: Vector2 = Poses._end("hand_f", Poses.bake(Poses.angles("punch", tt, t), true))[0]
+		var off: float = Geometry2D.get_closest_point_to_segment(fist, out_from, out_to).distance_to(fist)
+		check(off <= 8.0, "punch@%d: the fist comes back along its outward line (%.0f px off it)" % [tt, off])
+
+
+func test_the_spin_kick_folds_back_before_it_lowers() -> void:
+	# the testers' review of 0812a0e: the leg stayed long to +200 ms and lowered nearly straight (12 degrees at +250)
+	var t := Tuning.fresh()
+	var hit: int = Moves.data("spin_kick", t)["startup"]
+	for ms in [200, 250]:
+		var b := Poses.bake(Poses.angles("spin_kick", hit + roundi(ms * 60.0 / 1000.0), t), true)
+		check(absf(b["leg_f_lower"]) >= 90.0, "+%d ms: the knee is folded back (%.0f degrees)" % [ms, absf(b["leg_f_lower"])])
+		var knee: Vector2 = Poses._end("leg_f_upper", b)[0]
+		check(knee.y < (Poses._end("hip", b)[0] as Vector2).y + 10.0, "+%d ms: a high chamber, the knee up at hip height" % ms)

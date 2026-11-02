@@ -180,8 +180,9 @@ func apply(pose: Dictionary, grounded := true) -> void:
 	# far-side leg (with the hips) and arm (with the shoulders) come in front, lit as near
 	var over := cos(deg_to_rad(baked["turn"] + baked["spin"]))
 	var over_top := cos(deg_to_rad(baked["turn_upper"] + baked["spin_upper"]))
-	for n in ["belly", "chest"]:
-		bones[n].get_node("Part").scale.y = maxf(absf(over_top), 0.55)
+	# the waist turns with the hips and the chest with the shoulders, so the waist is seen leading
+	bones["belly"].get_node("Part").scale.y = maxf(absf(over), 0.55)
+	bones["chest"].get_node("Part").scale.y = maxf(absf(over_top), 0.55)
 	for name in bones:
 		var spec: Array = Poses.BONES[name]
 		var part: Node2D = bones[name].get_node_or_null("Part")

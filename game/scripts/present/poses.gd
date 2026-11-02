@@ -169,11 +169,11 @@ const SHOTS := {
 	# (the upper arm drawn short, pointing at us) with the fist level beside it; the elbow comes round forward, still
 	# level, the waist leading; at the hit the arm is a level hoop and the front foot has pivoted
 	"hook": [["start", {"cover_f": 0.0}],
-		["windup", {"upper_f": 0.85, "cover_f": 0.0, "fore_f": 0.9, "turn": -20.0, "hip_x": 6.0, "hip_y": 5.0, "hip_turn": -10.0, "arm_f_upper": -100.0, "arm_f_lower": 26.0, "torso": -10.0, "head": 6.0}],
+		["windup", {"upper_f": 0.85, "cover_f": 0.0, "fore_f": 0.9, "turn": -20.0, "hip_x": 2.0, "hip_y": 5.0, "hip_turn": -10.0, "arm_f_upper": -100.0, "arm_f_lower": 26.0, "torso": -10.0, "head": 6.0}],
 		["sweep", {"upper_f": 0.45, "cover_f": 0.0, "fore_f": 0.9, "turn": 20.0, "hip_x": 2.0, "hip_turn": 4.0, "arm_f_upper": -114.0, "arm_f_lower": 18.0, "torso": 12.0, "head": -6.0}],
-		["active", {"cover_f": 0.0, "pivot_f": 80.0, "rise_f": 0.3, "fore_f": 0.9, "turn": 60.0, "hip_x": 12.0, "hip_turn": 24.0, "arm_f_upper": -120.0, "arm_f_lower": 6.0, "torso": 30.0, "head": -14.0}],
-		["active_end", {"cover_f": 0.0, "pivot_f": 80.0, "rise_f": 0.3, "fore_f": 0.9, "turn": 60.0, "hip_x": 12.0, "hip_turn": 24.0, "arm_f_upper": -120.0, "arm_f_lower": 6.0, "torso": 30.0, "head": -14.0}],
-		["follow", {}],
+		["active", {"cover_f": 0.0, "pivot_f": 80.0, "rise_f": 0.3, "fore_f": 0.6, "turn": 60.0, "hip_x": 6.0, "hip_turn": 24.0, "arm_f_upper": -120.0, "arm_f_lower": -10.0, "torso": 30.0, "head": -14.0}],
+		["active_end", {"cover_f": 0.0, "pivot_f": 80.0, "rise_f": 0.3, "fore_f": 0.6, "turn": 60.0, "hip_x": 6.0, "hip_turn": 24.0, "arm_f_upper": -120.0, "arm_f_lower": -10.0, "torso": 30.0, "head": -14.0}],
+		["follow", {"cover_f": 0.0, "pivot_f": 80.0, "rise_f": 0.3, "fore_f": 0.6, "turn": 64.0, "hip_x": 6.0, "hip_turn": 24.0, "arm_f_upper": -120.0, "arm_f_lower": -10.0, "torso": 30.0, "head": -14.0}],
 		["end", {}]],
 	"uppercut": [["start", {}],
 		["windup", {"cover_b": 0.0, "cover_f": 1.0, "hip_x": -6.0, "hip_turn": 6.0, "arm_b_upper": 10.0, "arm_b_lower": -100.0, "torso": 14.0, "hip_y": 14.0}],
@@ -195,7 +195,7 @@ const SHOTS := {
 		["windup", {"hip_x": -45.0, "hip_turn": -4.0, "leg_f_upper": -112.0, "leg_f_lower": 118.0, "torso": -4.0, "hip_y": 0.0}],
 		["active", {"hip_x": 0.0, "hip_turn": -14.0, "leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -16.0, "head": 12.0, "hip_y": 0.0}],
 		["active_end", {"hip_x": 0.0, "hip_turn": -14.0, "leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -16.0, "head": 12.0, "hip_y": 0.0}],
-		["follow", {"hip_x": 0.0, "hip_turn": -14.0, "leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -16.0, "head": 12.0, "hip_y": 0.0}],
+		["follow", {"hip_x": 8.0, "hip_turn": -14.0, "leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -16.0, "head": 12.0, "hip_y": 0.0}],
 		["end", {}]],
 	# the body kick (K, K): a rear-leg snap kick to the body, as the posture sheet's front kick: the knee straight up
 	# to hip height, the foot hanging under it; the hips push and the lower leg flicks out, leaning back a touch; then
@@ -206,31 +206,33 @@ const SHOTS := {
 		["active_end", {"step_f": -22.0, "hip_x": 18.0, "hip_turn": -12.0, "leg_b_upper": -95.0, "leg_b_lower": 0.0, "torso": -14.0, "head": 12.0, "hip_y": 0.0}],
 		["follow", {"step_f": -18.0, "hip_x": 12.0, "hip_turn": -6.0, "leg_b_upper": -90.0, "leg_b_lower": 90.0, "torso": -6.0, "hip_y": 0.0}],
 		["end", {}]],
+	# (after the hit the leg folds back to a high chamber, knee up and shin tucked, before it lowers: the testers'
+	# review of 0812a0e, a 12-degree bend on the way down didn't meet the posture sheet)
 	"spin_kick": [["start", {}],
 		["windup", {"step_b": 30.0, "spin": 170.0, "pivot_b": 170.0, "rise_b": 0.35, "hip_x": -4.0, "hip_turn": 14.0, "leg_f_upper": -95.0, "leg_f_lower": 120.0, "torso": 40.0, "head": -20.0, "hip_y": 6.0}],
 		["sweep", {"step_b": 40.0, "spin": 290.0, "pivot_b": 290.0, "rise_b": 0.35, "hip_x": -8.0, "hip_turn": -10.0, "leg_f_upper": -112.0, "leg_f_lower": 85.0, "torso": -10.0, "head": 8.0, "hip_y": 0.0}],
 		["active", {"step_b": 40.0, "spin": 360.0, "pivot_b": 360.0, "rise_b": 0.35, "hip_x": -14.0, "hip_turn": -24.0, "leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -46.0, "head": 26.0, "hip_y": 0.0}],
 		["active_end", {"step_b": 40.0, "spin": 360.0, "pivot_b": 360.0, "rise_b": 0.35, "hip_x": -14.0, "hip_turn": -24.0, "leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -46.0, "head": 26.0, "hip_y": 0.0}],
-		["follow", {}],
+		["follow", {"step_b": 40.0, "spin": 360.0, "pivot_b": 360.0, "rise_b": 0.35, "hip_x": -14.0, "hip_turn": -24.0, "leg_f_upper": -112.0, "leg_f_lower": 125.0, "torso": -20.0, "head": 14.0, "hip_y": 0.0}],
 		["end", {"spin": 360.0, "pivot_b": 360.0}]],
 	# the elbow (posture sheet; the testers' joint review): the weight onto the front foot and a small turn away; then
-	# the waist turns first and the elbow swings across raised to the jaw, the upper arm coming round at us (drawn
-	# short), the fist ending by his own ear
+	# the waist turns first and the elbow swings across raised to head height (the cheek: as high as it reaches from
+	# the shoulder), the forearm folded back so the fist ends by his own ear
 	"elbow": [["start", {}],
 		["windup", {"cover_f": 0.0, "hip_x": 6.0, "hip_turn": -5.0, "turn": -15.0, "arm_f_upper": -60.0, "arm_f_lower": -150.0, "torso": 6.0}],
-		["active", {"cover_f": 0.0, "upper_f": 0.3, "fore_f": 0.6, "turn": 40.0, "hip_x": 12.0, "hip_turn": 10.0, "arm_f_upper": -138.0, "arm_f_lower": -94.0, "torso": 24.0, "head": -4.0}],
-		["active_end", {"cover_f": 0.0, "upper_f": 0.3, "fore_f": 0.6, "turn": 40.0, "hip_x": 12.0, "hip_turn": 10.0, "arm_f_upper": -138.0, "arm_f_lower": -94.0, "torso": 24.0, "head": -4.0}],
+		["active", {"cover_f": 0.0, "upper_f": 0.0, "fore_f": 0.4, "turn": 40.0, "hip_x": 12.0, "hip_turn": 10.0, "arm_f_upper": -148.0, "arm_f_lower": -106.0, "torso": 24.0, "head": -4.0}],
+		["active_end", {"cover_f": 0.0, "upper_f": 0.0, "fore_f": 0.4, "turn": 40.0, "hip_x": 12.0, "hip_turn": 10.0, "arm_f_upper": -148.0, "arm_f_lower": -106.0, "torso": 24.0, "head": -4.0}],
 		["follow", {}],
 		["end", {}]],
 	# the round kick (posture sheet): the front foot steps slightly out and takes the weight; the standing foot pivots
 	# until its heel points at the enemy, the hips turn right over and the bent leg sweeps across; the arm on the kicking
 	# side swings down and back to balance, the other hand guards the face
 	"roundhouse": [["start", {}],
-		["windup", {"step_f": 10.0, "turn": 40.0, "pivot_f": 60.0, "rise_f": 0.2, "hip_x": 10.0, "hip_turn": -10.0, "leg_b_upper": -60.0, "leg_b_lower": 115.0, "torso": -10.0, "hip_y": 0.0, "cover_b": 0.5}],
-		["sweep", {"step_f": 10.0, "turn": 90.0, "pivot_f": 120.0, "rise_f": 0.25, "hip_x": 10.0, "hip_turn": -20.0, "leg_b_upper": -100.0, "leg_b_lower": 95.0, "torso": -24.0, "head": 14.0, "hip_y": 0.0, "cover_b": 0.0, "arm_b_upper": 20.0, "arm_b_lower": -30.0}],
-		["active", {"step_f": 10.0, "turn": 165.0, "pivot_f": 170.0, "rise_f": 0.3, "hip_x": 8.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -22.0, "head": 16.0, "hip_y": 0.0, "cover_b": 0.0, "arm_b_upper": 45.0, "arm_b_lower": -15.0}],
-		["active_end", {"step_f": 10.0, "turn": 165.0, "pivot_f": 170.0, "rise_f": 0.3, "hip_x": 8.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -22.0, "head": 16.0, "hip_y": 0.0, "cover_b": 0.0, "arm_b_upper": 45.0, "arm_b_lower": -15.0}],
-		["follow", {"step_f": 10.0, "turn": 175.0, "pivot_f": 170.0, "rise_f": 0.3, "hip_x": 8.0, "hip_turn": -30.0, "leg_b_upper": -96.0, "leg_b_lower": 112.0, "torso": -22.0, "head": 16.0, "hip_y": 0.0, "cover_b": 0.0, "arm_b_upper": 45.0, "arm_b_lower": -15.0}],
+		["windup", {"step_f": 10.0, "turn": 40.0, "pivot_f": 95.0, "rise_f": 0.2, "hip_x": 10.0, "hip_turn": -10.0, "leg_b_upper": -60.0, "leg_b_lower": 115.0, "torso": -10.0, "hip_y": 0.0, "cover_b": 0.5}],
+		["sweep", {"step_f": 10.0, "turn": 90.0, "pivot_f": 150.0, "rise_f": 0.25, "hip_x": 10.0, "hip_turn": -20.0, "leg_b_upper": -100.0, "leg_b_lower": 95.0, "torso": -24.0, "head": 14.0, "hip_y": 0.0, "cover_b": 0.0, "arm_b_upper": 20.0, "arm_b_lower": -30.0}],
+		["active", {"step_f": 10.0, "turn": 165.0, "pivot_f": 180.0, "rise_f": 0.3, "hip_x": 8.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -22.0, "head": 16.0, "hip_y": 0.0, "cover_b": 0.0, "arm_b_upper": 45.0, "arm_b_lower": -15.0}],
+		["active_end", {"step_f": 10.0, "turn": 165.0, "pivot_f": 180.0, "rise_f": 0.3, "hip_x": 8.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -22.0, "head": 16.0, "hip_y": 0.0, "cover_b": 0.0, "arm_b_upper": 45.0, "arm_b_lower": -15.0}],
+		["follow", {"step_f": 10.0, "turn": 175.0, "pivot_f": 180.0, "rise_f": 0.3, "hip_x": 8.0, "hip_turn": -30.0, "leg_b_upper": -96.0, "leg_b_lower": 112.0, "torso": -22.0, "head": 16.0, "hip_y": 0.0, "cover_b": 0.0, "arm_b_upper": 45.0, "arm_b_lower": -15.0}],
 		["end", {}]],
 	"hammer_fist": [["start", {"cover_f": 0.0, "open_f": 0.0, "arm_f_upper": -170.0, "arm_f_lower": -20.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0,
 			"leg_b_upper": -20.0, "leg_b_lower": 105.0, "hip_y": 0.0}],
@@ -342,14 +344,18 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 			return now
 		var out := now.duplicate()
 		var striker: String = Moves.data(state, tune)["limb"]  # the striking part keeps the move's own timing
+		# the lead runs up to the end of the blow, then every part keeps the move's own clock, so the hand or foot comes
+		# home the way it went out (the testers' review of 0812a0e: with the upper arm still leading on the way back,
+		# the jab's fist dropped 39 px below its line)
+		var blow_end := moment(state, "active_end", tune)
 		for k in LEAD:
 			if out.has(k) and k != striker:
-				out[k] = _shot_at(state, keys, poses, maxi(0, t + LEAD[k]), tune)[k]
+				out[k] = _shot_at(state, keys, poses, maxi(t, mini(t + LEAD[k], blow_end)), tune)[k]
 		# the hips turn first and the chest and arms follow: "spin" and "turn" above are the hips (read ahead), these
 		# are the shoulders, on the move's own clock (the assistant team's fourth review: show the hips leading)
 		out["spin_upper"] = now.get("spin", 0.0)
 		out["turn_upper"] = now.get("turn", 0.0)
-		out["spin_head"] = _shot_at(state, keys, poses, t + HEAD_LEAD, tune).get("spin", 0.0)  # the head looks first
+		out["spin_head"] = _shot_at(state, keys, poses, maxi(t, mini(t + HEAD_LEAD, blow_end)), tune).get("spin", 0.0)  # the head looks first
 		return out
 	return full({})
 
