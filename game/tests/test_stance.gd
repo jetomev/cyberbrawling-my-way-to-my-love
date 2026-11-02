@@ -109,3 +109,21 @@ func test_a_front_leg_kick_stands_tall_on_the_back_foot() -> void:
 		var hip: Vector2 = Poses._end("hip", b)[0]
 		var foot: Vector2 = ankle(b, "b")
 		check(absf(foot.x - hip.x) < 30.0, "%s: the standing foot has stepped up under the hips (%.0f px off)" % [m, foot.x - hip.x])
+
+
+func test_the_back_knee_never_drops_to_a_kneel() -> void:
+	# the first soft-landing build: at the deepest of the sink, and walking on, the back knee folded nearly to the
+	# street and read as kneeling
+	var t := Tuning.fresh()
+	var poses := []
+	for tt in 60:
+		poses.append(["idle@%d" % tt, Poses.angles("idle", tt, t)])
+	for tt in range(0, 2 * Poses.WALK_CYCLE):
+		poses.append(["walk@%d" % tt, Poses.angles("walk", tt, t)])
+	for s in Poses.LAND_SETTLE:
+		poses.append(["land+%d" % s, Poses.landing(Poses.angles("land" if s < t["land_ticks"] else "idle", s, t), s, 0.0, false)])
+		poses.append(["land-walk+%d" % s, Poses.landing(Poses.angles("walk", s, t), s, 0.0, false)])
+	for p in poses:
+		var b := Poses.bake(p[1], true)
+		var knee: Vector2 = Poses._end("leg_b_upper", b)[0]
+		check(-knee.y >= 27.0, "%s: the back knee stays well off the street (%.0f px up; kneeling read at 14 to 25)" % [p[0], -knee.y])

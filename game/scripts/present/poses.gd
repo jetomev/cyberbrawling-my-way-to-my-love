@@ -95,9 +95,9 @@ const STANCE := {"f": Vector2(44.0, 100.0), "b": Vector2(-63.0, 100.0)}
 ## follows, the feet never pass each other and the stance never breaks. A cycle of WALK_CYCLE ticks; each foot spends
 ## WALK_STEP of them in the air and the rest planted, sliding back under the body at exactly the walking speed, so a
 ## planted foot stays put on the street.
-const WALK_CYCLE := 24
+const WALK_CYCLE := 20
 const WALK_EASE_IN := 4  # the first steps ease out of the guard
-const WALK_STEP := 10
+const WALK_STEP := 8
 const FORE_SHORT := 0.4  # a forearm pointing straight at the camera draws at 40% of its length
 ## How far into its start-up a strike is cocked (the wind-up moment). Most cock late (0.7), so the blow reads as a
 ## snap; the swinging ones cock early, so the swing round to the target lasts long enough to be seen.
@@ -114,10 +114,10 @@ const LOOPS := {
 	# (it starts and ends at the plain guard, which is where every move ends, so nothing jumps between them)
 	"idle": [60, [0, {}], [15, {"hip_x": -6.0, "hip_turn": -2.0, "hip_y": 0.0, "torso": 9.0, "head": 9.0}],
 		[45, {"hip_x": 6.0, "hip_turn": 2.0, "hip_y": 4.0, "torso": 12.0, "head": 7.0}]],
-	"walk": [24, [0, {"feet": 1.0, "hip_y": 2.0, "hip_turn": -3.0, "torso": 12.0}],
-		[6, {"feet": 1.0, "hip_y": -2.0, "hip_turn": 0.0, "torso": 11.0}],
-		[12, {"feet": 1.0, "hip_y": 2.0, "hip_turn": 3.0, "torso": 12.0}],
-		[18, {"feet": 1.0, "hip_y": -2.0, "hip_turn": 0.0, "torso": 11.0}]],
+	"walk": [20, [0, {"feet": 1.0, "hip_y": 2.0, "hip_turn": -3.0, "torso": 12.0}],
+		[5, {"feet": 1.0, "hip_y": -2.0, "hip_turn": 0.0, "torso": 11.0}],
+		[10, {"feet": 1.0, "hip_y": 2.0, "hip_turn": 3.0, "torso": 12.0}],
+		[15, {"feet": 1.0, "hip_y": -2.0, "hip_turn": 0.0, "torso": 11.0}]],
 }
 
 ## One-shot states, keyed by named moments the tuning decides (see moment()). A strike runs wind-up, hit, hold,
@@ -151,8 +151,8 @@ const SHOTS := {
 		["end", {}]],
 	"cross": [["start", {}],
 		["windup", {"cover_b": 0.0, "cover_f": 1.0, "turn": -20.0, "hip_x": -10.0, "hip_turn": -8.0, "arm_b_upper": -10.0, "arm_b_lower": -120.0, "torso": -2.0}],
-		["active", {"rise_b": 1.0, "cover_b": 0.0, "cover_f": 1.0, "turn": 50.0, "hip_x": 17.0, "hip_turn": 16.0, "arm_b_upper": -108.0, "arm_b_lower": 0.0, "torso": 32.0, "head": -16.0}],
-		["active_end", {"rise_b": 1.0, "cover_b": 0.0, "cover_f": 1.0, "turn": 50.0, "hip_x": 17.0, "hip_turn": 16.0, "arm_b_upper": -108.0, "arm_b_lower": 0.0, "torso": 32.0, "head": -16.0}],
+		["active", {"rise_b": 0.5, "cover_b": 0.0, "cover_f": 1.0, "turn": 50.0, "hip_x": 17.0, "hip_turn": 16.0, "arm_b_upper": -108.0, "arm_b_lower": 0.0, "torso": 32.0, "head": -16.0}],
+		["active_end", {"rise_b": 0.5, "cover_b": 0.0, "cover_f": 1.0, "turn": 50.0, "hip_x": 17.0, "hip_turn": 16.0, "arm_b_upper": -108.0, "arm_b_lower": 0.0, "torso": 32.0, "head": -16.0}],
 		["follow", {}],
 		["end", {}]],
 	"hook": [["start", {"cover_f": 0.0}],
@@ -345,8 +345,9 @@ static func landing(pose: Dictionary, since: int, height: float, falling: bool) 
 	var dip := sink_at(since)
 	out["hip_y"] = out.get("hip_y", 0.0) + dip
 	out["torso"] = out.get("torso", 0.0) + dip * 0.3  # the chest folds a little over the bent knees
-	# the back heel comes up as the weight drops, so the back leg stays long instead of folding to a kneel
-	out["rise_b"] = maxf(out.get("rise_b", 0.0), 0.7 * dip / SINK)
+	# the weight goes forward onto the front leg as it drops (he lands moving): the front knee takes the bend and the
+	# back leg stays long instead of folding to a kneel (lifting the back heel here only bent it more)
+	out["hip_x"] = out.get("hip_x", 0.0) + dip * 1.4
 	return out
 
 
@@ -400,7 +401,10 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 		var to := {}
 		var drop := 0.0
 		for side in ["f", "b"]:
-			to[side] = STANCE[side] + Vector2(pose.get("step_" + side, 0.0), -pose.get("lift_" + side, 0.0))
+			# a rising heel lifts the ankle off the ball of the foot, which stays on its spot
+			var tilt := deg_to_rad(90.0 * clampf(pose.get("rise_" + side, 0.0), 0.0, 1.0))
+			to[side] = STANCE[side] + Vector2(pose.get("step_" + side, 0.0) + FOOT_LENGTH * (1.0 - cos(tilt)),
+				-pose.get("lift_" + side, 0.0) - FOOT_LENGTH * sin(tilt))
 			# a stance stretched wider than a leg reaches: the hips drop just enough (they never drag a foot)
 			var span: float = BONES["leg_%s_upper" % side][3] + BONES["leg_%s_lower" % side][3] - 1.0
 			var tx: float = (to[side] as Vector2).x
@@ -511,6 +515,8 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 	# a rising heel ("rise_"). On one leg (no flat foot left) the whole body goes up onto its toes. Otherwise the leg
 	# drives straight: the ball of the foot stays put and the heel lifts just as far as a nearly straight leg needs
 	var all_rise := rising.size() == anchors.size() and not rising.is_empty()
+	if pose.get("feet", 0.0) > 0.5:
+		rising.clear()  # placed feet already stand on their toes where they rise
 	for side in rising:
 		var r := clampf(out["rise_" + side], 0.0, 1.0)
 		var a: Vector2 = anchors[side]
@@ -524,9 +530,13 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 		var reach: float = (BONES["leg_%s_upper" % side][3] + BONES["leg_%s_lower" % side][3]) * 0.97
 		var to_hip := joint - ball
 		var d := to_hip.length()
-		var lifted := a  # close enough to the hips to stand flat
+		# at the least, up on the ball of the foot by the angle "rise_" says (the weight coming onto the toes, as in
+		# a landing's crouch); more if the leg drives straight and needs it
+		var tilt := deg_to_rad(90.0 * r)
+		var lifted := Vector2(a.x + FOOT_LENGTH * (1.0 - cos(tilt)), a.y - FOOT_LENGTH * sin(tilt))
+		var tilted := lifted
 		if d >= reach + FOOT_LENGTH:
-			lifted = ball - Vector2(0, FOOT_LENGTH)  # too far even on the toes: up on them, the hips sink below
+			lifted = a.lerp(ball - Vector2(0, FOOT_LENGTH), r)  # too far even on the toes: up on them, the hips sink
 		elif d > reach - FOOT_LENGTH:
 			# the ankle sits a foot's length from the ball and a straight leg's length from the hip: where they meet
 			var along: float = (d * d + FOOT_LENGTH * FOOT_LENGTH - reach * reach) / (2.0 * d)
@@ -534,10 +544,10 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 			var dir := to_hip / d
 			var c1: Vector2 = ball + dir * along + Vector2(-dir.y, dir.x) * off
 			var c2: Vector2 = ball + dir * along - Vector2(-dir.y, dir.x) * off
-			lifted = c1 if c1.y < c2.y else c2
-			if lifted.y > a.y:
-				lifted = a
-		anchors[side] = a.lerp(lifted, r)
+			var straight: Vector2 = c1 if c1.y < c2.y else c2
+			if straight.y < tilted.y:
+				lifted = a.lerp(straight, r)
+		anchors[side] = lifted
 	# a leg too short for the shift: sink the hips just enough for it to reach (a fighter drops his weight)
 	for side in anchors:
 		var hip_end: Array = _end("hip", out)
