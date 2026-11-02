@@ -92,5 +92,16 @@ func test_planted_feet_stay_put_through_every_strike() -> void:
 					continue
 				# the ball of the foot against the guard's, both measured from the hips' home spot (no hip shift)
 				var toe: Vector2 = Poses._end("toe_" + side, b)[0]
-				var home: Vector2 = Poses._end("toe_" + side, g)[0]
+				# where the move slides it to (a step-up before a front-leg kick), or else where it stood in the guard
+				var home: Vector2 = (Poses._end("toe_" + side, g)[0] as Vector2) + Vector2(Poses.angles(m, tt, t)["step_" + side], 0)
 				check(absf(toe.x - home.x) < 4.0, "%s@%d: the planted %s foot stays on its spot (%.1f px off)" % [m, tt, side, toe.x - home.x])
+
+
+func test_a_front_leg_kick_stands_tall_on_the_back_foot() -> void:
+	# the first stance build: the front kicks were thrown out of a lunge, the standing leg slanting far behind
+	var t := Tuning.fresh()
+	for m in ["kick", "push_kick", "knee", "spin_kick"]:
+		var b := Poses.bake(Poses.angles(m, Moves.data(m, t)["startup"], t), true)
+		var hip: Vector2 = Poses._end("hip", b)[0]
+		var foot: Vector2 = ankle(b, "b")
+		check(absf(foot.x - hip.x) < 30.0, "%s: the standing foot has stepped up under the hips (%.0f px off)" % [m, foot.x - hip.x])
