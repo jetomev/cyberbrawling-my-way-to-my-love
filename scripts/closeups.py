@@ -13,7 +13,8 @@ game's pixels; the movie can be smaller) this cuts, for each move:
 - strips/NN-<move>-hit.png: the same rows, every single frame from HIT_BEFORE frames before the hit to HIT_AFTER after
   (the team's second review: more frames close together around each strike);
 - for "landing" (the first landing after the flying kick), strips/NN-landing-1.png, -2.png...: every frame from the
-  last moments in the air to him back up, CHUNK frames a picture (the third review).
+  last moments in the air to him back up, CHUNK frames a picture (the third review); the same for any window asked
+  for by hand as "<move>-frames:<hit>:<start>:<end>" (times are labelled from the hit).
 
 Usage: scripts/closeups.py <frames dir> <marks file> <out dir> move:land:start:end [...]
 Prints an OK line with the counts.
@@ -148,11 +149,12 @@ def main():
         row = out / "closeups" / f"{n:02d}-{move}.png"
         ffmpeg([still(land)], graph, row)
         rows.append(row)
-        if move == "landing":
+        if move == "landing" or move.endswith("-frames"):
+            # every frame of a window: the landing, or any "<move>-frames:<hit>:<start>:<end>" asked for by hand
             frames_all = list(range(start, end + 1))
             for c in range(0, len(frames_all), CHUNK):
-                part = out / "strips" / f"{n:02d}-landing-{c // CHUNK + 1}.png"
-                strips.append(strip(frames_all[c:c + CHUNK], land, "landing", part, still, at, k, u, w, h))
+                part = out / "strips" / f"{n:02d}-{move}-{c // CHUNK + 1}.png"
+                strips.append(strip(frames_all[c:c + CHUNK], land, move, part, still, at, k, u, w, h))
             continue
         # the timed strip: every STEP frames, lined up on the landing frame; then every frame around the hit
         steps = [f for f in range(start, end + 1) if (f - land) % STEP == 0]

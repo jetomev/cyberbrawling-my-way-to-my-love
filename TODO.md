@@ -40,7 +40,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Kicks stand tall on the standing leg (step-up for front-leg kicks) (solo) (D-26)
 - [x] Fourth review: the landing reaches, touches, sinks and rises; the hips lead the spin and roundhouse; the standing foot pivots where it shows (solo) (D-26)
 - [x] Each built move pose by pose against the team's posture sheet: guard, jab, cross, hook, uppercut, elbow, front and push kick, round kick, knee (solo) (D-27)
-- [ ] The reviewers' combined joint corrections on b033c19 and the sheet build (D-22)
+- [x] The testers' joint review of b033c19: hook (compact load, level arc, pivot), elbow raised to the jaw, knee in stages, round kick recoil, spin with the head first; body kick a snap kick; push kick in the demo (solo) (D-27)
 - [ ] The sheet's new moves: power punch (bow stance), side kick, low kick, sweep, spinning side kick; their combo presses are a design call (D-27)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)

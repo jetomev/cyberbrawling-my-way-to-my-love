@@ -173,6 +173,9 @@ func apply(pose: Dictionary, grounded := true) -> void:
 	# the other way about), the upper body is mirrored back to where the shoulders still face
 	var spun_top := cos(deg_to_rad(baked["spin_upper"]))
 	bones["belly"].scale.y = -1.0 if (spun < 0.0) != (spun_top < 0.0) else 1.0
+	# and the head looks round first, ahead of both (its face side flips over before the shoulders come round)
+	var spun_head := cos(deg_to_rad(baked["spin_head"]))
+	bones["head"].scale.y = -1.0 if (spun_top < 0.0) != (spun_head < 0.0) else 1.0
 	# the hips and shoulders turn over (a turn, or a spin): the chest narrows, never below about half; past 90 the
 	# far-side leg (with the hips) and arm (with the shoulders) come in front, lit as near
 	var over := cos(deg_to_rad(baked["turn"] + baked["spin"]))
@@ -197,11 +200,13 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		var x := maxf(absf(swing), 0.35) * (signf(swing) if swing != 0.0 else 1.0)
 		for n in ["foot_" + side, "toe_" + side]:
 			bones[n].get_node("Part").scale.x = x
-	# a forearm pointing at the camera draws shorter; the hand keeps its own size
+	# an upper arm or forearm pointing at the camera draws shorter: its drawn part shrinks along the bone and the next
+	# joint moves in to match (moving the joint, not scaling the bone, so nothing below it is skewed)
 	for side in ["f", "b"]:
-		var k := Poses.drawn_length("arm_%s_lower" % side, baked)
-		bones["arm_%s_lower" % side].scale.x = k
-		bones["hand_" + side].scale.x = 1.0 / k
+		for pair in [["arm_%s_upper" % side, "arm_%s_lower" % side], ["arm_%s_lower" % side, "hand_" + side]]:
+			var k := Poses.drawn_length(pair[0], baked)
+			bones[pair[0]].get_node("Part").scale.x = k
+			bones[pair[1]].position = Vector2(Poses.BONES[pair[0]][3] * k, 0)
 	for side in ["f", "b"]:
 		var hand: Node2D = bones["hand_" + side].get_node("Part")
 		var open: bool = baked["open_" + side] > 0.5

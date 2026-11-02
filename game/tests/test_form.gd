@@ -46,18 +46,20 @@ static func arc(m: String, t: Dictionary) -> float:
 func test_the_hook_swings_sideways() -> void:
 	# third review: the hook read as lifting the forearm. Seen from the side, a swing is the fist travelling level at
 	# head height with the elbow up, the forearm across the body (drawn shorter, pointing at the camera)
+	# (the testers' joint review: a compact load, then a level elbow-and-fist arc; the earlier "travels far forward"
+	# measure fought the compact load)
 	var t := Tuning.fresh()
 	var d := Moves.data("hook", t)
 	var w := Poses.moment("hook", "windup", t)
-	var start: Vector2 = Poses.tip("hand_f", Poses.angles("hook", w, t))
-	var hit: Vector2 = Poses.tip("hand_f", Poses.angles("hook", d["startup"], t))
-	var top := INF
-	var low := -INF
 	for tt in range(w, d["startup"] + 1):
-		var y: float = Poses.tip("hand_f", Poses.angles("hook", tt, t)).y
-		top = minf(top, y)
-		low = maxf(low, y)
-	check(hit.x - start.x > 3.0 * (low - top), "the fist travels forward (%.0f px) far more than it rises or drops (%.0f px)" % [hit.x - start.x, low - top])
+		var bb := Poses.bake(Poses.angles("hook", tt, t), true)
+		var el: Vector2 = Poses._end("arm_f_upper", bb)[0]
+		var fist: Vector2 = Poses._end("hand_f", bb)[0]
+		var sh: Vector2 = Poses._end("shoulder_f", bb)[0]
+		check(absf(el.y - sh.y) <= 15.0, "hook@%d: the elbow stays up at shoulder height (%.0f px off)" % [tt, el.y - sh.y])
+		check(absf(fist.y - el.y) <= 26.0, "hook@%d: the fist travels level with the elbow (%.0f px off)" % [tt, fist.y - el.y])
+	var load := Poses.bake(Poses.angles("hook", w, t), true)
+	check((Poses._end("hand_f", load)[0] as Vector2).x >= (Poses._end("head", load)[0] as Vector2).x, "a compact load: the fist isn't drawn back behind the head")
 	var b := Poses.bake(Poses.angles("hook", d["startup"], t), true)
 	var elbow: Vector2 = Poses._end("arm_f_upper", b)[0]
 	var shoulder: Vector2 = Poses._end("shoulder_f", b)[0]
@@ -215,10 +217,11 @@ static func written(move: String, moment: String) -> Dictionary:
 
 func test_a_forearm_at_the_camera_draws_short_and_hits_where_drawn() -> void:
 	var v = HeroView.new()
-	var pose := Poses.full({"cover_f": 0.0, "arm_f_upper": -90.0, "arm_f_lower": 0.0, "fore_f": 1.0})
+	var pose := Poses.full({"cover_f": 0.0, "arm_f_upper": -90.0, "arm_f_lower": -40.0, "fore_f": 1.0, "upper_f": 0.5})
 	v.apply(pose)
-	eq(snappedf(v.bones["arm_f_lower"].scale.x, 0.01), Poses.FORE_SHORT, "the forearm draws at its short length")
-	eq(snappedf(v.bones["hand_f"].scale.x * v.bones["arm_f_lower"].scale.x, 0.01), 1.0, "the fist keeps its own size")
+	eq(snappedf(v.bones["arm_f_lower"].get_node("Part").scale.x, 0.01), Poses.FORE_SHORT, "the forearm draws at its short length")
+	eq(v.bones["hand_f"].get_node("Part").scale, Vector2.ONE, "the fist keeps its own size")
+	eq(v.bones["arm_f_lower"].scale, Vector2.ONE, "nothing below it is skewed (no bone is scaled)")
 	var drawn: Vector2 = v.points()["hand_f"]
 	var logic: Vector2 = Poses._end("arm_f_lower", Poses.bake(pose, true))[0] + Vector2(0, -125) - Poses.BONES["hip"][1]
 	check(drawn.distance_to(logic) < 1.0, "the drawn wrist is where the hit check thinks it is (%.1f px apart)" % drawn.distance_to(logic))
@@ -243,7 +246,7 @@ func test_the_hips_lead_the_turn() -> void:
 	var spin_lead := false
 	for tt in range(0, Moves.data("spin_kick", t)["startup"] + 1):
 		var p := Poses.angles("spin_kick", tt, t)
-		spin_lead = spin_lead or (cos(deg_to_rad(p["spin"])) < 0.0 and cos(deg_to_rad(p["spin_upper"])) > 0.0)
+		spin_lead = spin_lead or (p["spin"] > 90.0 and p["spin_upper"] < 90.0)  # (not past 270: cos would pass that)
 	check(spin_lead, "the spin kick's hips come round while the shoulders still face the front")
 	var turn_lead := false
 	for tt in range(0, Moves.data("roundhouse", t)["startup"] + 1):
@@ -268,4 +271,18 @@ func test_the_standing_foot_pivots_where_it_shows() -> void:
 	var hit := Poses.angles("roundhouse", Moves.data("roundhouse", t)["startup"], t)
 	v.apply(hit)
 	check(v.bones["foot_f"].get_node("Part").scale.x < -0.5 and hit["rise_f"] <= 0.35, "the roundhouse's standing foot points back, flat enough to see it")
+	v.free()
+
+
+func test_on_the_spin_the_head_looks_first() -> void:
+	# the testers' joint review: show the head looking first, and the hips before the shoulders
+	var t := Tuning.fresh()
+	var head_first := false
+	for tt in range(0, Moves.data("spin_kick", t)["startup"] + 1):
+		var p := Poses.angles("spin_kick", tt, t)
+		head_first = head_first or (p["spin_head"] > 90.0 and p["spin"] < 90.0)  # (not past 270 either: cos would pass that)
+	check(head_first, "the head has looked round over the shoulder while the hips still face the front")
+	var v = HeroView.new()
+	v.apply(Poses.full({"spin": 60.0, "spin_upper": 30.0, "spin_head": 130.0}))
+	check(v.bones["head"].scale.y < 0.0 and v.body.scale.x > 0.0, "drawn: the face has turned to look back while the body hasn't yet")
 	v.free()

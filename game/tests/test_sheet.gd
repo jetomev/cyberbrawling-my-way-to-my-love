@@ -106,6 +106,8 @@ func test_the_uppercut_and_the_elbow() -> void:
 	check(written("elbow", "windup")["hip_x"] > 0.0, "the elbow's wind-up puts the weight onto the front foot")
 	var e := at("elbow", "active", t)
 	check(mid("hand_f", e).distance_to(mid("head", e)) < 34.0, "the elbow's fist ends by his own ear (%.0f px)" % mid("hand_f", e).distance_to(mid("head", e)))
+	var point: Vector2 = Poses._end("arm_f_upper", e)[0]
+	check(point.y < mid("head", e).y + 34.0, "the elbow is raised to head height, at the jaw (%.0f px under the middle of the head)" % (point.y - mid("head", e).y))
 
 
 func test_the_front_kick_chambers() -> void:
@@ -140,3 +142,28 @@ func test_the_round_kick_and_the_knee() -> void:
 	var k := at("knee", "active", t)
 	for side in ["f", "b"]:
 		check(mid("hand_" + side, k).y > mid("chest", k).y, "and pulls them down onto the knee (%s)" % side)
+
+
+func test_the_knee_reads_in_stages_and_the_round_kick_recoils() -> void:
+	# the testers' joint review: the knee shows reach, grab, hip drive and pull-down before lowering; the round kick
+	# shows its recoil
+	var t := Tuning.fresh()
+	var grab := written("knee", "sweep")
+	check(grab["open_f"] == 0.0 and grab["open_b"] == 0.0, "between the reach and the knee the hands close on a grab")
+	var g := at("knee", "sweep", t)
+	check(mid("hand_f", g).x > mid("head", g).x + 25.0, "still out in front, holding")
+	var hit := at("knee", "active", t)
+	var after := at("knee", "follow", t)
+	check(written("knee", "follow")["leg_f_upper"] <= -90.0, "the knee stays up while the pull finishes")
+	check(mid("hand_f", after).y > mid("hand_f", hit).y, "the hands keep pulling down before the knee lowers")
+	check(written("knee", "active")["hip_x"] > written("knee", "sweep")["hip_x"], "the hips drive forward into it")
+	check(written("roundhouse", "follow")["leg_b_lower"] >= 90.0, "after the round kick lands the leg recoils, folding back")
+
+
+func test_the_body_kick_is_a_snap_kick() -> void:
+	# the testers asked: snap or push? A snap: chamber, flick, snap back (the push kick is the P, P, K finisher)
+	var t := Tuning.fresh()
+	var w := at("body_kick", "windup", t)
+	check(absf(rad_to_deg(Poses._end("leg_b_upper", w)[1])) <= 20.0, "the rear knee comes up to hip height, the thigh level")
+	check(Poses.angles("body_kick", Poses.moment("body_kick", "follow", t), t)["leg_b_lower"] >= 60.0, "then it snaps back to the chamber")
+	check(Moves.data("body_kick", t)["effect"] != "push", "it doesn't shove")

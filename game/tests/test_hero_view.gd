@@ -112,7 +112,7 @@ func test_demo_shows_every_move() -> void:
 		seen[f.state] = true
 		if f.x > 2724.0 and f.y == 0.0 and f.state != "climb":
 			past_crate_two_on_ground = true
-	for s in STATES + ["cross", "hook", "body_kick", "spin_kick", "knee", "uppercut", "elbow", "roundhouse", "hammer_fist"]:
+	for s in STATES + ["cross", "hook", "push_kick", "body_kick", "spin_kick", "knee", "uppercut", "elbow", "roundhouse", "hammer_fist"]:
 		check(seen.has(s), "the demo shows %s" % s)
 	check(w.objects[0]["broken"], "it smashes the first crate")
 	check(not w.objects[2]["broken"] and past_crate_two_on_ground, "it jumps the second crate")

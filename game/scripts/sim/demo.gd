@@ -4,7 +4,7 @@ extends RefCounted
 
 ## The route on the grey street (street_world.grey_street): smash the first crate with two kicks, walk on, climb the
 ## car, walk across its roof and flying-kick off the end, step down the street and jump the second crate, then the
-## combos (moves.gd): jab-cross-hook, kick-body kick-spinning kick, jab-knee-uppercut, kick-elbow-roundhouse, and a
+## combos (moves.gd): jab-cross-hook, jab-cross-push kick, kick-body kick-spinning kick, jab-knee-uppercut, kick-elbow-roundhouse, and a
 ## hammer fist from a jump.
 const STEPS := [
 	[30, {}],
@@ -19,6 +19,7 @@ const STEPS := [
 	[21, {"mx": 1.0}],
 	[1, {"mx": 1.0, "jump": true}], [55, {"mx": 1.0}],
 	[1, {"punch": true}], [9, {}], [1, {"punch": true}], [9, {}], [1, {"punch": true}], [45, {}],
+	[1, {"punch": true}], [9, {}], [1, {"punch": true}], [9, {}], [1, {"kick": true}], [55, {}],
 	[1, {"kick": true}], [12, {}], [1, {"kick": true}], [12, {}], [1, {"kick": true}], [55, {}],
 	[1, {"punch": true}], [9, {}], [1, {"kick": true}], [9, {}], [1, {"punch": true}], [50, {}],
 	[1, {"kick": true}], [12, {}], [1, {"punch": true}], [9, {}], [1, {"kick": true}], [50, {}],
