@@ -38,7 +38,8 @@ func test_the_weight_shifts_and_the_feet_stay_put() -> void:
 	var d := Moves.data("cross", t)
 	var w := Poses.angles("cross", 0, t)
 	var h := Poses.angles("cross", d["startup"], t)
-	check(h["hip_x"] - w["hip_x"] >= 20.0, "the hips travel %.0f px from the load to the cross" % (h["hip_x"] - w["hip_x"]))
+	# (the posture sheet's cross: no pull-back load; the hips go forward onto a firm front leg, about 60% of the weight)
+	check(h["hip_x"] >= 10.0, "the hips go forward onto the front foot on the cross (%.0f px)" % h["hip_x"])
 	for pose in [w, h]:
 		var still: Dictionary = pose.duplicate()
 		still["hip_x"] = 0.0

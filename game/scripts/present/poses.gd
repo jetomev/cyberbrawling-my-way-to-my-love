@@ -79,14 +79,15 @@ const TOE_LENGTH := 11.0  # an ankle higher than foot + toes lets the foot point
 ## assistant team: the stance first): feet wider than the shoulders, front foot 44 px ahead of the hips and the back
 ## foot 63 px behind, the front knee well bent and the back leg nearly straight, hips dropped (the legs solved for
 ## ankles 100 px under the hips; with the back foot only 50 px back its knee folded and any dip read as kneeling), weight
-## between the feet, a slight lean in, chin down, both fists up at the cheeks with the elbows in (cover_f, cover_b; the
-## front fist a little further forward), shoulders loose. Any move that uses an arm switches its cover off for itself.
+## between the feet, a slight lean in, chin down, both fists up at cheekbone height with the elbows in (cover_f,
+## cover_b; the front fist a forearm ahead of the rear one), the back foot turned out 45 degrees with its heel slightly
+## up, shoulders loose (the assistant team's posture sheet, 2026-11-02). Any move that uses an arm switches its cover off for itself.
 const GUARD := {
 	"torso": 10.0, "neck": 14.0, "head": 6.0, "hand_f": -15.0, "hand_b": -15.0,
 	"arm_f_upper": -62.0, "arm_f_lower": -114.0, "arm_b_upper": -25.0, "arm_b_lower": -100.0,
 	"leg_f_upper": -47.3, "leg_f_lower": 48.9, "leg_b_upper": 22.6, "leg_b_lower": 19.9, "hip_y": 0.0,
 	"open_f": 0.0, "open_b": 0.0, "hip_x": 0.0, "hip_turn": 0.0, "cover_f": 1.0, "cover_b": 1.0, "rise_f": 0.0,
-	"rise_b": 0.0, "spin": 0.0, "turn": 0.0, "pivot_f": 0.0, "pivot_b": 0.0, "fore_f": 0.0, "fore_b": 0.0,
+	"rise_b": 0.15, "spin": 0.0, "turn": 0.0, "pivot_f": 0.0, "pivot_b": 45.0, "fore_f": 0.0, "fore_b": 0.0,
 	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0,
 }
 ## Where the ankles stand in the guard, from the hip joint: the guard's legs are solved for these spots.
@@ -106,7 +107,7 @@ const WINDUP_AT := {"hook": 0.4, "roundhouse": 0.45, "spin_kick": 0.5}
 ## forward to show past the face: the far hand is drawn behind the head, and at (16, 16) it hid there, so all one saw
 ## of it was its forearm across the chest (the assistant team's third review, 2026-11-02).
 const CHEEK := Vector2(30.0, 14.0)
-const CHEEK_FRONT := Vector2(42.0, 18.0)  # the front fist in the guard: up at the cheek, a little further out
+const CHEEK_FRONT := Vector2(62.0, 14.0)  # the front fist in the guard: at cheekbone height, a forearm ahead (the sheet)
 
 ## Looping states: [loop length in ticks, [tick, changes from GUARD], ...]
 const LOOPS := {
@@ -121,7 +122,8 @@ const LOOPS := {
 }
 
 ## One-shot states, keyed by named moments the tuning decides (see moment()). A strike runs wind-up, hit, hold,
-## follow-through, then eases back to the guard; an empty "follow" means "carry the hit a little further".
+## follow-through, then eases back to the guard; an empty "follow" means "carry the hit a little further", a written
+## one is the move's own (a jab snaps straight back, a push kick holds, a front kick folds back to its chamber).
 const SHOTS := {
 	"jump": [["start", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0,
 		"arm_f_upper": -70.0, "arm_b_upper": -45.0, "hip_y": 0.0}]],
@@ -130,11 +132,13 @@ const SHOTS := {
 	"land": [["start", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -60.0, "arm_f_lower": -90.0, "arm_b_upper": -30.0,
 		"arm_b_lower": -80.0, "torso": 14.0}],
 		["end", {}]],
-	"punch": [["start", {"cover_f": 0.0}],
-		["windup", {"cover_f": 0.0, "hip_x": -2.0, "hip_turn": -2.0, "arm_f_upper": -45.0, "arm_f_lower": -125.0, "torso": 4.0}],
-		["active", {"cover_f": 0.0, "hip_x": 3.0, "hip_turn": 3.0, "arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 6.0, "head": -6.0}],
-		["active_end", {"cover_f": 0.0, "hip_x": 3.0, "hip_turn": 3.0, "arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 6.0, "head": -6.0}],
-		["follow", {}],
+	# the jab (posture sheet): a tiny wind-up, the front foot sliding an inch and nothing pulled back; the arm straight
+	# out at shoulder height, almost no hip; then it snaps straight back along the same line
+	"punch": [["start", {}],
+		["windup", {"step_f": 8.0, "hip_x": 1.0, "hip_turn": 1.0, "torso": 10.0}],
+		["active", {"step_f": 8.0, "cover_f": 0.0, "hip_x": 3.0, "hip_turn": 3.0, "arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 6.0, "head": 4.0}],
+		["active_end", {"step_f": 8.0, "cover_f": 0.0, "hip_x": 3.0, "hip_turn": 3.0, "arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 6.0, "head": 4.0}],
+		["follow", {"step_f": 4.0, "hip_x": 1.0, "torso": 9.0}],
 		["end", {}]],
 	"air_kick": [["start", {"cover_f": 0.0, "cover_b": 0.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0,
 		"arm_f_upper": -70.0, "arm_b_upper": -45.0, "hip_y": 0.0}],
@@ -149,36 +153,43 @@ const SHOTS := {
 		["climb_mid", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hand_f": 60.0, "hand_b": 60.0, "arm_f_upper": -60.0, "arm_f_lower": -30.0, "arm_b_upper": -40.0, "arm_b_lower": -30.0,
 			"torso": 35.0, "leg_f_upper": -95.0, "leg_f_lower": 100.0, "leg_b_upper": 20.0, "leg_b_lower": 40.0, "hip_y": 10.0}],
 		["end", {}]],
+	# the cross (posture sheet): the back heel lifts and the hips begin to turn while the arm is still home; at the hit
+	# the back foot has pivoted on its ball, hips and shoulders square, the front leg a firm post (the hips rise onto it),
+	# about 60% of the weight forward, the front fist back by the cheek
 	"cross": [["start", {}],
-		["windup", {"cover_b": 0.0, "cover_f": 1.0, "turn": -20.0, "hip_x": -10.0, "hip_turn": -8.0, "arm_b_upper": -10.0, "arm_b_lower": -120.0, "torso": -2.0}],
-		["active", {"rise_b": 0.5, "cover_b": 0.0, "cover_f": 1.0, "turn": 50.0, "hip_x": 17.0, "hip_turn": 16.0, "arm_b_upper": -108.0, "arm_b_lower": 0.0, "torso": 32.0, "head": -16.0}],
-		["active_end", {"rise_b": 0.5, "cover_b": 0.0, "cover_f": 1.0, "turn": 50.0, "hip_x": 17.0, "hip_turn": 16.0, "arm_b_upper": -108.0, "arm_b_lower": 0.0, "torso": 32.0, "head": -16.0}],
+		["windup", {"rise_b": 0.4, "turn": 15.0, "hip_x": 4.0, "hip_turn": 4.0, "torso": 10.0}],
+		["active", {"rise_b": 0.6, "pivot_b": 70.0, "cover_b": 0.0, "cover_f": 1.0, "turn": 50.0, "hip_x": 12.0, "hip_y": -12.0, "hip_turn": 16.0, "arm_b_upper": -108.0, "arm_b_lower": 0.0, "torso": 22.0, "head": -4.0}],
+		["active_end", {"rise_b": 0.6, "pivot_b": 70.0, "cover_b": 0.0, "cover_f": 1.0, "turn": 50.0, "hip_x": 12.0, "hip_y": -12.0, "hip_turn": 16.0, "arm_b_upper": -108.0, "arm_b_lower": 0.0, "torso": 22.0, "head": -4.0}],
 		["follow", {}],
 		["end", {}]],
 	"hook": [["start", {"cover_f": 0.0}],
-		["windup", {"cover_f": 0.0, "fore_f": 1.0, "turn": -30.0, "hip_x": -10.0, "hip_turn": -14.0, "arm_f_upper": -140.0, "arm_f_lower": -138.0, "torso": -10.0, "head": 6.0}],
+		["windup", {"cover_f": 0.0, "fore_f": 1.0, "turn": -20.0, "hip_x": 6.0, "hip_y": 5.0, "hip_turn": -10.0, "arm_f_upper": -120.0, "arm_f_lower": -138.0, "torso": -10.0, "head": 6.0}],
 		["sweep", {"cover_f": 0.0, "fore_f": 0.9, "turn": 20.0, "hip_x": 2.0, "hip_turn": 4.0, "arm_f_upper": -86.0, "arm_f_lower": -100.0, "torso": 12.0, "head": -6.0}],
-		["active", {"cover_f": 0.0, "fore_f": 0.45, "turn": 60.0, "hip_x": 12.0, "hip_turn": 24.0, "arm_f_upper": -112.0, "arm_f_lower": -46.0, "torso": 30.0, "head": -14.0}],
-		["active_end", {"cover_f": 0.0, "fore_f": 0.45, "turn": 60.0, "hip_x": 12.0, "hip_turn": 24.0, "arm_f_upper": -112.0, "arm_f_lower": -46.0, "torso": 30.0, "head": -14.0}],
+		["active", {"cover_f": 0.0, "pivot_f": 60.0, "rise_f": 0.3, "fore_f": 0.9, "turn": 60.0, "hip_x": 12.0, "hip_turn": 24.0, "arm_f_upper": -120.0, "arm_f_lower": 6.0, "torso": 30.0, "head": -14.0}],
+		["active_end", {"cover_f": 0.0, "pivot_f": 60.0, "rise_f": 0.3, "fore_f": 0.9, "turn": 60.0, "hip_x": 12.0, "hip_turn": 24.0, "arm_f_upper": -120.0, "arm_f_lower": 6.0, "torso": 30.0, "head": -14.0}],
 		["follow", {}],
 		["end", {}]],
 	"uppercut": [["start", {}],
 		["windup", {"cover_b": 0.0, "cover_f": 1.0, "hip_x": -6.0, "hip_turn": 6.0, "arm_b_upper": 10.0, "arm_b_lower": -100.0, "torso": 14.0, "hip_y": 14.0}],
-		["active", {"rise_b": 0.6, "cover_b": 0.0, "cover_f": 1.0, "hip_x": 8.0, "hip_turn": -8.0, "arm_b_upper": -68.0, "arm_b_lower": -102.0, "torso": 6.0, "head": 4.0, "hip_y": -4.0}],
-		["active_end", {"rise_b": 0.6, "cover_b": 0.0, "cover_f": 1.0, "hip_x": 8.0, "hip_turn": -8.0, "arm_b_upper": -68.0, "arm_b_lower": -102.0, "torso": 6.0, "head": 4.0, "hip_y": -4.0}],
+		["active", {"turn": 25.0, "rise_b": 0.6, "cover_b": 0.0, "cover_f": 1.0, "hip_x": 8.0, "hip_turn": -8.0, "arm_b_upper": -68.0, "arm_b_lower": -102.0, "torso": 6.0, "head": 4.0, "hip_y": -4.0}],
+		["active_end", {"turn": 25.0, "rise_b": 0.6, "cover_b": 0.0, "cover_f": 1.0, "hip_x": 8.0, "hip_turn": -8.0, "arm_b_upper": -68.0, "arm_b_lower": -102.0, "torso": 6.0, "head": 4.0, "hip_y": -4.0}],
 		["follow", {}],
 		["end", {}]],
-	"knee": [["start", {"cover_f": 0.0, "cover_b": 0.0}],
-		["windup", {"step_b": 40.0, "cover_f": 0.0, "cover_b": 0.0, "hip_x": -4.0, "leg_f_upper": -40.0, "leg_f_lower": 60.0, "arm_f_upper": -80.0, "arm_b_upper": -70.0}],
-		["active", {"step_b": 50.0, "cover_f": 0.0, "cover_b": 0.0, "hip_x": 6.0, "hip_turn": -6.0, "leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 14.0, "arm_f_upper": -40.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
-		["active_end", {"step_b": 50.0, "cover_f": 0.0, "cover_b": 0.0, "hip_x": 6.0, "hip_turn": -6.0, "leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 14.0, "arm_f_upper": -40.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
+	# the knee (posture sheet): reach out with both hands open; then the knee drives up, the hips push forward and the
+	# hands pull the enemy down onto it
+	"knee": [["start", {}],
+		["windup", {"step_b": 40.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hip_x": -4.0, "leg_f_upper": -40.0, "leg_f_lower": 60.0, "arm_f_upper": -125.0, "arm_f_lower": -5.0, "arm_b_upper": -115.0, "arm_b_lower": -5.0, "torso": 12.0}],
+		["active", {"step_b": 50.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hip_x": 10.0, "hip_turn": -6.0, "leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 16.0, "arm_f_upper": -45.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
+		["active_end", {"step_b": 50.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hip_x": 10.0, "hip_turn": -6.0, "leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 16.0, "arm_f_upper": -45.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
 		["follow", {}],
 		["end", {}]],
+	# the push kick (posture sheet): the same chamber, the knee higher; the hips drive through, standing knee soft; the
+	# leg stays out a moment (a shove, not a snap)
 	"push_kick": [["start", {}],
-		["windup", {"step_b": 40.0, "hip_x": -6.0, "hip_turn": -4.0, "leg_f_upper": -80.0, "leg_f_lower": 110.0, "torso": -6.0, "hip_y": 0.0}],
-		["active", {"step_b": 50.0, "hip_x": 14.0, "hip_turn": -14.0, "leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -30.0, "head": 16.0, "hip_y": 0.0}],
-		["active_end", {"step_b": 50.0, "hip_x": 14.0, "hip_turn": -14.0, "leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -30.0, "head": 16.0, "hip_y": 0.0}],
-		["follow", {}],
+		["windup", {"hip_x": -45.0, "hip_turn": -4.0, "leg_f_upper": -112.0, "leg_f_lower": 118.0, "torso": -4.0, "hip_y": 0.0}],
+		["active", {"hip_x": 0.0, "hip_turn": -14.0, "leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -16.0, "head": 12.0, "hip_y": 0.0}],
+		["active_end", {"hip_x": 0.0, "hip_turn": -14.0, "leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -16.0, "head": 12.0, "hip_y": 0.0}],
+		["follow", {"hip_x": 0.0, "hip_turn": -14.0, "leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -16.0, "head": 12.0, "hip_y": 0.0}],
 		["end", {}]],
 	"body_kick": [["start", {}],
 		["windup", {"step_f": -14.0, "hip_x": 6.0, "hip_turn": -4.0, "leg_b_upper": -40.0, "leg_b_lower": 80.0, "torso": -10.0, "hip_y": 0.0}],
@@ -193,17 +204,22 @@ const SHOTS := {
 		["active_end", {"step_b": 40.0, "spin": 360.0, "pivot_b": 360.0, "rise_b": 0.35, "hip_x": -14.0, "hip_turn": -24.0, "leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -46.0, "head": 26.0, "hip_y": 0.0}],
 		["follow", {}],
 		["end", {"spin": 360.0, "pivot_b": 360.0}]],
-	"elbow": [["start", {"cover_f": 0.0}],
-		["windup", {"cover_f": 0.0, "cover_b": 1.0, "hip_x": -5.0, "hip_turn": -5.0, "arm_f_upper": -60.0, "arm_f_lower": -150.0, "torso": -4.0}],
-		["active", {"cover_f": 0.0, "cover_b": 1.0, "hip_x": 12.0, "hip_turn": 10.0, "arm_f_upper": -100.0, "arm_f_lower": -160.0, "torso": 24.0, "head": -10.0}],
-		["active_end", {"cover_f": 0.0, "cover_b": 1.0, "hip_x": 12.0, "hip_turn": 10.0, "arm_f_upper": -100.0, "arm_f_lower": -160.0, "torso": 24.0, "head": -10.0}],
+	# the elbow (posture sheet): the weight onto the front foot and a small turn away; then the hips turn first and the
+	# elbow swings across at head height, the fist ending by his own ear
+	"elbow": [["start", {}],
+		["windup", {"cover_f": 0.0, "hip_x": 6.0, "hip_turn": -5.0, "turn": -15.0, "arm_f_upper": -60.0, "arm_f_lower": -150.0, "torso": 6.0}],
+		["active", {"cover_f": 0.0, "turn": 40.0, "hip_x": 12.0, "hip_turn": 10.0, "arm_f_upper": -112.0, "arm_f_lower": -110.0, "torso": 24.0, "head": -4.0}],
+		["active_end", {"cover_f": 0.0, "turn": 40.0, "hip_x": 12.0, "hip_turn": 10.0, "arm_f_upper": -112.0, "arm_f_lower": -110.0, "torso": 24.0, "head": -4.0}],
 		["follow", {}],
 		["end", {}]],
+	# the round kick (posture sheet): the front foot steps slightly out and takes the weight; the standing foot pivots
+	# until its heel points at the enemy, the hips turn right over and the bent leg sweeps across; the arm on the kicking
+	# side swings down and back to balance, the other hand guards the face
 	"roundhouse": [["start", {}],
-		["windup", {"step_f": -10.0, "turn": 40.0, "pivot_f": 60.0, "rise_f": 0.2, "hip_x": 4.0, "hip_turn": -10.0, "leg_b_upper": -60.0, "leg_b_lower": 115.0, "torso": -14.0, "hip_y": 0.0}],
-		["sweep", {"step_f": -16.0, "turn": 90.0, "pivot_f": 120.0, "rise_f": 0.25, "hip_x": 10.0, "hip_turn": -20.0, "leg_b_upper": -100.0, "leg_b_lower": 95.0, "torso": -30.0, "head": 14.0, "hip_y": 0.0}],
-		["active", {"step_f": -18.0, "turn": 165.0, "pivot_f": 170.0, "rise_f": 0.3, "hip_x": 14.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -26.0, "head": 16.0, "hip_y": 0.0}],
-		["active_end", {"step_f": -18.0, "turn": 165.0, "pivot_f": 170.0, "rise_f": 0.3, "hip_x": 14.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -26.0, "head": 16.0, "hip_y": 0.0}],
+		["windup", {"step_f": 10.0, "turn": 40.0, "pivot_f": 60.0, "rise_f": 0.2, "hip_x": 10.0, "hip_turn": -10.0, "leg_b_upper": -60.0, "leg_b_lower": 115.0, "torso": -10.0, "hip_y": 0.0, "cover_b": 0.5}],
+		["sweep", {"step_f": 10.0, "turn": 90.0, "pivot_f": 120.0, "rise_f": 0.25, "hip_x": 10.0, "hip_turn": -20.0, "leg_b_upper": -100.0, "leg_b_lower": 95.0, "torso": -24.0, "head": 14.0, "hip_y": 0.0, "cover_b": 0.0, "arm_b_upper": 20.0, "arm_b_lower": -30.0}],
+		["active", {"step_f": 10.0, "turn": 165.0, "pivot_f": 170.0, "rise_f": 0.3, "hip_x": 8.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -22.0, "head": 16.0, "hip_y": 0.0, "cover_b": 0.0, "arm_b_upper": 45.0, "arm_b_lower": -15.0}],
+		["active_end", {"step_f": 10.0, "turn": 165.0, "pivot_f": 170.0, "rise_f": 0.3, "hip_x": 8.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -22.0, "head": 16.0, "hip_y": 0.0, "cover_b": 0.0, "arm_b_upper": 45.0, "arm_b_lower": -15.0}],
 		["follow", {}],
 		["end", {}]],
 	"hammer_fist": [["start", {"cover_f": 0.0, "open_f": 0.0, "arm_f_upper": -170.0, "arm_f_lower": -20.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0,
@@ -213,11 +229,14 @@ const SHOTS := {
 	"block": [["start", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -38.0, "arm_f_lower": -140.0, "arm_b_upper": -30.0, "arm_b_lower": -145.0,
 		"torso": 4.0, "head": 12.0,
 		"hip_y": 6.0}]],
+	# the front kick (posture sheet): the weight onto the back foot and the knee straight up to hip height, the foot
+	# hanging under it (the chamber); then the hips push forward and the lower leg flicks out, leaning back a touch,
+	# hands up; then the leg snaps back to the chamber and the foot sets down where it came from
 	"kick": [["start", {}],
-		["windup", {"step_b": 40.0, "hip_x": -6.0, "hip_turn": -4.0, "leg_f_upper": -72.0, "leg_f_lower": 105.0, "torso": -8.0, "hip_y": 0.0}],
-		["active", {"step_b": 50.0, "hip_x": 12.0, "hip_turn": -12.0, "leg_f_upper": -100.0, "leg_f_lower": 0.0, "torso": -26.0, "head": 18.0, "hip_y": 0.0}],
-		["active_end", {"step_b": 50.0, "hip_x": 12.0, "hip_turn": -12.0, "leg_f_upper": -100.0, "leg_f_lower": 0.0, "torso": -26.0, "head": 18.0, "hip_y": 0.0}],
-		["follow", {}],
+		["windup", {"hip_x": -45.0, "hip_turn": -4.0, "leg_f_upper": -90.0, "leg_f_lower": 90.0, "torso": -2.0, "hip_y": 0.0}],
+		["active", {"hip_x": 4.0, "hip_turn": -12.0, "leg_f_upper": -98.0, "leg_f_lower": 0.0, "torso": -12.0, "head": 12.0, "hip_y": 0.0}],
+		["active_end", {"hip_x": 4.0, "hip_turn": -12.0, "leg_f_upper": -98.0, "leg_f_lower": 0.0, "torso": -12.0, "head": 12.0, "hip_y": 0.0}],
+		["follow", {"hip_x": -30.0, "hip_turn": -4.0, "leg_f_upper": -90.0, "leg_f_lower": 90.0, "torso": -4.0, "hip_y": 0.0}],
 		["end", {}]],
 }
 
@@ -303,7 +322,7 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 		var poses := []
 		for i in keys.size():
 			var p: Dictionary = full(keys[i][1])
-			if keys[i][0] == "follow":
+			if keys[i][0] == "follow" and (keys[i][1] as Dictionary).is_empty():
 				p = overshoot(poses[i - 1])
 			poses.append(p)
 		var now := _shot_at(state, keys, poses, t, tune)
@@ -376,6 +395,7 @@ static func _walk_feet(t: int, tune: Dictionary) -> Dictionary:
 		else:
 			out["step_" + side] = reach - v * float(u - WALK_STEP)
 			out["lift_" + side] = 0.0
+	out["rise_b"] = 0.0  # shuffling, the back foot steps flat (a lifted heel let a planted foot slide)
 	return out
 
 

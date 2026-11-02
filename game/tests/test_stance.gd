@@ -29,8 +29,9 @@ func test_the_stance_is_low_and_wide() -> void:
 	check(-hip.y <= 110.0, "the hips are dropped (%.0f px up; standing tall they were 125)" % -hip.y)
 	var middle := (f.x + b.x) * 0.5
 	check(absf(hip.x - middle) <= 0.25 * (f.x - b.x), "the weight sits between the feet (%.0f px from the middle)" % (hip.x - middle))
-	for side in ["f", "b"]:
-		check(absf((Poses._end("toe_" + side, g)[0] as Vector2).y) < 1.0 and absf(ankle(g, side).y) < 1.0, "the %s foot is flat on the street" % side)
+	check(absf((Poses._end("toe_f", g)[0] as Vector2).y) < 1.0 and absf(ankle(g, "f").y) < 1.0, "the front foot is flat on the street")
+	# the back foot on its ball, the heel slightly up (the posture sheet)
+	check(absf((Poses._end("toe_b", g)[0] as Vector2).y) < 1.0 and ankle(g, "b").y < 0.0 and ankle(g, "b").y > -12.0, "the back foot is on the street, its heel slightly up")
 
 
 func test_the_chin_is_down() -> void:
@@ -104,11 +105,15 @@ func test_planted_feet_stay_put_through_every_strike() -> void:
 func test_a_front_leg_kick_stands_tall_on_the_back_foot() -> void:
 	# the first stance build: the front kicks were thrown out of a lunge, the standing leg slanting far behind
 	var t := Tuning.fresh()
-	for m in ["kick", "push_kick", "knee", "spin_kick"]:
+	for m in ["knee", "spin_kick"]:
 		var b := Poses.bake(Poses.angles(m, Moves.data(m, t)["startup"], t), true)
 		var hip: Vector2 = Poses._end("hip", b)[0]
 		var foot: Vector2 = ankle(b, "b")
 		check(absf(foot.x - hip.x) < 30.0, "%s: the standing foot has stepped up under the hips (%.0f px off)" % [m, foot.x - hip.x])
+	# the snap and push kicks shift the weight back over the back foot instead (the posture sheet)
+	for m in ["kick", "push_kick"]:
+		var hx: float = Poses.full(Poses.SHOTS[m][1][1])["hip_x"]
+		check(absf(hx - (Poses.STANCE["b"] as Vector2).x) <= 25.0, "%s: the chamber puts the hips over the back foot (%.0f px off)" % [m, hx - (Poses.STANCE["b"] as Vector2).x])
 
 
 func test_the_back_knee_never_drops_to_a_kneel() -> void:

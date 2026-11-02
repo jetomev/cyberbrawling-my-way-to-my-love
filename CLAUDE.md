@@ -91,6 +91,12 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   put; strikes move the hips and leave the planted feet where they are (no strike writes a standing leg); a driving
   back leg lifts its heel as far as a straight leg needs; a swinging foot is stopped by the street. Judged by eye with
   `scripts/pose_sheet.sh` (any poses side by side, large) before every build.
+- **D-27** **The posture sheet is the reference** (the assistant team's sheet, 2026-11-02, from coaching guides and
+  motion studies; on the shelf as `cyberbrawling-posture-sheet-2026-11-02.md`): every blow in four poses (wind-up,
+  hit, follow-through, back in guard); feet and hips start it, the spare hand stays home, chin down, the hand or foot
+  comes back the way it went, knees never lock but for the kicking leg at the hit, about 60% of the weight forward
+  on punches. `game/tests/test_sheet.gd` holds the sheet's checks for every built move; a new move gets its row
+  there before it's drawn. A move may write its own follow-through (snap back, hold) instead of carrying the hit on.
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 
