@@ -140,7 +140,8 @@ func test_the_guard_keeps_both_hands_up() -> void:
 		check(gap.length() < 36.0 and gap.x > 22.0, "punch@%d: the rear fist stays at the cheek, in front of the face where it shows (%.0f, %.0f)" % [tt, gap.x, gap.y])
 	# the arms that work leave the guard: the cross's rear fist goes out, the climb's hands grab
 	var cross := Poses.bake(Poses.angles("cross", Moves.data("cross", t)["startup"], t), true)
-	check(middle("hand_b", cross).x > middle("head", cross).x + 80.0, "the cross's rear fist leaves the cheek")
+	var guard := Poses.bake(Poses.angles("idle", 0, t), true)
+	check(middle("hand_b", cross).x > middle("hand_b", guard).x + 60.0, "the cross's rear fist leaves the cheek (%.0f px out)" % (middle("hand_b", cross).x - middle("hand_b", guard).x))
 
 
 func test_the_jab_and_the_cross_read_apart() -> void:

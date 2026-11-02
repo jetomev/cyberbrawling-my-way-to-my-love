@@ -54,7 +54,13 @@ func _part(name: String, spec: Array) -> Node2D:
 	var color: Color = SHADES[spec[5]] * tint
 	var p: Node2D
 	if name == "head":
-		p = _shape(_ellipse(Vector2(length * 0.5, 0), length * 0.5, w), color)
+		# a skull with a jaw and a nose on the face side (+y is forward), so the way he faces and tips his chin reads
+		p = Node2D.new()
+		p.add_child(_shape(PackedVector2Array([Vector2(length * 0.06, w * 0.15), Vector2(length * 0.02, w * 0.62),
+			Vector2(length * 0.22, w * 1.02), Vector2(length * 0.42, w * 0.96), Vector2(length * 0.4, w * 0.3)]), color))
+		p.add_child(_shape(_ellipse(Vector2(length * 0.55, 0), length * 0.47, w * 0.92), color))
+		p.add_child(_shape(PackedVector2Array([Vector2(length * 0.5, w * 0.8), Vector2(length * 0.44, w * 1.14),
+			Vector2(length * 0.36, w * 0.86)]), color))
 	elif name.begins_with("shoulder"):
 		p = _shape(_ellipse(Vector2(length * 0.5, 0), length * 0.62, w), color)
 	elif name.begins_with("hand"):
@@ -73,6 +79,14 @@ func _part(name: String, spec: Array) -> Node2D:
 		# heel at the ankle, the sole along the bone toward the ball of the foot
 		p = _shape(PackedVector2Array([Vector2(-w * 0.9, -w * 0.9), Vector2(length * 0.55, -w * 0.7),
 			Vector2(length + 2, -w * 0.45), Vector2(length + 2, w * 0.6), Vector2(-w * 1.1, w * 0.6)]), color)
+	elif name == "belly":
+		# from the hips in to the waist: the body tapers, it isn't a box
+		p = _shape(PackedVector2Array([Vector2(-6, -w * 0.92), Vector2(length + 2, -w * 0.8), Vector2(length + 2, w * 0.8),
+			Vector2(-6, w * 0.92)]), color)
+	elif name == "chest":
+		# from the waist out to the shoulders and the round of the back
+		p = _shape(PackedVector2Array([Vector2(-4, -w * 0.8), Vector2(length * 0.7, -w * 1.08), Vector2(length + 4, -w * 0.95),
+			Vector2(length + 6, w * 0.7), Vector2(length * 0.6, w * 0.95), Vector2(-4, w * 0.8)]), color)
 	elif name.begins_with("toe"):
 		p = _shape(PackedVector2Array([Vector2(-2, -w * 0.45), Vector2(length, -w * 0.15), Vector2(length + 2, w * 0.5),
 			Vector2(-2, w * 0.5)]), color)

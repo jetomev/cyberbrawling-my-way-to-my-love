@@ -83,7 +83,7 @@ func test_shoulders_turn_into_punches() -> void:
 
 func test_the_head_follows_the_eyes() -> void:
 	# a plain lean with no head tilt written in: only the automatic follow can keep the head nearer upright
-	var lean := Poses.full({"torso": 30.0, "head": 0.0})
+	var lean := Poses.full({"torso": 30.0, "head": 0.0, "neck": 0.0})
 	var b := Poses.bake(lean, true)
 	var chest: float = rad_to_deg(Poses._end("chest", b)[1])
 	var head: float = rad_to_deg(Poses._end("head", b)[1])

@@ -82,6 +82,15 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   the elbow up instead of lifting the forearm; the roundhouse lands turned over (his back to us), upright, the knee
   still bent as it sweeps through, while the spin kick lands facing front, leg straight, leaning back. Every build
   also strips the flying kick's landing frame by frame.
+- **D-26** **The stance first, then the posture under every move** (Javier, 2026-11-02 08:16 after playing build
+  27f398f: "posture and movements ..... still terrible. Need 100% lots of work and effort. More attention to detail
+  please"; the assistant team's order: stance, posture, then each move pose by pose): the guard is a low, wide
+  fighting stance (front foot 44 px ahead, back foot 63 px behind, front knee well bent, back leg nearly straight,
+  hips dropped, weight between the feet, chin down, both fists at the cheeks, a V-shaped torso, a head with a jaw);
+  the guard rocks gently from leg to leg with the knees giving; the walk is a fighter's shuffle whose planted feet stay
+  put; strikes move the hips and leave the planted feet where they are (no strike writes a standing leg); a driving
+  back leg lifts its heel as far as a straight leg needs; a swinging foot is stopped by the street. Judged by eye with
+  `scripts/pose_sheet.sh` (any poses side by side, large) before every build.
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 

@@ -47,8 +47,9 @@ func test_the_weight_shifts_and_the_feet_stay_put() -> void:
 		var fixed := Poses.bake(still, true)
 		for side in ["f", "b"]:
 			if Poses._planted(fixed, side):
-				var a: Vector2 = Poses._end("leg_%s_lower" % side, moved)[0]
-				var b: Vector2 = Poses._end("leg_%s_lower" % side, fixed)[0]
+				# the toes: a driving back leg lifts its heel on purpose, the ball of the foot stays put
+				var a: Vector2 = Poses._end("toe_" + side, moved)[0]
+				var b: Vector2 = Poses._end("toe_" + side, fixed)[0]
 				check(a.distance_to(b) < 1.0, "the %s foot stays planted while the hips shift (moved %.1f px)" % [side, a.distance_to(b)])
 
 

@@ -61,7 +61,7 @@ func run_file(path: String) -> void:
 		if suite.checks == checks_before:
 			suite.failures.append("%s: made no checks" % suite.current)
 		var ok: bool = suite.failures.size() == fails_before
-		print("%s %s (%d ms)" % ["PASS" if ok else "FAIL", suite.current, Time.get_ticks_msec() - t0])
+		print("%s %s (%d ms, %d checks)" % ["PASS" if ok else "FAIL", suite.current, Time.get_ticks_msec() - t0, suite.checks - checks_before])
 		tests += 1
 	checks += suite.checks
 	failures.append_array(suite.failures)
