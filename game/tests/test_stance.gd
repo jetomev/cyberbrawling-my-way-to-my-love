@@ -41,15 +41,19 @@ func test_the_chin_is_down() -> void:
 
 func test_the_guard_is_never_dead_still() -> void:
 	var t := Tuning.fresh()
-	var a := Poses.bake(Poses.angles("idle", 0, t), true)
-	var b := Poses.bake(Poses.angles("idle", 30, t), true)
+	var a := Poses.bake(Poses.angles("idle", 15, t), true)
+	var b := Poses.bake(Poses.angles("idle", 45, t), true)
 	check(absf(b["hip_x"] - a["hip_x"]) >= 10.0, "the weight rocks from the back leg to the front (%.0f px)" % absf(b["hip_x"] - a["hip_x"]))
 	# the knees give: a dip written into a pose really lowers the hips (it used to be wiped out by the feet settling)
 	var flat := Poses.bake(Poses.full({}), true)
 	var dip := Poses.bake(Poses.full({"hip_y": 10.0}), true)
 	var drop: float = (Poses._end("hip", dip)[0] as Vector2).y - (Poses._end("hip", flat)[0] as Vector2).y
 	check(absf(drop - 10.0) < 1.0, "a 10 px dip lowers the hips 10 px (%.1f)" % drop)
-	check(Poses.angles("idle", 30, t)["hip_y"] - Poses.angles("idle", 0, t)["hip_y"] >= 3.0, "the knees give as the weight comes forward")
+	check(Poses.angles("idle", 45, t)["hip_y"] - Poses.angles("idle", 15, t)["hip_y"] >= 3.0, "the knees give as the weight comes forward")
+	var start := Poses.angles("idle", 0, t)
+	var guard := Poses.full({})
+	for k in guard:
+		check(is_equal_approx(start[k], guard[k]), "the idle starts at the plain guard, where every move ends (%s)" % k)
 
 
 func test_the_walk_is_a_shuffle() -> void:
@@ -66,7 +70,7 @@ func test_the_walk_is_a_shuffle() -> void:
 			# where the toes are on the street: the body travels at the walking speed
 			var world: float = v * tt + (Poses._end("toe_" + side, b)[0] as Vector2).x
 			var planted: bool = pose["lift_" + side] == 0.0
-			if planted and last.has(side):
+			if planted and last.has(side) and tt > Poses.WALK_EASE_IN:
 				check(absf(world - last[side]) < 0.5, "walk@%d: the planted %s foot stays put (slid %.1f px)" % [tt, side, world - last[side]])
 			last[side] = world if planted else null
 			if not planted:

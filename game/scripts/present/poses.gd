@@ -61,16 +61,16 @@ const BONES := {
 
 ## Keys a pose may hold besides bones: shared or automatic parts that bake() turns into bone angles.
 const SOFT_KEYS := ["hip_x", "hip_y", "hip_turn", "torso", "open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b",
-	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b"]
+	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper"]
 ## Keys that switch something on rather than bend it: a follow-through never carries them further.
 const SWITCH_KEYS := ["open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b",
-	"fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b"]
+	"fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper"]
 
 ## The whip (D-21): in a strike the hips move first and the fist or foot arrives last. Each key is read this many
 ## ticks ahead on the move's curve, so the hips lead, the spine follows, then the shoulder and the upper limb; the
 ## forearm, hand, shin and foot keep the move's own timing (so the blow still lands when the logic says it does).
 ## The head trails a tick behind.
-const LEAD := {"hip_x": 3, "hip_turn": 3, "hip_y": 3, "spin": 2, "turn": 2, "pivot_f": 3, "pivot_b": 3, "torso": 2, "arm_f_upper": 1, "arm_b_upper": 1,
+const LEAD := {"hip_x": 3, "hip_turn": 3, "hip_y": 3, "spin": 3, "turn": 3, "pivot_f": 3, "pivot_b": 3, "torso": 2, "arm_f_upper": 1, "arm_b_upper": 1,
 	"leg_f_upper": 1, "leg_b_upper": 1, "head": -1}
 const FOOT_LENGTH := 24.0  # ankle to the ball of the foot
 const TOE_LENGTH := 11.0  # an ankle higher than foot + toes lets the foot point
@@ -87,7 +87,7 @@ const GUARD := {
 	"leg_f_upper": -47.3, "leg_f_lower": 48.9, "leg_b_upper": 22.6, "leg_b_lower": 19.9, "hip_y": 0.0,
 	"open_f": 0.0, "open_b": 0.0, "hip_x": 0.0, "hip_turn": 0.0, "cover_f": 1.0, "cover_b": 1.0, "rise_f": 0.0,
 	"rise_b": 0.0, "spin": 0.0, "turn": 0.0, "pivot_f": 0.0, "pivot_b": 0.0, "fore_f": 0.0, "fore_b": 0.0,
-	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0,
+	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0,
 }
 ## Where the ankles stand in the guard, from the hip joint: the guard's legs are solved for these spots.
 const STANCE := {"f": Vector2(44.0, 100.0), "b": Vector2(-63.0, 100.0)}
@@ -96,6 +96,7 @@ const STANCE := {"f": Vector2(44.0, 100.0), "b": Vector2(-63.0, 100.0)}
 ## WALK_STEP of them in the air and the rest planted, sliding back under the body at exactly the walking speed, so a
 ## planted foot stays put on the street.
 const WALK_CYCLE := 24
+const WALK_EASE_IN := 4  # the first steps ease out of the guard
 const WALK_STEP := 10
 const FORE_SHORT := 0.4  # a forearm pointing straight at the camera draws at 40% of its length
 ## How far into its start-up a strike is cocked (the wind-up moment). Most cock late (0.7), so the blow reads as a
@@ -110,8 +111,9 @@ const CHEEK_FRONT := Vector2(42.0, 18.0)  # the front fist in the guard: up at t
 ## Looping states: [loop length in ticks, [tick, changes from GUARD], ...]
 const LOOPS := {
 	# the guard is never dead still: the weight rocks gently from the back leg to the front and back, knees giving
-	"idle": [60, [0, {"hip_x": -6.0, "hip_turn": -2.0, "hip_y": 0.0, "torso": 9.0, "head": 9.0}],
-		[30, {"hip_x": 6.0, "hip_turn": 2.0, "hip_y": 4.0, "torso": 12.0, "head": 7.0}]],
+	# (it starts and ends at the plain guard, which is where every move ends, so nothing jumps between them)
+	"idle": [60, [0, {}], [15, {"hip_x": -6.0, "hip_turn": -2.0, "hip_y": 0.0, "torso": 9.0, "head": 9.0}],
+		[45, {"hip_x": 6.0, "hip_turn": 2.0, "hip_y": 4.0, "torso": 12.0, "head": 7.0}]],
 	"walk": [24, [0, {"feet": 1.0, "hip_y": 2.0, "hip_turn": -3.0, "torso": 12.0}],
 		[6, {"feet": 1.0, "hip_y": -2.0, "hip_turn": 0.0, "torso": 11.0}],
 		[12, {"feet": 1.0, "hip_y": 2.0, "hip_turn": 3.0, "torso": 12.0}],
@@ -123,7 +125,10 @@ const LOOPS := {
 const SHOTS := {
 	"jump": [["start", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0,
 		"arm_f_upper": -70.0, "arm_b_upper": -45.0, "hip_y": 0.0}]],
-	"land": [["start", {"hip_y": 16.0, "rise_b": 0.6, "torso": 16.0}],
+	# the touchdown itself: the arms still open from the air, coming in to the guard over the landing; the sink and
+	# rise of the legs is landing(), timed from the touchdown and running on into the guard
+	"land": [["start", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -60.0, "arm_f_lower": -90.0, "arm_b_upper": -30.0,
+		"arm_b_lower": -80.0, "torso": 14.0}],
 		["end", {}]],
 	"punch": [["start", {"cover_f": 0.0}],
 		["windup", {"cover_f": 0.0, "hip_x": -2.0, "hip_turn": -2.0, "arm_f_upper": -45.0, "arm_f_lower": -125.0, "torso": 4.0}],
@@ -182,12 +187,12 @@ const SHOTS := {
 		["follow", {}],
 		["end", {}]],
 	"spin_kick": [["start", {}],
-		["windup", {"step_b": 30.0, "spin": 170.0, "rise_b": 1.0, "hip_x": -4.0, "hip_turn": 14.0, "leg_f_upper": -95.0, "leg_f_lower": 120.0, "torso": 40.0, "head": -20.0, "hip_y": 6.0}],
-		["sweep", {"step_b": 40.0, "spin": 290.0, "rise_b": 1.0, "hip_x": -8.0, "hip_turn": -10.0, "leg_f_upper": -112.0, "leg_f_lower": 85.0, "torso": -10.0, "head": 8.0, "hip_y": 0.0}],
-		["active", {"step_b": 40.0, "spin": 360.0, "rise_b": 1.0, "hip_x": -14.0, "hip_turn": -24.0, "leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -46.0, "head": 26.0, "hip_y": 0.0}],
-		["active_end", {"step_b": 40.0, "spin": 360.0, "rise_b": 1.0, "hip_x": -14.0, "hip_turn": -24.0, "leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -46.0, "head": 26.0, "hip_y": 0.0}],
+		["windup", {"step_b": 30.0, "spin": 170.0, "pivot_b": 170.0, "rise_b": 0.35, "hip_x": -4.0, "hip_turn": 14.0, "leg_f_upper": -95.0, "leg_f_lower": 120.0, "torso": 40.0, "head": -20.0, "hip_y": 6.0}],
+		["sweep", {"step_b": 40.0, "spin": 290.0, "pivot_b": 290.0, "rise_b": 0.35, "hip_x": -8.0, "hip_turn": -10.0, "leg_f_upper": -112.0, "leg_f_lower": 85.0, "torso": -10.0, "head": 8.0, "hip_y": 0.0}],
+		["active", {"step_b": 40.0, "spin": 360.0, "pivot_b": 360.0, "rise_b": 0.35, "hip_x": -14.0, "hip_turn": -24.0, "leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -46.0, "head": 26.0, "hip_y": 0.0}],
+		["active_end", {"step_b": 40.0, "spin": 360.0, "pivot_b": 360.0, "rise_b": 0.35, "hip_x": -14.0, "hip_turn": -24.0, "leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -46.0, "head": 26.0, "hip_y": 0.0}],
 		["follow", {}],
-		["end", {"spin": 360.0}]],
+		["end", {"spin": 360.0, "pivot_b": 360.0}]],
 	"elbow": [["start", {"cover_f": 0.0}],
 		["windup", {"cover_f": 0.0, "cover_b": 1.0, "hip_x": -5.0, "hip_turn": -5.0, "arm_f_upper": -60.0, "arm_f_lower": -150.0, "torso": -4.0}],
 		["active", {"cover_f": 0.0, "cover_b": 1.0, "hip_x": 12.0, "hip_turn": 10.0, "arm_f_upper": -100.0, "arm_f_lower": -160.0, "torso": 24.0, "head": -10.0}],
@@ -196,9 +201,9 @@ const SHOTS := {
 		["end", {}]],
 	"roundhouse": [["start", {}],
 		["windup", {"step_f": -10.0, "turn": 40.0, "pivot_f": 60.0, "rise_f": 0.2, "hip_x": 4.0, "hip_turn": -10.0, "leg_b_upper": -60.0, "leg_b_lower": 115.0, "torso": -14.0, "hip_y": 0.0}],
-		["sweep", {"step_f": -16.0, "turn": 90.0, "pivot_f": 120.0, "rise_f": 0.4, "hip_x": 10.0, "hip_turn": -20.0, "leg_b_upper": -100.0, "leg_b_lower": 95.0, "torso": -30.0, "head": 14.0, "hip_y": 0.0}],
-		["active", {"step_f": -18.0, "turn": 165.0, "pivot_f": 170.0, "rise_f": 0.6, "hip_x": 14.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -26.0, "head": 16.0, "hip_y": 0.0}],
-		["active_end", {"step_f": -18.0, "turn": 165.0, "pivot_f": 170.0, "rise_f": 0.6, "hip_x": 14.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -26.0, "head": 16.0, "hip_y": 0.0}],
+		["sweep", {"step_f": -16.0, "turn": 90.0, "pivot_f": 120.0, "rise_f": 0.25, "hip_x": 10.0, "hip_turn": -20.0, "leg_b_upper": -100.0, "leg_b_lower": 95.0, "torso": -30.0, "head": 14.0, "hip_y": 0.0}],
+		["active", {"step_f": -18.0, "turn": 165.0, "pivot_f": 170.0, "rise_f": 0.3, "hip_x": 14.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -26.0, "head": 16.0, "hip_y": 0.0}],
+		["active_end", {"step_f": -18.0, "turn": 165.0, "pivot_f": 170.0, "rise_f": 0.3, "hip_x": 14.0, "hip_turn": -30.0, "leg_b_upper": -106.0, "leg_b_lower": 52.0, "torso": -26.0, "head": 16.0, "hip_y": 0.0}],
 		["follow", {}],
 		["end", {}]],
 	"hammer_fist": [["start", {"cover_f": 0.0, "open_f": 0.0, "arm_f_upper": -170.0, "arm_f_lower": -20.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0,
@@ -249,6 +254,10 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 static func full(changes: Dictionary) -> Dictionary:
 	var out := GUARD.duplicate()
 	out.merge(changes, true)
+	# the shoulders turn with the hips unless the pose says otherwise (a move's clock makes them trail; see angles())
+	for k in ["spin", "turn"]:
+		if not changes.has(k + "_upper"):
+			out[k + "_upper"] = out[k]
 	return out
 
 
@@ -283,6 +292,8 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 				var pose := blend(full(k0[1]), full(k1[1]), float(tt - k0[0]) / float(t1 - k0[0]))
 				if state == "walk":
 					pose.merge(_walk_feet(t, tune), true)
+					if t < WALK_EASE_IN:
+						pose = blend(full({"feet": 1.0}), pose, float(t) / WALK_EASE_IN)  # from the guard, no jump
 				return pose
 		return full({})
 	if SHOTS.has(state):
@@ -303,8 +314,48 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 		for k in LEAD:
 			if out.has(k) and k != striker:
 				out[k] = _shot_at(state, keys, poses, maxi(0, t + LEAD[k]), tune)[k]
+		# the hips turn first and the chest and arms follow: "spin" and "turn" above are the hips (read ahead), these
+		# are the shoulders, on the move's own clock (the assistant team's fourth review: show the hips leading)
+		out["spin_upper"] = now.get("spin", 0.0)
+		out["turn_upper"] = now.get("turn", 0.0)
 		return out
 	return full({})
+
+
+## The landing (the assistant team's fourth review, 2026-11-02: soften it). Falling the last REACH_HEIGHT px, the legs
+## reach down for the street. The frame the feet touch stays sharp; then over the next frames the knees and hips take
+## his weight (a sink of up to SINK px, deepest LAND_PEAK frames in) and he rises again by LAND_SETTLE frames, the feet
+## staying where they landed. It runs on into the guard. since = frames since the touchdown, or -1 in the air.
+const REACH_HEIGHT := 48.0
+const LAND_REACH := {"leg_f_upper": -28.0, "leg_f_lower": 22.0, "leg_b_upper": 12.0, "leg_b_lower": 26.0}
+const SINK := 18.0
+const LAND_PEAK := 4
+const LAND_SETTLE := 16
+
+
+static func landing(pose: Dictionary, since: int, height: float, falling: bool) -> Dictionary:
+	var out := pose.duplicate()
+	if since < 0:
+		if falling and height < REACH_HEIGHT:
+			var k := clampf(1.0 - height / REACH_HEIGHT, 0.0, 1.0)
+			k = k * k * (3.0 - 2.0 * k)
+			for key in LAND_REACH:
+				out[key] = lerpf(out.get(key, 0.0), LAND_REACH[key], k)
+		return out
+	var dip := sink_at(since)
+	out["hip_y"] = out.get("hip_y", 0.0) + dip
+	out["torso"] = out.get("torso", 0.0) + dip * 0.3  # the chest folds a little over the bent knees
+	return out
+
+
+## How far the hips have sunk, `since` frames after a touchdown.
+static func sink_at(since: int) -> float:
+	if since <= 0 or since >= LAND_SETTLE:
+		return 0.0
+	if since <= LAND_PEAK:
+		return SINK * sin(PI * 0.5 * float(since) / LAND_PEAK)
+	var k := float(since - LAND_PEAK) / float(LAND_SETTLE - LAND_PEAK)
+	return SINK * (1.0 - k * k * (3.0 - 2.0 * k))
 
 
 ## Where the feet are in the shuffle at tick t: each foot steps out over WALK_STEP ticks (lifted, eased), then stays
@@ -378,6 +429,8 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 	out["open_b"] = pose.get("open_b", 0.0)
 	for k in ["rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b"]:
 		out[k] = pose.get(k, 0.0)
+	out["spin_upper"] = pose.get("spin_upper", out["spin"])  # the shoulders (they trail the hips in a move)
+	out["turn_upper"] = pose.get("turn_upper", out["turn"])
 	for side in ["f", "b"]:
 		_settle_foot(out, side, grounded)
 	if not grounded:

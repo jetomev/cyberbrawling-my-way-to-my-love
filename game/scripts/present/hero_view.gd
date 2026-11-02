@@ -13,6 +13,8 @@ var body: Node2D
 var shadow: Polygon2D
 var tint := Color.WHITE
 var facing := 1.0
+var since_touch := 999  # frames since the feet last touched down (for the landing's sink and rise)
+var was_grounded := true
 
 
 func _init(body_tint := Color.WHITE) -> void:
@@ -130,7 +132,15 @@ func sync(f, ground_y: float) -> void:
 	facing = f.facing
 	var height := clampf(f.y / 200.0, 0.0, 1.0)
 	shadow.scale = Vector2.ONE * (1.0 - height * 0.45)
-	apply(Poses.angles(f.state, f.t, f.tune), f.on_ground())
+	var grounded: bool = f.on_ground()
+	if grounded and not was_grounded:
+		since_touch = 0
+	elif grounded:
+		since_touch += 1
+	was_grounded = grounded
+	var floor_y: float = f.world.floor_at(f.x, f.z, f.y) if f.world != null else 0.0
+	var pose := Poses.landing(Poses.angles(f.state, f.t, f.tune), since_touch if grounded else -1, f.y - floor_y, f.vy < 0.0)
+	apply(pose, grounded)
 	body.modulate = Color(1.6, 1.6, 1.9) if f.blocking() == "perfect" else Color.WHITE  # a perfect block flashes
 
 
@@ -159,18 +169,24 @@ func apply(pose: Dictionary, grounded := true) -> void:
 	# as for a hip turn, and past 90 the drawing flips to face the other way, his back to us
 	var spun := cos(deg_to_rad(baked["spin"]))
 	body.scale.x = facing * (-1.0 if spun < 0.0 else 1.0)
+	# the hips turn first and the shoulders follow: while the hips have come round and the shoulders haven't yet (or
+	# the other way about), the upper body is mirrored back to where the shoulders still face
+	var spun_top := cos(deg_to_rad(baked["spin_upper"]))
+	bones["belly"].scale.y = -1.0 if (spun < 0.0) != (spun_top < 0.0) else 1.0
 	# the hips and shoulders turn over (a turn, or a spin): the chest narrows, never below about half; past 90 the
-	# far-side arm and leg come in front, lit as near
+	# far-side leg (with the hips) and arm (with the shoulders) come in front, lit as near
 	var over := cos(deg_to_rad(baked["turn"] + baked["spin"]))
+	var over_top := cos(deg_to_rad(baked["turn_upper"] + baked["spin_upper"]))
 	for n in ["belly", "chest"]:
-		bones[n].get_node("Part").scale.y = maxf(absf(over), 0.55)
+		bones[n].get_node("Part").scale.y = maxf(absf(over_top), 0.55)
 	for name in bones:
 		var spec: Array = Poses.BONES[name]
 		var part: Node2D = bones[name].get_node_or_null("Part")
 		if part == null or name in ["belly", "chest", "neck", "head"]:
 			continue
 		var far: bool = spec[5] == 1
-		if over < 0.0:
+		var turned := over if name.begins_with("leg") or name.begins_with("foot") or name.begins_with("toe") else over_top
+		if turned < 0.0:
 			far = not far
 		part.z_index = -1 if far else 0
 		var drawn_far: bool = spec[5] == 1

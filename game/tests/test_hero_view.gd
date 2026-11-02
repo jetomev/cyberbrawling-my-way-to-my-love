@@ -59,11 +59,12 @@ func test_every_move_has_a_pose() -> void:
 func test_walk_loops_without_a_hitch() -> void:
 	var t := Tuning.fresh()
 	var length: int = Poses.LOOPS["walk"][0]
-	var a := Poses.angles("walk", 0, t)
-	var b := Poses.angles("walk", length, t)
+	# (the first steps ease out of the guard, so compare a cycle in with the next one)
+	var a := Poses.angles("walk", length, t)
+	var b := Poses.angles("walk", 2 * length, t)
 	for k in a:
 		check(is_equal_approx(a[k], b[k]), "walk %s matches across the loop" % k)
-	var last := Poses.angles("walk", length - 1, t)
+	var last := Poses.angles("walk", 2 * length - 1, t)
 	check(absf(last["leg_f_upper"] - a["leg_f_upper"]) < 8.0, "the last frame flows into the first")
 
 

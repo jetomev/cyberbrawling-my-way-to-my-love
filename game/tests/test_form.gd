@@ -91,7 +91,8 @@ func test_the_spinning_kicks_pivot_and_turn_more() -> void:
 		var b := Poses.bake(Poses.angles(m, Moves.data(m, t)["startup"], t), true)
 		var heel: Vector2 = Poses._end("leg_%s_lower" % stand[m], b)[0]
 		var toe: Vector2 = Poses._end("toe_" + stand[m], b)[0]
-		check(heel.y < toe.y - 15.0, "%s: the standing heel is up, pivoting on the toes (heel %.0f, toes %.0f)" % [m, heel.y, toe.y])
+		# on the ball of the foot to pivot, but low enough that the foot turning round shows (fourth review)
+		check(heel.y < toe.y - 8.0 and heel.y > toe.y - 18.0, "%s: the standing heel is up, pivoting on the ball of the foot (heel %.0f, toes %.0f)" % [m, heel.y, toe.y])
 		check(absf(toe.y) < 1.0, "%s: and the toes are on the street (%.1f)" % [m, toe.y])
 		for plain in ["kick", "body_kick"]:
 			var p := Poses.angles(plain, Moves.data(plain, t)["startup"], t)
@@ -234,3 +235,37 @@ func test_the_roundhouse_and_the_spin_kick_land_differently() -> void:
 	check(r["turn"] >= 150.0, "the roundhouse's waist and shoulders are turned over, his back to us (%.0f)" % r["turn"])
 	check(fmod(s["spin"], 360.0) == 0.0 and s["turn"] == 0.0, "the spin kick lands facing front")
 	check(r["torso"] > s["torso"] + 12.0, "the roundhouse turns upright, the spin kick leans far back (%.0f vs %.0f)" % [r["torso"], s["torso"]])
+
+
+func test_the_hips_lead_the_turn() -> void:
+	# fourth review: on the spin and the roundhouse they couldn't see the hips leading
+	var t := Tuning.fresh()
+	var spin_lead := false
+	for tt in range(0, Moves.data("spin_kick", t)["startup"] + 1):
+		var p := Poses.angles("spin_kick", tt, t)
+		spin_lead = spin_lead or (cos(deg_to_rad(p["spin"])) < 0.0 and cos(deg_to_rad(p["spin_upper"])) > 0.0)
+	check(spin_lead, "the spin kick's hips come round while the shoulders still face the front")
+	var turn_lead := false
+	for tt in range(0, Moves.data("roundhouse", t)["startup"] + 1):
+		var p := Poses.angles("roundhouse", tt, t)
+		turn_lead = turn_lead or (p["turn"] >= 90.0 and p["turn_upper"] < 90.0)
+	check(turn_lead, "the roundhouse's hips turn over before the shoulders do")
+	var v = HeroView.new()
+	v.apply(Poses.full({"spin": 120.0, "spin_upper": 60.0}))
+	check(v.body.scale.x < 0.0 and v.bones["belly"].scale.y < 0.0, "drawn: hips round, the upper body mirrored back to where the shoulders face")
+	eq([v.bones["leg_b_upper"].get_node("Part").z_index, v.bones["arm_b_upper"].get_node("Part").z_index], [0, -1], "the far leg has come in front with the hips; the far arm hasn't yet")
+	v.free()
+
+
+func test_the_standing_foot_pivots_where_it_shows() -> void:
+	var t := Tuning.fresh()
+	var v = HeroView.new()
+	var narrowest := 1.0
+	for tt in range(0, Moves.data("spin_kick", t)["startup"] + 1):
+		v.apply(Poses.angles("spin_kick", tt, t))
+		narrowest = minf(narrowest, absf(v.bones["foot_b"].get_node("Part").scale.x))
+	check(narrowest < 0.5, "the spin kick's standing foot turns round gradually, edge-on on the way (%.2f wide)" % narrowest)
+	var hit := Poses.angles("roundhouse", Moves.data("roundhouse", t)["startup"], t)
+	v.apply(hit)
+	check(v.bones["foot_f"].get_node("Part").scale.x < -0.5 and hit["rise_f"] <= 0.35, "the roundhouse's standing foot points back, flat enough to see it")
+	v.free()

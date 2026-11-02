@@ -37,6 +37,8 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] The team's notes on the D-25 build; their call on the landing's one-frame snap into the crouch (D-22)
 - [x] The stance: low, wide, weight between the feet, chin down, hands up; the guard rocks; the walk is a shuffle (solo) (D-26)
 - [x] The posture under every move: planted feet stay put, the hips do the shifting, heel drive, the street stops a swinging foot (solo) (D-26)
+- [x] Kicks stand tall on the standing leg (step-up for front-leg kicks) (solo) (D-26)
+- [x] Fourth review: the landing reaches, touches, sinks and rises; the hips lead the spin and roundhouse; the standing foot pivots where it shows (solo) (D-26)
 - [ ] Each move pose by pose against the team's reference poses (wind-up, strike, follow-through, back to guard) (D-26)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
