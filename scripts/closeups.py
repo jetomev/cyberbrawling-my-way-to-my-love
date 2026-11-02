@@ -71,7 +71,8 @@ def panel(src, box, size, text):
     side, x, y = box
     label = f",drawtext=text='{text}':x=6:y=6:fontsize={max(14, size // 16)}:fontcolor=white:box=1:boxcolor=black@0.55" \
         if text else ""
-    return f"[{src}]crop={side}:{side}:{x}:{y},scale={size}:{size}:flags=lanczos{label}"
+    # opaque in the end: a see-through label box would otherwise leave the picture with a transparency layer
+    return f"[{src}]crop={side}:{side}:{x}:{y},scale={size}:{size}:flags=lanczos{label},format=rgb24"
 
 
 def ffmpeg(inputs, graph, out):
@@ -147,7 +148,7 @@ def main():
         group = tiles[i:i + 4]
         real = len(group)
         group = group + [group[-1]] * (4 - real)
-        graph = ";".join(f"[{j}]" + ("drawbox=x=0:y=0:w=iw:h=ih:c=black:t=fill" if j >= real else "null") + f"[t{j}]" for j in range(4)) \
+        graph = ";".join(f"[{j}]" + ("format=rgb24,lutrgb=r=0:g=0:b=0" if j >= real else "null") + f"[t{j}]" for j in range(4)) \
             + ";" + "".join(f"[t{j}]" for j in range(4)) + "hstack=inputs=4"
         line = out / "moves" / f"row{i // 4}.png"
         ffmpeg(group, graph, line)
