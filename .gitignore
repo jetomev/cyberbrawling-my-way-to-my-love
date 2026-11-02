@@ -6,3 +6,6 @@ scratch/
 # Script logs
 logs/
 __pycache__/
+
+# The review shelf folder for scripts/build.sh (set per machine, never committed)
+.review-shelf

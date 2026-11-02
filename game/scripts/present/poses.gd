@@ -45,7 +45,14 @@ const BONES := {
 }
 
 ## Keys a pose may hold besides bones: shared or automatic parts that bake() turns into bone angles.
-const SOFT_KEYS := ["hip_y", "torso", "open_f", "open_b"]
+const SOFT_KEYS := ["hip_x", "hip_y", "hip_turn", "torso", "open_f", "open_b"]
+
+## The whip (D-21): in a strike the hips move first and the fist or foot arrives last. Each key is read this many
+## ticks ahead on the move's curve, so the hips lead, the spine follows, then the shoulder and the upper limb; the
+## forearm, hand, shin and foot keep the move's own timing (so the blow still lands when the logic says it does).
+## The head trails a tick behind.
+const LEAD := {"hip_x": 3, "hip_turn": 3, "hip_y": 3, "torso": 2, "arm_f_upper": 1, "arm_b_upper": 1,
+	"leg_f_upper": 1, "leg_b_upper": 1, "head": -1}
 const FOOT_LENGTH := 24.0  # ankle to the ball of the foot
 const TOE_LENGTH := 11.0  # an ankle higher than foot + toes lets the foot point
 
@@ -53,18 +60,19 @@ const GUARD := {
 	"torso": 8.0, "head": -8.0, "hand_f": -15.0, "hand_b": -15.0,
 	"arm_f_upper": -50.0, "arm_f_lower": -85.0, "arm_b_upper": -25.0, "arm_b_lower": -100.0,
 	"leg_f_upper": -16.0, "leg_f_lower": 12.0, "leg_b_upper": 16.0, "leg_b_lower": 12.0, "hip_y": 5.0,
-	"open_f": 0.0, "open_b": 0.0,
+	"open_f": 0.0, "open_b": 0.0, "hip_x": 0.0, "hip_turn": 0.0,
 }
 
 ## Looping states: [loop length in ticks, [tick, changes from GUARD], ...]
 const LOOPS := {
-	"idle": [60, [0, {}], [30, {"hip_y": 9.0, "arm_f_upper": -46.0, "torso": 10.0}]],
+	"idle": [60, [0, {"hip_x": -3.0, "hip_turn": -2.0}], [30, {"hip_y": 9.0, "hip_x": 3.0, "hip_turn": 2.0,
+		"arm_f_upper": -46.0, "torso": 10.0}]],
 	"walk": [32,
 		[0, {"leg_f_upper": -30.0, "leg_f_lower": 8.0, "leg_b_upper": 26.0, "leg_b_lower": 28.0, "hip_y": 6.0,
-			"arm_f_upper": -42.0, "arm_b_upper": -34.0}],
+			"hip_turn": -4.0, "arm_f_upper": -42.0, "arm_b_upper": -34.0}],
 		[8, {"leg_f_upper": 0.0, "leg_f_lower": 30.0, "leg_b_upper": 0.0, "leg_b_lower": 4.0, "hip_y": 1.0, "torso": 11.0}],
 		[16, {"leg_f_upper": 26.0, "leg_f_lower": 28.0, "leg_b_upper": -30.0, "leg_b_lower": 8.0, "hip_y": 6.0,
-			"arm_f_upper": -58.0, "arm_b_upper": -16.0}],
+			"hip_turn": 4.0, "arm_f_upper": -58.0, "arm_b_upper": -16.0}],
 		[24, {"leg_f_upper": 0.0, "leg_f_lower": 4.0, "leg_b_upper": 0.0, "leg_b_lower": 30.0, "hip_y": 1.0, "torso": 11.0}]],
 }
 
@@ -76,10 +84,10 @@ const SHOTS := {
 	"land": [["start", {"leg_f_upper": -38.0, "leg_f_lower": 62.0, "leg_b_upper": 8.0, "leg_b_lower": 55.0, "hip_y": 24.0}],
 		["end", {}]],
 	"punch": [["start", {}],
-		["windup", {"arm_f_upper": -35.0, "arm_f_lower": -110.0, "torso": 2.0}],
-		["active", {"arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 12.0, "head": -10.0, "arm_b_upper": -5.0,
+		["windup", {"hip_x": -4.0, "hip_turn": -3.0, "arm_f_upper": -35.0, "arm_f_lower": -110.0, "torso": 2.0}],
+		["active", {"hip_x": 6.0, "hip_turn": 6.0, "arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 12.0, "head": -10.0, "arm_b_upper": -5.0,
 			"leg_f_upper": -24.0, "leg_b_upper": 24.0}],
-		["active_end", {"arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 12.0, "head": -10.0, "arm_b_upper": -5.0,
+		["active_end", {"hip_x": 6.0, "hip_turn": 6.0, "arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 12.0, "head": -10.0, "arm_b_upper": -5.0,
 			"leg_f_upper": -24.0, "leg_b_upper": 24.0}],
 		["follow", {}],
 		["end", {}]],
@@ -93,57 +101,57 @@ const SHOTS := {
 			"torso": 35.0, "leg_f_upper": -95.0, "leg_f_lower": 100.0, "leg_b_upper": 20.0, "leg_b_lower": 40.0, "hip_y": 10.0}],
 		["end", {}]],
 	"cross": [["start", {}],
-		["windup", {"arm_b_upper": -10.0, "arm_b_lower": -120.0, "torso": 0.0}],
-		["active", {"arm_b_upper": -96.0, "arm_b_lower": 0.0, "torso": 22.0, "head": -12.0, "arm_f_upper": -20.0, "arm_f_lower": -110.0, "leg_f_upper": -26.0, "leg_b_upper": 26.0}],
-		["active_end", {"arm_b_upper": -96.0, "arm_b_lower": 0.0, "torso": 22.0, "head": -12.0, "arm_f_upper": -20.0, "arm_f_lower": -110.0, "leg_f_upper": -26.0, "leg_b_upper": 26.0}],
+		["windup", {"hip_x": -8.0, "hip_turn": -6.0, "arm_b_upper": -10.0, "arm_b_lower": -120.0, "torso": 0.0}],
+		["active", {"hip_x": 16.0, "hip_turn": 10.0, "arm_b_upper": -96.0, "arm_b_lower": 0.0, "torso": 22.0, "head": -12.0, "arm_f_upper": -20.0, "arm_f_lower": -110.0, "leg_f_upper": -26.0, "leg_b_upper": 26.0}],
+		["active_end", {"hip_x": 16.0, "hip_turn": 10.0, "arm_b_upper": -96.0, "arm_b_lower": 0.0, "torso": 22.0, "head": -12.0, "arm_f_upper": -20.0, "arm_f_lower": -110.0, "leg_f_upper": -26.0, "leg_b_upper": 26.0}],
 		["follow", {}],
 		["end", {}]],
 	"hook": [["start", {}],
-		["windup", {"arm_f_upper": -20.0, "arm_f_lower": -95.0, "torso": -6.0}],
-		["active", {"arm_f_upper": -88.0, "arm_f_lower": -75.0, "torso": 26.0, "head": -12.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
-		["active_end", {"arm_f_upper": -88.0, "arm_f_lower": -75.0, "torso": 26.0, "head": -12.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
+		["windup", {"hip_x": -6.0, "hip_turn": -8.0, "arm_f_upper": -20.0, "arm_f_lower": -95.0, "torso": -6.0}],
+		["active", {"hip_x": 10.0, "hip_turn": 12.0, "arm_f_upper": -88.0, "arm_f_lower": -75.0, "torso": 26.0, "head": -12.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
+		["active_end", {"hip_x": 10.0, "hip_turn": 12.0, "arm_f_upper": -88.0, "arm_f_lower": -75.0, "torso": 26.0, "head": -12.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
 		["follow", {}],
 		["end", {}]],
 	"uppercut": [["start", {}],
-		["windup", {"arm_b_upper": 10.0, "arm_b_lower": -100.0, "torso": 10.0, "hip_y": 18.0}],
-		["active", {"arm_b_upper": -115.0, "arm_b_lower": -80.0, "torso": 15.0, "head": -6.0, "hip_y": 0.0}],
-		["active_end", {"arm_b_upper": -115.0, "arm_b_lower": -80.0, "torso": 15.0, "head": -6.0, "hip_y": 0.0}],
+		["windup", {"hip_x": -6.0, "hip_turn": 6.0, "arm_b_upper": 10.0, "arm_b_lower": -100.0, "torso": 10.0, "hip_y": 18.0}],
+		["active", {"hip_x": 10.0, "hip_turn": -8.0, "arm_b_upper": -115.0, "arm_b_lower": -80.0, "torso": 15.0, "head": -6.0, "hip_y": 0.0}],
+		["active_end", {"hip_x": 10.0, "hip_turn": -8.0, "arm_b_upper": -115.0, "arm_b_lower": -80.0, "torso": 15.0, "head": -6.0, "hip_y": 0.0}],
 		["follow", {}],
 		["end", {}]],
 	"knee": [["start", {}],
-		["windup", {"leg_f_upper": -40.0, "leg_f_lower": 60.0, "arm_f_upper": -80.0, "arm_b_upper": -70.0}],
-		["active", {"leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 14.0, "arm_f_upper": -40.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
-		["active_end", {"leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 14.0, "arm_f_upper": -40.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
+		["windup", {"hip_x": -4.0, "leg_f_upper": -40.0, "leg_f_lower": 60.0, "arm_f_upper": -80.0, "arm_b_upper": -70.0}],
+		["active", {"hip_x": 6.0, "hip_turn": -6.0, "leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 14.0, "arm_f_upper": -40.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
+		["active_end", {"hip_x": 6.0, "hip_turn": -6.0, "leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 14.0, "arm_f_upper": -40.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
 		["follow", {}],
 		["end", {}]],
 	"push_kick": [["start", {}],
-		["windup", {"leg_f_upper": -80.0, "leg_f_lower": 110.0, "torso": -6.0, "hip_y": 0.0}],
-		["active", {"leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -30.0, "head": 16.0, "leg_b_upper": 10.0, "hip_y": 0.0}],
-		["active_end", {"leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -30.0, "head": 16.0, "leg_b_upper": 10.0, "hip_y": 0.0}],
+		["windup", {"hip_x": -6.0, "hip_turn": -4.0, "leg_f_upper": -80.0, "leg_f_lower": 110.0, "torso": -6.0, "hip_y": 0.0}],
+		["active", {"hip_x": 14.0, "hip_turn": -14.0, "leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -30.0, "head": 16.0, "leg_b_upper": 10.0, "hip_y": 0.0}],
+		["active_end", {"hip_x": 14.0, "hip_turn": -14.0, "leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -30.0, "head": 16.0, "leg_b_upper": 10.0, "hip_y": 0.0}],
 		["follow", {}],
 		["end", {}]],
 	"body_kick": [["start", {}],
-		["windup", {"leg_b_upper": -40.0, "leg_b_lower": 80.0, "torso": -10.0, "hip_y": 0.0}],
-		["active", {"leg_b_upper": -95.0, "leg_b_lower": 0.0, "torso": -28.0, "head": 16.0, "leg_f_upper": 6.0, "leg_f_lower": 6.0, "hip_y": 0.0}],
-		["active_end", {"leg_b_upper": -95.0, "leg_b_lower": 0.0, "torso": -28.0, "head": 16.0, "leg_f_upper": 6.0, "leg_f_lower": 6.0, "hip_y": 0.0}],
+		["windup", {"hip_x": 6.0, "hip_turn": -4.0, "leg_b_upper": -40.0, "leg_b_lower": 80.0, "torso": -10.0, "hip_y": 0.0}],
+		["active", {"hip_x": 12.0, "hip_turn": -12.0, "leg_b_upper": -95.0, "leg_b_lower": 0.0, "torso": -28.0, "head": 16.0, "leg_f_upper": 6.0, "leg_f_lower": 6.0, "hip_y": 0.0}],
+		["active_end", {"hip_x": 12.0, "hip_turn": -12.0, "leg_b_upper": -95.0, "leg_b_lower": 0.0, "torso": -28.0, "head": 16.0, "leg_f_upper": 6.0, "leg_f_lower": 6.0, "hip_y": 0.0}],
 		["follow", {}],
 		["end", {}]],
 	"spin_kick": [["start", {}],
-		["windup", {"leg_f_upper": -40.0, "leg_f_lower": 100.0, "torso": 40.0, "head": -20.0, "hip_y": 6.0}],
-		["active", {"leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -42.0, "head": 24.0, "leg_b_upper": 12.0, "hip_y": 0.0}],
-		["active_end", {"leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -42.0, "head": 24.0, "leg_b_upper": 12.0, "hip_y": 0.0}],
+		["windup", {"hip_x": -4.0, "hip_turn": 10.0, "leg_f_upper": -40.0, "leg_f_lower": 100.0, "torso": 40.0, "head": -20.0, "hip_y": 6.0}],
+		["active", {"hip_x": -14.0, "hip_turn": -16.0, "leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -42.0, "head": 24.0, "leg_b_upper": 12.0, "hip_y": 0.0}],
+		["active_end", {"hip_x": -14.0, "hip_turn": -16.0, "leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -42.0, "head": 24.0, "leg_b_upper": 12.0, "hip_y": 0.0}],
 		["follow", {}],
 		["end", {}]],
 	"elbow": [["start", {}],
-		["windup", {"arm_f_upper": -60.0, "arm_f_lower": -150.0, "torso": -4.0}],
-		["active", {"arm_f_upper": -100.0, "arm_f_lower": -160.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -22.0, "leg_b_upper": 22.0}],
-		["active_end", {"arm_f_upper": -100.0, "arm_f_lower": -160.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -22.0, "leg_b_upper": 22.0}],
+		["windup", {"hip_x": -5.0, "hip_turn": -5.0, "arm_f_upper": -60.0, "arm_f_lower": -150.0, "torso": -4.0}],
+		["active", {"hip_x": 12.0, "hip_turn": 10.0, "arm_f_upper": -100.0, "arm_f_lower": -160.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -22.0, "leg_b_upper": 22.0}],
+		["active_end", {"hip_x": 12.0, "hip_turn": 10.0, "arm_f_upper": -100.0, "arm_f_lower": -160.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -22.0, "leg_b_upper": 22.0}],
 		["follow", {}],
 		["end", {}]],
 	"roundhouse": [["start", {}],
-		["windup", {"leg_b_upper": -50.0, "leg_b_lower": 100.0, "torso": -14.0, "hip_y": 0.0}],
-		["active", {"leg_b_upper": -108.0, "leg_b_lower": -4.0, "torso": -36.0, "head": 20.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
-		["active_end", {"leg_b_upper": -108.0, "leg_b_lower": -4.0, "torso": -36.0, "head": 20.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
+		["windup", {"hip_x": 6.0, "hip_turn": -6.0, "leg_b_upper": -50.0, "leg_b_lower": 100.0, "torso": -14.0, "hip_y": 0.0}],
+		["active", {"hip_x": 14.0, "hip_turn": -16.0, "leg_b_upper": -108.0, "leg_b_lower": -4.0, "torso": -36.0, "head": 20.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
+		["active_end", {"hip_x": 14.0, "hip_turn": -16.0, "leg_b_upper": -108.0, "leg_b_lower": -4.0, "torso": -36.0, "head": 20.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
 		["follow", {}],
 		["end", {}]],
 	"hammer_fist": [["start", {"open_f": 0.0, "arm_f_upper": -170.0, "arm_f_lower": -20.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0,
@@ -154,10 +162,10 @@ const SHOTS := {
 		"torso": 4.0, "head": 12.0, "leg_f_upper": -20.0, "leg_f_lower": 22.0, "leg_b_upper": 20.0, "leg_b_lower": 22.0,
 		"hip_y": 12.0}]],
 	"kick": [["start", {}],
-		["windup", {"leg_f_upper": -72.0, "leg_f_lower": 105.0, "torso": -8.0, "hip_y": 0.0}],
-		["active", {"leg_f_upper": -100.0, "leg_f_lower": 0.0, "torso": -26.0, "head": 18.0, "leg_b_upper": 8.0,
+		["windup", {"hip_x": -6.0, "hip_turn": -4.0, "leg_f_upper": -72.0, "leg_f_lower": 105.0, "torso": -8.0, "hip_y": 0.0}],
+		["active", {"hip_x": 12.0, "hip_turn": -12.0, "leg_f_upper": -100.0, "leg_f_lower": 0.0, "torso": -26.0, "head": 18.0, "leg_b_upper": 8.0,
 			"leg_b_lower": 4.0, "hip_y": 0.0}],
-		["active_end", {"leg_f_upper": -100.0, "leg_f_lower": 0.0, "torso": -26.0, "head": 18.0, "leg_b_upper": 8.0,
+		["active_end", {"hip_x": 12.0, "hip_turn": -12.0, "leg_f_upper": -100.0, "leg_f_lower": 0.0, "torso": -26.0, "head": 18.0, "leg_b_upper": 8.0,
 			"leg_b_lower": 4.0, "hip_y": 0.0}],
 		["follow", {}],
 		["end", {}]],
@@ -234,13 +242,26 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 			if keys[i][0] == "follow":
 				p = overshoot(poses[i - 1])
 			poses.append(p)
-		for i in range(keys.size() - 1):
-			var a: int = moment(state, keys[i][0], tune)
-			var b: int = moment(state, keys[i + 1][0], tune)
-			if t < b or i == keys.size() - 2:
-				var k := 1.0 if b <= a else clampf(float(t - a) / float(b - a), 0.0, 1.0)
-				return blend(poses[i], poses[i + 1], k)
+		var now := _shot_at(state, keys, poses, t, tune)
+		if not Moves.is_move(state):
+			return now
+		var out := now.duplicate()
+		var striker: String = Moves.data(state, tune)["limb"]  # the striking part keeps the move's own timing
+		for k in LEAD:
+			if out.has(k) and k != striker:
+				out[k] = _shot_at(state, keys, poses, maxi(0, t + LEAD[k]), tune)[k]
+		return out
 	return full({})
+
+
+static func _shot_at(state: String, keys: Array, poses: Array, t: int, tune: Dictionary) -> Dictionary:
+	for i in range(keys.size() - 1):
+		var a: int = moment(state, keys[i][0], tune)
+		var b: int = moment(state, keys[i + 1][0], tune)
+		if t < b or i == keys.size() - 2:
+			var k := 1.0 if b <= a else clampf(float(t - a) / float(b - a), 0.0, 1.0)
+			return blend(poses[i], poses[i + 1], k)
+	return poses[-1]
 
 
 ## Turns a pose into an angle for every bone (degrees, added to the rest angle), plus hip_y and the open hands.
@@ -250,33 +271,88 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 	for b in BONES:
 		out[b] = pose.get(b, 0.0)
 	var lean: float = pose.get("torso", 0.0)
-	out["belly"] += lean * 0.4
+	var pelvis: float = pose.get("hip_turn", 0.0)
+	# the pelvis tips first and the spine bends the rest of the way: the total lean is still "torso"
+	out["belly"] += lean * 0.4 - pelvis
 	out["chest"] += lean * 0.6
 	out["neck"] += -lean * 0.35  # the head follows the eyes, not the spine
+	var rolls := {}
 	for side in ["f", "b"]:
-		# a shoulder rolls forward as its arm reaches; the arm keeps its aim, only its root moves
+		# a shoulder rolls forward as its arm reaches
 		var reach: float = pose.get("arm_%s_upper" % side, 0.0) - GUARD["arm_%s_upper" % side]
-		var roll: float = pose.get("shoulder_" + side, clampf(reach * 0.8, -75.0, 25.0))
+		rolls[side] = clampf(reach * 0.8, -75.0, 25.0)
+	for side in ["f", "b"]:
+		# … and the other shoulder swings back, the way a body turns into a punch; the arms keep their aim
+		var other := "b" if side == "f" else "f"
+		var roll: float = pose.get("shoulder_" + side, rolls[side] - rolls[other] * 0.4)
 		out["shoulder_" + side] = roll
 		out["arm_%s_upper" % side] -= roll
+	out["hip_x"] = 0.0
 	out["hip_y"] = pose.get("hip_y", 0.0)
 	out["open_f"] = pose.get("open_f", 0.0)
 	out["open_b"] = pose.get("open_b", 0.0)
 	for side in ["f", "b"]:
 		_settle_foot(out, side, grounded)
-	if grounded:
-		# the body stands on its feet: settle it until the lower planted foot touches the street, then re-plant
-		for i in 4:
-			var lowest := -INF
-			for side in ["f", "b"]:
-				if -(_end("leg_%s_lower" % side, out)[0] as Vector2).y <= FOOT_LENGTH:
-					lowest = maxf(lowest, (_end("toe_" + side, out)[0] as Vector2).y)
-			if lowest == -INF:
-				break
-			out["hip_y"] -= lowest
-			for side in ["f", "b"]:
-				_settle_foot(out, side, grounded)
+	if not grounded:
+		out["hip"] = pelvis
+		for side in ["f", "b"]:
+			out["leg_%s_upper" % side] -= pelvis
+		return out
+	# the body stands on its feet: settle it until the lower planted foot touches the street, then re-plant
+	for i in 4:
+		var lowest := -INF
+		for side in ["f", "b"]:
+			if _planted(out, side):
+				lowest = maxf(lowest, (_end("toe_" + side, out)[0] as Vector2).y)
+		if lowest == -INF:
+			break
+		out["hip_y"] -= lowest
+		for side in ["f", "b"]:
+			_settle_foot(out, side, grounded)
+	# the weight shifts and the pelvis tips while the planted feet stay where they are: the legs bend to keep them
+	var anchors := {}
+	for side in ["f", "b"]:
+		if _planted(out, side):
+			anchors[side] = _end("leg_%s_lower" % side, out)[0]
+	out["hip_x"] = pose.get("hip_x", 0.0)
+	out["hip"] = pelvis
+	for side in ["f", "b"]:
+		if not anchors.has(side):
+			out["leg_%s_upper" % side] -= pelvis  # a raised leg keeps its aim: the pelvis bends the back, not the kick
+	# a leg too short for the shift: sink the hips just enough for it to reach (a fighter drops his weight)
+	for side in anchors:
+		var hip_end: Array = _end("hip", out)
+		var joint: Vector2 = hip_end[0] + (BONES["leg_%s_upper" % side][1] as Vector2).rotated(hip_end[1])
+		var span: float = BONES["leg_%s_upper" % side][3] + BONES["leg_%s_lower" % side][3] - 1.0
+		var to: Vector2 = anchors[side] - joint
+		if to.length() > span and absf(to.x) < span:
+			out["hip_y"] += to.y - sqrt(span * span - to.x * to.x)
+	for side in anchors:
+		_reach_with_leg(out, side, anchors[side])
+		_settle_foot(out, side, grounded)
 	return out
+
+
+static func _planted(out: Dictionary, side: String) -> bool:
+	return -(_end("leg_%s_lower" % side, out)[0] as Vector2).y <= FOOT_LENGTH + TOE_LENGTH
+
+
+## Bends a leg so its ankle lands on target (two bones, the knee pointing forward, as knees do).
+static func _reach_with_leg(out: Dictionary, side: String, target: Vector2) -> void:
+	var upper := "leg_%s_upper" % side
+	var lower := "leg_%s_lower" % side
+	var hip_end: Array = _end("hip", out)
+	var joint: Vector2 = hip_end[0] + (BONES[upper][1] as Vector2).rotated(hip_end[1])
+	var l1: float = BONES[upper][3]
+	var l2: float = BONES[lower][3]
+	var to := target - joint
+	var d := clampf(to.length(), absf(l1 - l2) + 0.5, l1 + l2 - 0.5)
+	var cos_a := clampf((l1 * l1 + d * d - l2 * l2) / (2.0 * l1 * d), -1.0, 1.0)
+	var thigh := to.angle() - acos(cos_a)  # the smaller angle: the knee forward
+	var knee := joint + Vector2(l1, 0).rotated(thigh)
+	var shin := (target - knee).angle()
+	out[upper] = rad_to_deg(thigh - hip_end[1]) - BONES[upper][2]
+	out[lower] = rad_to_deg(shin - thigh) - BONES[lower][2]
 
 
 ## A planted foot keeps the ball of the foot and the toes on the street: the heel rises exactly as far as the leg
@@ -308,7 +384,7 @@ static func _end(bone: String, baked: Dictionary) -> Array:
 	while b != "":
 		chain.push_front(b)
 		b = BONES[b][0]
-	var pos := Vector2(0, baked.get("hip_y", 0.0))
+	var pos := Vector2(baked.get("hip_x", 0.0), baked.get("hip_y", 0.0))
 	var ang := 0.0
 	for name in chain:
 		var spec: Array = BONES[name]

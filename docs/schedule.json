@@ -126,6 +126,30 @@
           "todo": "A fuller body"
         },
         {
+          "id": "whip",
+          "name": "Motion from the hips: the whip",
+          "who": "claude",
+          "start": "2026-11-01",
+          "end": "2026-11-02",
+          "todo": "Motion from the hips"
+        },
+        {
+          "id": "build",
+          "name": "Build step onto the review shelf",
+          "who": "claude",
+          "start": "2026-11-01",
+          "end": "2026-11-02",
+          "todo": "The build step"
+        },
+        {
+          "id": "kungfu",
+          "name": "Kung-fu patterns (after the team's research)",
+          "who": "claude",
+          "start": "2026-11-03",
+          "end": "2026-11-07",
+          "todo": "Kung-fu patterns"
+        },
+        {
           "id": "enemy",
           "name": "First enemy, weapon drop and pickup",
           "who": "claude",

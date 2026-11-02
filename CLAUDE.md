@@ -48,6 +48,18 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   arms, hands that are fists or open, thighs, shins, feet, toes). Poses stay short and `poses.gd` bake() adds the body
   sense: feet stand on the street and roll onto the toes as the leg drives, shoulders roll into punches, the head
   follows the eyes; every strike winds up, lands, follows through and eases back. The real art uses the same parts.
+- **D-21** **Motion from the hips out** (Javier, 2026-11-01 23:45: "still stiff as a pipe... no hip movements, not
+  side movements, no back and shoulders moving with hits and kicks"): in a strike the hips move first, then the spine,
+  the shoulder and the upper limb, and the fist or foot arrives last, on the logic's timing (the whip, `LEAD` in
+  `poses.gd`); the weight shifts (`hip_x`) while planted feet stay put (two-bone leg solving; the hips sink if a leg
+  can't reach); the pelvis tips (`hip_turn`) and the back bends into kicks; one shoulder swings forward, the other
+  back. His wish for kung-fu patterns over karate (front, side and round kicks low, middle and high; fast punch strings
+  ending in a power punch from a side stance) waits for the assistant team's research, including whether free
+  motion-capture data can drive these bones and under what licence.
+- **D-22** **The team reviews every build before Javier** (Javier, 2026-11-01: "have the team critize the build,
+  before I do it"): `scripts/build.sh` is the build step: tests (red = no demo), the recorded demo, a still of every
+  move as it lands, a short note, all copied to the review shelf (its folder is set outside the repo in
+  `.review-shelf`, git-ignored). Javier sees a build after the reviewers' fixes, or with their list.
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 
@@ -68,6 +80,8 @@ project's role-play, ever.
 - Logic that can be tested bare lives in `game/scripts/sim/` (no nodes); what draws and plays lives in
   `game/scripts/present/`.
 - A bot plays every finished level on several seeds as part of the test run.
+- **A build is `scripts/build.sh`** (D-22): tests, the demo, the move stills, the note, the review shelf. Never hand
+  Javier a build that didn't go through it.
 - Every script Javier runs logs to `logs/` (with a `-latest` link) and ends with an OK line.
 - Packages: `nog` first; anything missing is a KognogOS finding.
 

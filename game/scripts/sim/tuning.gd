@@ -20,11 +20,11 @@ const DEFAULTS := {
 	"punch_startup": 4,
 	"punch_active": 3,
 	"punch_recovery": 8,
-	"punch_reach": 112.0,
+	"punch_reach": 128.0,
 	"kick_startup": 7,
 	"kick_active": 4,
 	"kick_recovery": 12,
-	"kick_reach": 125.0,
+	"kick_reach": 138.0,
 	"air_kick_startup": 3,  # the flying kick: pressed in the air, out until landing
 	"air_kick_active": 10,
 	"air_kick_reach": 140.0,

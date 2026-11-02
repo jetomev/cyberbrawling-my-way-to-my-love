@@ -124,7 +124,7 @@ func apply(pose: Dictionary, grounded := true) -> void:
 	for name in bones:
 		var bone: Bone2D = bones[name]
 		bone.rotation_degrees = Poses.BONES[name][2] + baked[name]
-	bones["hip"].position.y = Poses.BONES["hip"][1].y + baked["hip_y"]
+	bones["hip"].position = Poses.BONES["hip"][1] + Vector2(baked["hip_x"], baked["hip_y"])
 	for side in ["f", "b"]:
 		var hand: Node2D = bones["hand_" + side].get_node("Part")
 		var open: bool = baked["open_" + side] > 0.5

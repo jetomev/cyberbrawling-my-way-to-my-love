@@ -52,6 +52,8 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
   or d-pad, X punch, B kick, A jump; hold L or Shift, or Y or RB, to block). **F1 opens the feel lab**: change walk speed, jump, punch and kick timing and more
   while you play; F8 saves your changes for next time. `scripts/record.sh` records the scripted demo to a contact
   sheet and a clip.
+- `scripts/build.sh` is a build: the tests, the recorded demo, a still of every move, and a note, handed to the
+  reviewers first.
 - `TODO.md` — the live list.
 - `docs/schedule.json` — the timeline: every task's dates and the gates where Javier plays it; `scripts/gantt.py`
   turns it and the TODO ticks into the Gantt page.
