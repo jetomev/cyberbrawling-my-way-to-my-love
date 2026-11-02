@@ -7,13 +7,6 @@ extends RefCounted
 const BODY_HALF_WIDTH := 24.0  # how far a fighter's body reaches left and right of their x
 const BODY_HALF_DEPTH := 6.0
 
-## Damage a blow does to an object, and the height band it covers above the feet (a punch flies over a low crate).
-const BLOWS := {
-	"punch": {"damage": 1, "low": 120.0, "high": 230.0},
-	"kick": {"damage": 2, "low": 60.0, "high": 180.0},
-	"air_kick": {"damage": 3, "low": 30.0, "high": 170.0},
-}
-
 ## Each object: {id, kind, x0, x1, z0, z1, top, climbable, breakable, strength, broken}
 var objects: Array[Dictionary] = []
 var _hit_log := {}  # attack serial -> ids it already hit, so one blow hits an object once
@@ -73,7 +66,7 @@ func step_hits(fighters: Array) -> Array:
 		var box: Dictionary = f.hit_box()
 		if box.is_empty():
 			continue
-		var blow: Dictionary = BLOWS[f.state]
+		var blow: Dictionary = f.move()  # damage and height band, from moves.gd
 		var seen: Array = _hit_log.get(f.attack_serial, [])
 		for o in objects:
 			if o["broken"] or not o["breakable"] or o["id"] in seen:

@@ -5,12 +5,15 @@ extends RefCounted
 ## Space: x runs along the street, z is the depth of the street (0 = far edge), y is height above the street.
 ## An input is a Dictionary: {mx: -1..1, mz: -1..1, jump: bool, punch: bool, kick: bool}; the buttons are
 ## "pressed this tick", not "held". A world (street_world.gd) is optional: without one the street is empty.
+## Attacks and combos live in moves.gd: the state is the move's name ("punch", "cross", "spin_kick", …).
 
 const Tuning := preload("res://scripts/sim/tuning.gd")
+const Moves := preload("res://scripts/sim/moves.gd")
 
 const GROUND_STATES := ["idle", "walk"]
-const AIR_STATES := ["jump", "air_kick"]
-const ATTACKS := ["punch", "kick", "air_kick"]
+const DOUBLE_TAP_TICKS := 3
+const MAX_QUEUE := 2  # P then K pressed during one long blow play P then K
+const AIR_STATES := ["jump", "air_kick", "hammer_fist"]
 
 var tune: Dictionary
 var world = null
@@ -22,10 +25,14 @@ var vy := 0.0
 var facing := 1  # 1 = right, -1 = left
 var state := "idle"
 var t := 0  # ticks spent in the current state
-var buffered := ""  # a button pressed early, waiting for the fighter to be free
-var buffer_left := 0
+var queue: Array[String] = []  # buttons pressed early, in order, waiting for the fighter to be free
+var buffer_left := 0  # once free, how long the waiting presses stay good
+var clock := 0  # ticks since this fighter was made
+var last_press := -100  # the tick of the last attack button that counted
+var chain := ""  # the combo so far ("P", "PK", …); "" = none
+var chain_left := 0  # ticks left to continue the chain once free
 var attack_serial := 0  # counts attacks, so a world can tell one blow from the next
-var air_kicked := false  # one flying kick per jump
+var air_kicked := false  # one air attack (flying kick or hammer fist) per jump
 var push_ticks := 0  # how long the stick has pushed into something climbable
 var climb_from := Vector2.ZERO  # (x, y) where a climb started
 var climb_to := Vector2.ZERO  # (x, y) where it ends, on top
@@ -41,43 +48,58 @@ func _init(tuning: Dictionary = {}, start_x := 200.0, start_z := 80.0, street = 
 func step(inp: Dictionary) -> void:
 	var mx: float = clampf(inp.get("mx", 0.0), -1.0, 1.0)
 	var mz: float = clampf(inp.get("mz", 0.0), -1.0, 1.0)
+	clock += 1
 	for b in ["jump", "punch", "kick"]:
 		if inp.get(b, false):
-			buffered = b
+			# during a blow, a press is kept until the blow ends, so a rhythm of presses chains a combo; a press
+			# hard on the heels of the last one (a bounced or doubled tap) is dropped, so it can't fire twice
+			if b != "jump":
+				if clock - last_press < DOUBLE_TAP_TICKS:
+					continue
+				last_press = clock
+			if queue.size() < MAX_QUEUE:
+				queue.append(b)
 			buffer_left = tune["buffer_ticks"]
 	t += 1
 	match state:
 		"idle", "walk":
 			_ground(mx, mz)
-		"jump", "air_kick":
-			if state == "jump" and buffered == "kick" and not air_kicked:
-				_take_buffer()
+		"jump", "air_kick", "hammer_fist":
+			if state == "jump" and not queue.is_empty() and queue[0] in ["punch", "kick"] and not air_kicked:
+				var move: String = Moves.AIR["P" if _take_buffer() == "punch" else "K"]
 				air_kicked = true
 				attack_serial += 1
-				_enter("air_kick")
+				_enter(move)
 			_air(mx)
 		"land":
 			if t >= tune["land_ticks"]:
 				_enter("idle")
 		"climb":
 			_climb()
-		"punch", "kick":
-			if t >= attack_length(state):
+		_:
+			if _ground_attack() and t >= attack_length(state):
+				chain_left = tune["combo_window_ticks"]
 				_enter("idle")
 	# a fighter who just became free acts on a buffered button in the same tick
-	if state in GROUND_STATES and buffered != "":
+	if state in GROUND_STATES and not queue.is_empty():
 		_start(_take_buffer(), mx)
-	if buffer_left > 0:
-		buffer_left -= 1
-		if buffer_left == 0:
-			buffered = ""
+	if not _ground_attack():
+		if chain_left > 0:
+			chain_left -= 1
+		if chain_left == 0:
+			chain = ""
+		if buffer_left > 0:
+			buffer_left -= 1
+			if buffer_left == 0:
+				queue.clear()
+
+
+func _ground_attack() -> bool:
+	return Moves.is_move(state) and not Moves.is_air(state)
 
 
 func _take_buffer() -> String:
-	var b := buffered
-	buffered = ""
-	buffer_left = 0
-	return b
+	return queue.pop_front()
 
 
 func _blocked(nx: float, nz: float) -> bool:
@@ -162,11 +184,15 @@ func _start(action: String, mx: float) -> void:
 	if action == "jump":
 		vy = Tuning.takeoff_speed(tune)
 		vx = mx * tune["jump_speed"]
+		chain = ""
 		_enter("jump")
 	else:
 		vx = 0.0
 		attack_serial += 1
-		_enter(action)
+		var link: Array = Moves.next(chain, "P" if action == "punch" else "K")
+		chain = link[0]
+		chain_left = 0
+		_enter(link[1])
 
 
 func _enter(s: String) -> void:
@@ -179,25 +205,31 @@ func on_ground() -> bool:
 
 
 func attack_length(a: String) -> int:
-	return tune[a + "_startup"] + tune[a + "_active"] + tune[a + "_recovery"]
+	return Moves.length(a, tune)
 
 
-## "startup", "active" or "recovery" while attacking; "" otherwise. A flying kick stays out until landing.
+## "startup", "active" or "recovery" while attacking; "" otherwise. Air attacks stay out until landing.
 func attack_phase() -> String:
-	if not state in ATTACKS:
+	if not Moves.is_move(state):
 		return ""
-	if t < tune[state + "_startup"]:
+	var d := Moves.data(state, tune)
+	if t < d["startup"]:
 		return "startup"
-	if t < tune[state + "_startup"] + tune[state + "_active"]:
+	if t < d["startup"] + d["active"]:
 		return "active"
 	return "recovery"
+
+
+## The move being thrown, with its damage and effect (moves.gd), or {}.
+func move() -> Dictionary:
+	return Moves.data(state, tune) if Moves.is_move(state) else {}
 
 
 ## The space a blow covers this tick, or {} when nothing can be hit: {x0, x1, z0, z1} on the street.
 func hit_box() -> Dictionary:
 	if attack_phase() != "active":
 		return {}
-	var reach: float = tune[state + "_reach"]
+	var reach: float = move()["reach"]
 	var near := x + facing * 20.0
 	var far := x + facing * reach
 	return {"x0": minf(near, far), "x1": maxf(near, far), "z0": z - tune["hit_depth"], "z1": z + tune["hit_depth"]}

@@ -161,7 +161,7 @@ func test_early_press_is_buffered_into_the_next_move() -> void:
 	while f.t != 0 and waited < 10:
 		f.step(NONE)
 		waited += 1
-	eq(f.state, "punch", "the second punch came out")
+	eq(f.state, "cross", "the second press came out, as the combo's second hit (moves.gd)")
 	check(waited <= 3, "with no gap (%d ticks)" % waited)
 
 

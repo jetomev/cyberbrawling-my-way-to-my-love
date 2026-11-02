@@ -11,6 +11,7 @@ const Demo := preload("res://scripts/sim/demo.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 
 const STATES := ["idle", "walk", "jump", "land", "punch", "kick", "air_kick", "climb"]
+const Moves := preload("res://scripts/sim/moves.gd")
 
 
 func test_skeleton_is_whole() -> void:
@@ -47,7 +48,7 @@ func test_poses_name_only_real_bones() -> void:
 func test_every_move_has_a_pose() -> void:
 	var t := Tuning.fresh()
 	var guard := Poses.full({})
-	for s in STATES:
+	for s in STATES + Moves.TABLE.keys():
 		check(Poses.LOOPS.has(s) or Poses.SHOTS.has(s), "%s has a pose" % s)
 		var a := Poses.angles(s, 3, t)
 		eq(a.size(), guard.size(), "%s sets every bone" % s)
@@ -67,13 +68,20 @@ func test_walk_loops_without_a_hitch() -> void:
 
 
 func test_drawn_blows_reach_where_they_hit() -> void:
+	# every ground move: the striking limb's drawn tip lands within 15 px of the logic's reach, at a height inside
+	# the band the logic uses for hits (the picture never lies about what connects)
 	var t := Tuning.fresh()
+	for m in Moves.TABLE:
+		if Moves.is_air(m):
+			continue
+		var d := Moves.data(m, t)
+		var tip := Poses.tip(d["limb"], Poses.angles(m, d["startup"], t))
+		check(absf(tip.x - d["reach"]) <= 15.0, "%s: drawn tip at %.0f px, reach %.0f" % [m, tip.x, d["reach"]])
+		check(-tip.y >= d["low"] and -tip.y <= d["high"], "%s: tip height %.0f inside %.0f..%.0f" % [m, -tip.y, d["low"], d["high"]])
 	var fist := Poses.tip("arm_f_lower", Poses.angles("punch", t["punch_startup"], t))
 	var foot := Poses.tip("leg_f_lower", Poses.angles("kick", t["kick_startup"], t))
-	check(absf(fist.x - t["punch_reach"]) <= 15.0, "drawn fist at %.0f px, the punch reaches %.0f" % [fist.x, t["punch_reach"]])
-	check(absf(foot.x - t["kick_reach"]) <= 15.0, "drawn foot at %.0f px, the kick reaches %.0f" % [foot.x, t["kick_reach"]])
-	check(fist.y < -150.0 and fist.y > -240.0, "the punch is at head-to-chest height (%.0f)" % fist.y)
-	check(foot.y < -90.0 and foot.y > -200.0, "the kick is at body height (%.0f)" % foot.y)
+	check(fist.y < -150.0 and fist.y > -240.0, "the jab is at head-to-chest height (%.0f)" % fist.y)
+	check(foot.y < -90.0 and foot.y > -200.0, "the front kick is at body height (%.0f)" % foot.y)
 
 
 func test_view_follows_the_fighter() -> void:
@@ -103,7 +111,7 @@ func test_demo_shows_every_move() -> void:
 		seen[f.state] = true
 		if f.x > 2724.0 and f.y == 0.0 and f.state != "climb":
 			past_crate_two_on_ground = true
-	for s in STATES:
+	for s in STATES + ["cross", "hook", "body_kick", "spin_kick", "knee", "uppercut", "elbow", "roundhouse", "hammer_fist"]:
 		check(seen.has(s), "the demo shows %s" % s)
 	check(w.objects[0]["broken"], "it smashes the first crate")
 	check(not w.objects[2]["broken"] and past_crate_two_on_ground, "it jumps the second crate")

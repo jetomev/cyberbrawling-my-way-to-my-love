@@ -7,6 +7,8 @@ extends RefCounted
 ## torso, a positive offset leans it forward; a positive lower-leg offset bends the knee, a negative forearm offset
 ## bends the elbow up. "hip_y" moves the whole body down in pixels (a crouch, a bob).
 
+const Moves := preload("res://scripts/sim/moves.gd")
+
 ## Parents come before their children. name: [parent, position on the parent bone, rest angle, length, width, shade (0 = front, 1 = back)]
 const BONES := {
 	"hip": ["", Vector2(0, -125), 0.0, 0.0, 0.0, 0],
@@ -60,6 +62,55 @@ const SHOTS := {
 		["climb_mid", {"arm_f_upper": -60.0, "arm_f_lower": -30.0, "arm_b_upper": -40.0, "arm_b_lower": -30.0,
 			"torso": 35.0, "leg_f_upper": -95.0, "leg_f_lower": 100.0, "leg_b_upper": 20.0, "leg_b_lower": 40.0, "hip_y": 10.0}],
 		["end", {}]],
+	"cross": [["start", {}],
+		["startup", {"arm_b_upper": -10.0, "arm_b_lower": -120.0, "torso": 0.0}],
+		["active", {"arm_b_upper": -96.0, "arm_b_lower": 0.0, "torso": 22.0, "head": -12.0, "arm_f_upper": -20.0, "arm_f_lower": -110.0, "leg_f_upper": -26.0, "leg_b_upper": 26.0}],
+		["active_end", {"arm_b_upper": -96.0, "arm_b_lower": 0.0, "torso": 22.0, "head": -12.0, "arm_f_upper": -20.0, "arm_f_lower": -110.0, "leg_f_upper": -26.0, "leg_b_upper": 26.0}],
+		["end", {}]],
+	"hook": [["start", {}],
+		["startup", {"arm_f_upper": -20.0, "arm_f_lower": -95.0, "torso": -6.0}],
+		["active", {"arm_f_upper": -88.0, "arm_f_lower": -75.0, "torso": 26.0, "head": -12.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
+		["active_end", {"arm_f_upper": -88.0, "arm_f_lower": -75.0, "torso": 26.0, "head": -12.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
+		["end", {}]],
+	"uppercut": [["start", {}],
+		["startup", {"arm_b_upper": 10.0, "arm_b_lower": -100.0, "torso": 10.0, "hip_y": 18.0}],
+		["active", {"arm_b_upper": -115.0, "arm_b_lower": -80.0, "torso": 15.0, "head": -6.0, "hip_y": 0.0}],
+		["active_end", {"arm_b_upper": -115.0, "arm_b_lower": -80.0, "torso": 15.0, "head": -6.0, "hip_y": 0.0}],
+		["end", {}]],
+	"knee": [["start", {}],
+		["startup", {"leg_f_upper": -40.0, "leg_f_lower": 60.0, "arm_f_upper": -80.0, "arm_b_upper": -70.0}],
+		["active", {"leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 14.0, "arm_f_upper": -40.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
+		["active_end", {"leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 14.0, "arm_f_upper": -40.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
+		["end", {}]],
+	"push_kick": [["start", {}],
+		["startup", {"leg_f_upper": -80.0, "leg_f_lower": 110.0, "torso": -6.0, "hip_y": 0.0}],
+		["active", {"leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -30.0, "head": 16.0, "leg_b_upper": 10.0, "hip_y": 0.0}],
+		["active_end", {"leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -30.0, "head": 16.0, "leg_b_upper": 10.0, "hip_y": 0.0}],
+		["end", {}]],
+	"body_kick": [["start", {}],
+		["startup", {"leg_b_upper": -40.0, "leg_b_lower": 80.0, "torso": -10.0, "hip_y": 0.0}],
+		["active", {"leg_b_upper": -95.0, "leg_b_lower": 0.0, "torso": -28.0, "head": 16.0, "leg_f_upper": 6.0, "leg_f_lower": 6.0, "hip_y": 0.0}],
+		["active_end", {"leg_b_upper": -95.0, "leg_b_lower": 0.0, "torso": -28.0, "head": 16.0, "leg_f_upper": 6.0, "leg_f_lower": 6.0, "hip_y": 0.0}],
+		["end", {}]],
+	"spin_kick": [["start", {}],
+		["startup", {"leg_f_upper": -40.0, "leg_f_lower": 100.0, "torso": 40.0, "head": -20.0, "hip_y": 6.0}],
+		["active", {"leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -42.0, "head": 24.0, "leg_b_upper": 12.0, "hip_y": 0.0}],
+		["active_end", {"leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -42.0, "head": 24.0, "leg_b_upper": 12.0, "hip_y": 0.0}],
+		["end", {}]],
+	"elbow": [["start", {}],
+		["startup", {"arm_f_upper": -60.0, "arm_f_lower": -150.0, "torso": -4.0}],
+		["active", {"arm_f_upper": -100.0, "arm_f_lower": -160.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -22.0, "leg_b_upper": 22.0}],
+		["active_end", {"arm_f_upper": -100.0, "arm_f_lower": -160.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -22.0, "leg_b_upper": 22.0}],
+		["end", {}]],
+	"roundhouse": [["start", {}],
+		["startup", {"leg_b_upper": -50.0, "leg_b_lower": 100.0, "torso": -14.0, "hip_y": 0.0}],
+		["active", {"leg_b_upper": -108.0, "leg_b_lower": -4.0, "torso": -36.0, "head": 20.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
+		["active_end", {"leg_b_upper": -108.0, "leg_b_lower": -4.0, "torso": -36.0, "head": 20.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
+		["end", {}]],
+	"hammer_fist": [["start", {"arm_f_upper": -170.0, "arm_f_lower": -20.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0,
+			"leg_b_upper": -20.0, "leg_b_lower": 105.0, "hip_y": 0.0}],
+		["startup", {"arm_f_upper": -55.0, "arm_f_lower": -10.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -60.0,
+			"leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0, "hip_y": 0.0}]],
 	"kick": [["start", {}],
 		["startup", {"leg_f_upper": -72.0, "leg_f_lower": 105.0, "torso": -8.0, "hip_y": 0.0}],
 		["active", {"leg_f_upper": -100.0, "leg_f_lower": 0.0, "torso": -26.0, "head": 18.0, "leg_b_upper": 8.0,
@@ -78,15 +129,15 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 			match state:
 				"land": return tune["land_ticks"]
 				"climb": return tune["climb_ticks"]
-			return tune[state + "_startup"] + tune[state + "_active"] + tune[state + "_recovery"]
+			return Moves.length(state, tune)
 		"climb_mid":
 			return tune["climb_ticks"] / 2
-		"startup":
-			return tune[state + "_startup"]
-		"active":
-			return tune[state + "_startup"]
+	var d := Moves.data(state, tune)
+	match name:
+		"startup", "active":
+			return d["startup"]
 		"active_end":
-			return tune[state + "_startup"] + tune[state + "_active"] - 1
+			return d["startup"] + d["active"] - 1
 	return 0
 
 

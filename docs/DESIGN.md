@@ -45,6 +45,31 @@ is the rescue, level by level, up to the mob's boss.
 - **Moves:** jump, flying kicks, climb onto objects and get down from them.
 - **Obstacles are smashed or jumped. You never walk through one.**
 
+### Combos (D-18, Javier 2026-11-01: "make combos to make fights fun… FUN!")
+Three presses in quick succession chain into a finisher. Once a blow ends, the next press has a short window
+(24 ticks, 0.4 s; a feel-lab setting) to continue the chain; miss it and the chain starts over. Presses made during a
+blow wait their turn, in order, so a rhythm of taps chains naturally; a doubled tap (two presses within 3 ticks)
+counts once. The table lives in `game/scripts/sim/moves.gd`.
+
+| Presses | Moves | The finisher |
+|---|---|---|
+| P, P, P | jab, cross, hook | staggers |
+| P, P, K | jab, cross, push kick | pushes away, makes space |
+| P, K, P | jab, knee, uppercut | launches |
+| K, K, K | front kick, body kick, spinning kick to the head | knocks down |
+| K, P, K | front kick, elbow, roundhouse | staggers |
+| jump + K | flying kick | — |
+| jump + P | hammer fist | — |
+
+The team's starter list opened K,K,K with a low kick and K,P,K with a front kick. The first press can't know which
+chain follows, so both open with the front kick.
+
+**Still to come, with weapons:** W, W, W = swing, backswing, overhead smash (wears the weapon faster); W, P, K mixes;
+a **throw** sends the held weapon at a far enemy, it lands where it stops and can be picked up again; **each weapon
+feels different** (knife fast and short, sword a wide sweep, bat big knockback, pipe and wrench heavy). What the
+finishers do (stagger, knockdown, launch, push) shows on enemies once they exist; pain on body parts, never blood
+(D-9).
+
 ## The street, in layers
 - Fast foreground props, the play lane, a slow background (parallax: nearer things slide past faster).
 - Cars, posts and containers sit on **their own layers**: you pass in front of some and behind others.

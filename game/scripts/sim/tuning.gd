@@ -31,6 +31,8 @@ const DEFAULTS := {
 	"hit_depth": 28.0,  # how far up/down the street a blow still connects
 	# a button pressed a little early still counts, so moves chain without frame-perfect timing
 	"buffer_ticks": 6,
+	# combos (moves.gd): once a blow ends, the next press within this many ticks continues the chain
+	"combo_window_ticks": 24,
 	# climbing: push into something climbable this long, and it takes this long to get on top
 	"climb_hold_ticks": 10,
 	"climb_ticks": 18,

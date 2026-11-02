@@ -20,6 +20,7 @@ const SETTINGS := [
 	["kick_active", "Kick active (ticks)", 1, 1, 12],
 	["kick_recovery", "Kick recovery (ticks)", 1, 0, 40],
 	["buffer_ticks", "Early-press window (ticks)", 1, 0, 20],
+	["combo_window_ticks", "Combo window (ticks, 60 = 1 s)", 2, 4, 90],
 	["camera_zoom", "Camera zoom", 0.05, 0.6, 2.0],
 	["flat_line", "Flat line instead of street", true, false, true],
 ]

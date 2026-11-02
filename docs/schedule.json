@@ -3,75 +3,495 @@
   "start": "2026-11-01",
   "end": "2027-04-25",
   "bands": [
-    {"name": "DecadeDrop launch + Christmas push", "start": "2026-11-23", "end": "2026-12-24", "kind": "risk"},
-    {"name": "Holidays", "start": "2026-12-21", "end": "2027-01-03", "kind": "quiet"}
+    {
+      "name": "DecadeDrop launch + Christmas push",
+      "start": "2026-11-23",
+      "end": "2026-12-24",
+      "kind": "risk"
+    },
+    {
+      "name": "Holidays",
+      "start": "2026-12-21",
+      "end": "2027-01-03",
+      "kind": "quiet"
+    }
   ],
   "stages": [
-    {"id": "s0", "name": "The kit", "issue": null, "tasks": [
-      {"id": "kit", "name": "Kit, public repo, issues, board, Vault", "who": "claude", "start": "2026-11-01", "end": "2026-11-01", "todo": "Public GitHub repo jetomev/"},
-      {"id": "questions", "name": "Answer the design questions", "who": "javier", "start": "2026-11-02", "end": "2026-11-08", "todo": "Javier answers the open questions"},
-      {"id": "weekday", "name": "Yes or no on weekday sessions", "who": "javier", "start": "2026-11-02", "end": "2026-11-08", "todo": "Javier says yes or no to the unattended plan"}
-    ]},
-    {"id": "s1", "name": "The feel, in grey boxes", "issue": 2, "tasks": [
-      {"id": "godot", "name": "Godot project, fenced test runner", "who": "claude", "start": "2026-11-02", "end": "2026-11-04", "todo": "Godot project, fenced test runner"},
-      {"id": "pad", "name": "Keyboard + gamepad, dead zone", "who": "claude", "start": "2026-11-04", "end": "2026-11-07", "todo": "Keyboard + gamepad"},
-      {"id": "hero", "name": "Grey-box hero on bones", "who": "claude", "start": "2026-11-03", "end": "2026-11-08", "todo": "Grey-box hero on bones"},
-      {"id": "lab", "name": "The feel lab", "who": "claude", "start": "2026-11-06", "end": "2026-11-10", "todo": "The feel lab"},
-      {"id": "moves", "name": "Flying kick, climb, smash or jump", "who": "claude", "start": "2026-11-09", "end": "2026-11-13", "todo": "Flying kick; climb"},
-      {"id": "layers", "name": "Layers, in front and behind", "who": "claude", "start": "2026-11-09", "end": "2026-11-14", "todo": "Layers: foreground props"},
-      {"id": "enemy", "name": "First enemy, weapon drop and pickup", "who": "claude", "start": "2026-11-11", "end": "2026-11-15", "todo": "One enemy type"},
-      {"id": "pain", "name": "Pain system, no blood", "who": "claude", "start": "2026-11-13", "end": "2026-11-17", "todo": "Pain system in grey boxes"},
-      {"id": "lanes", "name": "Both lane depths to try", "who": "claude", "start": "2026-11-14", "end": "2026-11-17", "todo": "Both lane depths"},
-      {"id": "grey1", "name": "Grey level 1, boss upstairs, bot", "who": "claude", "start": "2026-11-16", "end": "2026-11-20", "todo": "A grey level 1"},
-      {"id": "team1", "name": "Team run on the KognogOS machines", "who": "team", "start": "2026-11-20", "end": "2026-11-21"},
-      {"id": "feeltest", "name": "Grey-box feel test", "who": "javier", "start": "2026-11-22", "end": "2026-11-22", "gate": true, "todo": "Javier's grey-box feel test"}
-    ]},
-    {"id": "s2", "name": "The look", "issue": 4, "tasks": [
-      {"id": "style", "name": "Style sheet, neon to grit", "who": "claude", "start": "2026-11-09", "end": "2026-11-12", "todo": "Style sheet docs/STYLE.md"},
-      {"id": "prompts", "name": "ChatGPT prompt sheets", "who": "claude", "start": "2026-11-12", "end": "2026-11-15", "todo": "Prompt sheets for ChatGPT"},
-      {"id": "dailies", "name": "The Dailies page", "who": "claude", "start": "2026-11-16", "end": "2026-11-18", "todo": "The Dailies page"},
-      {"id": "frames", "name": "Style frames; pick one", "who": "javier", "start": "2026-11-16", "end": "2026-11-22", "todo": "ChatGPT style frames"},
-      {"id": "parts", "name": "Heroes and enemies as parts sheets", "who": "javier", "start": "2026-11-20", "end": "2026-11-28", "todo": "Both heroes and two enemies"},
-      {"id": "street", "name": "Level 1 street in layers", "who": "javier", "start": "2026-11-22", "end": "2026-11-28", "todo": "Level 1 street in layers"},
-      {"id": "looklock", "name": "The look locked", "who": "javier", "start": "2026-11-29", "end": "2026-11-29", "gate": true}
-    ]},
-    {"id": "s3", "name": "Level 1 playable", "issue": 5, "tasks": [
-      {"id": "rig", "name": "Cut, clean and rig the parts", "who": "claude", "start": "2026-11-30", "end": "2026-12-05", "todo": "Cut, clean and rig"},
-      {"id": "l1layers", "name": "Level 1 layers in the game", "who": "claude", "start": "2026-12-01", "end": "2026-12-05", "todo": "Level 1 layers in the game"},
-      {"id": "sound", "name": "First music and sound drafts", "who": "claude", "start": "2026-12-02", "end": "2026-12-09", "todo": "First music cue"},
-      {"id": "boss1", "name": "Level 1 boss, upstairs", "who": "claude", "start": "2026-12-05", "end": "2026-12-10", "todo": "Level 1 boss upstairs"},
-      {"id": "build1", "name": "Linux build and test matrix", "who": "claude", "start": "2026-12-10", "end": "2026-12-12", "todo": "Linux build he can install"},
-      {"id": "team2", "name": "Team run on the KognogOS machines", "who": "team", "start": "2026-12-11", "end": "2026-12-12"},
-      {"id": "play1", "name": "Javier plays level 1", "who": "javier", "start": "2026-12-13", "end": "2026-12-13", "gate": true, "todo": "Javier plays level 1"}
-    ]},
-    {"id": "s4", "name": "Levels 2–5", "issue": null, "tasks": [
-      {"id": "fix1", "name": "Level 1 findings fixed", "who": "claude", "start": "2026-12-14", "end": "2026-12-20", "todo": "Level 1 findings fixed"},
-      {"id": "bag", "name": "The weapon bag", "who": "claude", "start": "2026-12-14", "end": "2027-01-03", "todo": "The weapon bag"},
-      {"id": "story", "name": "Story opening", "who": "claude", "start": "2027-01-04", "end": "2027-01-17", "todo": "Story opening"},
-      {"id": "lv25", "name": "Level 2, then levels 3–5 on two floors", "who": "claude", "start": "2026-12-21", "end": "2027-01-29", "todo": "Level 2; levels 3–5"},
-      {"id": "team3", "name": "Team run on the KognogOS machines", "who": "team", "start": "2027-01-29", "end": "2027-01-30"},
-      {"id": "gate4", "name": "Javier plays levels 1–5", "who": "javier", "start": "2027-01-31", "end": "2027-01-31", "gate": true}
-    ]},
-    {"id": "s5", "name": "Levels 6–9", "issue": null, "tasks": [
-      {"id": "switches", "name": "Switches that open doors below", "who": "claude", "start": "2027-02-01", "end": "2027-02-07", "todo": "Switches upstairs"},
-      {"id": "lv68", "name": "Levels 6–8 on three floors", "who": "claude", "start": "2027-02-01", "end": "2027-02-21", "todo": "Levels 6–8"},
-      {"id": "lv9", "name": "Level 9", "who": "claude", "start": "2027-02-15", "end": "2027-02-26", "todo": "- [ ] Level 9"},
-      {"id": "dark", "name": "The darker, grittier palette", "who": "claude", "start": "2027-02-01", "end": "2027-02-26", "todo": "darker, grittier palette"},
-      {"id": "team4", "name": "Team run on the KognogOS machines", "who": "team", "start": "2027-02-26", "end": "2027-02-27"},
-      {"id": "gate5", "name": "Javier plays levels 6–9", "who": "javier", "start": "2027-02-28", "end": "2027-02-28", "gate": true}
-    ]},
-    {"id": "s6", "name": "The end", "issue": null, "tasks": [
-      {"id": "lv10", "name": "Level 10 and the super boss", "who": "claude", "start": "2027-03-01", "end": "2027-03-10", "todo": "Level 10 and the super boss"},
-      {"id": "endings", "name": "The endings", "who": "claude", "start": "2027-03-08", "end": "2027-03-13", "todo": "The endings"},
-      {"id": "team5", "name": "Team run on the KognogOS machines", "who": "team", "start": "2027-03-12", "end": "2027-03-13"},
-      {"id": "gate6", "name": "The whole game, start to end", "who": "javier", "start": "2027-03-14", "end": "2027-03-14", "gate": true}
-    ]},
-    {"id": "s7", "name": "Finished and shipped", "issue": null, "tasks": [
-      {"id": "final", "name": "Full playthrough, every finding fixed", "who": "javier", "start": "2027-03-15", "end": "2027-03-21", "todo": "Javier's full playthrough"},
-      {"id": "team6", "name": "Team: last runs and packaging help", "who": "team", "start": "2027-03-15", "end": "2027-03-20"},
-      {"id": "done", "name": "Finished, at the latest", "who": "javier", "start": "2027-03-21", "end": "2027-03-21", "gate": true},
-      {"id": "ship", "name": "v1.0.0, AUR, KognogOS launcher", "who": "claude", "start": "2027-03-22", "end": "2027-04-18", "todo": "v1.0.0 release"},
-      {"id": "kognogos", "name": "Ships with KognogOS 1.0", "who": "javier", "start": "2027-04-19", "end": "2027-04-19", "gate": true}
-    ]}
+    {
+      "id": "s0",
+      "name": "The kit",
+      "issue": null,
+      "tasks": [
+        {
+          "id": "kit",
+          "name": "Kit, public repo, issues, board, Vault",
+          "who": "claude",
+          "start": "2026-11-01",
+          "end": "2026-11-01",
+          "todo": "Public GitHub repo jetomev/"
+        },
+        {
+          "id": "questions",
+          "name": "Answer the design questions",
+          "who": "javier",
+          "start": "2026-11-02",
+          "end": "2026-11-08",
+          "todo": "Javier answers the open questions"
+        },
+        {
+          "id": "weekday",
+          "name": "Yes or no on weekday sessions",
+          "who": "javier",
+          "start": "2026-11-02",
+          "end": "2026-11-08",
+          "todo": "Javier says yes or no to the unattended plan"
+        }
+      ]
+    },
+    {
+      "id": "s1",
+      "name": "The feel, in grey boxes",
+      "issue": 2,
+      "tasks": [
+        {
+          "id": "godot",
+          "name": "Godot project, fenced test runner",
+          "who": "claude",
+          "start": "2026-11-02",
+          "end": "2026-11-04",
+          "todo": "Godot project, fenced test runner"
+        },
+        {
+          "id": "pad",
+          "name": "Keyboard + gamepad, dead zone",
+          "who": "claude",
+          "start": "2026-11-04",
+          "end": "2026-11-07",
+          "todo": "Keyboard + gamepad"
+        },
+        {
+          "id": "hero",
+          "name": "Grey-box hero on bones",
+          "who": "claude",
+          "start": "2026-11-03",
+          "end": "2026-11-08",
+          "todo": "Grey-box hero on bones"
+        },
+        {
+          "id": "lab",
+          "name": "The feel lab",
+          "who": "claude",
+          "start": "2026-11-06",
+          "end": "2026-11-10",
+          "todo": "The feel lab"
+        },
+        {
+          "id": "moves",
+          "name": "Flying kick, climb, smash or jump",
+          "who": "claude",
+          "start": "2026-11-09",
+          "end": "2026-11-13",
+          "todo": "Flying kick; climb"
+        },
+        {
+          "id": "layers",
+          "name": "Layers, in front and behind",
+          "who": "claude",
+          "start": "2026-11-09",
+          "end": "2026-11-14",
+          "todo": "Layers: foreground props"
+        },
+        {
+          "id": "combos",
+          "name": "Combos: three-hit chains, finishers",
+          "who": "claude",
+          "start": "2026-11-01",
+          "end": "2026-11-01",
+          "todo": "Combos: P/K"
+        },
+        {
+          "id": "enemy",
+          "name": "First enemy, weapon drop and pickup",
+          "who": "claude",
+          "start": "2026-11-11",
+          "end": "2026-11-15",
+          "todo": "One enemy type"
+        },
+        {
+          "id": "pain",
+          "name": "Pain system, no blood",
+          "who": "claude",
+          "start": "2026-11-13",
+          "end": "2026-11-17",
+          "todo": "Pain system in grey boxes"
+        },
+        {
+          "id": "lanes",
+          "name": "Both lane depths to try",
+          "who": "claude",
+          "start": "2026-11-14",
+          "end": "2026-11-17",
+          "todo": "Both lane depths"
+        },
+        {
+          "id": "grey1",
+          "name": "Grey level 1, boss upstairs, bot",
+          "who": "claude",
+          "start": "2026-11-16",
+          "end": "2026-11-20",
+          "todo": "A grey level 1"
+        },
+        {
+          "id": "team1",
+          "name": "Team run on the KognogOS machines",
+          "who": "team",
+          "start": "2026-11-20",
+          "end": "2026-11-21"
+        },
+        {
+          "id": "feeltest",
+          "name": "Grey-box feel test",
+          "who": "javier",
+          "start": "2026-11-22",
+          "end": "2026-11-22",
+          "gate": true,
+          "todo": "Javier's grey-box feel test"
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "name": "The look",
+      "issue": 4,
+      "tasks": [
+        {
+          "id": "style",
+          "name": "Style sheet, neon to grit",
+          "who": "claude",
+          "start": "2026-11-09",
+          "end": "2026-11-12",
+          "todo": "Style sheet docs/STYLE.md"
+        },
+        {
+          "id": "prompts",
+          "name": "ChatGPT prompt sheets",
+          "who": "claude",
+          "start": "2026-11-12",
+          "end": "2026-11-15",
+          "todo": "Prompt sheets for ChatGPT"
+        },
+        {
+          "id": "dailies",
+          "name": "The Dailies page",
+          "who": "claude",
+          "start": "2026-11-16",
+          "end": "2026-11-18",
+          "todo": "The Dailies page"
+        },
+        {
+          "id": "frames",
+          "name": "Style frames; pick one",
+          "who": "javier",
+          "start": "2026-11-16",
+          "end": "2026-11-22",
+          "todo": "ChatGPT style frames"
+        },
+        {
+          "id": "parts",
+          "name": "Heroes and enemies as parts sheets",
+          "who": "javier",
+          "start": "2026-11-20",
+          "end": "2026-11-28",
+          "todo": "Both heroes and two enemies"
+        },
+        {
+          "id": "street",
+          "name": "Level 1 street in layers",
+          "who": "javier",
+          "start": "2026-11-22",
+          "end": "2026-11-28",
+          "todo": "Level 1 street in layers"
+        },
+        {
+          "id": "looklock",
+          "name": "The look locked",
+          "who": "javier",
+          "start": "2026-11-29",
+          "end": "2026-11-29",
+          "gate": true
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "name": "Level 1 playable",
+      "issue": 5,
+      "tasks": [
+        {
+          "id": "rig",
+          "name": "Cut, clean and rig the parts",
+          "who": "claude",
+          "start": "2026-11-30",
+          "end": "2026-12-05",
+          "todo": "Cut, clean and rig"
+        },
+        {
+          "id": "l1layers",
+          "name": "Level 1 layers in the game",
+          "who": "claude",
+          "start": "2026-12-01",
+          "end": "2026-12-05",
+          "todo": "Level 1 layers in the game"
+        },
+        {
+          "id": "sound",
+          "name": "First music and sound drafts",
+          "who": "claude",
+          "start": "2026-12-02",
+          "end": "2026-12-09",
+          "todo": "First music cue"
+        },
+        {
+          "id": "boss1",
+          "name": "Level 1 boss, upstairs",
+          "who": "claude",
+          "start": "2026-12-05",
+          "end": "2026-12-10",
+          "todo": "Level 1 boss upstairs"
+        },
+        {
+          "id": "build1",
+          "name": "Linux build and test matrix",
+          "who": "claude",
+          "start": "2026-12-10",
+          "end": "2026-12-12",
+          "todo": "Linux build he can install"
+        },
+        {
+          "id": "team2",
+          "name": "Team run on the KognogOS machines",
+          "who": "team",
+          "start": "2026-12-11",
+          "end": "2026-12-12"
+        },
+        {
+          "id": "play1",
+          "name": "Javier plays level 1",
+          "who": "javier",
+          "start": "2026-12-13",
+          "end": "2026-12-13",
+          "gate": true,
+          "todo": "Javier plays level 1"
+        }
+      ]
+    },
+    {
+      "id": "s4",
+      "name": "Levels 2–5",
+      "issue": null,
+      "tasks": [
+        {
+          "id": "fix1",
+          "name": "Level 1 findings fixed",
+          "who": "claude",
+          "start": "2026-12-14",
+          "end": "2026-12-20",
+          "todo": "Level 1 findings fixed"
+        },
+        {
+          "id": "bag",
+          "name": "The weapon bag",
+          "who": "claude",
+          "start": "2026-12-14",
+          "end": "2027-01-03",
+          "todo": "The weapon bag"
+        },
+        {
+          "id": "wcombos",
+          "name": "Weapon combos and each weapon's feel",
+          "who": "claude",
+          "start": "2026-12-14",
+          "end": "2026-12-24",
+          "todo": "Weapon combos"
+        },
+        {
+          "id": "throw",
+          "name": "Throw the held weapon",
+          "who": "claude",
+          "start": "2026-12-28",
+          "end": "2027-01-03",
+          "todo": "Throw the held weapon"
+        },
+        {
+          "id": "story",
+          "name": "Story opening",
+          "who": "claude",
+          "start": "2027-01-04",
+          "end": "2027-01-17",
+          "todo": "Story opening"
+        },
+        {
+          "id": "lv25",
+          "name": "Level 2, then levels 3–5 on two floors",
+          "who": "claude",
+          "start": "2026-12-21",
+          "end": "2027-01-29",
+          "todo": "Level 2; levels 3–5"
+        },
+        {
+          "id": "team3",
+          "name": "Team run on the KognogOS machines",
+          "who": "team",
+          "start": "2027-01-29",
+          "end": "2027-01-30"
+        },
+        {
+          "id": "gate4",
+          "name": "Javier plays levels 1–5",
+          "who": "javier",
+          "start": "2027-01-31",
+          "end": "2027-01-31",
+          "gate": true
+        }
+      ]
+    },
+    {
+      "id": "s5",
+      "name": "Levels 6–9",
+      "issue": null,
+      "tasks": [
+        {
+          "id": "switches",
+          "name": "Switches that open doors below",
+          "who": "claude",
+          "start": "2027-02-01",
+          "end": "2027-02-07",
+          "todo": "Switches upstairs"
+        },
+        {
+          "id": "lv68",
+          "name": "Levels 6–8 on three floors",
+          "who": "claude",
+          "start": "2027-02-01",
+          "end": "2027-02-21",
+          "todo": "Levels 6–8"
+        },
+        {
+          "id": "lv9",
+          "name": "Level 9",
+          "who": "claude",
+          "start": "2027-02-15",
+          "end": "2027-02-26",
+          "todo": "- [ ] Level 9"
+        },
+        {
+          "id": "dark",
+          "name": "The darker, grittier palette",
+          "who": "claude",
+          "start": "2027-02-01",
+          "end": "2027-02-26",
+          "todo": "darker, grittier palette"
+        },
+        {
+          "id": "team4",
+          "name": "Team run on the KognogOS machines",
+          "who": "team",
+          "start": "2027-02-26",
+          "end": "2027-02-27"
+        },
+        {
+          "id": "gate5",
+          "name": "Javier plays levels 6–9",
+          "who": "javier",
+          "start": "2027-02-28",
+          "end": "2027-02-28",
+          "gate": true
+        }
+      ]
+    },
+    {
+      "id": "s6",
+      "name": "The end",
+      "issue": null,
+      "tasks": [
+        {
+          "id": "lv10",
+          "name": "Level 10 and the super boss",
+          "who": "claude",
+          "start": "2027-03-01",
+          "end": "2027-03-10",
+          "todo": "Level 10 and the super boss"
+        },
+        {
+          "id": "endings",
+          "name": "The endings",
+          "who": "claude",
+          "start": "2027-03-08",
+          "end": "2027-03-13",
+          "todo": "The endings"
+        },
+        {
+          "id": "team5",
+          "name": "Team run on the KognogOS machines",
+          "who": "team",
+          "start": "2027-03-12",
+          "end": "2027-03-13"
+        },
+        {
+          "id": "gate6",
+          "name": "The whole game, start to end",
+          "who": "javier",
+          "start": "2027-03-14",
+          "end": "2027-03-14",
+          "gate": true
+        }
+      ]
+    },
+    {
+      "id": "s7",
+      "name": "Finished and shipped",
+      "issue": null,
+      "tasks": [
+        {
+          "id": "final",
+          "name": "Full playthrough, every finding fixed",
+          "who": "javier",
+          "start": "2027-03-15",
+          "end": "2027-03-21",
+          "todo": "Javier's full playthrough"
+        },
+        {
+          "id": "team6",
+          "name": "Team: last runs and packaging help",
+          "who": "team",
+          "start": "2027-03-15",
+          "end": "2027-03-20"
+        },
+        {
+          "id": "done",
+          "name": "Finished, at the latest",
+          "who": "javier",
+          "start": "2027-03-21",
+          "end": "2027-03-21",
+          "gate": true
+        },
+        {
+          "id": "ship",
+          "name": "v1.0.0, AUR, KognogOS launcher",
+          "who": "claude",
+          "start": "2027-03-22",
+          "end": "2027-04-18",
+          "todo": "v1.0.0 release"
+        },
+        {
+          "id": "kognogos",
+          "name": "Ships with KognogOS 1.0",
+          "who": "javier",
+          "start": "2027-04-19",
+          "end": "2027-04-19",
+          "gate": true
+        }
+      ]
+    }
   ]
 }

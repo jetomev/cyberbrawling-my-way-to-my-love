@@ -35,6 +35,10 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
 - **D-15** **Saves at the start of every level, three lives per level**; losing them restarts that level (Javier,
   2026-11-01).
 - **D-16** **One player in 1.0**; the code keeps the door open for a second player after launch (Javier, 2026-11-01).
+- **D-18** **Combos** (Javier, 2026-11-01 night, through the assistant team: "make combos to make fights fun…
+  FUN!", details left to Claude): three-press chains into finishers, a 0.4 s window (feel lab), presses during a
+  blow queue in order, a doubled tap counts once; both K chains open with the front kick. Table in
+  `docs/DESIGN.md` → Combos and `game/scripts/sim/moves.gd`; weapon combos and the throw come with weapons.
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 
