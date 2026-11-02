@@ -3,8 +3,8 @@ extends RefCounted
 ## the same result, so tests and the bot can drive it bare. The hero uses it now; enemies will too.
 ##
 ## Space: x runs along the street, z is the depth of the street (0 = far edge), y is height above the street.
-## An input is a Dictionary: {mx: -1..1, mz: -1..1, jump: bool, punch: bool, kick: bool}; the buttons are
-## "pressed this tick", not "held". A world (street_world.gd) is optional: without one the street is empty.
+## An input is a Dictionary: {mx: -1..1, mz: -1..1, jump: bool, punch: bool, kick: bool, block: bool}; jump, punch
+## and kick are "pressed this tick"; block is "held" (D-19: hold to guard; its first moments are a perfect block). A world (street_world.gd) is optional: without one the street is empty.
 ## Attacks and combos live in moves.gd: the state is the move's name ("punch", "cross", "spin_kick", …).
 
 const Tuning := preload("res://scripts/sim/tuning.gd")
@@ -71,6 +71,11 @@ func step(inp: Dictionary) -> void:
 				attack_serial += 1
 				_enter(move)
 			_air(mx)
+		"block":
+			if mx != 0.0:
+				facing = 1 if mx > 0.0 else -1  # turn to face a threat without dropping the guard
+			if not inp.get("block", false):
+				_enter("idle")
 		"land":
 			if t >= tune["land_ticks"]:
 				_enter("idle")
@@ -81,8 +86,12 @@ func step(inp: Dictionary) -> void:
 				chain_left = tune["combo_window_ticks"]
 				_enter("idle")
 	# a fighter who just became free acts on a buffered button in the same tick
-	if state in GROUND_STATES and not queue.is_empty():
-		_start(_take_buffer(), mx)
+	if (state in GROUND_STATES or state == "block") and not queue.is_empty():
+		_start(_take_buffer(), mx)  # a press from the guard comes straight out of it
+	if state in GROUND_STATES and inp.get("block", false):
+		chain = ""
+		vx = 0.0
+		_enter("block")
 	if not _ground_attack():
 		if chain_left > 0:
 			chain_left -= 1
@@ -198,6 +207,13 @@ func _start(action: String, mx: float) -> void:
 func _enter(s: String) -> void:
 	state = s
 	t = 0
+
+
+## "perfect" in a block's first perfect_block_ticks, "block" after that, "" when not blocking.
+func blocking() -> String:
+	if state != "block":
+		return ""
+	return "perfect" if t < tune["perfect_block_ticks"] else "block"
 
 
 func on_ground() -> bool:

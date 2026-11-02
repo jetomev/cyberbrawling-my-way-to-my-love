@@ -10,7 +10,7 @@ const Tuning := preload("res://scripts/sim/tuning.gd")
 const Demo := preload("res://scripts/sim/demo.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 
-const STATES := ["idle", "walk", "jump", "land", "punch", "kick", "air_kick", "climb"]
+const STATES := ["idle", "walk", "jump", "land", "punch", "kick", "air_kick", "climb", "block"]
 const Moves := preload("res://scripts/sim/moves.gd")
 
 

@@ -84,6 +84,7 @@ func sync(f, ground_y: float) -> void:
 	var height := clampf(f.y / 200.0, 0.0, 1.0)
 	shadow.scale = Vector2.ONE * (1.0 - height * 0.45)
 	apply(Poses.angles(f.state, f.t, f.tune))
+	body.modulate = Color(1.6, 1.6, 1.9) if f.blocking() == "perfect" else Color.WHITE  # a perfect block flashes
 
 
 func apply(pose: Dictionary) -> void:

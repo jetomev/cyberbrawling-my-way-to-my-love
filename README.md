@@ -48,7 +48,7 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 - `game/` — the Godot 4 project. `scripts/test.sh` runs its tests headless, inside a memory and CPU fence with a
   time limit, logs to `logs/`, and fails if the number of tests ever drops below `game/tests/FLOOR`.
 - `scripts/play.sh` plays it in a window (keyboard: arrows or WASD move, J punch, K kick, Space jump; gamepad: stick
-  or d-pad, X punch, B kick, A jump). **F1 opens the feel lab**: change walk speed, jump, punch and kick timing and more
+  or d-pad, X punch, B kick, A jump; hold L or Shift, or Y or RB, to block). **F1 opens the feel lab**: change walk speed, jump, punch and kick timing and more
   while you play; F8 saves your changes for next time. `scripts/record.sh` records the scripted demo to a contact
   sheet and a clip.
 - `TODO.md` — the live list.

@@ -23,6 +23,7 @@ const STEPS := [
 	[1, {"punch": true}], [9, {}], [1, {"kick": true}], [9, {}], [1, {"punch": true}], [50, {}],
 	[1, {"kick": true}], [12, {}], [1, {"punch": true}], [9, {}], [1, {"kick": true}], [50, {}],
 	[1, {"jump": true}], [6, {}], [1, {"punch": true}], [50, {}],
+	[40, {"block": true}], [1, {"block": true, "punch": true}], [40, {}],
 ]
 
 

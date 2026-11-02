@@ -64,6 +64,23 @@ counts once. The table lives in `game/scripts/sim/moves.gd`.
 The team's starter list opened K,K,K with a low kick and K,P,K with a front kick. The first press can't know which
 chain follows, so both open with the front kick.
 
+### Blocks, enemy combos, counters (D-19, Javier 2026-11-01, 23:00)
+> "Please include blocks too. Enemies should have combos too, and depending on the type kick/punch and early block
+> they can be stopped and disarm them, and give chance for our combos to hit. Hitting enemies with two consecutive
+> combos can lead them to get dizzy opening time for a third and final combo, and stuff like that. Each enemy have
+> different combos, and anti-combos, same as bosses which have different combinations and ways to kill."
+
+- **Block (built):** hold the block button (L or Shift; pad Y or RB). The hero covers up and stands his ground; he
+  can turn to face a threat, and a punch or kick comes straight out of the guard. The first moments of a block
+  (8 ticks, a feel-lab setting) are a **perfect block**, shown by a flash.
+- **With enemies (to build):** enemies throw their own combos. The right punch or kick, or a perfect block,
+  **interrupts** an enemy's combo and can **disarm** him: his weapon drops to the floor and can be picked up, and he
+  is open for the hero's combo. A plain block takes less pain than a clean hit. **Two hero combos in a row** on one
+  enemy make him **dizzy** for a short time: the window for a third, finishing combo.
+- **Each enemy type and each boss** has its own combos, its own counters to the hero's combos ("anti-combos") and its
+  own way to be beaten. The assistant team is writing the full table (hero combos, each enemy's combos, counters, weak
+  spots, bosses); it reaches the game through Javier.
+
 **Still to come, with weapons:** W, W, W = swing, backswing, overhead smash (wears the weapon faster); W, P, K mixes;
 a **throw** sends the held weapon at a far enemy, it lands where it stops and can be picked up again; **each weapon
 feels different** (knife fast and short, sword a wide sweep, bat big knockback, pipe and wrench heavy). What the

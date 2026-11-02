@@ -25,7 +25,10 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] The feel lab: live settings on the F-keys (solo) (2026-11-01 night: F1 opens it, 15 settings, F8 saves; 32 tests)
 - [x] Flying kick; climb onto objects and down; smash or jump obstacles, never walk through (solo) (2026-11-01 night: 44 tests)
 - [x] Combos: P/K three-hit chains with finishers, hammer fist, feel-lab window (solo) (2026-11-01 night, D-18: 62 tests)
+- [x] Block: hold to guard, perfect-block window with a flash, attack out of the guard (solo) (2026-11-01 night, D-19: 68 tests)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
+- [ ] That enemy's own combos; the right hit or a perfect block interrupts them and can disarm him; a block takes less pain (solo)
+- [ ] Two hero combos in a row make an enemy dizzy: the window for a finishing combo (solo)
 - [ ] Pain system in grey boxes: damage stages per part, broken arm/leg effects, hit sounds; no blood (solo) (#3)
 - [ ] Pick up a weapon; it stays in the hand (solo)
 - [ ] Weapon combos (W,W,W swing, backswing, overhead smash; W,P,K) and each weapon's feel: knife, sword, bat, pipe/wrench (solo)
@@ -57,6 +60,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] The weapon bag: collect and switch
 - [ ] Story opening: choose your hero, the kidnapping
 - [ ] Level 2; levels 3–5 on two floors; the level 5 boss
+- [ ] Each enemy type and boss: its own combos, counters to the hero's combos, its own way to be beaten (D-19; the team's table)
 
 ## Stage 5 · Levels 6–9 (by Sun 28 Feb)
 - [ ] Switches upstairs that open doors below

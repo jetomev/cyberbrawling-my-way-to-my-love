@@ -110,12 +110,28 @@
           "todo": "Combos: P/K"
         },
         {
+          "id": "block",
+          "name": "Block and the perfect block",
+          "who": "claude",
+          "start": "2026-11-01",
+          "end": "2026-11-01",
+          "todo": "Block: hold to guard"
+        },
+        {
           "id": "enemy",
           "name": "First enemy, weapon drop and pickup",
           "who": "claude",
           "start": "2026-11-11",
           "end": "2026-11-15",
           "todo": "One enemy type"
+        },
+        {
+          "id": "ecombos",
+          "name": "Enemy combos, interrupts, disarm, dizzy",
+          "who": "claude",
+          "start": "2026-11-14",
+          "end": "2026-11-19",
+          "todo": "That enemy's own combos"
         },
         {
           "id": "pain",
@@ -337,6 +353,14 @@
           "start": "2026-12-21",
           "end": "2027-01-29",
           "todo": "Level 2; levels 3–5"
+        },
+        {
+          "id": "etypes",
+          "name": "Each enemy and boss: combos, counters",
+          "who": "claude",
+          "start": "2027-01-04",
+          "end": "2027-01-29",
+          "todo": "Each enemy type and boss"
         },
         {
           "id": "team3",

@@ -33,6 +33,8 @@ const DEFAULTS := {
 	"buffer_ticks": 6,
 	# combos (moves.gd): once a blow ends, the next press within this many ticks continues the chain
 	"combo_window_ticks": 24,
+	# blocking (D-19): a block's first ticks are a perfect block (with enemies: it stops their combo, can disarm)
+	"perfect_block_ticks": 8,
 	# climbing: push into something climbable this long, and it takes this long to get on top
 	"climb_hold_ticks": 10,
 	"climb_ticks": 18,

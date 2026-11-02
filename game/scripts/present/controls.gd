@@ -2,8 +2,8 @@ extends RefCounted
 ## Keyboard and gamepad controls, set up in code so they're easy to read and test.
 ## Sticks are NOT in the action map: they go through stick_guard.gd (feed()), which ignores a stick stuck off centre
 ## from the moment it connects (Javier's G13, F-1) and applies the dead zone.
-## Keyboard: arrows or WASD move, J or Z punch, K or X kick, Space or L jump.
-## Gamepad: left stick or d-pad moves, X/Square punch, B/Circle kick, A/Cross jump.
+## Keyboard: arrows or WASD move, J or Z punch, K or X kick, Space jump, L or Shift block (hold).
+## Gamepad: left stick or d-pad moves, X/Square punch, B/Circle kick, A/Cross jump, Y/Triangle or RB block (hold).
 
 const StickGuard := preload("res://scripts/sim/stick_guard.gd")
 const DEAD_ZONE := 0.25
@@ -13,12 +13,13 @@ static var guard = StickGuard.new()
 const KEYS := {
 	"move_left": [KEY_LEFT, KEY_A], "move_right": [KEY_RIGHT, KEY_D],
 	"move_up": [KEY_UP, KEY_W], "move_down": [KEY_DOWN, KEY_S],
-	"punch": [KEY_J, KEY_Z], "kick": [KEY_K, KEY_X], "jump": [KEY_SPACE, KEY_L],
+	"punch": [KEY_J, KEY_Z], "kick": [KEY_K, KEY_X], "jump": [KEY_SPACE], "block": [KEY_L, KEY_SHIFT],
 }
 const PAD_BUTTONS := {
 	"move_left": [JOY_BUTTON_DPAD_LEFT], "move_right": [JOY_BUTTON_DPAD_RIGHT],
 	"move_up": [JOY_BUTTON_DPAD_UP], "move_down": [JOY_BUTTON_DPAD_DOWN],
 	"punch": [JOY_BUTTON_X], "kick": [JOY_BUTTON_B], "jump": [JOY_BUTTON_A],
+	"block": [JOY_BUTTON_Y, JOY_BUTTON_RIGHT_SHOULDER],
 }
 
 
@@ -57,4 +58,5 @@ static func read() -> Dictionary:
 		"jump": Input.is_action_just_pressed("jump"),
 		"punch": Input.is_action_just_pressed("punch"),
 		"kick": Input.is_action_just_pressed("kick"),
+		"block": Input.is_action_pressed("block"),
 	}
