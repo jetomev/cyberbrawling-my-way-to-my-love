@@ -1,113 +1,152 @@
 extends RefCounted
 ## The grey-box body (D-4: cut-out parts on 2D bones) and its poses, as plain data, so tests can read them without a
-## scene. The real art later replaces each grey part with a drawn one on the same bone.
+## scene. The real art later replaces each grey part with a drawn one on the same bone: belly, chest, neck, head,
+## shoulders, upper and lower arms, hands (a fist or an open hand), thighs, shins, feet and toes (D-20).
 ##
 ## A bone points along its own +x. Its rest angle is relative to its parent; poses add an offset in degrees. With
-## the body facing right: for bones hanging down (legs, arms), a negative offset swings them forward; for the
-## torso, a positive offset leans it forward; a positive lower-leg offset bends the knee, a negative forearm offset
-## bends the elbow up. "hip_y" moves the whole body down in pixels (a crouch, a bob).
+## the body facing right: for bones hanging down (legs, arms, shoulders), a negative offset swings them forward; a
+## positive "torso" leans the body forward (shared between belly and chest); a positive lower-leg offset bends the
+## knee, a negative forearm offset bends the elbow up. "hip_y" moves the whole body down in pixels.
+##
+## Poses are written in a few keys and bake() fills in the rest, so every move gets the same body sense:
+## - the neck takes back part of the lean, so the head follows the eyes instead of the spine;
+## - a shoulder rolls forward as its arm reaches, moving the arm's root, not the arm's aim;
+## - a foot on the ground keeps its toes on the street: flat when the ankle is low, rolled onto the toes (heel up) as
+##   the leg lifts the ankle, pointed once the ankle is higher than the foot is long, or in the air;
+## - the body settles until its lower planted foot stands on the street;
+## - "open_f" / "open_b" (0 or 1) open a hand; hands are fists otherwise.
 
 const Moves := preload("res://scripts/sim/moves.gd")
 
-## Parents come before their children. name: [parent, position on the parent bone, rest angle, length, width, shade (0 = front, 1 = back)]
+## Parents come before their children; back limbs before the body, front limbs after (that is the drawing order).
+## name: [parent, position on the parent bone, rest angle, length, width, shade (0 = front, 1 = back)]
 const BONES := {
 	"hip": ["", Vector2(0, -125), 0.0, 0.0, 0.0, 0],
-	"torso": ["hip", Vector2(0, 0), -90.0, 85.0, 48.0, 0],
-	"head": ["torso", Vector2(88, 0), 0.0, 46.0, 40.0, 0],
 	"leg_b_upper": ["hip", Vector2(0, 0), 90.0, 62.0, 26.0, 1],
-	"leg_b_lower": ["leg_b_upper", Vector2(62, 0), 0.0, 63.0, 22.0, 1],
-	"arm_b_upper": ["torso", Vector2(78, 0), 180.0, 52.0, 19.0, 1],
-	"arm_b_lower": ["arm_b_upper", Vector2(52, 0), 0.0, 50.0, 16.0, 1],
+	"leg_b_lower": ["leg_b_upper", Vector2(62, 0), 0.0, 58.0, 21.0, 1],
+	"foot_b": ["leg_b_lower", Vector2(58, 0), -90.0, 24.0, 13.0, 1],
+	"toe_b": ["foot_b", Vector2(24, 0), 0.0, 11.0, 11.0, 1],
+	"belly": ["hip", Vector2(0, 0), -90.0, 40.0, 44.0, 0],
+	"chest": ["belly", Vector2(40, 0), 0.0, 46.0, 50.0, 0],
+	"shoulder_b": ["chest", Vector2(42, 0), 180.0, 14.0, 20.0, 1],
+	"arm_b_upper": ["shoulder_b", Vector2(14, 0), 0.0, 44.0, 18.0, 1],
+	"arm_b_lower": ["arm_b_upper", Vector2(44, 0), 0.0, 44.0, 15.0, 1],
+	"hand_b": ["arm_b_lower", Vector2(44, 0), 0.0, 16.0, 17.0, 1],
+	"neck": ["chest", Vector2(46, 0), 0.0, 12.0, 17.0, 0],
+	"head": ["neck", Vector2(12, 0), 0.0, 44.0, 40.0, 0],
 	"leg_f_upper": ["hip", Vector2(0, 0), 90.0, 62.0, 26.0, 0],
-	"leg_f_lower": ["leg_f_upper", Vector2(62, 0), 0.0, 63.0, 22.0, 0],
-	"arm_f_upper": ["torso", Vector2(78, 0), 180.0, 52.0, 19.0, 0],
-	"arm_f_lower": ["arm_f_upper", Vector2(52, 0), 0.0, 50.0, 16.0, 0],
+	"leg_f_lower": ["leg_f_upper", Vector2(62, 0), 0.0, 58.0, 21.0, 0],
+	"foot_f": ["leg_f_lower", Vector2(58, 0), -90.0, 24.0, 13.0, 0],
+	"toe_f": ["foot_f", Vector2(24, 0), 0.0, 11.0, 11.0, 0],
+	"shoulder_f": ["chest", Vector2(42, 0), 180.0, 14.0, 20.0, 0],
+	"arm_f_upper": ["shoulder_f", Vector2(14, 0), 0.0, 44.0, 18.0, 0],
+	"arm_f_lower": ["arm_f_upper", Vector2(44, 0), 0.0, 44.0, 15.0, 0],
+	"hand_f": ["arm_f_lower", Vector2(44, 0), 0.0, 16.0, 17.0, 0],
 }
 
+## Keys a pose may hold besides bones: shared or automatic parts that bake() turns into bone angles.
+const SOFT_KEYS := ["hip_y", "torso", "open_f", "open_b"]
+const FOOT_LENGTH := 24.0  # ankle to the ball of the foot
+const TOE_LENGTH := 11.0  # an ankle higher than foot + toes lets the foot point
+
 const GUARD := {
-	"torso": 8.0, "head": -8.0,
+	"torso": 8.0, "head": -8.0, "hand_f": -15.0, "hand_b": -15.0,
 	"arm_f_upper": -50.0, "arm_f_lower": -85.0, "arm_b_upper": -25.0, "arm_b_lower": -100.0,
 	"leg_f_upper": -16.0, "leg_f_lower": 12.0, "leg_b_upper": 16.0, "leg_b_lower": 12.0, "hip_y": 5.0,
+	"open_f": 0.0, "open_b": 0.0,
 }
 
 ## Looping states: [loop length in ticks, [tick, changes from GUARD], ...]
 const LOOPS := {
-	"idle": [60, [0, {}], [30, {"hip_y": 9.0, "arm_f_upper": -46.0}]],
+	"idle": [60, [0, {}], [30, {"hip_y": 9.0, "arm_f_upper": -46.0, "torso": 10.0}]],
 	"walk": [32,
-		[0, {"leg_f_upper": -30.0, "leg_f_lower": 8.0, "leg_b_upper": 26.0, "leg_b_lower": 28.0, "hip_y": 6.0}],
-		[8, {"leg_f_upper": 0.0, "leg_f_lower": 30.0, "leg_b_upper": 0.0, "leg_b_lower": 4.0, "hip_y": 1.0}],
-		[16, {"leg_f_upper": 26.0, "leg_f_lower": 28.0, "leg_b_upper": -30.0, "leg_b_lower": 8.0, "hip_y": 6.0}],
-		[24, {"leg_f_upper": 0.0, "leg_f_lower": 4.0, "leg_b_upper": 0.0, "leg_b_lower": 30.0, "hip_y": 1.0}]],
+		[0, {"leg_f_upper": -30.0, "leg_f_lower": 8.0, "leg_b_upper": 26.0, "leg_b_lower": 28.0, "hip_y": 6.0,
+			"arm_f_upper": -42.0, "arm_b_upper": -34.0}],
+		[8, {"leg_f_upper": 0.0, "leg_f_lower": 30.0, "leg_b_upper": 0.0, "leg_b_lower": 4.0, "hip_y": 1.0, "torso": 11.0}],
+		[16, {"leg_f_upper": 26.0, "leg_f_lower": 28.0, "leg_b_upper": -30.0, "leg_b_lower": 8.0, "hip_y": 6.0,
+			"arm_f_upper": -58.0, "arm_b_upper": -16.0}],
+		[24, {"leg_f_upper": 0.0, "leg_f_lower": 4.0, "leg_b_upper": 0.0, "leg_b_lower": 30.0, "hip_y": 1.0, "torso": 11.0}]],
 }
 
-## One-shot states, keyed by named moments the tuning decides (see moment()).
+## One-shot states, keyed by named moments the tuning decides (see moment()). A strike runs wind-up, hit, hold,
+## follow-through, then eases back to the guard; an empty "follow" means "carry the hit a little further".
 const SHOTS := {
-	"jump": [["start", {"leg_f_upper": -60.0, "leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0,
+	"jump": [["start", {"open_f": 1.0, "open_b": 1.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0,
 		"arm_f_upper": -70.0, "arm_b_upper": -45.0, "hip_y": 0.0}]],
 	"land": [["start", {"leg_f_upper": -38.0, "leg_f_lower": 62.0, "leg_b_upper": 8.0, "leg_b_lower": 55.0, "hip_y": 24.0}],
 		["end", {}]],
 	"punch": [["start", {}],
-		["startup", {"arm_f_upper": -35.0, "arm_f_lower": -110.0, "torso": 2.0}],
+		["windup", {"arm_f_upper": -35.0, "arm_f_lower": -110.0, "torso": 2.0}],
 		["active", {"arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 12.0, "head": -10.0, "arm_b_upper": -5.0,
 			"leg_f_upper": -24.0, "leg_b_upper": 24.0}],
 		["active_end", {"arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 12.0, "head": -10.0, "arm_b_upper": -5.0,
 			"leg_f_upper": -24.0, "leg_b_upper": 24.0}],
+		["follow", {}],
 		["end", {}]],
 	"air_kick": [["start", {"leg_f_upper": -60.0, "leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0,
 		"arm_f_upper": -70.0, "arm_b_upper": -45.0, "hip_y": 0.0}],
 		["startup", {"leg_f_upper": -92.0, "leg_f_lower": -4.0, "leg_b_upper": 34.0, "leg_b_lower": 85.0, "torso": -22.0,
 			"head": 14.0, "arm_f_upper": -30.0, "arm_f_lower": -60.0, "arm_b_upper": 40.0, "arm_b_lower": -40.0, "hip_y": 0.0}]],
-	"climb": [["start", {"arm_f_upper": -165.0, "arm_f_lower": 0.0, "arm_b_upper": -150.0, "arm_b_lower": 0.0,
+	"climb": [["start", {"open_f": 1.0, "open_b": 1.0, "hand_f": -30.0, "hand_b": -30.0, "arm_f_upper": -165.0, "arm_f_lower": 0.0, "arm_b_upper": -150.0, "arm_b_lower": 0.0,
 			"leg_f_upper": -20.0, "leg_f_lower": 30.0, "hip_y": 0.0}],
-		["climb_mid", {"arm_f_upper": -60.0, "arm_f_lower": -30.0, "arm_b_upper": -40.0, "arm_b_lower": -30.0,
+		["climb_mid", {"open_f": 1.0, "open_b": 1.0, "hand_f": 60.0, "hand_b": 60.0, "arm_f_upper": -60.0, "arm_f_lower": -30.0, "arm_b_upper": -40.0, "arm_b_lower": -30.0,
 			"torso": 35.0, "leg_f_upper": -95.0, "leg_f_lower": 100.0, "leg_b_upper": 20.0, "leg_b_lower": 40.0, "hip_y": 10.0}],
 		["end", {}]],
 	"cross": [["start", {}],
-		["startup", {"arm_b_upper": -10.0, "arm_b_lower": -120.0, "torso": 0.0}],
+		["windup", {"arm_b_upper": -10.0, "arm_b_lower": -120.0, "torso": 0.0}],
 		["active", {"arm_b_upper": -96.0, "arm_b_lower": 0.0, "torso": 22.0, "head": -12.0, "arm_f_upper": -20.0, "arm_f_lower": -110.0, "leg_f_upper": -26.0, "leg_b_upper": 26.0}],
 		["active_end", {"arm_b_upper": -96.0, "arm_b_lower": 0.0, "torso": 22.0, "head": -12.0, "arm_f_upper": -20.0, "arm_f_lower": -110.0, "leg_f_upper": -26.0, "leg_b_upper": 26.0}],
+		["follow", {}],
 		["end", {}]],
 	"hook": [["start", {}],
-		["startup", {"arm_f_upper": -20.0, "arm_f_lower": -95.0, "torso": -6.0}],
+		["windup", {"arm_f_upper": -20.0, "arm_f_lower": -95.0, "torso": -6.0}],
 		["active", {"arm_f_upper": -88.0, "arm_f_lower": -75.0, "torso": 26.0, "head": -12.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
 		["active_end", {"arm_f_upper": -88.0, "arm_f_lower": -75.0, "torso": 26.0, "head": -12.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
+		["follow", {}],
 		["end", {}]],
 	"uppercut": [["start", {}],
-		["startup", {"arm_b_upper": 10.0, "arm_b_lower": -100.0, "torso": 10.0, "hip_y": 18.0}],
+		["windup", {"arm_b_upper": 10.0, "arm_b_lower": -100.0, "torso": 10.0, "hip_y": 18.0}],
 		["active", {"arm_b_upper": -115.0, "arm_b_lower": -80.0, "torso": 15.0, "head": -6.0, "hip_y": 0.0}],
 		["active_end", {"arm_b_upper": -115.0, "arm_b_lower": -80.0, "torso": 15.0, "head": -6.0, "hip_y": 0.0}],
+		["follow", {}],
 		["end", {}]],
 	"knee": [["start", {}],
-		["startup", {"leg_f_upper": -40.0, "leg_f_lower": 60.0, "arm_f_upper": -80.0, "arm_b_upper": -70.0}],
+		["windup", {"leg_f_upper": -40.0, "leg_f_lower": 60.0, "arm_f_upper": -80.0, "arm_b_upper": -70.0}],
 		["active", {"leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 14.0, "arm_f_upper": -40.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
 		["active_end", {"leg_f_upper": -100.0, "leg_f_lower": 120.0, "torso": 14.0, "arm_f_upper": -40.0, "arm_f_lower": -40.0, "arm_b_upper": -40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
+		["follow", {}],
 		["end", {}]],
 	"push_kick": [["start", {}],
-		["startup", {"leg_f_upper": -80.0, "leg_f_lower": 110.0, "torso": -6.0, "hip_y": 0.0}],
+		["windup", {"leg_f_upper": -80.0, "leg_f_lower": 110.0, "torso": -6.0, "hip_y": 0.0}],
 		["active", {"leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -30.0, "head": 16.0, "leg_b_upper": 10.0, "hip_y": 0.0}],
 		["active_end", {"leg_f_upper": -98.0, "leg_f_lower": -2.0, "torso": -30.0, "head": 16.0, "leg_b_upper": 10.0, "hip_y": 0.0}],
+		["follow", {}],
 		["end", {}]],
 	"body_kick": [["start", {}],
-		["startup", {"leg_b_upper": -40.0, "leg_b_lower": 80.0, "torso": -10.0, "hip_y": 0.0}],
+		["windup", {"leg_b_upper": -40.0, "leg_b_lower": 80.0, "torso": -10.0, "hip_y": 0.0}],
 		["active", {"leg_b_upper": -95.0, "leg_b_lower": 0.0, "torso": -28.0, "head": 16.0, "leg_f_upper": 6.0, "leg_f_lower": 6.0, "hip_y": 0.0}],
 		["active_end", {"leg_b_upper": -95.0, "leg_b_lower": 0.0, "torso": -28.0, "head": 16.0, "leg_f_upper": 6.0, "leg_f_lower": 6.0, "hip_y": 0.0}],
+		["follow", {}],
 		["end", {}]],
 	"spin_kick": [["start", {}],
-		["startup", {"leg_f_upper": -40.0, "leg_f_lower": 100.0, "torso": 40.0, "head": -20.0, "hip_y": 6.0}],
+		["windup", {"leg_f_upper": -40.0, "leg_f_lower": 100.0, "torso": 40.0, "head": -20.0, "hip_y": 6.0}],
 		["active", {"leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -42.0, "head": 24.0, "leg_b_upper": 12.0, "hip_y": 0.0}],
 		["active_end", {"leg_f_upper": -122.0, "leg_f_lower": 0.0, "torso": -42.0, "head": 24.0, "leg_b_upper": 12.0, "hip_y": 0.0}],
+		["follow", {}],
 		["end", {}]],
 	"elbow": [["start", {}],
-		["startup", {"arm_f_upper": -60.0, "arm_f_lower": -150.0, "torso": -4.0}],
+		["windup", {"arm_f_upper": -60.0, "arm_f_lower": -150.0, "torso": -4.0}],
 		["active", {"arm_f_upper": -100.0, "arm_f_lower": -160.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -22.0, "leg_b_upper": 22.0}],
 		["active_end", {"arm_f_upper": -100.0, "arm_f_lower": -160.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -22.0, "leg_b_upper": 22.0}],
+		["follow", {}],
 		["end", {}]],
 	"roundhouse": [["start", {}],
-		["startup", {"leg_b_upper": -50.0, "leg_b_lower": 100.0, "torso": -14.0, "hip_y": 0.0}],
+		["windup", {"leg_b_upper": -50.0, "leg_b_lower": 100.0, "torso": -14.0, "hip_y": 0.0}],
 		["active", {"leg_b_upper": -108.0, "leg_b_lower": -4.0, "torso": -36.0, "head": 20.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
 		["active_end", {"leg_b_upper": -108.0, "leg_b_lower": -4.0, "torso": -36.0, "head": 20.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
+		["follow", {}],
 		["end", {}]],
-	"hammer_fist": [["start", {"arm_f_upper": -170.0, "arm_f_lower": -20.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0,
+	"hammer_fist": [["start", {"open_f": 0.0, "arm_f_upper": -170.0, "arm_f_lower": -20.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0,
 			"leg_b_upper": -20.0, "leg_b_lower": 105.0, "hip_y": 0.0}],
 		["startup", {"arm_f_upper": -55.0, "arm_f_lower": -10.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -60.0,
 			"leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0, "hip_y": 0.0}]],
@@ -115,11 +154,12 @@ const SHOTS := {
 		"torso": 4.0, "head": 12.0, "leg_f_upper": -20.0, "leg_f_lower": 22.0, "leg_b_upper": 20.0, "leg_b_lower": 22.0,
 		"hip_y": 12.0}]],
 	"kick": [["start", {}],
-		["startup", {"leg_f_upper": -72.0, "leg_f_lower": 105.0, "torso": -8.0, "hip_y": 0.0}],
+		["windup", {"leg_f_upper": -72.0, "leg_f_lower": 105.0, "torso": -8.0, "hip_y": 0.0}],
 		["active", {"leg_f_upper": -100.0, "leg_f_lower": 0.0, "torso": -26.0, "head": 18.0, "leg_b_upper": 8.0,
 			"leg_b_lower": 4.0, "hip_y": 0.0}],
 		["active_end", {"leg_f_upper": -100.0, "leg_f_lower": 0.0, "torso": -26.0, "head": 18.0, "leg_b_upper": 8.0,
 			"leg_b_lower": 4.0, "hip_y": 0.0}],
+		["follow", {}],
 		["end", {}]],
 }
 
@@ -137,16 +177,28 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 			return tune["climb_ticks"] / 2
 	var d := Moves.data(state, tune)
 	match name:
+		"windup":
+			return maxi(1, int(round(d["startup"] * 0.7)))  # cocked a beat before the blow, so it reads
 		"startup", "active":
 			return d["startup"]
 		"active_end":
 			return d["startup"] + d["active"] - 1
+		"follow":
+			return d["startup"] + d["active"] - 1 + maxi(2, int(d["recovery"] * 0.35))
 	return 0
 
 
 static func full(changes: Dictionary) -> Dictionary:
 	var out := GUARD.duplicate()
 	out.merge(changes, true)
+	return out
+
+
+## A hit carried a little past itself: 12% further from the guard, every key.
+static func overshoot(hit: Dictionary) -> Dictionary:
+	var out := {}
+	for k in hit:
+		out[k] = hit[k] + (hit[k] - GUARD.get(k, 0.0)) * 0.12 if not k in ["open_f", "open_b"] else hit[k]
 	return out
 
 
@@ -158,7 +210,7 @@ static func blend(a: Dictionary, b: Dictionary, k: float) -> Dictionary:
 	return out
 
 
-## The angle offsets (and hip_y) for a state, t ticks into it.
+## The pose (soft keys and bone offsets) for a state, t ticks into it.
 static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 	if LOOPS.has(state):
 		var spec: Array = LOOPS[state]
@@ -176,27 +228,95 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 		var keys: Array = SHOTS[state]
 		if keys.size() == 1:
 			return full(keys[0][1])
+		var poses := []
+		for i in keys.size():
+			var p: Dictionary = full(keys[i][1])
+			if keys[i][0] == "follow":
+				p = overshoot(poses[i - 1])
+			poses.append(p)
 		for i in range(keys.size() - 1):
 			var a: int = moment(state, keys[i][0], tune)
 			var b: int = moment(state, keys[i + 1][0], tune)
 			if t < b or i == keys.size() - 2:
 				var k := 1.0 if b <= a else clampf(float(t - a) / float(b - a), 0.0, 1.0)
-				return blend(full(keys[i][1]), full(keys[i + 1][1]), k)
+				return blend(poses[i], poses[i + 1], k)
 	return full({})
 
 
-## Where a bone's far end sits, relative to the feet, for a pose, facing right (plain maths, for tests and hit
-## checks). Screen axes: +x forward, +y down.
-static func tip(bone: String, pose: Dictionary) -> Vector2:
+## Turns a pose into an angle for every bone (degrees, added to the rest angle), plus hip_y and the open hands.
+## grounded = the fighter stands on something (feet plant); false = in the air (feet point).
+static func bake(pose: Dictionary, grounded := true) -> Dictionary:
+	var out := {}
+	for b in BONES:
+		out[b] = pose.get(b, 0.0)
+	var lean: float = pose.get("torso", 0.0)
+	out["belly"] += lean * 0.4
+	out["chest"] += lean * 0.6
+	out["neck"] += -lean * 0.35  # the head follows the eyes, not the spine
+	for side in ["f", "b"]:
+		# a shoulder rolls forward as its arm reaches; the arm keeps its aim, only its root moves
+		var reach: float = pose.get("arm_%s_upper" % side, 0.0) - GUARD["arm_%s_upper" % side]
+		var roll: float = pose.get("shoulder_" + side, clampf(reach * 0.8, -75.0, 25.0))
+		out["shoulder_" + side] = roll
+		out["arm_%s_upper" % side] -= roll
+	out["hip_y"] = pose.get("hip_y", 0.0)
+	out["open_f"] = pose.get("open_f", 0.0)
+	out["open_b"] = pose.get("open_b", 0.0)
+	for side in ["f", "b"]:
+		_settle_foot(out, side, grounded)
+	if grounded:
+		# the body stands on its feet: settle it until the lower planted foot touches the street, then re-plant
+		for i in 4:
+			var lowest := -INF
+			for side in ["f", "b"]:
+				if -(_end("leg_%s_lower" % side, out)[0] as Vector2).y <= FOOT_LENGTH:
+					lowest = maxf(lowest, (_end("toe_" + side, out)[0] as Vector2).y)
+			if lowest == -INF:
+				break
+			out["hip_y"] -= lowest
+			for side in ["f", "b"]:
+				_settle_foot(out, side, grounded)
+	return out
+
+
+## A planted foot keeps the ball of the foot and the toes on the street: the heel rises exactly as far as the leg
+## lifts the ankle. An ankle higher than the foot is long, or a fighter in the air, lets the foot point.
+static func _settle_foot(out: Dictionary, side: String, grounded: bool) -> void:
+	var shin: Array = _end("leg_%s_lower" % side, out)
+	var ankle: Vector2 = shin[0]
+	var shin_deg: float = rad_to_deg(shin[1])
+	var foot := "foot_" + side
+	var toe := "toe_" + side
+	var height := -ankle.y
+	if grounded and height <= FOOT_LENGTH:
+		var tilt := rad_to_deg(asin(clampf(height / FOOT_LENGTH, 0.0, 1.0)))
+		out[foot] = tilt - shin_deg - BONES[foot][2]  # world angle 0 = flat, pointing forward
+		out[toe] = -tilt  # the toes stay flat on the street
+	elif grounded and height <= FOOT_LENGTH + TOE_LENGTH:
+		# pushing off: the foot stands up on the tips of its toes
+		out[foot] = 90.0 - shin_deg - BONES[foot][2]
+		out[toe] = rad_to_deg(asin(clampf((height - FOOT_LENGTH) / TOE_LENGTH, 0.0, 1.0))) - 90.0
+	else:
+		out[foot] = 30.0  # pointed
+		out[toe] = 10.0
+
+
+## The far end of a bone and its world angle (radians), for baked angles. Screen axes: +x forward, +y down.
+static func _end(bone: String, baked: Dictionary) -> Array:
 	var chain: Array[String] = []
 	var b := bone
 	while b != "":
 		chain.push_front(b)
 		b = BONES[b][0]
-	var pos := Vector2(0, pose.get("hip_y", 0.0))
+	var pos := Vector2(0, baked.get("hip_y", 0.0))
 	var ang := 0.0
 	for name in chain:
 		var spec: Array = BONES[name]
 		pos += (spec[1] as Vector2).rotated(ang)
-		ang += deg_to_rad(spec[2] + pose.get(name, 0.0))
-	return pos + Vector2(BONES[bone][3], 0).rotated(ang)
+		ang += deg_to_rad(spec[2] + baked.get(name, 0.0))
+	return [pos + Vector2(BONES[bone][3], 0).rotated(ang), ang]
+
+
+## Where a bone's far end sits, relative to the feet, for a pose, facing right (for tests and hit checks).
+static func tip(bone: String, pose: Dictionary, grounded := true) -> Vector2:
+	return _end(bone, bake(pose, grounded))[0]

@@ -47,32 +47,64 @@ func _init(body_tint := Color.WHITE) -> void:
 			bone.add_child(_part(name, spec))
 
 
-func _part(name: String, spec: Array) -> Polygon2D:
+func _part(name: String, spec: Array) -> Node2D:
 	var length: float = spec[3]
 	var w: float = spec[4] * 0.5
-	var p := Polygon2D.new()
-	p.name = "Part"
+	var color: Color = SHADES[spec[5]] * tint
+	var p: Node2D
 	if name == "head":
-		var pts := PackedVector2Array()
-		for i in 20:
-			var a := TAU * i / 20.0
-			pts.append(Vector2(length * 0.5 + cos(a) * length * 0.5, sin(a) * w))
-		p.polygon = pts
+		p = _shape(_ellipse(Vector2(length * 0.5, 0), length * 0.5, w), color)
+	elif name.begins_with("shoulder"):
+		p = _shape(_ellipse(Vector2(length * 0.5, 0), length * 0.62, w), color)
+	elif name.begins_with("hand"):
+		# a fist (a rounded block) and an open hand (flat, longer, a thumb); the pose shows one or the other
+		p = Node2D.new()
+		var fist := _shape(_ellipse(Vector2(length * 0.45, 0), length * 0.62, w * 0.95), color)
+		fist.name = "Fist"
+		var open := _shape(PackedVector2Array([Vector2(-2, -w * 0.5), Vector2(length + 6, -w * 0.4),
+			Vector2(length + 8, w * 0.1), Vector2(length * 0.5, w * 0.45), Vector2(length * 0.55, w * 1.1),
+			Vector2(length * 0.2, w * 1.0), Vector2(-2, w * 0.5)]), color)
+		open.name = "Open"
+		open.visible = false
+		p.add_child(fist)
+		p.add_child(open)
+	elif name.begins_with("foot"):
+		# heel at the ankle, the sole along the bone toward the ball of the foot
+		p = _shape(PackedVector2Array([Vector2(-w * 0.9, -w * 0.9), Vector2(length * 0.55, -w * 0.7),
+			Vector2(length + 2, -w * 0.45), Vector2(length + 2, w * 0.6), Vector2(-w * 1.1, w * 0.6)]), color)
+	elif name.begins_with("toe"):
+		p = _shape(PackedVector2Array([Vector2(-2, -w * 0.45), Vector2(length, -w * 0.15), Vector2(length + 2, w * 0.5),
+			Vector2(-2, w * 0.5)]), color)
 	else:
 		# a rounded slab from joint to joint, a little past each end so the joins never gap
-		p.polygon = PackedVector2Array([Vector2(-w * 0.6, -w), Vector2(length + w * 0.4, -w * 0.85),
-			Vector2(length + w * 0.4, w * 0.85), Vector2(-w * 0.6, w)])
-	p.color = SHADES[spec[5]] * tint
-	var line := Line2D.new()
-	line.points = p.polygon
-	line.closed = true
-	line.width = 3.0
-	line.default_color = OUTLINE
-	p.add_child(line)
-	# the back arm draws behind the torso; children of a later sibling draw on top otherwise
+		p = _shape(PackedVector2Array([Vector2(-w * 0.6, -w), Vector2(length + w * 0.4, -w * 0.85),
+			Vector2(length + w * 0.4, w * 0.85), Vector2(-w * 0.6, w)]), color)
+	p.name = "Part"
+	# back limbs draw behind the body
 	if spec[5] == 1:
 		p.z_index = -1
 	return p
+
+
+func _shape(points: PackedVector2Array, color: Color) -> Polygon2D:
+	var poly := Polygon2D.new()
+	poly.polygon = points
+	poly.color = color
+	var line := Line2D.new()
+	line.points = points
+	line.closed = true
+	line.width = 3.0
+	line.default_color = OUTLINE
+	poly.add_child(line)
+	return poly
+
+
+func _ellipse(centre: Vector2, rx: float, ry: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for i in 20:
+		var a := TAU * i / 20.0
+		pts.append(centre + Vector2(cos(a) * rx, sin(a) * ry))
+	return pts
 
 
 ## Puts the view where the fighter is and poses it. ground_y is the screen line of the street's far edge.
@@ -83,12 +115,18 @@ func sync(f, ground_y: float) -> void:
 	body.scale.x = f.facing
 	var height := clampf(f.y / 200.0, 0.0, 1.0)
 	shadow.scale = Vector2.ONE * (1.0 - height * 0.45)
-	apply(Poses.angles(f.state, f.t, f.tune))
+	apply(Poses.angles(f.state, f.t, f.tune), f.on_ground())
 	body.modulate = Color(1.6, 1.6, 1.9) if f.blocking() == "perfect" else Color.WHITE  # a perfect block flashes
 
 
-func apply(pose: Dictionary) -> void:
+func apply(pose: Dictionary, grounded := true) -> void:
+	var baked := Poses.bake(pose, grounded)
 	for name in bones:
 		var bone: Bone2D = bones[name]
-		bone.rotation_degrees = Poses.BONES[name][2] + pose.get(name, 0.0)
-	bones["hip"].position.y = Poses.BONES["hip"][1].y + pose.get("hip_y", 0.0)
+		bone.rotation_degrees = Poses.BONES[name][2] + baked[name]
+	bones["hip"].position.y = Poses.BONES["hip"][1].y + baked["hip_y"]
+	for side in ["f", "b"]:
+		var hand: Node2D = bones["hand_" + side].get_node("Part")
+		var open: bool = baked["open_" + side] > 0.5
+		hand.get_node("Open").visible = open
+		hand.get_node("Fist").visible = not open

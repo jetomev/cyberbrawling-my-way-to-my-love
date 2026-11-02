@@ -43,6 +43,11 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   held block with a perfect-block window (built); enemy combos that the right hit or a perfect block interrupts and
   disarms; two hero combos in a row make an enemy dizzy for a finisher; each enemy and boss has its own combos,
   counters and way to be beaten (with the enemies; the team's table comes through Javier).
+- **D-20** **A fuller body** (Javier, 2026-11-01 23:20: "the character movements seem to stiff, the upper body has
+  little to none flexibility, no feet, no hands…"): 21 bones (belly, chest, neck, head, shoulders, upper and lower
+  arms, hands that are fists or open, thighs, shins, feet, toes). Poses stay short and `poses.gd` bake() adds the body
+  sense: feet stand on the street and roll onto the toes as the leg drives, shoulders roll into punches, the head
+  follows the eyes; every strike winds up, lands, follows through and eases back. The real art uses the same parts.
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 

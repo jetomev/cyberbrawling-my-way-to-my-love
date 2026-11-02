@@ -13,31 +13,31 @@ const TUNED := ["punch", "kick", "air_kick"]
 
 const TABLE := {
 	# opener P: the jab
-	"punch": {"low": 120.0, "high": 230.0, "damage": 1, "effect": "", "limb": "arm_f_lower"},
+	"punch": {"low": 120.0, "high": 230.0, "damage": 1, "effect": "", "limb": "hand_f"},
 	"cross": {"startup": 5, "active": 3, "recovery": 9, "reach": 125.0, "low": 120.0, "high": 230.0, "damage": 1,
-		"effect": "", "limb": "arm_b_lower"},
+		"effect": "", "limb": "hand_b"},
 	"hook": {"startup": 7, "active": 4, "recovery": 14, "reach": 112.0, "low": 130.0, "high": 230.0, "damage": 2,
-		"effect": "stagger", "limb": "arm_f_lower"},
+		"effect": "stagger", "limb": "hand_f"},
 	"push_kick": {"startup": 8, "active": 4, "recovery": 14, "reach": 124.0, "low": 60.0, "high": 180.0, "damage": 1,
-		"effect": "push", "limb": "leg_f_lower"},
+		"effect": "push", "limb": "foot_f"},
 	"knee": {"startup": 5, "active": 3, "recovery": 10, "reach": 64.0, "low": 60.0, "high": 160.0, "damage": 2,
 		"effect": "", "limb": "leg_f_upper"},
-	"uppercut": {"startup": 7, "active": 4, "recovery": 16, "reach": 72.0, "low": 140.0, "high": 260.0, "damage": 3,
-		"effect": "launch", "limb": "arm_b_lower"},
+	"uppercut": {"startup": 7, "active": 4, "recovery": 16, "reach": 72.0, "low": 140.0, "high": 280.0, "damage": 3,
+		"effect": "launch", "limb": "hand_b"},
 	# opener K: the front kick
-	"kick": {"low": 60.0, "high": 180.0, "damage": 2, "effect": "", "limb": "leg_f_lower"},
+	"kick": {"low": 60.0, "high": 180.0, "damage": 2, "effect": "", "limb": "foot_f"},
 	"body_kick": {"startup": 7, "active": 4, "recovery": 12, "reach": 120.0, "low": 60.0, "high": 190.0, "damage": 2,
-		"effect": "", "limb": "leg_b_lower"},
+		"effect": "", "limb": "foot_b"},
 	"spin_kick": {"startup": 10, "active": 5, "recovery": 18, "reach": 110.0, "low": 120.0, "high": 260.0, "damage": 3,
-		"effect": "knockdown", "limb": "leg_f_lower"},
+		"effect": "knockdown", "limb": "foot_f"},
 	"elbow": {"startup": 4, "active": 3, "recovery": 10, "reach": 80.0, "low": 140.0, "high": 230.0, "damage": 2,
 		"effect": "", "limb": "arm_f_upper"},
 	"roundhouse": {"startup": 9, "active": 5, "recovery": 16, "reach": 120.0, "low": 100.0, "high": 230.0, "damage": 3,
-		"effect": "stagger", "limb": "leg_b_lower"},
+		"effect": "stagger", "limb": "foot_b"},
 	# in the air: one per jump
-	"air_kick": {"low": 30.0, "high": 170.0, "damage": 3, "effect": "", "limb": "leg_f_lower"},
+	"air_kick": {"low": 30.0, "high": 170.0, "damage": 3, "effect": "", "limb": "foot_f"},
 	"hammer_fist": {"startup": 4, "active": 8, "recovery": 0, "reach": 70.0, "low": 20.0, "high": 160.0, "damage": 2,
-		"effect": "", "limb": "arm_f_lower"},
+		"effect": "", "limb": "hand_f"},
 }
 
 ## What each sequence of presses becomes. A sequence not listed starts a new chain with its last press.

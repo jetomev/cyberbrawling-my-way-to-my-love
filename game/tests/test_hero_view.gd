@@ -42,7 +42,7 @@ func test_poses_name_only_real_bones() -> void:
 			tables.append(k[1])
 	for table in tables:
 		for key in table:
-			check(key == "hip_y" or Poses.BONES.has(key), "pose key %s is a bone" % key)
+			check(key in Poses.SOFT_KEYS or Poses.BONES.has(key), "pose key %s is a bone or a soft key" % key)
 
 
 func test_every_move_has_a_pose() -> void:

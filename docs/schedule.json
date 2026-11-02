@@ -118,6 +118,14 @@
           "todo": "Block: hold to guard"
         },
         {
+          "id": "body",
+          "name": "A fuller body: hands, feet, spine",
+          "who": "claude",
+          "start": "2026-11-01",
+          "end": "2026-11-01",
+          "todo": "A fuller body"
+        },
+        {
           "id": "enemy",
           "name": "First enemy, weapon drop and pickup",
           "who": "claude",

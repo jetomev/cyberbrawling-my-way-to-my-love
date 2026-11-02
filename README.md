@@ -6,7 +6,8 @@ sticks, knives, swords — keep it, switch between what you've collected, and sa
 
 It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 
-> **Status: Stage 1, the feel in grey boxes (2026-11-01).** A grey hero built from cut-out parts on bones walks the
+> **Status: Stage 1, the feel in grey boxes (2026-11-01).** A grey hero built from cut-out parts on 21 bones (spine,
+> neck, shoulders, fists and open hands, feet that plant, toes) walks the
 > shallow street, jumps, punches, kicks and flying-kicks, and chains three-hit **combos** into finishers (jab, cross,
 > hook; front kick, body kick, spinning kick; and more); kicks smash crates; cars are climbed and jumped off; nothing
 > is ever walked through. A feel lab (F1) changes the feel while you play. No enemies yet, no art yet.

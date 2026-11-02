@@ -26,6 +26,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Flying kick; climb onto objects and down; smash or jump obstacles, never walk through (solo) (2026-11-01 night: 44 tests)
 - [x] Combos: P/K three-hit chains with finishers, hammer fist, feel-lab window (solo) (2026-11-01 night, D-18: 62 tests)
 - [x] Block: hold to guard, perfect-block window with a flash, attack out of the guard (solo) (2026-11-01 night, D-19: 68 tests)
+- [x] A fuller body: spine, neck, shoulders, hands, feet and toes; planted feet, wind-up and follow-through (solo) (2026-11-01 night, D-20: 76 tests)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
 - [ ] That enemy's own combos; the right hit or a perfect block interrupts them and can disarm him; a block takes less pain (solo)
 - [ ] Two hero combos in a row make an enemy dizzy: the window for a finishing combo (solo)
