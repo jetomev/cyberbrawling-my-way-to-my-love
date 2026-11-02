@@ -75,6 +75,13 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   ticks and the kicking knee comes up bent before the shin sweeps; the roundhouse turns the hips and shoulders over
   (`turn`: his back shows, the far arm and leg come in front) and swings the standing foot round (`pivot_f`); after a
   flying kick the knee tucks back in (`tuck`). Every build also makes an every-frame strip around each hit.
+- **D-25** **Form from the third review** (the assistant team, 2026-11-02, on build eb78ba7): a spin never squashes
+  the fighter thin — the limbs keep their width, the chest narrows at most to about half, and past 90 the drawing flips
+  round; the covering fist sits in front of the jaw (`CHEEK`), where it shows past the face; a forearm pointing at the
+  camera draws shorter (`fore_f`/`fore_b`, hits measured on the same arm), so the hook swings level at head height with
+  the elbow up instead of lifting the forearm; the roundhouse lands turned over (his back to us), upright, the knee
+  still bent as it sweeps through, while the spin kick lands facing front, leg straight, leaning back. Every build
+  also strips the flying kick's landing frame by frame.
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 

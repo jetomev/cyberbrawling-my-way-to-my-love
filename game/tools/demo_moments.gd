@@ -1,7 +1,8 @@
 extends SceneTree
 ## Prints, for the first time each move shows up in the demo, "name:land:start:end" in movie frames: the frame it lands
 ## (the active blow; for climb and block, 8 ticks in), its first frame and its last, for scripts/build.sh's stills,
-## close-ups and timed strips.
+## close-ups and timed strips. Also "landing:touch:start:end" for the first landing after the flying kick: from 6 frames
+## before the feet touch down to 10 frames after he is back up (the team's third review asked to see it frame by frame).
 ## Run headless: godot --headless --path game -s res://tools/demo_moments.gd
 
 const Fighter := preload("res://scripts/sim/fighter.gd")
@@ -24,6 +25,8 @@ func _initialize() -> void:
 	var land := {}
 	var last := {}
 	var prev := ""
+	var touch := -1
+	var printed_landing := false
 	for i in Demo.length():
 		f.step(Demo.input_at(i))
 		w.step_hits([f])
@@ -36,6 +39,12 @@ func _initialize() -> void:
 			if not seen.has(key):
 				start[key] = frame
 				land.erase(key)
+		if seen.has("air_kick") and not printed_landing:
+			if key == "land" and touch < 0:
+				touch = frame
+			elif touch >= 0 and key != "land":
+				printed_landing = true
+				print("landing:%d:%d:%d" % [touch, touch - 6, mini(frame + 9, Demo.length() - 1 + MOVIE_OFFSET)])
 		prev = key
 		last[key] = frame
 		var ready := Moves.is_move(key) and f.attack_phase() == "active"

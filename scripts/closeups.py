@@ -11,7 +11,9 @@ game's pixels; the movie can be smaller) this cuts, for each move:
   the landing frame is one of them), four rows (whole body, hips, hands, feet). Each row keeps one frame for the whole
   move, so the parts are seen moving, not re-centred;
 - strips/NN-<move>-hit.png: the same rows, every single frame from HIT_BEFORE frames before the hit to HIT_AFTER after
-  (the team's second review: more frames close together around each strike).
+  (the team's second review: more frames close together around each strike);
+- for "landing" (the first landing after the flying kick), strips/NN-landing-1.png, -2.png...: every frame from the
+  last moments in the air to him back up, CHUNK frames a picture (the third review).
 
 Usage: scripts/closeups.py <frames dir> <marks file> <out dir> move:land:start:end [...]
 Prints an OK line with the counts.
@@ -26,6 +28,7 @@ PANEL = 320  # a close-up panel's side
 STRIP_PANEL = 170  # a timed strip's panel side
 STEP = 3  # frames between stills in a timed strip (50 ms at 60 frames a second)
 HIT_BEFORE, HIT_AFTER = 6, 3  # the hit strip: every frame from 100 ms before the hit to 50 ms after
+CHUNK = 10  # frames a picture in an every-frame sequence
 PARTS = ["hip", "hand_f", "hand_b", "foot_f", "foot_b", "head"]
 ROWS = ["whole body", "hips", "hands", "feet"]
 
@@ -98,7 +101,7 @@ def strip(steps, land, move, path, still, at, k, u, w, h):
     parts = []
     for c, f in enumerate(steps):
         ms = round((f - land) * 1000 / 60)
-        when = "HIT" if f == land else f"{ms:+d} ms"
+        when = ("TOUCH" if move == "landing" else "HIT") if f == land else f"{ms:+d} ms"
         parts.append(f"[{c}]split=4[c{c}r0][c{c}r1][c{c}r2][c{c}r3]")
         for r, b in enumerate(fixed):
             text = (f"{move} {when}" if c == 0 else when) if r == 0 else (ROWS[r] if c == 0 else "")
@@ -145,6 +148,12 @@ def main():
         row = out / "closeups" / f"{n:02d}-{move}.png"
         ffmpeg([still(land)], graph, row)
         rows.append(row)
+        if move == "landing":
+            frames_all = list(range(start, end + 1))
+            for c in range(0, len(frames_all), CHUNK):
+                part = out / "strips" / f"{n:02d}-landing-{c // CHUNK + 1}.png"
+                strips.append(strip(frames_all[c:c + CHUNK], land, "landing", part, still, at, k, u, w, h))
+            continue
         # the timed strip: every STEP frames, lined up on the landing frame; then every frame around the hit
         steps = [f for f in range(start, end + 1) if (f - land) % STEP == 0]
         strips.append(strip(steps, land, move, out / "strips" / f"{n:02d}-{move}.png", still, at, k, u, w, h))

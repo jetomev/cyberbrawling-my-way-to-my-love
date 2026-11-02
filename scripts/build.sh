@@ -50,7 +50,8 @@ fail() { echo "FAILED $*"; exit 1; }
     echo "- Files: \`demo.mp4\` (the scripted demo), \`moves.png\` (each move as it lands), \`sheet.png\` (nine moments),"
     echo "  \`closeups.png\` and \`closeups/\` (each move as it lands: the whole body, the hips, the hands, the feet, up close),"
     echo "  \`strips/NN-move.png\` (each move from start to end, a still every 50 ms lined up on the hit: whole body, hips,"
-    echo "  hands, feet) and \`strips/NN-move-hit.png\` (every frame from 100 ms before the hit to 50 ms after)"
+    echo "  hands, feet), \`strips/NN-move-hit.png\` (every frame from 100 ms before the hit to 50 ms after) and"
+    echo "  \`strips/NN-landing-N.png\` (every frame of the flying kick's landing, from the air until he is back up)"
     echo "- Moves in the demo: $(echo $MOMENTS | sed 's/:[0-9:]*//g')"
     echo
     echo "## What changed since the last push"

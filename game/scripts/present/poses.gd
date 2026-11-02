@@ -23,7 +23,9 @@ extends RefCounted
 ##   90 the fighter is edge-on and at 180 he shows his back. A spin ends on a whole turn (360 = facing again);
 ## - "turn" (degrees) turns only the hips and shoulders over, the legs keep their size: the chest narrows, and past 90
 ##   the far-side arm and leg come in front of the body (his back shows), as on a roundhouse or a cross;
-## - "pivot_f" / "pivot_b" (degrees) swing a standing foot round on its ball: at 180 the heel points at the target.
+## - "pivot_f" / "pivot_b" (degrees) swing a standing foot round on its ball: at 180 the heel points at the target;
+## - "fore_f" / "fore_b" (0 to 1) point that forearm at the camera: it draws shorter (down to FORE_SHORT of its length),
+##   as a hook's forearm does coming across the body. Hits are measured on the same shortened arm.
 
 const Moves := preload("res://scripts/sim/moves.gd")
 
@@ -55,9 +57,10 @@ const BONES := {
 
 ## Keys a pose may hold besides bones: shared or automatic parts that bake() turns into bone angles.
 const SOFT_KEYS := ["hip_x", "hip_y", "hip_turn", "torso", "open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b",
-	"spin", "turn", "pivot_f", "pivot_b"]
+	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b"]
 ## Keys that switch something on rather than bend it: a follow-through never carries them further.
-const SWITCH_KEYS := ["open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b"]
+const SWITCH_KEYS := ["open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b",
+	"fore_f", "fore_b"]
 
 ## The whip (D-21): in a strike the hips move first and the fist or foot arrives last. Each key is read this many
 ## ticks ahead on the move's curve, so the hips lead, the spine follows, then the shoulder and the upper limb; the
@@ -75,13 +78,16 @@ const GUARD := {
 	"arm_f_upper": -62.0, "arm_f_lower": -114.0, "arm_b_upper": -25.0, "arm_b_lower": -100.0,
 	"leg_f_upper": -16.0, "leg_f_lower": 12.0, "leg_b_upper": 16.0, "leg_b_lower": 12.0, "hip_y": 5.0,
 	"open_f": 0.0, "open_b": 0.0, "hip_x": 0.0, "hip_turn": 0.0, "cover_f": 0.0, "cover_b": 1.0, "rise_f": 0.0,
-	"rise_b": 0.0, "spin": 0.0, "turn": 0.0, "pivot_f": 0.0, "pivot_b": 0.0,
+	"rise_b": 0.0, "spin": 0.0, "turn": 0.0, "pivot_f": 0.0, "pivot_b": 0.0, "fore_f": 0.0, "fore_b": 0.0,
 }
+const FORE_SHORT := 0.4  # a forearm pointing straight at the camera draws at 40% of its length
 ## How far into its start-up a strike is cocked (the wind-up moment). Most cock late (0.7), so the blow reads as a
 ## snap; the swinging ones cock early, so the swing round to the target lasts long enough to be seen.
 const WINDUP_AT := {"hook": 0.4, "roundhouse": 0.45, "spin_kick": 0.5}
-## Where a covering fist sits: from the middle of the head, a little forward and down, on the cheek and jaw.
-const CHEEK := Vector2(16.0, 16.0)
+## Where a covering fist sits: from the middle of the head, forward and a little down, in front of the jaw. Far enough
+## forward to show past the face: the far hand is drawn behind the head, and at (16, 16) it hid there, so all one saw
+## of it was its forearm across the chest (the assistant team's third review, 2026-11-02).
+const CHEEK := Vector2(30.0, 14.0)
 
 ## Looping states: [loop length in ticks, [tick, changes from GUARD], ...]
 const LOOPS := {
@@ -131,10 +137,10 @@ const SHOTS := {
 		["follow", {}],
 		["end", {}]],
 	"hook": [["start", {}],
-		["windup", {"turn": -30.0, "hip_x": -10.0, "hip_turn": -14.0, "arm_f_upper": 30.0, "arm_f_lower": -20.0, "torso": -10.0, "head": 6.0}],
-		["sweep", {"turn": 20.0, "hip_x": 2.0, "hip_turn": 4.0, "arm_f_upper": -75.0, "arm_f_lower": -100.0, "torso": 12.0, "head": -6.0}],
-		["active", {"turn": 60.0, "hip_x": 12.0, "hip_turn": 24.0, "arm_f_upper": -95.0, "arm_f_lower": -80.0, "torso": 30.0, "head": -14.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
-		["active_end", {"turn": 60.0, "hip_x": 12.0, "hip_turn": 24.0, "arm_f_upper": -95.0, "arm_f_lower": -80.0, "torso": 30.0, "head": -14.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
+		["windup", {"fore_f": 1.0, "turn": -30.0, "hip_x": -10.0, "hip_turn": -14.0, "arm_f_upper": -140.0, "arm_f_lower": -138.0, "torso": -10.0, "head": 6.0}],
+		["sweep", {"fore_f": 0.9, "turn": 20.0, "hip_x": 2.0, "hip_turn": 4.0, "arm_f_upper": -86.0, "arm_f_lower": -100.0, "torso": 12.0, "head": -6.0}],
+		["active", {"fore_f": 0.45, "turn": 60.0, "hip_x": 12.0, "hip_turn": 24.0, "arm_f_upper": -112.0, "arm_f_lower": -46.0, "torso": 30.0, "head": -14.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
+		["active_end", {"fore_f": 0.45, "turn": 60.0, "hip_x": 12.0, "hip_turn": 24.0, "arm_f_upper": -112.0, "arm_f_lower": -46.0, "torso": 30.0, "head": -14.0, "leg_f_upper": -24.0, "leg_b_upper": 24.0}],
 		["follow", {}],
 		["end", {}]],
 	"uppercut": [["start", {"cover_b": 0.0}],
@@ -177,8 +183,8 @@ const SHOTS := {
 	"roundhouse": [["start", {}],
 		["windup", {"turn": 40.0, "pivot_f": 60.0, "rise_f": 0.2, "hip_x": 4.0, "hip_turn": -10.0, "leg_b_upper": -60.0, "leg_b_lower": 115.0, "torso": -14.0, "hip_y": 0.0}],
 		["sweep", {"turn": 90.0, "pivot_f": 120.0, "rise_f": 0.3, "hip_x": 10.0, "hip_turn": -20.0, "leg_b_upper": -100.0, "leg_b_lower": 95.0, "torso": -30.0, "head": 14.0, "hip_y": 0.0}],
-		["active", {"turn": 130.0, "pivot_f": 160.0, "rise_f": 0.3, "hip_x": 14.0, "hip_turn": -24.0, "leg_b_upper": -108.0, "leg_b_lower": -4.0, "torso": -42.0, "head": 22.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
-		["active_end", {"turn": 130.0, "pivot_f": 160.0, "rise_f": 0.3, "hip_x": 14.0, "hip_turn": -24.0, "leg_b_upper": -108.0, "leg_b_lower": -4.0, "torso": -42.0, "head": 22.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
+		["active", {"turn": 165.0, "pivot_f": 170.0, "rise_f": 0.3, "hip_x": 14.0, "hip_turn": -30.0, "leg_b_upper": -100.0, "leg_b_lower": 52.0, "torso": -26.0, "head": 16.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
+		["active_end", {"turn": 165.0, "pivot_f": 170.0, "rise_f": 0.3, "hip_x": 14.0, "hip_turn": -30.0, "leg_b_upper": -100.0, "leg_b_lower": 52.0, "torso": -26.0, "head": 16.0, "leg_f_upper": 8.0, "hip_y": 0.0}],
 		["follow", {}],
 		["end", {}]],
 	"hammer_fist": [["start", {"open_f": 0.0, "arm_f_upper": -170.0, "arm_f_lower": -20.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0,
@@ -323,7 +329,7 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 	out["hip_y"] = pose.get("hip_y", 0.0)
 	out["open_f"] = pose.get("open_f", 0.0)
 	out["open_b"] = pose.get("open_b", 0.0)
-	for k in ["rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b"]:
+	for k in ["rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b"]:
 		out[k] = pose.get(k, 0.0)
 	for side in ["f", "b"]:
 		_settle_foot(out, side, grounded)
@@ -452,11 +458,20 @@ static func _end(bone: String, baked: Dictionary) -> Array:
 		b = BONES[b][0]
 	var pos := Vector2(baked.get("hip_x", 0.0), baked.get("hip_y", 0.0))
 	var ang := 0.0
+	var stretch := 1.0  # the parent bone's drawn length, as a share of its real one
 	for name in chain:
 		var spec: Array = BONES[name]
-		pos += (spec[1] as Vector2).rotated(ang)
+		pos += (spec[1] as Vector2).rotated(ang) * stretch
 		ang += deg_to_rad(spec[2] + baked.get(name, 0.0))
-	return [pos + Vector2(BONES[bone][3], 0).rotated(ang), ang]
+		stretch = drawn_length(name, baked)
+	return [pos + Vector2(BONES[bone][3] * stretch, 0).rotated(ang), ang]
+
+
+## How long a bone draws, as a share of its length: a forearm pointing at the camera ("fore_") looks shorter.
+static func drawn_length(bone: String, baked: Dictionary) -> float:
+	if bone in ["arm_f_lower", "arm_b_lower"]:
+		return 1.0 - (1.0 - FORE_SHORT) * clampf(baked.get("fore_" + bone.substr(4, 1), 0.0), 0.0, 1.0)
+	return 1.0
 
 
 ## Where a bone's far end sits, relative to the feet, for a pose, facing right (for tests and hit checks).

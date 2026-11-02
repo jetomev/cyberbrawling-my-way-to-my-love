@@ -25,7 +25,7 @@ func test_the_free_hand_guards_the_face() -> void:
 		var b := Poses.bake(Poses.angles(m, Moves.data(m, t)["startup"], t), true)
 		var head := middle("head", b)
 		var fist := middle("hand_" + side, b)
-		check(fist.distance_to(head) < 28.0, "%s: the free fist is at the face (%.0f px from the middle of the head)" % [m, fist.distance_to(head)])
+		check(fist.distance_to(head) < 36.0, "%s: the free fist is at the face (%.0f px from the middle of the head)" % [m, fist.distance_to(head)])
 		check(fist.x > head.x - 4.0, "%s: in front of the face, not behind it (%.0f vs %.0f)" % [m, fist.x, head.x])
 		var elbow: Vector2 = Poses._end("arm_%s_upper" % side, b)[0]
 		check(elbow.y > fist.y + 20.0, "%s: the elbow stays down under the fist (%.0f vs %.0f)" % [m, elbow.y, fist.y])
@@ -43,14 +43,29 @@ static func arc(m: String, t: Dictionary) -> float:
 	return most
 
 
-func test_the_hook_swings_wide() -> void:
+func test_the_hook_swings_sideways() -> void:
+	# third review: the hook read as lifting the forearm. Seen from the side, a swing is the fist travelling level at
+	# head height with the elbow up, the forearm across the body (drawn shorter, pointing at the camera)
 	var t := Tuning.fresh()
-	var hook := arc("hook", t)
-	for m in ["punch", "cross"]:
-		check(hook > 2.0 * arc(m, t), "the hook's arc (%.0f px) is more than twice the %s's (%.0f px)" % [hook, m, arc(m, t)])
-	var hit := Poses.angles("hook", Moves.data("hook", t)["startup"], t)
-	var cross := Poses.angles("cross", Moves.data("cross", t)["startup"], t)
-	check(hit["hip_turn"] > cross["hip_turn"] + 5.0, "the hook turns the hips more than the cross (%.0f vs %.0f)" % [hit["hip_turn"], cross["hip_turn"]])
+	var d := Moves.data("hook", t)
+	var w := Poses.moment("hook", "windup", t)
+	var start: Vector2 = Poses.tip("hand_f", Poses.angles("hook", w, t))
+	var hit: Vector2 = Poses.tip("hand_f", Poses.angles("hook", d["startup"], t))
+	var top := INF
+	var low := -INF
+	for tt in range(w, d["startup"] + 1):
+		var y: float = Poses.tip("hand_f", Poses.angles("hook", tt, t)).y
+		top = minf(top, y)
+		low = maxf(low, y)
+	check(hit.x - start.x > 3.0 * (low - top), "the fist travels forward (%.0f px) far more than it rises or drops (%.0f px)" % [hit.x - start.x, low - top])
+	var b := Poses.bake(Poses.angles("hook", d["startup"], t), true)
+	var elbow: Vector2 = Poses._end("arm_f_upper", b)[0]
+	var shoulder: Vector2 = Poses._end("shoulder_f", b)[0]
+	check(absf(elbow.y - shoulder.y) < 12.0, "at contact the elbow is up, level with the shoulder (%.0f px off)" % absf(elbow.y - shoulder.y))
+	check(Poses.angles("hook", Poses.moment("hook", "sweep", t), t)["fore_f"] > 0.8, "coming round, the forearm points across the body (drawn short)")
+	var cross := Poses.angles("cross", d["startup"], t)
+	var hook := Poses.angles("hook", d["startup"], t)
+	check(hook["hip_turn"] > cross["hip_turn"] + 5.0, "the hook turns the hips more than the cross (%.0f vs %.0f)" % [hook["hip_turn"], cross["hip_turn"]])
 
 
 func test_the_spin_kick_turns_all_the_way_round() -> void:
@@ -91,13 +106,20 @@ func test_the_spinning_kicks_pivot_and_turn_more() -> void:
 
 
 func test_the_drawing_turns_with_the_spin() -> void:
+	# the third review: no squashing him to a sliver; the limbs keep their thickness, the chest narrows, he flips round
 	var v = HeroView.new()
+	for spin in range(0, 361, 10):
+		v.apply(Poses.full({"spin": float(spin)}))
+		check(absf(v.body.scale.x) == 1.0, "at %d degrees he keeps his full width (%.2f)" % [spin, v.body.scale.x])
+		check(v.bones["chest"].get_node("Part").scale.y >= 0.55, "at %d degrees the chest keeps at least half its width" % spin)
 	v.apply(Poses.full({"spin": 90.0}))
-	check(absf(v.body.scale.x) < 0.1, "at 90 degrees the body is edge-on (%.2f wide)" % v.body.scale.x)
+	check(v.bones["chest"].get_node("Part").scale.y < 0.6, "edge-on, the chest is at its narrowest")
 	v.apply(Poses.full({"spin": 180.0}))
-	check(v.body.scale.x < -0.99, "at 180 he shows his back (%.2f)" % v.body.scale.x)
+	check(v.body.scale.x < 0.0, "at 180 he faces the other way")
+	eq(v.bones["arm_b_upper"].get_node("Part").z_index, 0, "and the far arm comes in front: his back shows")
 	v.apply(Poses.full({"spin": 360.0}))
-	check(v.body.scale.x > 0.99, "a whole turn faces the front again (%.2f)" % v.body.scale.x)
+	check(v.body.scale.x > 0.0, "a whole turn faces the front again")
+	eq(v.bones["arm_b_upper"].get_node("Part").z_index, -1, "with the far arm behind again")
 	v.free()
 
 
@@ -109,12 +131,13 @@ func test_the_guard_keeps_both_hands_up() -> void:
 		var head := middle("head", b)
 		var rear := middle("hand_b", b)
 		var front := middle("hand_f", b)
-		check(rear.distance_to(head) < 28.0, "%s@%d: the rear fist at the cheek (%.0f px off)" % [p[0], p[1], rear.distance_to(head)])
+		check(rear.distance_to(head) < 36.0 and rear.x - head.x > 22.0, "%s@%d: the rear fist at the cheek (%.0f px off)" % [p[0], p[1], rear.distance_to(head)])
 		check(front.y < head.y + 50.0 and front.x > head.x + 15.0, "%s@%d: the front fist up and out in front (%.0f, %.0f from the head)" % [p[0], p[1], front.x - head.x, front.y - head.y])
 	for tt in range(0, Moves.length("punch", t) + 1):
 		# all through a jab, coming back too, the rear fist stays at the cheek
 		var b := Poses.bake(Poses.angles("punch", tt, t), true)
-		check(middle("hand_b", b).distance_to(middle("head", b)) < 28.0, "punch@%d: the rear fist stays at the cheek" % tt)
+		var gap: Vector2 = middle("hand_b", b) - middle("head", b)
+		check(gap.length() < 36.0 and gap.x > 22.0, "punch@%d: the rear fist stays at the cheek, in front of the face where it shows (%.0f, %.0f)" % [tt, gap.x, gap.y])
 	# the arms that work leave the guard: the cross's rear fist goes out, the climb's hands grab
 	var cross := Poses.bake(Poses.angles("cross", Moves.data("cross", t)["startup"], t), true)
 	check(middle("hand_b", cross).x > middle("head", cross).x + 80.0, "the cross's rear fist leaves the cheek")
@@ -186,3 +209,27 @@ static func written(move: String, moment: String) -> Dictionary:
 		if k[0] == moment:
 			return Poses.full(k[1])
 	return Poses.full({})
+
+
+func test_a_forearm_at_the_camera_draws_short_and_hits_where_drawn() -> void:
+	var v = HeroView.new()
+	var pose := Poses.full({"cover_f": 0.0, "arm_f_upper": -90.0, "arm_f_lower": 0.0, "fore_f": 1.0})
+	v.apply(pose)
+	eq(snappedf(v.bones["arm_f_lower"].scale.x, 0.01), Poses.FORE_SHORT, "the forearm draws at its short length")
+	eq(snappedf(v.bones["hand_f"].scale.x * v.bones["arm_f_lower"].scale.x, 0.01), 1.0, "the fist keeps its own size")
+	var drawn: Vector2 = v.points()["hand_f"]
+	var logic: Vector2 = Poses._end("arm_f_lower", Poses.bake(pose, true))[0] + Vector2(0, -125) - Poses.BONES["hip"][1]
+	check(drawn.distance_to(logic) < 1.0, "the drawn wrist is where the hit check thinks it is (%.1f px apart)" % drawn.distance_to(logic))
+	v.free()
+
+
+func test_the_roundhouse_and_the_spin_kick_land_differently() -> void:
+	# third review: at contact the roundhouse looked like the spin kick
+	var t := Tuning.fresh()
+	var r := Poses.angles("roundhouse", Moves.data("roundhouse", t)["startup"], t)
+	var s := Poses.angles("spin_kick", Moves.data("spin_kick", t)["startup"], t)
+	check(r["leg_b_lower"] > 30.0, "the roundhouse lands with the knee still bent, sweeping through (%.0f)" % r["leg_b_lower"])
+	check(s["leg_f_lower"] < 10.0, "the spin kick lands with the leg straight (%.0f)" % s["leg_f_lower"])
+	check(r["turn"] >= 150.0, "the roundhouse's waist and shoulders are turned over, his back to us (%.0f)" % r["turn"])
+	check(fmod(s["spin"], 360.0) == 0.0 and s["turn"] == 0.0, "the spin kick lands facing front")
+	check(r["torso"] > s["torso"] + 12.0, "the roundhouse turns upright, the spin kick leans far back (%.0f vs %.0f)" % [r["torso"], s["torso"]])

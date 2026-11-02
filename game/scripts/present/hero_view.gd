@@ -140,13 +140,16 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		var bone: Bone2D = bones[name]
 		bone.rotation_degrees = Poses.BONES[name][2] + baked[name]
 	bones["hip"].position = Poses.BONES["hip"][1] + Vector2(baked["hip_x"], baked["hip_y"])
-	# a spin turns the body around the up axis: squeezed edge-on at 90, his back at 180 (never quite zero wide)
-	var turn := cos(deg_to_rad(baked["spin"]))
-	body.scale.x = facing * (maxf(absf(turn), 0.06) * signf(turn) if turn != 0.0 else 0.06)
-	# the hips and shoulders turn over: the chest narrows; past 90 the far-side arm and leg come in front, lit as near
-	var over := cos(deg_to_rad(baked["turn"]))
+	# a spin turns the whole body around the up axis. It never squashes him thin (the assistant team's third review:
+	# a turn that flattens him to a line reads wrong): the arms and legs keep their thickness, only the chest narrows
+	# as for a hip turn, and past 90 the drawing flips to face the other way, his back to us
+	var spun := cos(deg_to_rad(baked["spin"]))
+	body.scale.x = facing * (-1.0 if spun < 0.0 else 1.0)
+	# the hips and shoulders turn over (a turn, or a spin): the chest narrows, never below about half; past 90 the
+	# far-side arm and leg come in front, lit as near
+	var over := cos(deg_to_rad(baked["turn"] + baked["spin"]))
 	for n in ["belly", "chest"]:
-		bones[n].get_node("Part").scale.y = maxf(absf(over), 0.45)
+		bones[n].get_node("Part").scale.y = maxf(absf(over), 0.55)
 	for name in bones:
 		var spec: Array = Poses.BONES[name]
 		var part: Node2D = bones[name].get_node_or_null("Part")
@@ -164,6 +167,11 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		var x := maxf(absf(swing), 0.35) * (signf(swing) if swing != 0.0 else 1.0)
 		for n in ["foot_" + side, "toe_" + side]:
 			bones[n].get_node("Part").scale.x = x
+	# a forearm pointing at the camera draws shorter; the hand keeps its own size
+	for side in ["f", "b"]:
+		var k := Poses.drawn_length("arm_%s_lower" % side, baked)
+		bones["arm_%s_lower" % side].scale.x = k
+		bones["hand_" + side].scale.x = 1.0 / k
 	for side in ["f", "b"]:
 		var hand: Node2D = bones["hand_" + side].get_node("Part")
 		var open: bool = baked["open_" + side] > 0.5
