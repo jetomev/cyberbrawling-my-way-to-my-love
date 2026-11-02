@@ -5,6 +5,8 @@ extends RefCounted
 const DEFAULTS := {
 	# moving along the street (x) and up/down its depth (z, the shallow street of D-13)
 	"walk_speed": 4.0,
+	"run_speed": 8.0,  # W held (Javier, 2026-11-02 18:48: "the character needs to be able to walk, and run")
+	"stance_switch_ticks": 8,  # X: from the fight stance to the walk stance and back
 	"depth_speed": 2.4,
 	"street_left": 0.0,
 	"street_right": 3840.0,

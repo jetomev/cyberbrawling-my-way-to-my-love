@@ -2,7 +2,9 @@ extends SceneTree
 ## Prints, for the first time each move shows up in the demo, "name:land:start:end" in movie frames: the frame it lands
 ## (the active blow; for climb and block, 8 ticks in), its first frame and its last, for scripts/build.sh's stills,
 ## close-ups and timed strips. Also "landing:touch:start:end" for the first landing after the flying kick: from 6 frames
-## before the feet touch down to 10 frames after he is back up (the team's third review asked to see it frame by frame).
+## before the feet touch down to 10 frames after he is back up (the team's third review asked to see it frame by frame);
+## and "<state>-cycle-frames:start:start:end" for the first stretch of the fighting shuffle, the everyday walk, the
+## run and both stance switches (up to 30 frames each).
 ## Run headless: godot --headless --path game -s res://tools/demo_moments.gd
 
 const Fighter := preload("res://scripts/sim/fighter.gd")
@@ -27,6 +29,7 @@ func _initialize() -> void:
 	var prev := ""
 	var touch := -1
 	var printed_landing := false
+	var cycles := {}  # walking, running and switching stance: their first stretch, frame by frame (capped)
 	for i in Demo.length():
 		f.step(Demo.input_at(i))
 		w.step_hits([f])
@@ -45,6 +48,13 @@ func _initialize() -> void:
 			elif touch >= 0 and key != "land":
 				printed_landing = true
 				print("landing:%d:%d:%d" % [touch, touch - 6, mini(frame + 9, Demo.length() - 1 + MOVIE_OFFSET)])
+		if key in ["walk", "stroll", "run", "to_walk", "to_fight"]:
+			if not cycles.has(key):
+				cycles[key] = [frame, frame, false]
+			elif not cycles[key][2] and frame == cycles[key][1] + 1 and frame - cycles[key][0] < 30:
+				cycles[key][1] = frame
+			else:
+				cycles[key][2] = true
 		prev = key
 		last[key] = frame
 		var ready := Moves.is_move(key) and f.attack_phase() == "active"
@@ -52,6 +62,8 @@ func _initialize() -> void:
 			ready = f.t == 8
 		if ready and not land.has(key) and not seen.has(key):
 			land[key] = frame
+	for key in cycles:
+		print("%s-cycle-frames:%d:%d:%d" % [key, cycles[key][0], cycles[key][0], cycles[key][1]])
 	if land.has(prev) and not seen.has(prev):
 		print("%s:%d:%d:%d" % [prev, land[prev], start[prev], last[prev]])
 	quit(0)

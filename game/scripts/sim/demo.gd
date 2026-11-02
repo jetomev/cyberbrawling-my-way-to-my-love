@@ -4,8 +4,8 @@ extends RefCounted
 
 ## The route on the grey street (street_world.grey_street): smash the first crate with two kicks, walk on, climb the
 ## car, walk across its roof and flying-kick off the end, step down the street and jump the second crate, then the
-## combos (moves.gd): jab-cross-hook, jab-cross-push kick, kick-body kick-spinning kick, jab-knee-uppercut, kick-elbow-roundhouse, and a
-## hammer fist from a jump.
+## combos (moves.gd): jab-cross-power punch, jab-cross-push kick, low kick-body kick-side kick, jab-knee-uppercut, low kick-elbow-roundhouse, and a
+## hammer fist from a jump, a block; then the walk stance: switching to it, an everyday walk, a run, and back.
 const STEPS := [
 	[30, {}],
 	[150, {"mx": 1.0}],
@@ -25,6 +25,9 @@ const STEPS := [
 	[1, {"kick": true}], [12, {}], [1, {"punch": true}], [9, {}], [1, {"kick": true}], [50, {}],
 	[1, {"jump": true}], [6, {}], [1, {"punch": true}], [50, {}],
 	[40, {"block": true}], [1, {"block": true, "punch": true}], [40, {}],
+	# then X to the walk stance, an everyday walk, a run (W held), and X back to the fight stance
+	[1, {"stance": true}], [16, {}], [25, {"mx": 1.0}], [26, {"mx": 1.0, "run": true}], [12, {}],
+	[1, {"stance": true}], [20, {}],
 ]
 
 
@@ -42,7 +45,7 @@ static func input_at(i: int) -> Dictionary:
 		if i < start + s[0]:
 			var inp: Dictionary = s[1].duplicate()
 			if i != start:
-				for b in ["jump", "punch", "kick"]:
+				for b in ["jump", "punch", "kick", "stance"]:
 					inp.erase(b)
 			return inp
 		start += s[0]

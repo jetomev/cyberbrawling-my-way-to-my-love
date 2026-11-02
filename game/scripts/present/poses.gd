@@ -62,11 +62,11 @@ const BONES := {
 
 ## Keys a pose may hold besides bones: shared or automatic parts that bake() turns into bone angles.
 const SOFT_KEYS := ["hip_x", "hip_y", "hip_turn", "torso", "open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b",
-	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head"]
+	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head", "relaxed"]
 ## Keys that switch something on rather than bend it: a follow-through never carries them further.
 const SWITCH_KEYS := ["open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b",
 	"fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b",
-	"spin_head"]
+	"spin_head", "relaxed"]
 
 ## The whip (D-21): in a strike the hips move first and the fist or foot arrives last. Each key is read this many
 ## ticks ahead on the move's curve, so the hips lead, the spine follows, then the shoulder and the upper limb; the
@@ -90,11 +90,20 @@ const GUARD := {
 	"leg_f_upper": -47.3, "leg_f_lower": 48.9, "leg_b_upper": 22.6, "leg_b_lower": 19.9, "hip_y": 0.0,
 	"open_f": 0.0, "open_b": 0.0, "hip_x": 0.0, "hip_turn": 0.0, "cover_f": 1.0, "cover_b": 1.0, "rise_f": 0.0,
 	"rise_b": 0.15, "spin": 0.0, "turn": 0.0, "pivot_f": 0.0, "pivot_b": 45.0, "fore_f": 0.0, "fore_b": 0.0,
-	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0,
+	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0, "relaxed": 0.0,
 }
 const HEAD_LEAD := 6  # on a spin the head looks round first: it reads the spin this many frames ahead
 ## Where the ankles stand in the guard, from the hip joint: the guard's legs are solved for these spots.
 const STANCE := {"f": Vector2(44.0, 100.0), "b": Vector2(-63.0, 100.0)}
+## Where they stand in the walk stance ("relaxed" 1, feet mode): close together under the hips, legs nearly straight
+## (Javier, 2026-11-02 18:48: the hero walks and runs, X switches between the fight stance and the walk stance).
+const RELAXED := {"f": Vector2(12.0, 118.0), "b": Vector2(-10.0, 118.0)}
+## The everyday walk: each foot planted most of the cycle, the legs passing each other, the arms swinging against them.
+const STROLL_CYCLE := 32
+const STROLL_STEP := 13
+## The run: knees high, arms bent and pumping, a lean forward, and a moment with both feet off the street.
+const RUN_CYCLE := 24
+const RUN_STEP := 15
 ## The walk is a fighter's shuffle, not a stroll (Javier, 2026-11-02 morning): the front foot steps out, the back foot
 ## follows, the feet never pass each other and the stance never breaks. A cycle of WALK_CYCLE ticks; each foot spends
 ## WALK_STEP of them in the air and the rest planted, sliding back under the body at exactly the walking speed, so a
@@ -112,12 +121,24 @@ const WINDUP_AT := {"hook": 0.4, "roundhouse": 0.45, "spin_kick": 0.6, "knee": 0
 const CHEEK := Vector2(30.0, 14.0)
 const CHEEK_FRONT := Vector2(62.0, 14.0)  # the front fist in the guard: at cheekbone height, a forearm ahead (the sheet)
 
+## The walk stance standing (also the base of the everyday walk), and the base of the run.
+const STAND := {"feet": 1.0, "relaxed": 1.0, "cover_f": 0.0, "cover_b": 0.0, "pivot_b": 0.0, "rise_b": 0.0,
+	"arm_f_upper": -8.0, "arm_f_lower": -15.0, "arm_b_upper": 8.0, "arm_b_lower": -15.0, "torso": 2.0, "neck": 0.0, "head": 0.0}
+const RUN := {"feet": 1.0, "relaxed": 1.0, "cover_f": 0.0, "cover_b": 0.0, "pivot_b": 0.0, "rise_b": 0.0,
+	"arm_f_lower": -95.0, "arm_b_lower": -95.0, "torso": 18.0, "neck": 4.0, "head": 2.0}
+
 ## Looping states: [loop length in ticks, [tick, changes from GUARD], ...]
 const LOOPS := {
 	# the guard is never dead still: the weight rocks gently from the back leg to the front and back, knees giving
 	# (it starts and ends at the plain guard, which is where every move ends, so nothing jumps between them)
 	"idle": [60, [0, {}], [15, {"hip_x": -6.0, "hip_turn": -2.0, "hip_y": 0.0, "torso": 9.0, "head": 9.0}],
 		[45, {"hip_x": 6.0, "hip_turn": 2.0, "hip_y": 4.0, "torso": 12.0, "head": 7.0}]],
+	# the walk stance, standing: upright and easy, feet close, legs nearly straight, arms hanging, chin level, breathing
+	"stand": [90, [0, STAND], [45, {"feet": 1.0, "relaxed": 1.0, "cover_f": 0.0, "cover_b": 0.0, "pivot_b": 0.0, "rise_b": 0.0,
+		"arm_f_upper": -6.0, "arm_f_lower": -18.0, "arm_b_upper": 10.0, "arm_b_lower": -18.0, "torso": 4.0, "neck": 0.0,
+		"head": 0.0, "hip_y": 1.5}]],
+	"stroll": [32, [0, STAND], [16, STAND]],
+	"run": [24, [0, RUN], [12, RUN]],
 	"walk": [20, [0, {"feet": 1.0, "hip_y": 2.0, "hip_turn": -3.0, "torso": 12.0}],
 		[5, {"feet": 1.0, "hip_y": -2.0, "hip_turn": 0.0, "torso": 11.0}],
 		[10, {"feet": 1.0, "hip_y": 2.0, "hip_turn": 3.0, "torso": 12.0}],
@@ -280,7 +301,10 @@ const SHOTS := {
 		["active", {"step_b": 60.0, "hip_x": 20.0, "turn": 85.0, "pivot_b": 180.0, "leg_f_upper": -116.0, "leg_f_lower": 0.0, "torso": -48.0, "head": 22.0, "hip_turn": -30.0}],
 		["active_end", {"step_b": 60.0, "hip_x": 20.0, "turn": 85.0, "pivot_b": 180.0, "leg_f_upper": -116.0, "leg_f_lower": 0.0, "torso": -48.0, "head": 22.0, "hip_turn": -30.0}],
 		["follow", {"step_b": 56.0, "hip_x": 4.0, "turn": 60.0, "pivot_b": 180.0, "leg_f_upper": -110.0, "leg_f_lower": 130.0, "torso": -20.0, "head": 10.0, "hip_turn": -12.0}],
-		["end", {}]]
+		["end", {}]],
+	# X switches stance (Javier, 2026-11-02 18:48): the guard eases down to standing easy, and back up again
+	"to_walk": [["start", {"feet": 1.0}], ["end", STAND]],
+	"to_fight": [["start", STAND], ["end", {"feet": 1.0}]]
 }
 
 
@@ -291,6 +315,7 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 		"end":
 			match state:
 				"land": return tune["land_ticks"]
+				"to_walk", "to_fight": return tune["stance_switch_ticks"]
 				"climb": return tune["climb_ticks"]
 			return Moves.length(state, tune)
 		"climb_mid":
@@ -358,6 +383,14 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 					pose.merge(_walk_feet(t, tune), true)
 					if t < WALK_EASE_IN:
 						pose = blend(full({"feet": 1.0}), pose, float(t) / WALK_EASE_IN)  # from the guard, no jump
+				elif state == "stroll":
+					pose.merge(_gait(t, STROLL_CYCLE, STROLL_STEP, tune["walk_speed"], 10.0, 22.0), true)
+					if t < WALK_EASE_IN:
+						pose = blend(full(STAND), pose, float(t) / WALK_EASE_IN)
+				elif state == "run":
+					pose.merge(_gait(t, RUN_CYCLE, RUN_STEP, tune["run_speed"], 64.0, 38.0), true)
+					if t < WALK_EASE_IN:
+						pose = blend(full(STAND), pose, float(t) / WALK_EASE_IN)
 				return pose
 		return full({})
 	if SHOTS.has(state):
@@ -430,6 +463,33 @@ static func sink_at(since: int) -> float:
 	return SINK * (1.0 - k * k * (3.0 - 2.0 * k))
 
 
+## An everyday walk or a run at tick t: each foot swings forward over `step` ticks (lifted by up to `lift` px), then
+## stays planted, sliding back under the body at `speed`, so it holds its place on the street; the back foot is half a
+## cycle behind, so the legs pass each other. The arms swing against the legs by `arm` degrees. In a run the swing
+## is longer than the stance, so twice a cycle both feet are off the street, and the body lifts in that moment.
+static func _gait(t: int, cycle: int, step: int, speed: float, lift: float, arm: float) -> Dictionary:
+	var reach := speed * float(cycle - step) * 0.5
+	var out := {"feet": 1.0, "relaxed": 1.0, "rise_b": 0.0}
+	var airborne := 0
+	for side in ["f", "b"]:
+		var u := (t + (0 if side == "f" else cycle / 2)) % cycle
+		if u < step:
+			var k := float(u) / step
+			out["step_" + side] = lerpf(-reach, reach, k * k * (3.0 - 2.0 * k))
+			# running, the heel flicks up straight after the push-off (the lift comes early in the swing)
+			out["lift_" + side] = lift * sin(PI * (pow(k, 0.6) if lift > 40.0 else k))
+			airborne += 1
+		else:
+			out["step_" + side] = reach - speed * float(u - step)
+			out["lift_" + side] = 0.0
+	# the arms against the legs: the near arm forward as the far leg comes forward, and the other way about
+	out["arm_f_upper"] = -8.0 - arm * out["step_b"] / maxf(reach, 1.0)
+	out["arm_b_upper"] = 8.0 - arm * out["step_f"] / maxf(reach, 1.0)
+	if airborne == 2:
+		out["hip_y"] = -14.0 if lift > 40.0 else -4.0  # both feet off the street: the body is in the air
+	return out
+
+
 ## Where the feet are in the shuffle at tick t: each foot steps out over WALK_STEP ticks (lifted, eased), then stays
 ## planted, sliding back under the body at the walking speed. The back foot steps half a cycle after the front.
 static func _walk_feet(t: int, tune: Dictionary) -> Dictionary:
@@ -473,7 +533,8 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 		for side in ["f", "b"]:
 			# a rising heel lifts the ankle off the ball of the foot, which stays on its spot
 			var tilt := deg_to_rad(90.0 * clampf(pose.get("rise_" + side, 0.0), 0.0, 1.0))
-			to[side] = STANCE[side] + Vector2(pose.get("step_" + side, 0.0) + FOOT_LENGTH * (1.0 - cos(tilt)),
+			var spot: Vector2 = (STANCE[side] as Vector2).lerp(RELAXED[side], clampf(pose.get("relaxed", 0.0), 0.0, 1.0))
+			to[side] = spot + Vector2(pose.get("step_" + side, 0.0) + FOOT_LENGTH * (1.0 - cos(tilt)),
 				-pose.get("lift_" + side, 0.0) - FOOT_LENGTH * sin(tilt))
 			# a stance stretched wider than a leg reaches: the hips drop just enough (they never drag a foot)
 			var span: float = BONES["leg_%s_upper" % side][3] + BONES["leg_%s_lower" % side][3] - 1.0

@@ -102,7 +102,10 @@ def strip(steps, land, move, path, still, at, k, u, w, h):
     parts = []
     for c, f in enumerate(steps):
         ms = round((f - land) * 1000 / 60)
-        when = ("TOUCH" if move == "landing" else "HIT") if f == land else f"{ms:+d} ms"
+        if "-cycle" in move:
+            when = f"{ms:+d} ms"  # a walk or run cycle: times from its first frame
+        else:
+            when = ("TOUCH" if move == "landing" else "HIT") if f == land else f"{ms:+d} ms"
         parts.append(f"[{c}]split=4[c{c}r0][c{c}r1][c{c}r2][c{c}r3]")
         for r, b in enumerate(fixed):
             text = (f"{move} {when}" if c == 0 else when) if r == 0 else (ROWS[r] if c == 0 else "")

@@ -48,8 +48,9 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 - `docs/UNATTENDED.md` — how work keeps moving on weekdays, and what always waits for Javier.
 - `game/` — the Godot 4 project. `scripts/test.sh` runs its tests headless, inside a memory and CPU fence with a
   time limit, logs to `logs/`, and fails if the number of tests ever drops below `game/tests/FLOOR`.
-- `scripts/play.sh` plays it in a window (keyboard: arrows or WASD move, J punch, K kick, Space jump; gamepad: stick
-  or d-pad, X punch, B kick, A jump; hold L or Shift, or Y or RB, to block). **F1 opens the feel lab**: change walk speed, jump, punch and kick timing and more
+- `scripts/play.sh` plays it in a window (keyboard: the arrows move, A punch, B kick, hold D to block, hold W to run,
+  X switches between the fight stance and the walk stance, Space jump; gamepad: stick or d-pad, X punch, B kick,
+  A jump, hold Y or RB to block, hold LB to run, click the left stick to switch stance). **F1 opens the feel lab**: change walk and run speed, jump, punch and kick timing and more
   while you play; F8 saves your changes for next time. `scripts/record.sh` records the scripted demo to a contact
   sheet and a clip.
 - `scripts/build.sh` is a build: the tests, the recorded demo, a still of every move, and a note, handed to the

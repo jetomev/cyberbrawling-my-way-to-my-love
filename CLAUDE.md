@@ -104,6 +104,13 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   every kick chain with the low kick (it keeps the old opener's name "kick", its feel-lab dials and its damage).
   P, P, K stays the push kick. The hook, the front kick (now "front_kick") and the spinning kick keep their poses,
   no press reaches them; no sweep. Each new move has its posture-sheet row in `test_sheet.gd`.
+- **D-29** **Walking, running and two stances** (Javier, 2026-11-02 18:48, through the assistant team: "the character
+  needs to be able to walk, and run. ASDW are not key for walking. Let's do: A for punches, B for kicks, D for
+  blocking, W for running, X to swtich stance (fight/walk)"): keyboard A punch, B kick, D block (held), W run (held),
+  X switch stance; the arrows move until he says what moves the hero (`MOVE_KEYS` in `controls.gd` is the one place to
+  change); read as keyboard keys, not the gamepad's A/B/X. The fight stance (guard, shuffle) and the walk stance
+  (standing easy, an everyday walk); a short switch between them; running from either and back; a blow or a block
+  from the walk stance raises the guard first and the press waits. The demo ends with the switch, a walk and a run.
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 

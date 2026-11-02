@@ -3,14 +3,20 @@ extends RefCounted
 ## the same result, so tests and the bot can drive it bare. The hero uses it now; enemies will too.
 ##
 ## Space: x runs along the street, z is the depth of the street (0 = far edge), y is height above the street.
-## An input is a Dictionary: {mx: -1..1, mz: -1..1, jump: bool, punch: bool, kick: bool, block: bool}; jump, punch
-## and kick are "pressed this tick"; block is "held" (D-19: hold to guard; its first moments are a perfect block). A world (street_world.gd) is optional: without one the street is empty.
+## An input is a Dictionary: {mx: -1..1, mz: -1..1, jump, punch, kick, block, run, stance: bool}; jump, punch, kick
+## and stance are "pressed this tick"; block and run are "held" (D-19: hold to guard; its first moments are a perfect
+## block). Two stances (Javier, 2026-11-02 18:48: "W for running, X to swtich stance (fight/walk)"): the fight stance
+## (guard "idle", the shuffle "walk") and the walk stance (relaxed "stand", the everyday walk "stroll"); X switches
+## between them through a short "to_walk" / "to_fight"; running ("run", run held while moving) works from either and
+## comes back to it. A blow, a block or a press from the walk stance raises the guard first ("to_fight"): the press
+## waits through it. A world (street_world.gd) is optional: without one the street is empty.
 ## Attacks and combos live in moves.gd: the state is the move's name ("punch", "cross", "spin_kick", …).
 
 const Tuning := preload("res://scripts/sim/tuning.gd")
 const Moves := preload("res://scripts/sim/moves.gd")
 
-const GROUND_STATES := ["idle", "walk"]
+const GROUND_STATES := ["idle", "walk", "stand", "stroll", "run"]
+const SWITCH_STATES := ["to_walk", "to_fight"]
 const DOUBLE_TAP_TICKS := 3
 const MAX_QUEUE := 2  # P then K pressed during one long blow play P then K
 const AIR_STATES := ["jump", "air_kick", "hammer_fist"]
@@ -24,6 +30,7 @@ var vx := 0.0
 var vy := 0.0
 var facing := 1  # 1 = right, -1 = left
 var state := "idle"
+var stance := "fight"  # "fight" (the guard) or "walk" (relaxed)
 var t := 0  # ticks spent in the current state
 var queue: Array[String] = []  # buttons pressed early, in order, waiting for the fighter to be free
 var buffer_left := 0  # once free, how long the waiting presses stay good
@@ -61,9 +68,17 @@ func step(inp: Dictionary) -> void:
 				queue.append(b)
 			buffer_left = tune["buffer_ticks"]
 	t += 1
+	if inp.get("stance", false) and state in GROUND_STATES and queue.is_empty():
+		vx = 0.0
+		stance = "walk" if stance == "fight" else "fight"
+		_enter("to_walk" if stance == "walk" else "to_fight")
+		return
 	match state:
-		"idle", "walk":
-			_ground(mx, mz)
+		"idle", "walk", "stand", "stroll", "run":
+			_ground(mx, mz, inp.get("run", false))
+		"to_walk", "to_fight":
+			if t >= tune["stance_switch_ticks"]:
+				_enter(_rest())
 		"jump", "air_kick", "hammer_fist":
 			if state == "jump" and not queue.is_empty() and queue[0] in ["punch", "kick"] and not air_kicked:
 				var move: String = Moves.AIR["P" if _take_buffer() == "punch" else "K"]
@@ -78,13 +93,18 @@ func step(inp: Dictionary) -> void:
 				_enter("idle")
 		"land":
 			if t >= tune["land_ticks"]:
-				_enter("idle")
+				_enter(_rest())
 		"climb":
 			_climb()
 		_:
 			if _ground_attack() and t >= attack_length(state):
 				chain_left = tune["combo_window_ticks"]
 				_enter("idle")
+	# a blow or a block from the walk stance raises the guard first; the press waits through it
+	if stance == "walk" and state in GROUND_STATES and (inp.get("block", false) or (not queue.is_empty() and queue[0] != "jump")):
+		vx = 0.0
+		stance = "fight"
+		_enter("to_fight")
 	# a fighter who just became free acts on a buffered button in the same tick
 	if (state in GROUND_STATES or state == "block") and not queue.is_empty():
 		_start(_take_buffer(), mx)  # a press from the guard comes straight out of it
@@ -92,7 +112,7 @@ func step(inp: Dictionary) -> void:
 		chain = ""
 		vx = 0.0
 		_enter("block")
-	if not _ground_attack():
+	if not _ground_attack() and not state in SWITCH_STATES:
 		if chain_left > 0:
 			chain_left -= 1
 		if chain_left == 0:
@@ -115,8 +135,14 @@ func _blocked(nx: float, nz: float) -> bool:
 	return world != null and world.blocks(nx, nz, y)
 
 
-func _ground(mx: float, mz: float) -> void:
-	vx = mx * tune["walk_speed"]
+## Where a free fighter rests: the guard in the fight stance, standing relaxed in the walk stance.
+func _rest() -> String:
+	return "idle" if stance == "fight" else "stand"
+
+
+func _ground(mx: float, mz: float, run := false) -> void:
+	var moving: bool = mx != 0.0 or (mz != 0.0 and not tune["flat_line"])
+	vx = mx * tune["run_speed" if run and moving else "walk_speed"]
 	var nx := clampf(x + vx, tune["street_left"], tune["street_right"])
 	if mx != 0.0:
 		facing = 1 if mx > 0.0 else -1
@@ -135,8 +161,9 @@ func _ground(mx: float, mz: float) -> void:
 		vy = 0.0  # walked off an edge: fall
 		_enter("jump")
 		return
-	var moving: bool = mx != 0.0 or (mz != 0.0 and not tune["flat_line"])
-	var next: String = "walk" if moving else "idle"
+	var next := _rest()
+	if moving:
+		next = "run" if run else ("walk" if stance == "fight" else "stroll")
 	if next != state:
 		_enter(next)
 
@@ -167,7 +194,7 @@ func _climb() -> void:
 	if k >= 1.0:
 		y = climb_to.y
 		x = climb_to.x
-		_enter("idle")
+		_enter(_rest())
 
 
 func _air(mx: float) -> void:
