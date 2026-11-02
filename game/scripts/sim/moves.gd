@@ -14,7 +14,7 @@ const TUNED := ["punch", "kick", "air_kick"]
 const TABLE := {
 	# opener P: the jab
 	"punch": {"low": 120.0, "high": 230.0, "damage": 1, "effect": "", "limb": "hand_f"},
-	"cross": {"startup": 5, "active": 3, "recovery": 9, "reach": 146.0, "low": 120.0, "high": 230.0, "damage": 1,
+	"cross": {"startup": 5, "active": 3, "recovery": 9, "reach": 164.0, "low": 120.0, "high": 230.0, "damage": 1,
 		"effect": "", "limb": "hand_b"},
 	"hook": {"startup": 7, "active": 4, "recovery": 14, "reach": 112.0, "low": 130.0, "high": 230.0, "damage": 2,
 		"effect": "stagger", "limb": "hand_f"},

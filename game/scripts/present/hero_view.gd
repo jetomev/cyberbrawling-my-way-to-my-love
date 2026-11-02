@@ -143,6 +143,27 @@ func apply(pose: Dictionary, grounded := true) -> void:
 	# a spin turns the body around the up axis: squeezed edge-on at 90, his back at 180 (never quite zero wide)
 	var turn := cos(deg_to_rad(baked["spin"]))
 	body.scale.x = facing * (maxf(absf(turn), 0.06) * signf(turn) if turn != 0.0 else 0.06)
+	# the hips and shoulders turn over: the chest narrows; past 90 the far-side arm and leg come in front, lit as near
+	var over := cos(deg_to_rad(baked["turn"]))
+	for n in ["belly", "chest"]:
+		bones[n].get_node("Part").scale.y = maxf(absf(over), 0.45)
+	for name in bones:
+		var spec: Array = Poses.BONES[name]
+		var part: Node2D = bones[name].get_node_or_null("Part")
+		if part == null or name in ["belly", "chest", "neck", "head"]:
+			continue
+		var far: bool = spec[5] == 1
+		if over < 0.0:
+			far = not far
+		part.z_index = -1 if far else 0
+		var drawn_far: bool = spec[5] == 1
+		part.modulate = Color.WHITE if far == drawn_far else (Color(1.55, 1.55, 1.5) if drawn_far else Color(0.65, 0.65, 0.66))
+	# a standing foot swung round on its ball: shorter as it turns, pointing back past 90
+	for side in ["f", "b"]:
+		var swing := cos(deg_to_rad(baked["pivot_" + side]))
+		var x := maxf(absf(swing), 0.35) * (signf(swing) if swing != 0.0 else 1.0)
+		for n in ["foot_" + side, "toe_" + side]:
+			bones[n].get_node("Part").scale.x = x
 	for side in ["f", "b"]:
 		var hand: Node2D = bones["hand_" + side].get_node("Part")
 		var open: bool = baked["open_" + side] > 0.5

@@ -57,7 +57,7 @@ func test_the_shoulders_swing() -> void:
 	var b := Poses.bake(Poses.angles("cross", Moves.data("cross", t)["startup"], t), true)
 	check(b["shoulder_b"] < -30.0, "the back shoulder comes forward on the cross (%.0f)" % b["shoulder_b"])
 	# only the back arm reaches, the front arm stays in its guard: only the swing can move the front shoulder
-	var only_back := Poses.bake(Poses.full({"arm_b_upper": -96.0}), true)
+	var only_back := Poses.bake(Poses.full({"arm_b_upper": -96.0, "cover_b": 0.0}), true)  # reaching, so not covering
 	check(only_back["shoulder_f"] > 10.0, "as the back shoulder comes forward, the front one swings back (%.0f)" % only_back["shoulder_f"])
 
 

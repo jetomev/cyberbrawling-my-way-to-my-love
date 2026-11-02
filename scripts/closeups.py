@@ -9,7 +9,9 @@ game's pixels; the movie can be smaller) this cuts, for each move:
 - closeups/NN-<move>.png (and all of them in closeups.png): as it lands, the whole body, the hips, the hands, the feet;
 - strips/NN-<move>.png: the move from its first frame to its last, at fixed time steps (every STEP frames, lined up so
   the landing frame is one of them), four rows (whole body, hips, hands, feet). Each row keeps one frame for the whole
-  move, so the parts are seen moving, not re-centred.
+  move, so the parts are seen moving, not re-centred;
+- strips/NN-<move>-hit.png: the same rows, every single frame from HIT_BEFORE frames before the hit to HIT_AFTER after
+  (the team's second review: more frames close together around each strike).
 
 Usage: scripts/closeups.py <frames dir> <marks file> <out dir> move:land:start:end [...]
 Prints an OK line with the counts.
@@ -23,6 +25,7 @@ GAME_W, GAME_H = 1920, 1080
 PANEL = 320  # a close-up panel's side
 STRIP_PANEL = 170  # a timed strip's panel side
 STEP = 3  # frames between stills in a timed strip (50 ms at 60 frames a second)
+HIT_BEFORE, HIT_AFTER = 6, 3  # the hit strip: every frame from 100 ms before the hit to 50 ms after
 PARTS = ["hip", "hand_f", "hand_b", "foot_f", "foot_b", "head"]
 ROWS = ["whole body", "hips", "hands", "feet"]
 
@@ -60,7 +63,7 @@ def boxes(points_by_frame, u, w, h):
     def gather(names):
         return [at[n] for at in points_by_frame for n in names]
     return [
-        square(gather(PARTS), 0.4 * u, 2.6 * u, w, h),
+        square(gather(PARTS), 0.7 * u, 2.8 * u, w, h),  # room around the head and feet
         square(gather(["hip"]), 0.9 * u, 1.8 * u, w, h),
         square(gather(["hand_f", "hand_b"]), 0.4 * u, 1.5 * u, w, h),
         square(gather(["foot_f", "foot_b"]), 0.4 * u, 1.5 * u, w, h),
@@ -87,6 +90,24 @@ def stack(files, how, out):
         ffmpeg(files, "null", out)
     else:
         ffmpeg(files, f"{how}=inputs={len(files)}", out)
+
+
+def strip(steps, land, move, path, still, at, k, u, w, h):
+    """Columns at the given frames, rows for the whole body, hips, hands and feet, each row on one fixed frame."""
+    fixed = boxes([at(f, k) for f in steps], u, w, h)
+    parts = []
+    for c, f in enumerate(steps):
+        ms = round((f - land) * 1000 / 60)
+        when = "HIT" if f == land else f"{ms:+d} ms"
+        parts.append(f"[{c}]split=4[c{c}r0][c{c}r1][c{c}r2][c{c}r3]")
+        for r, b in enumerate(fixed):
+            text = (f"{move} {when}" if c == 0 else when) if r == 0 else (ROWS[r] if c == 0 else "")
+            parts.append(panel(f"c{c}r{r}", b, STRIP_PANEL, text) + f"[c{c}p{r}]")
+        parts.append(f"[c{c}p0][c{c}p1][c{c}p2][c{c}p3]vstack=inputs=4[col{c}]")
+    cols = "".join(f"[col{c}]" for c in range(len(steps)))
+    parts.append(f"{cols}hstack=inputs={len(steps)}" if len(steps) > 1 else f"{cols}null")
+    ffmpeg([still(f) for f in steps], ";".join(parts), path)
+    return path
 
 
 def main():
@@ -124,23 +145,11 @@ def main():
         row = out / "closeups" / f"{n:02d}-{move}.png"
         ffmpeg([still(land)], graph, row)
         rows.append(row)
-        # the timed strip: every STEP frames, lined up on the landing frame
+        # the timed strip: every STEP frames, lined up on the landing frame; then every frame around the hit
         steps = [f for f in range(start, end + 1) if (f - land) % STEP == 0]
-        fixed = boxes([at(f, k) for f in steps], u, w, h)
-        parts = []
-        for c, f in enumerate(steps):
-            ms = round((f - land) * 1000 / 60)
-            when = "HIT" if f == land else f"{ms:+d} ms"
-            parts.append(f"[{c}]split=4[c{c}r0][c{c}r1][c{c}r2][c{c}r3]")
-            for r, b in enumerate(fixed):
-                text = (f"{move} {when}" if c == 0 else when) if r == 0 else (ROWS[r] if c == 0 else "")
-                parts.append(panel(f"c{c}r{r}", b, STRIP_PANEL, text) + f"[c{c}p{r}]")
-            parts.append(f"[c{c}p0][c{c}p1][c{c}p2][c{c}p3]vstack=inputs=4[col{c}]")
-        cols = "".join(f"[col{c}]" for c in range(len(steps)))
-        parts.append(f"{cols}hstack=inputs={len(steps)}" if len(steps) > 1 else f"{cols}null")
-        strip = out / "strips" / f"{n:02d}-{move}.png"
-        ffmpeg([still(f) for f in steps], ";".join(parts), strip)
-        strips.append(strip)
+        strips.append(strip(steps, land, move, out / "strips" / f"{n:02d}-{move}.png", still, at, k, u, w, h))
+        close = [f for f in range(max(start, land - HIT_BEFORE), min(end, land + HIT_AFTER) + 1)]
+        strips.append(strip(close, land, move, out / "strips" / f"{n:02d}-{move}-hit.png", still, at, k, u, w, h))
     stack(rows, "vstack", out / "closeups.png")
     # moves.png: four panels a row; a short last row is filled with blank panels
     lines = []
@@ -155,7 +164,7 @@ def main():
         lines.append(line)
     stack(lines, "vstack", out / "moves.png")
     print(f"OK {len(moves)} moves: moves.png, {len(rows)} close-up rows, {len(strips)} timed strips "
-          f"(every {STEP} frames = {round(STEP * 1000 / 60)} ms)")
+          f"(every {STEP} frames = {round(STEP * 1000 / 60)} ms, and every frame around each hit)")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,9 @@
 extends "res://tests/test_case.gd"
-## Form, from the assistant team's first review (2026-11-02, build e7a5106): the free hand guards the face while the
-## other one strikes; the hook swings wide; the spinning kicks turn the body and pivot on the standing foot, so the
-## four kicks stop looking alike.
+## Form, from the assistant team's reviews (2026-11-02). First round (build e7a5106): the free hand guards the face
+## while the other one strikes; the hook swings wide; the spinning kicks turn and pivot. Second round (6809c7d): the
+## guard keeps both hands up; the jab and the cross read apart; the hook's swing lasts long enough to see; the
+## spinning kicks chamber and sweep with a bent knee, turn the hips and shoulders over and pivot the standing foot
+## round; after a flying kick the knee tucks back in for the landing.
 
 const Poses := preload("res://scripts/present/poses.gd")
 const Moves := preload("res://scripts/sim/moves.gd")
@@ -81,9 +83,11 @@ func test_the_spinning_kicks_pivot_and_turn_more() -> void:
 			var h := Poses.angles(m, Moves.data(m, t)["startup"], t)
 			check(absf(h["hip_turn"]) > absf(p["hip_turn"]) + 6.0, "%s turns the hips more than the %s (%.0f vs %.0f)" % [m, plain, h["hip_turn"], p["hip_turn"]])
 	var r := Poses.bake(Poses.angles("roundhouse", Moves.data("roundhouse", t)["startup"], t), true)
-	check(r["spin"] > 30.0 and r["spin"] < 90.0, "the roundhouse turns the body into the kick (%.0f degrees)" % r["spin"])
+	check(r["turn"] > 100.0, "the roundhouse turns the hips and shoulders over, his back showing (%.0f degrees)" % r["turn"])
+	check(r["pivot_f"] > 120.0, "and swings the standing foot round, heel to the target (%.0f degrees)" % r["pivot_f"])
 	for plain in ["kick", "body_kick"]:
-		eq(Poses.bake(Poses.angles(plain, Moves.data(plain, t)["startup"], t), true)["spin"], 0.0, "the %s doesn't turn" % plain)
+		var p := Poses.bake(Poses.angles(plain, Moves.data(plain, t)["startup"], t), true)
+		eq([p["spin"], p["turn"]], [0.0, 0.0], "the %s doesn't turn over" % plain)
 
 
 func test_the_drawing_turns_with_the_spin() -> void:
@@ -95,3 +99,90 @@ func test_the_drawing_turns_with_the_spin() -> void:
 	v.apply(Poses.full({"spin": 360.0}))
 	check(v.body.scale.x > 0.99, "a whole turn faces the front again (%.2f)" % v.body.scale.x)
 	v.free()
+
+
+func test_the_guard_keeps_both_hands_up() -> void:
+	var t := Tuning.fresh()
+	var poses := [["idle", 0], ["idle", 30], ["walk", 0], ["walk", 16]]
+	for p in poses:
+		var b := Poses.bake(Poses.angles(p[0], p[1], t), true)
+		var head := middle("head", b)
+		var rear := middle("hand_b", b)
+		var front := middle("hand_f", b)
+		check(rear.distance_to(head) < 28.0, "%s@%d: the rear fist at the cheek (%.0f px off)" % [p[0], p[1], rear.distance_to(head)])
+		check(front.y < head.y + 50.0 and front.x > head.x + 15.0, "%s@%d: the front fist up and out in front (%.0f, %.0f from the head)" % [p[0], p[1], front.x - head.x, front.y - head.y])
+	for tt in range(0, Moves.length("punch", t) + 1):
+		# all through a jab, coming back too, the rear fist stays at the cheek
+		var b := Poses.bake(Poses.angles("punch", tt, t), true)
+		check(middle("hand_b", b).distance_to(middle("head", b)) < 28.0, "punch@%d: the rear fist stays at the cheek" % tt)
+	# the arms that work leave the guard: the cross's rear fist goes out, the climb's hands grab
+	var cross := Poses.bake(Poses.angles("cross", Moves.data("cross", t)["startup"], t), true)
+	check(middle("hand_b", cross).x > middle("head", cross).x + 80.0, "the cross's rear fist leaves the cheek")
+
+
+func test_the_jab_and_the_cross_read_apart() -> void:
+	var t := Tuning.fresh()
+	var jab := Poses.angles("punch", Moves.data("punch", t)["startup"], t)
+	var cross := Poses.angles("cross", Moves.data("cross", t)["startup"], t)
+	var jab_w := written("punch", "windup")
+	var cross_w := written("cross", "windup")
+	check(cross["hip_x"] - cross_w["hip_x"] > 2.5 * (jab["hip_x"] - jab_w["hip_x"]), "the cross drives the hips much further (%.0f vs %.0f px)" % [cross["hip_x"] - cross_w["hip_x"], jab["hip_x"] - jab_w["hip_x"]])
+	check(cross["torso"] > jab["torso"] + 15.0, "the cross leans in, the jab stays upright (%.0f vs %.0f)" % [cross["torso"], jab["torso"]])
+	check(cross["turn"] >= 40.0 and jab["turn"] == 0.0, "the cross turns the shoulders over, the jab doesn't (%.0f vs %.0f)" % [cross["turn"], jab["turn"]])
+	check(Moves.data("cross", t)["reach"] > Moves.data("punch", t)["reach"] + 20.0, "the cross reaches further than the jab")
+
+
+func test_the_swings_last_long_enough_to_see() -> void:
+	var t := Tuning.fresh()
+	for m in ["hook", "roundhouse", "spin_kick"]:
+		var swing: int = Moves.data(m, t)["startup"] - Poses.moment(m, "windup", t)
+		check(swing >= 4, "%s: %d ticks from the wind-up to the blow (a snap is 2)" % [m, swing])
+		var sweep := Poses.moment(m, "sweep", t)
+		check(sweep > Poses.moment(m, "windup", t) and sweep < Moves.data(m, t)["startup"], "%s: the sweep comes between them" % m)
+
+
+func test_the_spinning_kicks_sweep_with_a_bent_knee() -> void:
+	var t := Tuning.fresh()
+	for m in ["roundhouse", "spin_kick"]:
+		var d := Moves.data(m, t)
+		var leg: String = "leg_%s_lower" % d["limb"].substr(5)
+		var thigh: String = "leg_%s_upper" % d["limb"].substr(5)
+		var mid := Poses.angles(m, Poses.moment(m, "sweep", t), t)
+		var hit := Poses.angles(m, d["startup"], t)
+		# the knee comes up first, the shin folded; then the shin sweeps round to the target
+		check(mid[leg] > 60.0, "%s: halfway round, the knee is bent (%.0f)" % [m, mid[leg]])
+		check(absf(mid[thigh] - hit[thigh]) < 20.0, "%s: and the thigh is already up near its aim (%.0f vs %.0f)" % [m, mid[thigh], hit[thigh]])
+
+
+func test_the_flying_kick_tucks_the_knee_to_land() -> void:
+	var t := Tuning.fresh()
+	var kicking := Poses.angles("air_kick", Moves.data("air_kick", t)["startup"], t)
+	var after := Poses.angles("air_kick", Poses.moment("air_kick", "tuck", t), t)
+	check(kicking["leg_f_lower"] < 10.0, "the flying kick is straight when it lands (%.0f)" % kicking["leg_f_lower"])
+	check(after["leg_f_lower"] > 80.0, "then the knee pulls back in (%.0f)" % after["leg_f_lower"])
+	var b := Poses.bake(after, false)
+	var foot: Vector2 = Poses._end("leg_f_lower", b)[0]
+	check(absf(foot.x) < 70.0, "the foot comes back under the body for the landing (%.0f px out)" % foot.x)
+
+
+func test_the_drawing_turns_the_shoulders_and_pivots_the_foot() -> void:
+	var v = HeroView.new()
+	v.apply(Poses.full({}))
+	var arm: Node2D = v.bones["arm_b_upper"].get_node("Part")
+	var leg: Node2D = v.bones["leg_b_upper"].get_node("Part")
+	eq([arm.z_index, leg.z_index], [-1, -1], "in the guard the far arm and leg are behind the body")
+	v.apply(Poses.full({"turn": 130.0}))
+	eq([arm.z_index, leg.z_index], [0, 0], "turned over, they come in front (his back shows)")
+	eq(v.bones["arm_f_upper"].get_node("Part").z_index, -1, "and the near arm goes behind")
+	check(v.bones["chest"].get_node("Part").scale.y < 0.9, "the chest narrows as it turns")
+	v.apply(Poses.full({"pivot_f": 160.0}))
+	check(v.bones["foot_f"].get_node("Part").scale.x < -0.5, "a foot swung round on its ball points back")
+	v.free()
+
+
+## A move's pose as written for one of its moments (the hips run ahead of the clock, so compare these).
+static func written(move: String, moment: String) -> Dictionary:
+	for k in Poses.SHOTS[move]:
+		if k[0] == moment:
+			return Poses.full(k[1])
+	return Poses.full({})

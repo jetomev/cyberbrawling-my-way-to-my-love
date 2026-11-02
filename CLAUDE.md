@@ -68,6 +68,13 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   winds up low and wide and turns the hips more than the cross; the spinning kicks turn the body and pivot on the
   standing foot (`spin`: the drawing squeezes edge-on and shows his back; `rise_f`/`rise_b`: heel off the street) — the
   spin kick goes all the way round and lands facing, the roundhouse turns a third of the way into it.
+- **D-24** **Form from the second review** (the assistant team, 2026-11-02, on build 6809c7d): the guard keeps both
+  hands up (rear fist at the cheek, front fist out at chin height; a move that uses the rear arm switches its cover
+  off); the jab stays upright and short, the cross lunges, turns the shoulders over and reaches further (164 px); the
+  swinging moves (hook, roundhouse, spin kick) cock early (`WINDUP_AT`) and pass a `sweep` key, so the swing lasts 4+
+  ticks and the kicking knee comes up bent before the shin sweeps; the roundhouse turns the hips and shoulders over
+  (`turn`: his back shows, the far arm and leg come in front) and swings the standing foot round (`pivot_f`); after a
+  flying kick the knee tucks back in (`tuck`). Every build also makes an every-frame strip around each hit.
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 
