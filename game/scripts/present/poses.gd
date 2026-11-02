@@ -328,9 +328,9 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 ## staying where they landed. It runs on into the guard. since = frames since the touchdown, or -1 in the air.
 const REACH_HEIGHT := 48.0
 const LAND_REACH := {"leg_f_upper": -28.0, "leg_f_lower": 22.0, "leg_b_upper": 12.0, "leg_b_lower": 26.0}
-const SINK := 18.0
+const SINK := 14.0
 const LAND_PEAK := 4
-const LAND_SETTLE := 16
+const LAND_SETTLE := 14
 
 
 static func landing(pose: Dictionary, since: int, height: float, falling: bool) -> Dictionary:
@@ -345,6 +345,8 @@ static func landing(pose: Dictionary, since: int, height: float, falling: bool) 
 	var dip := sink_at(since)
 	out["hip_y"] = out.get("hip_y", 0.0) + dip
 	out["torso"] = out.get("torso", 0.0) + dip * 0.3  # the chest folds a little over the bent knees
+	# the back heel comes up as the weight drops, so the back leg stays long instead of folding to a kneel
+	out["rise_b"] = maxf(out.get("rise_b", 0.0), 0.7 * dip / SINK)
 	return out
 
 
