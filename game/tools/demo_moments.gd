@@ -8,7 +8,10 @@ const Demo := preload("res://scripts/sim/demo.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Moves := preload("res://scripts/sim/moves.gd")
 
-const MOVIE_OFFSET := 2  # the movie's first frame comes before the first tick
+## Movie frame f shows the hero after f + 1 ticks, which is the state after step i = f here: measured 2026-11-02 on the
+## cross's fastest frame against the demo's --marks (frame 692 showed tick 693, frame 693 tick 694). It was 2 before,
+## which put every still two frames late.
+const MOVIE_OFFSET := 0
 
 
 func _initialize() -> void:
