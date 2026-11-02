@@ -35,7 +35,7 @@ fail() { echo "FAILED $*"; exit 1; }
   [ "$(grep -vc '^#' "$OUT/marks.txt" 2>/dev/null)" -ge $((FRAMES - 1)) ] || fail "the demo didn't mark its frames: no close-ups"
   cp "$REC/demo.mp4" "$REC/sheet.png" "$OUT/"
   echo "== 3. the moves: stills, close-ups and timed strips"
-  MOMENTS="$(timeout 120 "$ROOT/scripts/capped.sh" godot --headless --path "$ROOT/game" -s res://tools/demo_moments.gd 2>/dev/null | grep -E '^[a-z_]+:[0-9]+:[0-9]+:[0-9]+$')"
+  MOMENTS="$(timeout 120 "$ROOT/scripts/capped.sh" godot --headless --path "$ROOT/game" -s res://tools/demo_moments.gd 2>/dev/null | grep -E '^[a-z_-]+:[0-9]+:[0-9]+:[0-9]+$')"
   [ -n "$MOMENTS" ] || fail "no moves found in the demo"
   python3 "$ROOT/scripts/closeups.py" "$REC/frames" "$OUT/marks.txt" "$OUT" $MOMENTS || fail "could not cut the stills"
   echo "$(echo $MOMENTS | wc -w) moves: $(echo $MOMENTS | sed 's/:[0-9:]*//g')"
