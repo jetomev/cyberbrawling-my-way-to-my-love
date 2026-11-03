@@ -16,6 +16,10 @@ game's pixels; the movie can be smaller) this cuts, for each move:
   last moments in the air to him back up, CHUNK frames a picture (the third review); the same for any window asked
   for by hand as "<move>-frames:<hit>:<start>:<end>" (times are labelled from the hit).
 
+- clips/NN-<move>.mp4 and clips/NN-<move>-half.mp4: the move moving, close on the whole body, from a few frames before
+  it starts to a few after it ends, at full speed and at half speed (Javier, 2026-11-02 evening: "stiff as a tree";
+  the stills had been hiding it).
+
 Usage: scripts/closeups.py <frames dir> <marks file> <out dir> move:land:start:end [...]
 Prints an OK line with the counts.
 """
@@ -117,6 +121,23 @@ def strip(steps, land, move, path, still, at, k, u, w, h):
     return path
 
 
+CLIP_PAD = 8  # frames before and after a move in its clip
+CLIP_SIZE = 480
+
+
+def clip(frames, start, end, label, path, at, k, u, w, h):
+    """The move at full speed and at half speed, on one fixed frame that holds the whole body throughout."""
+    span = [f for f in range(start - CLIP_PAD, end + CLIP_PAD + 1) if (frames / f"f{f:08d}.png").exists()]
+    side, x, y = boxes([at(f, k) for f in span], u, w, h)[0]
+    look = (f"crop={side}:{side}:{x}:{y},scale={CLIP_SIZE}:{CLIP_SIZE}:flags=lanczos,"
+            f"drawtext=text='{label}':x=8:y=8:fontsize=24:fontcolor=white:box=1:boxcolor=black@0.55")
+    for speed, suffix in [(1, ""), (2, "-half")]:
+        vf = look + (f",setpts={speed}*PTS" if speed > 1 else "") + ",format=yuv420p"
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-framerate", "60", "-start_number", str(span[0]),
+                        "-i", str(frames / "f%08d.png"), "-frames:v", str(len(span) * speed), "-vf", vf, "-r", "60",
+                        "-c:v", "libx264", str(path.with_name(path.stem + suffix + ".mp4"))], check=True)
+
+
 def main():
     if len(sys.argv) < 5:
         sys.exit(__doc__)
@@ -125,7 +146,7 @@ def main():
     for item in sys.argv[4:]:
         move, land, start, end = item.split(":")
         moves.append((move, int(land), int(start), int(end)))
-    for d in ["closeups", "strips", "moves"]:
+    for d in ["closeups", "strips", "moves", "clips"]:
         (out / d).mkdir(parents=True, exist_ok=True)
 
     def still(frame):
@@ -152,6 +173,8 @@ def main():
         row = out / "closeups" / f"{n:02d}-{move}.png"
         ffmpeg([still(land)], graph, row)
         rows.append(row)
+        label = move.replace("-cycle-frames", "").replace("-frames", "")
+        clip(frames, start, end, label, out / "clips" / f"{n:02d}-{label}.mp4", at, k, u, w, h)
         if move == "landing" or move.endswith("-frames"):
             # every frame of a window: the landing, or any "<move>-frames:<hit>:<start>:<end>" asked for by hand
             frames_all = list(range(start, end + 1))

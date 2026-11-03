@@ -52,7 +52,8 @@ fail() { echo "FAILED $*"; exit 1; }
     echo "  \`strips/NN-move.png\` (each move from start to end, a still every 50 ms lined up on the hit: whole body, hips,"
     echo "  hands, feet), \`strips/NN-move-hit.png\` (every frame from 100 ms before the hit to 50 ms after) and"
     echo "  \`strips/NN-landing-N.png\` (every frame of the flying kick's landing, from the air until he is back up),"
-    echo "  \`strips/NN-<walk|stroll|run|to_walk|to_fight>-cycle-frames-N.png\` (every frame of the walking, running and stance switches)"
+    echo "  \`strips/NN-<walk|stroll|run|to_walk|to_fight>-cycle-frames-N.png\` (every frame of the walking, running and stance switches),"
+    echo "  \`clips/NN-move.mp4\` and \`clips/NN-move-half.mp4\` (each move moving, close up, at full speed and at half speed)"
     echo "- Moves in the demo: $(echo $MOMENTS | sed 's/:[0-9:]*//g')"
     echo
     echo "## What changed since the last push"
@@ -65,7 +66,7 @@ fail() { echo "FAILED $*"; exit 1; }
   echo "== 5. the review shelf"
   SHELF="${REVIEW_SHELF:-$(head -n 1 "$ROOT/.review-shelf" 2>/dev/null)}"
   if [ -n "$SHELF" ] && [ -d "$SHELF" ]; then
-    mkdir -p "$SHELF/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/build.md "$SHELF/$NAME/" \
+    mkdir -p "$SHELF/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/build.md "$SHELF/$NAME/" \
       || fail "could not copy to the shelf"
     echo "on the shelf: $SHELF/$NAME"
   else
