@@ -287,8 +287,9 @@ func test_the_power_punch_loads_low_and_wide() -> void:
 		var b := Poses.bake(Poses.angles("power_punch", tick, t), true)
 		var drop: float = (Poses._end("hip", b)[0] as Vector2).y - hip0
 		check(drop >= 12.0, "power_punch@%d (%d ms before): the hips sink into the load (%.0f px)" % [tick, (hit - tick) * 50 / 3, drop])
-		# (the testers, 2026-11-02 22:33, on 98a076f: the load still too narrow; now 25 px wider than the guard at least)
-		check(_wide(b) >= _wide(g) + 25.0, "power_punch@%d: the stance widens (%.0f px, guard %.0f)" % [tick, _wide(b), _wide(g)])
+		# (the testers, three times, last on f744019 at 23:29: still too narrow at 28% wider. "Clearly wider": at least
+		# half again the guard's width)
+		check(_wide(b) >= _wide(g) * 1.5, "power_punch@%d: the stance clearly wider (%.0f px, guard %.0f)" % [tick, _wide(b), _wide(g)])
 
 
 func test_the_round_kicks_waist_rolls_through() -> void:
@@ -380,3 +381,18 @@ func test_the_sweep_sweeps_long_and_low() -> void:
 		check(absf(b["leg_b_lower"]) <= 25.0, "sweep@%d: the sweeping leg straight (knee %.0f)" % [tick, absf(b["leg_b_lower"])])
 		check(street - (Poses._end("leg_b_lower", b)[0] as Vector2).y <= 45.0, "sweep@%d: and low (%.0f px up)" % [tick, street - (Poses._end("leg_b_lower", b)[0] as Vector2).y])
 	check(checked >= 6, "enough frames to judge (%d)" % checked)
+
+
+func test_no_move_kneels_on_a_standing_leg() -> void:
+	# reviewing the wider power punch load (2026-11-02 night): as the hips sank ahead of the back foot's slide, the back
+	# knee came down on the street, a kneel. No standing (planted) knee comes within 12 px of the street, any move.
+	var t := Tuning.fresh()
+	for m in ["power_punch", "sweep", "cross", "roundhouse", "side_kick", "body_kick", "knee", "uppercut"]:
+		for tick in range(0, Moves.data(m, t)["startup"] + 1):
+			var b := Poses.bake(Poses.angles(m, tick, t), true)
+			var street: float = maxf((Poses._end("leg_f_lower", b)[0] as Vector2).y, (Poses._end("leg_b_lower", b)[0] as Vector2).y)
+			for side in ["f", "b"]:
+				if not Poses._planted(b, side):
+					continue
+				var knee: float = (Poses._end("leg_%s_upper" % side, b)[0] as Vector2).y
+				check(street - knee >= 12.0, "%s@%d: the %s knee off the street (%.0f px)" % [m, tick, side, street - knee])

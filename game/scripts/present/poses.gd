@@ -82,14 +82,18 @@ const LEAD := {"hip_x": 3, "hip_turn": 3, "hip_y": 3, "spin": 3, "turn": 3, "piv
 ## Moves whose body may run at most this many frames ahead. The power punch loads low and wide and then drives all at
 ## once (the testers' joint session, 2026-11-02 20:30: no loading crouch showed 100 to 50 ms before contact, because
 ## the hips, three frames ahead, were already driving out of it).
-const LEAD_CAP := {"power_punch": 1, "sweep": 1}
+const LEAD_CAP := {"power_punch": 2, "sweep": 1}
 ## Moves whose shoulders trail the hips by this many frames more than the move's own clock, so the waist is seen
 ## rolling through (the testers' joint session: on the round kick the waist and chest both froze at the hit). At the
 ## hit the hips are over while the chest is still coming round; it keeps turning through the next 50 ms.
 const SHOULDER_LAG := {"roundhouse": 3}
+## Moves whose held load ends this many frames before the blow (2 by default). The power punch holds its wide load to
+## 50 ms before contact, as the testers asked, then drives all at once, the body two frames ahead of the fist.
+const LOAD_END := {"power_punch": 1}
 const FOOT_LENGTH := 24.0  # ankle to the ball of the foot
 const SQUAT_LEG := 72.0  # hip to ankle in a deep squat on one leg ("tall" -1)
 const KNEE_CLEAR := 15.0  # a swinging knee stays at least this far above the street
+const KNEE_STAND := 14.0  # a standing knee stays at least this far above its ankle (no kneeling)
 const TOE_LENGTH := 11.0  # an ankle higher than foot + toes lets the foot point
 
 ## The guard, the fighter's home stance (Javier, 2026-11-02 morning: "posture and movements ... still terrible"; the
@@ -359,11 +363,11 @@ const SHOTS := {
 	# pulled back to the hip on purpose, kung fu style; hold it a beat (the freeze), then step back to guard
 	"power_punch": [["start", {}],
 		# loads low and wide (the back foot slides back, the hips sink and sit back) and holds it, then drives all at once
-		["windup", {"hip_y": 16.0, "hip_x": -8.0, "step_b": -30.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
-		["load", {"hip_y": 16.0, "hip_x": -8.0, "step_b": -30.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
-		["active", {"step_f": 30.0, "step_b": -4.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 60.0}],
-		["active_end", {"step_f": 30.0, "step_b": -4.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 60.0}],
-		["follow", {"step_f": 30.0, "step_b": -4.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 62.0}],
+		["windup", {"hip_y": 22.0, "hip_x": -8.0, "step_b": -66.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
+		["load", {"hip_y": 22.0, "hip_x": -8.0, "step_b": -66.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
+		["active", {"step_f": 30.0, "step_b": -30.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 60.0}],
+		["active_end", {"step_f": 30.0, "step_b": -30.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 60.0}],
+		["follow", {"step_f": 30.0, "step_b": -30.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 62.0}],
 		["end", {}]],
 	# the side kick to the face, ending the three-kick chain (posture sheet): the back foot steps up behind the front
 	# and the body rises, the kicking knee comes up across the body; then the standing foot turns its heel to the enemy
@@ -417,7 +421,8 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 			# halfway round a swing, between the wind-up and the blow: a bent knee or elbow coming round
 			return (moment(state, "windup", tune) + d["startup"]) / 2 + 1
 		"load":
-			return d["startup"] - 2  # a held load ends two frames before the blow: the drive is sudden
+			# a held load ends LOAD_END frames before the blow (2, or a move's own): the drive is sudden
+			return d["startup"] - LOAD_END.get(state, 2)
 		"startup", "active":
 			return d["startup"]
 		"active_end":
@@ -800,6 +805,18 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 	for side in anchors:
 		_reach_with_leg(out, side, anchors[side])
 		_settle_foot(out, side, grounded)
+	# … but never into a kneel: a standing knee stays KNEE_STAND above its ankle's street. If a dip or a wide stance would
+	# fold it down, the hips give up just enough of the dip (a wide power punch load knelt, 2026-11-02 night)
+	for i in 8:
+		var low := 0.0
+		for side in anchors:
+			low = maxf(low, (_end("leg_%s_upper" % side, out)[0] as Vector2).y - ((anchors[side] as Vector2).y - KNEE_STAND))
+		if low <= 0.5:
+			break
+		out["hip_y"] -= low
+		for side in anchors:
+			_reach_with_leg(out, side, anchors[side])
+			_settle_foot(out, side, grounded)
 	# the street stops a swinging foot: a kick leaving or coming back to the ground skims it, never goes through it
 	for side in ["f", "b"]:
 		if anchors.has(side):
