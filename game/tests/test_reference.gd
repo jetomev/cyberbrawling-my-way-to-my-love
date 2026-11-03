@@ -8,6 +8,7 @@ extends "res://tests/test_case.gd"
 const Poses := preload("res://scripts/present/poses.gd")
 const Moves := preload("res://scripts/sim/moves.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
+const HeroView := preload("res://scripts/present/hero_view.gd")
 
 
 func test_a_jump_crouches_first() -> void:
@@ -47,7 +48,22 @@ func test_the_flying_kick_is_a_flying_side_kick() -> void:
 	var hit := Poses.angles("air_kick", d["startup"], t)
 	var b := Poses.bake(hit, false)
 	check(hit["turn"] >= 70.0, "side-on at the hit (turned %.0f)" % hit["turn"])
-	check(hit["torso"] <= -25.0, "leaning back, away from the target (%.0f)" % hit["torso"])
+	# (the testers, 2026-11-02 21:31 and again 22:33: it leaned too far back. A touch back, not falling away: the line
+	# from the hips to the head, as drawn, leans back no more than 25 degrees)
+	# (measured on the drawing, as the testers see it: a pose-number check passed while the picture leaned 45)
+	for tick in range(d["startup"] - 3, d["startup"] + d["active"]):
+		var v = HeroView.new()
+		v.apply(Poses.angles("air_kick", tick, t), false)
+		var hip: Vector2 = v.points()["hip"]
+		var tr := Transform2D.IDENTITY
+		var n: Node = v.bones["neck"]
+		while n != v:
+			tr = (n as Node2D).transform * tr
+			n = n.get_parent()
+		var neck: Vector2 = tr.origin  # the trunk, hips to the base of the neck (the head tips its own way)
+		var lean_back: float = rad_to_deg(atan2(hip.x - neck.x, hip.y - neck.y))
+		check(lean_back <= 25.0, "air_kick@%d: a touch back, not falling away (the trunk %.0f degrees back)" % [tick, lean_back])
+		v.free()
 	check(absf(b["leg_f_lower"]) <= 10.0, "the kicking leg straight (%.0f)" % absf(b["leg_f_lower"]))
 	var foot: Vector2 = Poses._end("leg_f_lower", b)[0]
 	var hip: Vector2 = Poses._end("hip", b)[0]
