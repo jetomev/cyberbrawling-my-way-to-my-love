@@ -51,6 +51,31 @@ fail() { echo "FAILED $*"; exit 1; }
     python3 "$ROOT/scripts/reference_strips.py" "$REC/frames" "$OUT/marks.txt" "$OUT" $MOMENTS || fail "could not draw the side-by-sides"
     SBS="yes"
   fi
+  # measurements on the drawing for the notes, and every frame sheet checked to cover its whole move (the testers,
+  # 00:57 on 66ce4c6: "measure it yourself ... and put that number in the build notes"; "make sure each sheet covers
+  # the whole action start to finish")
+  MEASURE="$(timeout 60 "$ROOT/scripts/capped.sh" godot --headless --path "$ROOT/game" -s res://tools/measure.gd 2>/dev/null)"
+  echo "$MEASURE" | grep -q '^- Power punch' || fail "could not measure the drawing"
+  WHOLE="$(python3 - "$MEASURE" $MOMENTS <<'PY'
+import sys
+lens = {l.split(":")[1]: int(l.split(":")[2]) for l in sys.argv[1].splitlines() if l.startswith("len:")}
+short = []
+n = 0
+for item in sys.argv[2:]:
+    name, hit, start, end = item.split(":")
+    move = name.replace("-cycle-frames", "")
+    if move not in lens:
+        continue
+    n += 1
+    if int(end) - int(start) + 1 < lens[move]:
+        short.append(f"{move} ({int(end) - int(start) + 1} of {lens[move]} frames)")
+print(f"- Every frame sheet covers its whole move: {n} moves checked, each from its first frame to its last, with 8"
+      if not short else "- NOT WHOLE: " + ", ".join(short))
+if not short:
+    print("  frames more on either side (the frames before and after can be the moves chained to it).")
+PY
+)"
+  echo "$WHOLE" | grep -q '^- Every frame sheet' || fail "a frame sheet doesn't cover its whole move: $WHOLE"
   echo "== 4. the note"
   {
     echo "# Build $NAME"
@@ -85,11 +110,17 @@ fail() { echo "FAILED $*"; exit 1; }
     else
       echo "- Side by side: not drawn (no reference recordings on this machine)"
     fi
+    echo "- \`frames/NN-roll-shoulder.png\` and \`clips/NN-roll-shoulder.mp4\` / \`-half.mp4\`: the shoulders up close through"
+    echo "  the whole roll, every frame, the shoulder point ringed, the street under it"
     echo "- Moves in the demo: $(echo $MOMENTS | sed 's/:[0-9:]*//g')"
     echo "- Drawn with no recording behind them: the sweep (Z, from the posture sheet; no recorded sweep exists in the"
     echo "  libraries we use) and the roll (C, from common technique; CMU 128_09 \"Run Roll Underneath\" is the candidate,"
     echo "  waiting on Javier's own yes to download). The low kick, knee, hook, uppercut, elbow and push kick have no"
     echo "  recorded counterpart either; they follow the posture sheet."
+    echo
+    echo "## Measured on the drawing"
+    echo "$MEASURE" | grep -v '^len:'
+    echo "$WHOLE"
     echo
     echo "## What changed since the last push"
     git -C "$ROOT" log --format='- %h %s' origin/main..HEAD 2>/dev/null

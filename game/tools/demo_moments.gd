@@ -3,7 +3,7 @@ extends SceneTree
 ## (the active blow; for climb and block, 8 ticks in), its first frame and its last, for scripts/build.sh's stills,
 ## close-ups and timed strips. Also "landing:touch:start:end" for the first landing after the flying kick: from 6 frames
 ## before the feet touch down to 10 frames after he is back up (the team's third review asked to see it frame by frame);
-## and "<state>-cycle-frames:start:start:end" for the first stretch of the guard, the fighting shuffle, the everyday
+## and "<state>-cycle-frames:start:start:end" for the first stretch of the guard (its whole rocking cycle, up to 60), the fighting shuffle, the everyday
 ## walk (a whole cycle, up to 70 frames), the run and both stance switches (up to 30 frames each), the first roll
 ## (all of it, up to 40), the run (a full second, up to 60); and "runkick-frames:hit:start:end", the running flying kick from its first
 ## running step to half a second after it lands; and "plainjump:touch:crouch:end" for the first jump
@@ -83,7 +83,7 @@ func _initialize() -> void:
 		if key in ["idle", "walk", "stroll", "run", "to_walk", "to_fight", "roll"]:
 			if not cycles.has(key):
 				cycles[key] = [frame, frame, false]
-			elif not cycles[key][2] and frame == cycles[key][1] + 1 and frame - cycles[key][0] < {"stroll": 70, "roll": 40, "run": 60}.get(key, 30):
+			elif not cycles[key][2] and frame == cycles[key][1] + 1 and frame - cycles[key][0] < {"stroll": 70, "roll": 40, "run": 60, "idle": 60}.get(key, 30):
 				cycles[key][1] = frame
 			else:
 				cycles[key][2] = true

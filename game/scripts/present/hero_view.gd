@@ -197,6 +197,20 @@ func points() -> Dictionary:
 	return out
 
 
+## Where the shoulders are drawn (between the two shoulder joints), in the same space as points(): for the close-up of the
+## shoulder carrying the roll (the testers, 00:57 on 66ce4c6). Kept out of points(), whose parts frame every close-up.
+func shoulder_point() -> Vector2:
+	var sum := Vector2.ZERO
+	for name in ["arm_f_upper", "arm_b_upper"]:
+		var t := Transform2D.IDENTITY
+		var n: Node = bones[name]
+		while n != self:
+			t = (n as Node2D).transform * t
+			n = n.get_parent()
+		sum += t.origin
+	return sum * 0.5
+
+
 func apply(pose: Dictionary, grounded := true) -> void:
 	var baked := Poses.bake(pose, grounded)
 	for name in bones:

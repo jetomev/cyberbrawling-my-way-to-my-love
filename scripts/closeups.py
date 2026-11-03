@@ -60,6 +60,8 @@ def read_marks(path):
         marks[n[0]] = {p: (n[2 + 2 * i], n[3 + 2 * i]) for i, p in enumerate(PARTS)}
         if len(n) >= 4 + 2 * len(PARTS):
             marks[n[0]]["street"] = (n[2 + 2 * len(PARTS)], n[3 + 2 * len(PARTS)])
+        if len(n) >= 6 + 2 * len(PARTS):
+            marks[n[0]]["shoulder"] = (n[4 + 2 * len(PARTS)], n[5 + 2 * len(PARTS)])
     return marks
 
 
@@ -200,6 +202,45 @@ def street_fixed(frames, start, end, zero, label, sheet_path, clip_path, marks, 
     return True
 
 
+def shoulder_closeup(frames, start, end, zero, label, sheet_path, clip_path, marks, k, u):
+    """The shoulders up close through a move (the testers, 00:57 on 66ce4c6: "show the shoulder carrying the roll"): a
+    square that follows the shoulders, big enough to show the street under them, with a ring on the shoulder mark;
+    every frame on a sheet, timed, and clips at full and half speed. Returns False without shoulder marks."""
+    from PIL import Image, ImageDraw
+    span = [f for f in range(start - CLIP_PAD, end + CLIP_PAD + 1) if (frames / f"f{f:08d}.png").exists()]
+    if not all("shoulder" in marks.get(f, {}) for f in span):
+        return False
+    side = int(2.0 * u)
+    cols = SHEET_COLUMNS
+    sheet = Image.new("RGB", (cols * (SHEET_SIZE + 2), -(-len(span) // cols) * (SHEET_SIZE + 2)), (22, 22, 28))
+    tmp = clip_path.parent / f".shoulder-{clip_path.stem}"
+    tmp.mkdir(exist_ok=True)
+    for i, f in enumerate(span):
+        img = Image.open(frames / f"f{f:08d}.png").convert("RGB")
+        sx, sy = marks[f]["shoulder"][0] * k, marks[f]["shoulder"][1] * k
+        x = int(min(max(sx - side / 2, 0), img.width - side))
+        y = int(min(max(sy - side / 2, 0), img.height - side))
+        crop = img.crop((x, y, x + side, y + side)).resize((CLIP_SIZE, CLIP_SIZE))
+        d = ImageDraw.Draw(crop)
+        cx, cy = (sx - x) * CLIP_SIZE / side, (sy - y) * CLIP_SIZE / side
+        d.ellipse([cx - 14, cy - 14, cx + 14, cy + 14], outline=(255, 200, 80), width=3)
+        ms = int((f - zero) * 1000 / 60)
+        d.rectangle([0, 0, 300, 30], fill=(0, 0, 0))
+        d.text((8, 8), f"{label}, the shoulders (ringed) {ms} ms", fill=(255, 255, 255))
+        crop.save(tmp / f"f{i:05d}.png")
+        sheet.paste(crop.resize((SHEET_SIZE, SHEET_SIZE)), ((i % cols) * (SHEET_SIZE + 2), (i // cols) * (SHEET_SIZE + 2)))
+    sheet.save(sheet_path)
+    for speed, suffix in [(1, ""), (2, "-half")]:
+        vf = (f"setpts={speed}*PTS," if speed > 1 else "") + "format=yuv420p"
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-framerate", "60", "-i", str(tmp / "f%05d.png"),
+                        "-vf", vf, "-r", "60", "-c:v", "libx264",
+                        str(clip_path.with_name(clip_path.stem + suffix + ".mp4"))], check=True)
+    for png in tmp.glob("f*.png"):
+        png.unlink()
+    tmp.rmdir()
+    return True
+
+
 def clip(frames, start, end, label, path, at, k, u, w, h):
     """The move at full speed and at half speed, on one fixed frame that holds the whole body throughout."""
     span = [f for f in range(start - CLIP_PAD, end + CLIP_PAD + 1) if (frames / f"f{f:08d}.png").exists()]
@@ -259,6 +300,10 @@ def main():
                         out / "frames" / f"{n:02d}-{label}-street.png", out / "clips" / f"{n:02d}-{label}-street.mp4",
                         marks, k, u):
             streets += 1
+        if label == "roll" and not shoulder_closeup(frames, start, end, start, label,
+                                                    out / "frames" / f"{n:02d}-roll-shoulder.png",
+                                                    out / "clips" / f"{n:02d}-roll-shoulder.mp4", marks, k, u):
+            sys.exit("FAILED no shoulder marks for the roll's close-up")
         if move == "landing" or move.endswith("-frames"):
             # every frame of a window: the landing, or any "<move>-frames:<hit>:<start>:<end>" asked for by hand
             frames_all = list(range(start, end + 1))

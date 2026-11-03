@@ -60,7 +60,7 @@ func _ready() -> void:
 	var at := args.find("--marks")
 	if demo and at >= 0 and at + 1 < args.size():
 		marks = FileAccess.open(args[at + 1], FileAccess.WRITE)
-		marks.store_line("# frame tick then x y in the 1920x1080 game for: hip hand_f hand_b foot_f foot_b head(top) street(0,0)")
+		marks.store_line("# frame tick then x y in the 1920x1080 game for: hip hand_f hand_b foot_f foot_b head(top) street(0,0) shoulders")
 		RenderingServer.frame_pre_draw.connect(_mark)
 
 
@@ -92,6 +92,9 @@ func _mark() -> void:
 	# how the build holds the street still in its pictures and shows his travel (the testers, 2026-11-02 22:33)
 	var street: Vector2 = get_viewport().get_canvas_transform() * Vector2.ZERO
 	line += " %d %d" % [roundi(street.x), roundi(street.y)]
+	# and the shoulders, for the roll's shoulder close-up (the testers, 00:57 on 66ce4c6)
+	var shoulder: Vector2 = to_screen * hero_view.shoulder_point()
+	line += " %d %d" % [roundi(shoulder.x), roundi(shoulder.y)]
 	marks.store_line(line)
 	marks.flush()
 	frame += 1
