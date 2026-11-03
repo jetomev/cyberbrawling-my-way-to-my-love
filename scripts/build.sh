@@ -64,7 +64,9 @@ fail() { echo "FAILED $*"; exit 1; }
     if [ "$SBS" = yes ]; then
       echo "- Side by side: \`reference/NN-<jump|flying_kick|walk|stance>-side-by-side.png\`, the hero (top) beside the"
       echo "  recording his movement was measured from (below, a stick figure scaled to the same leg length, on the same"
-      echo "  street line), lined up on the move's events; each column gives both times. The flying kick compares the"
+      echo "  street line), lined up on the move's events; each column gives both times. The recorded jump is a small"
+      echo "  forward hop (the feet rise about a fifth of the hip height) and the game jump clears a crate, so compare"
+      echo "  the shapes (crouch, extension, legs reaching for the landing), not the heights. The flying kick compares the"
       echo "  leg's shape only (the recorded kick is done standing); the stance row is the recorded kicker standing"
       echo "  ready before his kick. Reference: CMU, mocap.cs.cmu.edu (never in the game)."
     else
