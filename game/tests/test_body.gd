@@ -116,8 +116,8 @@ func test_every_strike_winds_up_follows_through_and_eases_back() -> void:
 		var follow := Poses.moment(m, "follow", t)
 		var end := Moves.length(m, t)
 		check(wind < hit_t, "%s: the wind-up comes before the blow" % m)
-		var p_wind: Vector2 = Poses.tip(limb, Poses.angles(m, wind, t))
-		var p_hit: Vector2 = Poses.tip(limb, Poses.angles(m, hit_t, t))
+		var p_wind: Vector2 = Poses.drawn_tip(limb, Poses.angles(m, wind, t))
+		var p_hit: Vector2 = Poses.drawn_tip(limb, Poses.angles(m, hit_t, t))
 		check(p_wind.distance_to(p_hit) > 20.0, "%s: the blow travels from the wind-up (%.0f px)" % [m, p_wind.distance_to(p_hit)])
 		if m != "uppercut":  # the uppercut rises; every other blow drives forward
 			check(p_wind.x < p_hit.x - 10.0, "%s: pulled back on the wind-up (%.0f), out on the blow (%.0f)" % [m, p_wind.x, p_hit.x])

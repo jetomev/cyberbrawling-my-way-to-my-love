@@ -37,7 +37,10 @@ extends RefCounted
 ## - "tumble" (degrees) turns the whole drawing round in the picture's plane, around the hips, the way a roll goes
 ##   (hero_view.gd: the lowest drawn point stays on the street, so he rolls along it);
 ## - "land_spread" (0 or 1) falling to the street, the feet spread into the guard stance before they touch (a flying
-##   kick lands staggered) instead of reaching together (a two-footed jump, as recorded)
+##   kick lands staggered) instead of reaching together (a two-footed jump, as recorded);
+## - "knees_out" (0 to 1) the back knee points back instead of forward: a horse stance, whose knees point out over
+##   their own feet, seen from the front (the power punch's load). On the way the knee turns through pointing at the
+##   camera, where the leg shows straight
 
 const Moves := preload("res://scripts/sim/moves.gd")
 
@@ -69,11 +72,11 @@ const BONES := {
 
 ## Keys a pose may hold besides bones: shared or automatic parts that bake() turns into bone angles.
 const SOFT_KEYS := ["hip_x", "hip_y", "hip_turn", "torso", "open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b",
-	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head", "relaxed", "tall", "tumble", "land_spread"]
+	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head", "relaxed", "tall", "tumble", "land_spread", "knees_out"]
 ## Keys that switch something on rather than bend it: a follow-through never carries them further.
 const SWITCH_KEYS := ["open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b",
 	"fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b",
-	"spin_head", "relaxed", "tall", "tumble", "land_spread"]
+	"spin_head", "relaxed", "tall", "tumble", "land_spread", "knees_out"]
 
 ## The whip (D-21): in a strike the hips move first and the fist or foot arrives last. Each key is read this many
 ## ticks ahead on the move's curve, so the hips lead, the spine follows, then the shoulder and the upper limb; the
@@ -96,6 +99,11 @@ const FOOT_LENGTH := 24.0  # ankle to the ball of the foot
 const SQUAT_LEG := 72.0  # hip to ankle in a deep squat on one leg ("tall" -1)
 const KNEE_CLEAR := 15.0  # a swinging knee stays at least this far above the street
 const KNEE_STAND := 14.0  # a standing knee stays at least this far above its ankle (no kneeling)
+## His shoulder width, outside to outside. The game draws him from the side, where it never shows, so it comes from
+## real bodies: in CMU's recordings (subjects 16 and 135) the shoulder joints sit 0.43 to 0.44 of a leg (thigh + shin)
+## apart, 53 px on his 120 px legs, plus an arm's thickness (18 px) for the outside of the shoulders. What a stance's
+## width is measured against (the testers, 00:57 on 66ce4c6: "feet apart vs shoulder width at the loading frame").
+const SHOULDER_WIDTH := 71.0
 const TOE_LENGTH := 11.0  # an ankle higher than foot + toes lets the foot point
 
 ## The guard, the fighter's home stance (Javier, 2026-11-02 morning: "posture and movements ... still terrible"; the
@@ -111,7 +119,7 @@ const GUARD := {
 	"leg_f_upper": -47.3, "leg_f_lower": 48.9, "leg_b_upper": 22.6, "leg_b_lower": 19.9, "hip_y": 0.0,
 	"open_f": 0.0, "open_b": 0.0, "hip_x": 0.0, "hip_turn": 0.0, "cover_f": 1.0, "cover_b": 1.0, "rise_f": 0.0,
 	"rise_b": 0.15, "spin": 0.0, "turn": 0.0, "pivot_f": 0.0, "pivot_b": 45.0, "fore_f": 0.0, "fore_b": 0.0,
-	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0, "relaxed": 0.0, "tall": 0.0, "tumble": 0.0, "land_spread": 0.0,
+	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0, "relaxed": 0.0, "tall": 0.0, "tumble": 0.0, "land_spread": 0.0, "knees_out": 0.0,
 }
 const HEAD_LEAD := 6  # on a spin the head looks round first: it reads the spin this many frames ahead
 ## Where the ankles stand in the guard, from the hip joint: the guard's legs are solved for these spots.
@@ -223,18 +231,21 @@ const SHOTS := {
 			"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -70.0, "arm_f_lower": -15.0, "arm_b_upper": 75.0, "arm_b_lower": -15.0}]],
 	# Z: the back sweep (the posture sheet; no recorded sweep exists in the libraries we use): sink low into the bow
 	# stance with the hands going down; spin on the front foot, the back leg straight and low along the street, the
-	# hands on or near the floor; the leg comes round to the ankles in front; finish the circle; rise to guard
+	# hands on or near the floor; the leg comes round to the ankles in front; finish the circle; rise to guard. The leg
+	# stays straight out behind him while the whole body turns once, so the foot goes all the way round (the testers,
+	# 00:57 on 66ce4c6: seen from above it cut through the middle and covered only part of the circle); it passes the
+	# enemy's ankles halfway round, his back to the enemy, the way a back sweep does
 	"sweep": [["start", {}],
 		["windup", {"tall": -1.0, "hip_y": 32.0, "step_b": -75.0, "step_f": 8.0, "torso": 26.0, "head": -8.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
-			"arm_f_upper": 30.0, "arm_f_lower": -20.0, "arm_b_upper": 20.0, "arm_b_lower": -20.0}],
-		["sweep", {"spin": 180.0, "pivot_f": 180.0, "tall": -1.0, "hip_y": 38.0, "torso": 34.0, "head": -10.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
-			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": -68.0, "leg_b_lower": 0.0}],
-		["active", {"spin": 330.0, "pivot_f": 330.0, "tall": -1.0, "hip_y": 38.0, "torso": 28.0, "head": -6.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
-			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": -68.0, "leg_b_lower": 0.0}],
-		["active_end", {"spin": 360.0, "pivot_f": 360.0, "tall": -1.0, "hip_y": 38.0, "torso": 24.0, "head": -4.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
-			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": -66.0, "leg_b_lower": 0.0}],
-		["follow", {"spin": 360.0, "pivot_f": 360.0, "tall": -0.5, "torso": 14.0, "cover_f": 0.0, "cover_b": 0.0,
-			"arm_f_upper": 30.0, "arm_f_lower": -40.0, "arm_b_upper": 20.0, "arm_b_lower": -40.0, "leg_b_upper": -64.0, "leg_b_lower": 12.0}],
+			"arm_f_upper": 30.0, "arm_f_lower": -20.0, "arm_b_upper": 20.0, "arm_b_lower": -20.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
+		["sweep", {"spin": 120.0, "pivot_f": 120.0, "tall": -1.0, "hip_y": 38.0, "torso": 34.0, "head": -10.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
+		["active", {"spin": 180.0, "pivot_f": 180.0, "tall": -1.0, "hip_y": 38.0, "torso": 28.0, "head": -6.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
+		["active_end", {"spin": 260.0, "pivot_f": 260.0, "tall": -1.0, "hip_y": 38.0, "torso": 24.0, "head": -4.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
+		["follow", {"spin": 360.0, "pivot_f": 360.0, "tall": -0.8, "hip_y": 30.0, "torso": 18.0, "cover_f": 0.0, "cover_b": 0.0,
+			"arm_f_upper": 30.0, "arm_f_lower": -40.0, "arm_b_upper": 20.0, "arm_b_lower": -40.0, "leg_b_upper": 66.0, "leg_b_lower": 6.0}],
 		["end", {"spin": 360.0, "pivot_f": 360.0}]],
 	# C: the evasion roll (Javier, 2026-11-02 21:56). No recorded roll yet (CMU 128_09 "Run Roll Underneath" waits on
 	# Javier's yes to download); the team's roll reference (judo and aikido forward rolls, Muybridge's somersault plates):
@@ -364,9 +375,13 @@ const SHOTS := {
 	# back leg straight, about 70% forward), the waist turns, the rear fist straight to the chest and the front fist
 	# pulled back to the hip on purpose, kung fu style; hold it a beat (the freeze), then step back to guard
 	"power_punch": [["start", {}],
-		# loads low and wide (the back foot slides back, the hips sink and sit back) and holds it, then drives all at once
-		["windup", {"hip_y": 22.0, "hip_x": -8.0, "step_b": -66.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
-		["load", {"hip_y": 22.0, "hip_x": -8.0, "step_b": -66.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
+		# loads low and wide (the back foot slides back, the hips sink and sit back) and holds it, then drives all at once.
+		# The load is the sheet's horse stance: the hips in the middle of the feet (50/50) at about thigh level, both knees
+		# bent alike (the testers sent it back four times as narrow; measured, the feet were already 2.3 shoulder widths
+		# apart, but the hips sat right down over the front foot with the back knee near the street: a kneeling lunge, not
+		# a wide stance)
+		["windup", {"knees_out": 1.0, "hip_y": 36.0, "hip_x": -39.0, "step_b": -66.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
+		["load", {"knees_out": 1.0, "hip_y": 36.0, "hip_x": -39.0, "step_b": -66.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
 		["active", {"step_f": 30.0, "step_b": -30.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 60.0}],
 		["active_end", {"step_f": 30.0, "step_b": -30.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 60.0}],
 		["follow", {"step_f": 30.0, "step_b": -30.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 62.0}],
@@ -644,6 +659,7 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 	var out := {}
 	for b in BONES:
 		out[b] = pose.get(b, 0.0)
+	out["knees_out"] = pose.get("knees_out", 0.0)  # read by the leg solve
 	if pose.get("feet", 0.0) > 0.5:
 		# feet placed, legs bent to reach them (the hips are still level here; they shift and tip further down)
 		var joint: Vector2 = _end("hip", out)[0]
@@ -913,6 +929,19 @@ static func _reach_with_leg(out: Dictionary, side: String, target: Vector2) -> v
 	var cos_a := clampf((l1 * l1 + d * d - l2 * l2) / (2.0 * l1 * d), -1.0, 1.0)
 	var thigh := to.angle() - acos(cos_a)  # the smaller angle: the knee forward
 	var knee := joint + Vector2(l1, 0).rotated(thigh)
+	# "knees_out" turns the back knee round the line from hip to ankle until it points back. Half way it points at the
+	# camera: seen from the side the knee then sits on that line and both bones draw shorter, so the foot stays put
+	var out_k: float = clampf(out.get("knees_out", 0.0), 0.0, 1.0) if side == "b" else 0.0
+	out["short_%s_upper" % side] = 1.0
+	out["short_%s_lower" % side] = 1.0
+	if out_k > 0.0:
+		var axis := to.normalized() * d
+		var foot_of := joint + to.normalized() * (l1 * cos_a)  # the knee's circle round that line has its middle here
+		knee = foot_of + (knee - foot_of) * cos(PI * out_k)
+		thigh = (knee - joint).angle()
+		out["short_%s_upper" % side] = maxf((knee - joint).length() / l1, 0.05)
+		out["short_%s_lower" % side] = maxf((joint + axis - knee).length() / l2, 0.05)
+		target = joint + axis
 	var shin := (target - knee).angle()
 	out[upper] = rad_to_deg(thigh - hip_end[1]) - BONES[upper][2]
 	out[lower] = rad_to_deg(shin - thigh) - BONES[lower][2]
@@ -958,15 +987,25 @@ static func _end(bone: String, baked: Dictionary) -> Array:
 	return [pos + Vector2(BONES[bone][3] * stretch, 0).rotated(ang), ang]
 
 
-## How long a bone draws, as a share of its length: a forearm pointing at the camera ("fore_") looks shorter.
+## How long a bone draws, as a share of its length: a forearm pointing at the camera ("fore_") looks shorter, and
+## so do the thigh and shin while a knee turns round past it ("knees_out").
 static func drawn_length(bone: String, baked: Dictionary) -> float:
 	if bone in ["arm_f_lower", "arm_b_lower"]:
 		return 1.0 - (1.0 - FORE_SHORT) * clampf(baked.get("fore_" + bone.substr(4, 1), 0.0), 0.0, 1.0)
 	if bone in ["arm_f_upper", "arm_b_upper"]:
 		return 1.0 - (1.0 - FORE_SHORT) * clampf(baked.get("upper_" + bone.substr(4, 1), 0.0), 0.0, 1.0)
+	if bone in ["leg_f_upper", "leg_b_upper", "leg_f_lower", "leg_b_lower"]:
+		return baked.get("short_" + bone.substr(4), 1.0)  # a knee turning round past the camera ("knees_out")
 	return 1.0
 
 
 ## Where a bone's far end sits, relative to the feet, for a pose, facing right (for tests and hit checks).
 static func tip(bone: String, pose: Dictionary, grounded := true) -> Vector2:
 	return _end(bone, bake(pose, grounded))[0]
+
+
+## … and where it is drawn: past a quarter turn of a spin the view flips the drawing to face the other way (his back
+## to us), so a foot reaching back in the pose reaches forward on the screen (the back sweep's hit).
+static func drawn_tip(bone: String, pose: Dictionary, grounded := true) -> Vector2:
+	var at := tip(bone, pose, grounded)
+	return Vector2(-at.x, at.y) if cos(deg_to_rad(pose.get("spin", 0.0))) < 0.0 else at

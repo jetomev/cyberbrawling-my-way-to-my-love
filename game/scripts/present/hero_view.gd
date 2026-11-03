@@ -242,10 +242,11 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		for n in ["foot_" + side, "toe_" + side]:
 			bones[n].get_node("Part").scale.x = x
 		bones["toe_" + side].position = Poses.BONES["toe_" + side][1] * Vector2(x, 1.0)
-	# an upper arm or forearm pointing at the camera draws shorter: its drawn part shrinks along the bone and the next
+	# an upper arm or forearm pointing at the camera draws shorter (and a leg while its knee turns past it): its drawn part shrinks along the bone and the next
 	# joint moves in to match (moving the joint, not scaling the bone, so nothing below it is skewed)
 	for side in ["f", "b"]:
-		for pair in [["arm_%s_upper" % side, "arm_%s_lower" % side], ["arm_%s_lower" % side, "hand_" + side]]:
+		for pair in [["arm_%s_upper" % side, "arm_%s_lower" % side], ["arm_%s_lower" % side, "hand_" + side],
+				["leg_%s_upper" % side, "leg_%s_lower" % side], ["leg_%s_lower" % side, "foot_" + side]]:
 			var k := Poses.drawn_length(pair[0], baked)
 			bones[pair[0]].get_node("Part").scale.x = k
 			bones[pair[1]].position = Vector2(Poses.BONES[pair[0]][3] * k, 0)

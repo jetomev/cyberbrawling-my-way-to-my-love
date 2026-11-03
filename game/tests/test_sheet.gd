@@ -292,6 +292,60 @@ func test_the_power_punch_loads_low_and_wide() -> void:
 		check(_wide(b) >= _wide(g) * 1.5, "power_punch@%d: the stance clearly wider (%.0f px, guard %.0f)" % [tick, _wide(b), _wide(g)])
 
 
+func test_the_power_punch_loads_in_a_horse_stance() -> void:
+	# the testers, a fourth time (00:57 on 66ce4c6): measure the load against the sheet, feet apart vs shoulder width.
+	# Measured: 2.3 shoulder widths already, but the hips sat down over the front foot (69% forward) and the back knee
+	# came within a few px of the street, a kneeling lunge. The sheet's horse stance: 50/50, both knees bent alike, each
+	# over its own foot (seen from the front, the back knee points back)
+	var t := Tuning.fresh()
+	var hit: int = Moves.data("power_punch", t)["startup"]
+	var held := 0
+	for tick in range(hit - 6, hit - 2):
+		var b := Poses.bake(Poses.angles("power_punch", tick, t), true)
+		var f: Vector2 = Poses._end("leg_f_lower", b)[0]
+		var k: Vector2 = Poses._end("leg_b_lower", b)[0]
+		var hip: Vector2 = Poses._end("hip", b)[0]
+		var share := (hip.x - k.x) / (f.x - k.x)
+		check(f.x - k.x >= 2.0 * Poses.SHOULDER_WIDTH, "power_punch@%d: the feet at least two shoulder widths apart (%.1f)" % [tick, (f.x - k.x) / Poses.SHOULDER_WIDTH])
+		check(share >= 0.4 and share <= 0.6, "power_punch@%d: the hips in the middle of the feet (%.0f%% forward)" % [tick, share * 100.0])
+		var kf: Vector2 = Poses._end("leg_f_upper", b)[0]
+		var kb: Vector2 = Poses._end("leg_b_upper", b)[0]
+		check(kf.x > hip.x + 30.0 and kb.x < hip.x - 30.0, "power_punch@%d: each knee out over its own foot (%.0f, %.0f from the hips)" % [tick, kf.x - hip.x, kb.x - hip.x])
+		check(-kb.y >= 40.0 and -kf.y >= 40.0, "power_punch@%d: both knees well off the street (%.0f, %.0f)" % [tick, -kf.y, -kb.y])
+		check(absf(kf.y - kb.y) <= 12.0, "power_punch@%d: both knees bent alike (%.0f px apart in height)" % [tick, absf(kf.y - kb.y)])
+		held += 1
+	check(held == 4, "the load held 100 to 50 ms before the hit")
+	# turning the back knee round, the foot stays on the street (it draws shorter while the knee faces the camera),
+	# until the drive lifts its heel
+	for tick in range(0, hit - 2):
+		var b := Poses.bake(Poses.angles("power_punch", tick, t), true)
+		var ankle: Vector2 = Poses._end("leg_b_lower", b)[0]
+		check(ankle.y <= 1.0 and ankle.y >= -12.0, "power_punch@%d: the back foot on the street as the knee turns (%.0f)" % [tick, ankle.y])
+
+
+func test_the_sweep_goes_all_the_way_round() -> void:
+	# the testers (00:57 on 66ce4c6): seen from above, the leg should go all the way round. It cut through the middle
+	# and covered part of the circle. Seen from above, the foot at full reach (80 px or more out) turns a whole circle
+	# round him, and it is in front of him, at the enemy's ankles, at the hit
+	var t := Tuning.fresh()
+	var total := 0.0
+	var prev = null
+	for tick in Moves.length("sweep", t):
+		var p := Poses.angles("sweep", tick, t)
+		var b := Poses.bake(p, true)
+		var reach: float = (Poses._end("leg_b_lower", b)[0] as Vector2).x - (Poses._end("hip", b)[0] as Vector2).x
+		var a := deg_to_rad(p["spin"])
+		var at := Vector2(reach * sin(a), -reach * cos(a))
+		if absf(reach) >= 80.0:
+			if prev != null:
+				total += absf(rad_to_deg((prev as Vector2).angle_to(at)))
+			prev = at
+	check(total >= 350.0, "the foot goes all the way round at full reach (%.0f degrees)" % total)
+	var hit := Poses.angles("sweep", Moves.data("sweep", t)["startup"], t)
+	var foot := Poses.drawn_tip("leg_b_lower", hit)
+	check(foot.x >= 90.0, "at the hit the foot is out in front of him (%.0f px), his back to the enemy (spin %.0f)" % [foot.x, hit["spin"]])
+
+
 func test_the_round_kicks_waist_rolls_through() -> void:
 	# the testers' joint session: the waist should roll through. The waist (hips) is over at the hit while the chest
 	# is still coming round, and the chest keeps turning through 50 ms after: nothing frozen at the hit.

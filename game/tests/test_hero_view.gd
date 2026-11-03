@@ -76,7 +76,7 @@ func test_drawn_blows_reach_where_they_hit() -> void:
 		if Moves.is_air(m):
 			continue
 		var d := Moves.data(m, t)
-		var tip := Poses.tip(d["limb"], Poses.angles(m, d["startup"], t))
+		var tip := Poses.drawn_tip(d["limb"], Poses.angles(m, d["startup"], t))  # as drawn (a spin flips it)
 		check(absf(tip.x - d["reach"]) <= 15.0, "%s: drawn tip at %.0f px, reach %.0f" % [m, tip.x, d["reach"]])
 		check(-tip.y >= d["low"] and -tip.y <= d["high"], "%s: tip height %.0f inside %.0f..%.0f" % [m, -tip.y, d["low"], d["high"]])
 	var fist := Poses.tip("arm_f_lower", Poses.angles("punch", t["punch_startup"], t))

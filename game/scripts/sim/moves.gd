@@ -53,7 +53,7 @@ const TABLE := {
 	# low, spin on the front foot with the back leg straight along the street, hands near the floor; the biggest
 	# wind-up of the low moves. No recorded sweep exists in the libraries we use: drawn from the sheet.
 	"sweep": {"startup": 12, "active": 6, "recovery": 20, "reach": 120.0, "low": 0.0, "high": 50.0, "damage": 2,
-		"effect": "knockdown", "limb": "foot_b"},
+		"effect": "knockdown", "limb": "leg_b_lower"},  # a back sweep catches the ankles with the heel and calf
 	# in the air: one per jump
 	"air_kick": {"low": 30.0, "high": 170.0, "damage": 3, "effect": "", "limb": "foot_f"},
 	"hammer_fist": {"startup": 4, "active": 8, "recovery": 0, "reach": 70.0, "low": 20.0, "high": 160.0, "damage": 2,
