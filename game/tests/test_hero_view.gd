@@ -114,7 +114,7 @@ func test_demo_shows_every_move() -> void:
 		seen[f.state] = true
 		if f.x > 2724.0 and f.y == 0.0 and f.state != "climb":
 			past_crate_two_on_ground = true
-	for s in STATES + ["cross", "power_punch", "push_kick", "body_kick", "side_kick", "knee", "uppercut", "elbow", "roundhouse", "hammer_fist", "sweep"]:
+	for s in STATES + ["cross", "power_punch", "push_kick", "body_kick", "side_kick", "knee", "uppercut", "elbow", "roundhouse", "hammer_fist", "sweep", "roll"]:
 		check(seen.has(s), "the demo shows %s" % s)
 	check(w.objects[0]["broken"], "it smashes the first crate")
 	check(not w.objects[2]["broken"] and past_crate_two_on_ground, "it jumps the second crate")
@@ -173,4 +173,27 @@ func test_a_pivoted_standing_foot_shows_its_heel_to_the_target() -> void:
 			var ankle := _at(v, "foot_" + pair[1])
 			var toe := _at(v, "toe_" + pair[1])
 			check(toe.x < ankle.x - 10.0, "%s@%d: the standing toe points away from the target, heel to it (toe %.0f, ankle %.0f)" % [pair[0], tick, toe.x, ankle.x])
+	v.free()
+
+
+func test_the_roll_turns_a_full_circle_along_the_street() -> void:
+	# the drawn body tumbles all the way round, rolling on the street (never drawn through it), and ends upright
+	var t := Tuning.fresh()
+	var v = HeroView.new()
+	var most := 0.0  # the turn added up frame by frame (a rotation reads -180..180)
+	var prev := 0.0
+	var lowest := -INF
+	for tick in t["roll_ticks"]:
+		var p := Poses.angles("roll", tick, t)
+		p["tumble_dir"] = 1.0
+		v.apply(p)
+		most += wrapf(v.body.rotation_degrees - prev, -180.0, 180.0)
+		prev = v.body.rotation_degrees
+		for name in v.bones:
+			lowest = maxf(lowest, _at(v, name).y)
+		lowest = maxf(lowest, v.points()["head"].y)  # the top of the head too
+	check(absf(most) >= 300.0, "a full circle (%.0f degrees)" % most)
+	check(lowest <= 2.0, "rolling on the street, never through it (%.0f px under it)" % lowest)
+	v.apply(Poses.angles("idle", 0, t))
+	check(absf(v.body.rotation_degrees) < 0.5, "upright again after it")
 	v.free()

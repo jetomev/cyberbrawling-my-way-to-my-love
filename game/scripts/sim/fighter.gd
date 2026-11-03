@@ -3,8 +3,8 @@ extends RefCounted
 ## the same result, so tests and the bot can drive it bare. The hero uses it now; enemies will too.
 ##
 ## Space: x runs along the street, z is the depth of the street (0 = far edge), y is height above the street.
-## An input is a Dictionary: {mx: -1..1, mz: -1..1, jump, punch, kick, sweep, block, run, stance: bool}; jump, punch,
-## kick, sweep and stance are "pressed this tick"; block and run are "held" (D-19: hold to guard; its first moments are a perfect
+## An input is a Dictionary: {mx: -1..1, mz: -1..1, jump, punch, kick, sweep, roll, block, run, stance: bool}; jump,
+## punch, kick, sweep, roll and stance are "pressed this tick"; block and run are "held" (D-19: hold to guard; its first moments are a perfect
 ## block). Two stances (Javier, 2026-11-02 18:48: "W for running, X to swtich stance (fight/walk)"): the fight stance
 ## (guard "idle", the shuffle "walk") and the walk stance (relaxed "stand", the everyday walk "stroll"); X switches
 ## between them through a short "to_walk" / "to_fight"; running ("run" held: alone, the way he faces; with an arrow, that way) works from either and
@@ -32,6 +32,8 @@ var facing := 1  # 1 = right, -1 = left
 var state := "idle"
 var stance := "fight"  # "fight" (the guard) or "walk" (relaxed)
 var squat_mx := 0.0  # the stick when the jump was pressed: a running jump still carries forward from its crouch
+var roll_dir := 1  # which way along the street a roll goes (+1 right, -1 left)
+var roll_mz := 0.0  # and up or down the street
 var t := 0  # ticks spent in the current state
 var queue: Array[String] = []  # buttons pressed early, in order, waiting for the fighter to be free
 var buffer_left := 0  # once free, how long the waiting presses stay good
@@ -69,6 +71,14 @@ func step(inp: Dictionary) -> void:
 				queue.append(b)
 			buffer_left = tune["buffer_ticks"]
 	t += 1
+	# C: the evasion roll (Javier, 2026-11-02 21:56: "c for evation role (direction of the keys)"), from the ground or a
+	# block, the way the arrows point (forward if none), facing the threat the whole time
+	if inp.get("roll", false) and (state in GROUND_STATES or state == "block") and queue.is_empty():
+		chain = ""
+		roll_dir = int(signf(mx)) if mx != 0.0 else facing
+		roll_mz = mz
+		_enter("roll")
+		return
 	if inp.get("stance", false) and state in GROUND_STATES and queue.is_empty():
 		vx = 0.0
 		stance = "walk" if stance == "fight" else "fight"
@@ -80,6 +90,8 @@ func step(inp: Dictionary) -> void:
 		"to_walk", "to_fight":
 			if t >= tune["stance_switch_ticks"]:
 				_enter(_rest())
+		"roll":
+			_roll()
 		"jump", "air_kick", "hammer_fist":
 			if state == "jump" and not queue.is_empty() and queue[0] in ["punch", "kick"] and not air_kicked:
 				var move: String = Moves.AIR["P" if _take_buffer() == "punch" else "K"]
@@ -260,6 +272,27 @@ func _start(action: String, mx: float) -> void:
 func _enter(s: String) -> void:
 	state = s
 	t = 0
+
+
+## Rolling along the street: the body moves the way the roll goes, stopped by what blocks it; then back to the rest.
+func _roll() -> void:
+	if t >= tune["roll_ticks"]:
+		vx = 0.0
+		_enter(_rest())
+		return
+	vx = roll_dir * tune["roll_speed"]
+	var nx := clampf(x + vx, tune["street_left"], tune["street_right"])
+	if not _blocked(nx, z):
+		x = nx
+	if not tune["flat_line"]:
+		var nz := clampf(z + roll_mz * tune["depth_speed"], 0.0, tune["street_depth"])
+		if not _blocked(x, nz):
+			z = nz
+
+
+## True while a roll can't be hit (most of it; he comes up open).
+func evading() -> bool:
+	return state == "roll" and t < int(tune["roll_ticks"] * tune["roll_evade"])
 
 
 ## "perfect" in a block's first perfect_block_ticks, "block" after that, "" when not blocking.

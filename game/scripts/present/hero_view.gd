@@ -13,6 +13,7 @@ var body: Node2D
 var shadow: Polygon2D
 var tint := Color.WHITE
 var facing := 1.0
+var body_y := 0.0  # the body's height off the street (sync sets it); a roll moves the body about it
 var since_touch := 999  # frames since the feet last touched down (for the landing's sink and rise)
 var was_grounded := true
 
@@ -128,7 +129,7 @@ func _ellipse(centre: Vector2, rx: float, ry: float) -> PackedVector2Array:
 func sync(f, ground_y: float) -> void:
 	position = Vector2(f.x, ground_y + f.z)
 	z_index = int(f.z)
-	body.position.y = -f.y
+	body_y = -f.y
 	facing = f.facing
 	var height := clampf(f.y / 200.0, 0.0, 1.0)
 	shadow.scale = Vector2.ONE * (1.0 - height * 0.45)
@@ -140,6 +141,7 @@ func sync(f, ground_y: float) -> void:
 	was_grounded = grounded
 	var floor_y: float = f.world.floor_at(f.x, f.z, f.y) if f.world != null else 0.0
 	var pose := Poses.landing(Poses.angles(f.state, f.t, f.tune), since_touch if grounded else -1, f.y - floor_y, f.vy < 0.0)
+	pose["tumble_dir"] = float(f.roll_dir)
 	apply(pose, grounded)
 	body.modulate = Color(1.6, 1.6, 1.9) if f.blocking() == "perfect" else Color.WHITE  # a perfect block flashes
 
@@ -215,3 +217,24 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		var open: bool = baked["open_" + side] > 0.5
 		hand.get_node("Open").visible = open
 		hand.get_node("Fist").visible = not open
+	# a roll ("tumble") turns the whole drawing round about the hips, the way the roll goes along the street, and keeps
+	# its lowest point on the street: he rolls along it, never through it
+	body.rotation = 0.0
+	body.position = Vector2(0.0, body_y)
+	var tumble: float = pose.get("tumble", 0.0)
+	if tumble != 0.0:
+		var turn := Transform2D(deg_to_rad(tumble * pose.get("tumble_dir", 1.0)), Vector2.ZERO)
+		var flip := Transform2D(0.0, body.scale, 0.0, Vector2.ZERO)
+		var hip: Vector2 = flip * (bones["hip"].position as Vector2)
+		var pos := Vector2(0.0, body_y) + hip - turn * hip
+		var lowest := -INF
+		for name in bones:
+			var at := Transform2D.IDENTITY
+			var n: Node = bones[name]
+			while n != body:
+				at = (n as Node2D).transform * at
+				n = n.get_parent()
+			for end in [Vector2.ZERO, Vector2(Poses.BONES[name][3], 0.0)]:  # each part's joint and its far end (the head's top)
+				lowest = maxf(lowest, (pos + turn * (flip * (at * end))).y)
+		body.rotation = turn.get_rotation()
+		body.position = pos - Vector2(0.0, lowest - body_y)

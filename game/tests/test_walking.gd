@@ -66,12 +66,20 @@ func test_a_blow_from_the_walk_stance_raises_the_guard_first() -> void:
 
 func test_the_keys_are_javiers() -> void:
 	var k: Dictionary = Controls.KEYS
-	for pair in [["punch", KEY_A], ["kick", KEY_B], ["block", KEY_D], ["run", KEY_W], ["stance", KEY_X], ["sweep", KEY_Z]]:
+	# Javier's final set (2026-11-02 21:56, through the assistant team): "A punches, S kicks, D block, W for running, X
+	# for stance, z for sweep, c for evation role (direction of the keys), space jump"
+	for pair in [["punch", KEY_A], ["kick", KEY_S], ["block", KEY_D], ["run", KEY_W], ["stance", KEY_X], ["sweep", KEY_Z], ["roll", KEY_C], ["jump", KEY_SPACE]]:
 		check(pair[1] in k[pair[0]], "%s is on %s" % [pair[0], OS.get_keycode_string(pair[1])])
 	for move in ["move_left", "move_right", "move_up", "move_down"]:
 		for key in [KEY_A, KEY_S, KEY_D, KEY_W]:
 			check(not key in k[move], "%s doesn't move him" % OS.get_keycode_string(key))
 	check(not KEY_X in k["kick"], "X isn't a kick any more")
+	check(not KEY_B in k["kick"], "B isn't the kick any more (S is)")
+	for action in k:
+		if action != "roll":
+			check(not KEY_C in k[action], "C is only the roll (not %s)" % action)
+		if action != "kick":
+			check(not KEY_S in k[action], "S is only the kick (not %s)" % action)
 	for action in k:
 		if action != "sweep":
 			check(not KEY_Z in k[action], "Z is only the sweep (not %s)" % action)
@@ -159,3 +167,29 @@ func test_z_sweeps() -> void:
 	eq(f.chain, "", "it is no link of a chain (a P after it opens a new one)")
 	run_for(f, 90)
 	eq(f.state, "idle", "and he rises back to his guard")
+
+
+func test_c_rolls_the_way_the_arrows_point() -> void:
+	# Javier (21:56): "c for evation role (direction of the keys)". An evasion roll along the street the way the arrows
+	# point (forward if none), facing the threat the whole time; it evades for most of the roll, then he is open again.
+	var f = Fighter.new()
+	var x0: float = f.x
+	f.step({"roll": true, "mx": -1.0})
+	eq(f.state, "roll", "C: the roll")
+	check(f.evading(), "while rolling he can't be hit")
+	run_for(f, f.tune["roll_ticks"] - 4)
+	check(f.x < x0 - 100.0, "it goes the way the arrow points: back (%.0f px)" % (f.x - x0))
+	eq(f.facing, 1, "still facing the threat")
+	check(not f.evading(), "coming up out of it, he's open again")
+	run_for(f, 10)
+	eq(f.state, "idle", "back in his guard")
+	var g = Fighter.new()
+	var gx: float = g.x
+	g.step({"roll": true})
+	run_for(g, g.tune["roll_ticks"])
+	check(g.x > gx + 100.0, "no arrow: a forward roll (%.0f px)" % (g.x - gx))
+	var h = Fighter.new()
+	var z0: float = h.z
+	h.step({"roll": true, "mz": 1.0})
+	run_for(h, h.tune["roll_ticks"])
+	check(h.z > z0 + 20.0, "down the street with the down arrow (%.0f px)" % (h.z - z0))

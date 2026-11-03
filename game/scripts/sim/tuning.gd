@@ -20,6 +20,9 @@ const DEFAULTS := {
 	"jump_speed": 6.0,  # a running jump goes faster than walking, so a crate can be cleared
 	"air_steer": 0.5,  # how much the stick can change a jump that's already going (0 = none, 1 = full)
 	"land_ticks": 4,
+	"roll_ticks": 32,  # C: the evasion roll (Javier, 2026-11-02 21:56), about half a second
+	"roll_speed": 6.0,  # along the street the way the arrows point
+	"roll_evade": 0.7,  # the share of the roll he can't be hit in (then he comes up open)
 	# attacks: start-up, active (can hit), recovery, all in ticks; reach in pixels from the body's centre
 	"punch_startup": 4,
 	"punch_active": 3,

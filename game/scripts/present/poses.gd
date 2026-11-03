@@ -33,7 +33,9 @@ extends RefCounted
 ##   out to the side, as on a hook's load). Hits are measured on the same shortened arm.
 ## - "tall" (0 to 1) on one leg, how far he rises onto it: 0 keeps the stance's bend (a front kick's standing knee,
 ##   about 40 degrees as recorded), 1 stands on a straight leg (a round kick or side kick, recorded within 8 degrees);
-##   below 0 he sinks onto it (-1: a deep squat on the one leg, as a sweep spins low)
+##   below 0 he sinks onto it (-1: a deep squat on the one leg, as a sweep spins low);
+## - "tumble" (degrees) turns the whole drawing round in the picture's plane, around the hips, the way a roll goes
+##   (hero_view.gd: the lowest drawn point stays on the street, so he rolls along it)
 
 const Moves := preload("res://scripts/sim/moves.gd")
 
@@ -65,11 +67,11 @@ const BONES := {
 
 ## Keys a pose may hold besides bones: shared or automatic parts that bake() turns into bone angles.
 const SOFT_KEYS := ["hip_x", "hip_y", "hip_turn", "torso", "open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b",
-	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head", "relaxed", "tall"]
+	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head", "relaxed", "tall", "tumble"]
 ## Keys that switch something on rather than bend it: a follow-through never carries them further.
 const SWITCH_KEYS := ["open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b",
 	"fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b",
-	"spin_head", "relaxed", "tall"]
+	"spin_head", "relaxed", "tall", "tumble"]
 
 ## The whip (D-21): in a strike the hips move first and the fist or foot arrives last. Each key is read this many
 ## ticks ahead on the move's curve, so the hips lead, the spine follows, then the shoulder and the upper limb; the
@@ -102,7 +104,7 @@ const GUARD := {
 	"leg_f_upper": -47.3, "leg_f_lower": 48.9, "leg_b_upper": 22.6, "leg_b_lower": 19.9, "hip_y": 0.0,
 	"open_f": 0.0, "open_b": 0.0, "hip_x": 0.0, "hip_turn": 0.0, "cover_f": 1.0, "cover_b": 1.0, "rise_f": 0.0,
 	"rise_b": 0.15, "spin": 0.0, "turn": 0.0, "pivot_f": 0.0, "pivot_b": 45.0, "fore_f": 0.0, "fore_b": 0.0,
-	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0, "relaxed": 0.0, "tall": 0.0,
+	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0, "relaxed": 0.0, "tall": 0.0, "tumble": 0.0,
 }
 const HEAD_LEAD := 6  # on a spin the head looks round first: it reads the spin this many frames ahead
 ## Where the ankles stand in the guard, from the hip joint: the guard's legs are solved for these spots.
@@ -227,6 +229,14 @@ const SHOTS := {
 		["follow", {"spin": 360.0, "pivot_f": 360.0, "tall": -0.5, "torso": 14.0, "cover_f": 0.0, "cover_b": 0.0,
 			"arm_f_upper": 30.0, "arm_f_lower": -40.0, "arm_b_upper": 20.0, "arm_b_lower": -40.0, "leg_b_upper": -60.0, "leg_b_lower": 90.0}],
 		["end", {"spin": 360.0, "pivot_f": 360.0}]],
+	# C: the evasion roll (Javier, 2026-11-02 21:56). No recorded roll yet (CMU 128_09 "Run Roll Underneath" waits on
+	# Javier's yes to download), so common technique: drop into a crouch with the chin tucked and the arms reaching down,
+	# roll over through a tight ball (knees to the chest, arms round the shins), come up into a crouch, back to guard
+	"roll": [["start", {}],
+		["roll_down", {"hip_y": 30.0, "torso": 40.0, "head": 24.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -30.0, "arm_f_lower": -60.0, "arm_b_upper": -20.0, "arm_b_lower": -60.0, "tumble": 0.0}],
+		["roll_over", {"torso": 55.0, "head": 30.0, "cover_f": 0.0, "cover_b": 0.0, "leg_f_upper": -125.0, "leg_f_lower": 140.0, "leg_b_upper": -115.0, "leg_b_lower": 140.0, "arm_f_upper": -50.0, "arm_f_lower": -110.0, "arm_b_upper": -40.0, "arm_b_lower": -110.0, "tumble": 180.0}],
+		["roll_up", {"hip_y": 28.0, "torso": 26.0, "head": 10.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -30.0, "arm_f_lower": -70.0, "arm_b_upper": -20.0, "arm_b_lower": -70.0, "tumble": 340.0}],
+		["end", {"tumble": 360.0}]],
 	"climb": [["start", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hand_f": -30.0, "hand_b": -30.0, "arm_f_upper": -165.0, "arm_f_lower": 0.0, "arm_b_upper": -150.0, "arm_b_lower": 0.0,
 			"leg_f_upper": -20.0, "leg_f_lower": 30.0, "hip_y": 0.0}],
 		["climb_mid", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hand_f": 60.0, "hand_b": 60.0, "arm_f_upper": -60.0, "arm_f_lower": -30.0, "arm_b_upper": -40.0, "arm_b_lower": -30.0,
@@ -379,7 +389,15 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 				"to_walk", "to_fight": return tune["stance_switch_ticks"]
 				"jump_squat": return tune["jump_squat_ticks"]
 				"climb": return tune["climb_ticks"]
+				"roll": return tune["roll_ticks"]
 			return Moves.length(state, tune)
+		# the roll: down, over (upside down, a tight ball), up into a crouch
+		"roll_down":
+			return int(tune["roll_ticks"] * 0.15)
+		"roll_over":
+			return int(tune["roll_ticks"] * 0.5)
+		"roll_up":
+			return int(tune["roll_ticks"] * 0.85)
 		"climb_mid":
 			return tune["climb_ticks"] / 2
 		# a jump's flight, at the same fractions of the air time as the recording (CMU 16_05)

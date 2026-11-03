@@ -2,13 +2,12 @@ extends RefCounted
 ## Keyboard and gamepad controls, set up in code so they're easy to read and test.
 ## Sticks are NOT in the action map: they go through stick_guard.gd (feed()), which ignores a stick stuck off centre
 ## from the moment it connects (Javier's G13, F-1) and applies the dead zone.
-## Keyboard (Javier, 2026-11-02 18:48: "ASDW are not key for walking. Let's do: A for punches, B for kicks, D for
-## blocking, W for running, X to swtich stance (fight/walk)"): A punch, B kick, D block (hold), W run (hold), X switch
-## stance; the arrows move (what moves the hero is his call still: MOVE_KEYS is the one place to change it); Space
-## jump; the old J punch, K kick, L/Shift block still work. Z is the sweep (Javier, 2026-11-02 19:28, through the
-## assistant team, on where the sweep goes: "Z key"), its own move, built with the punches and kicks from recorded
-## motion (no recorded sweep exists in the libraries we use, so it is drawn from the posture sheet). No gamepad button
-## for it yet.
+## Keyboard, Javier's final set (2026-11-02 21:56, through the assistant team): "A punches, S kicks, D block, W for
+## running, X for stance, z for sweep, c for evation role (direction of the keys), space jump"; the arrows move
+## (MOVE_KEYS is the one place to change that). The old spares J punch, K kick, L/Shift block still work; B is no
+## longer the kick. The sweep (Z) and the roll (C) are drawn from the posture sheet and common technique (no recorded
+## sweep exists in our libraries; a recorded roll, CMU 128_09, waits on Javier's yes to download). No gamepad button
+## for them yet.
 ## Gamepad: left stick or d-pad moves, X/Square punch, B/Circle kick, A/Cross jump, Y/Triangle or RB block (hold),
 ## LB run (hold), the left stick's click switches stance.
 
@@ -23,8 +22,8 @@ const MOVE_KEYS := {
 const KEYS := {
 	"move_left": MOVE_KEYS["move_left"], "move_right": MOVE_KEYS["move_right"],
 	"move_up": MOVE_KEYS["move_up"], "move_down": MOVE_KEYS["move_down"],
-	"punch": [KEY_A, KEY_J], "kick": [KEY_B, KEY_K], "jump": [KEY_SPACE], "block": [KEY_D, KEY_L, KEY_SHIFT],
-	"run": [KEY_W], "stance": [KEY_X], "sweep": [KEY_Z],
+	"punch": [KEY_A, KEY_J], "kick": [KEY_S, KEY_K], "jump": [KEY_SPACE], "block": [KEY_D, KEY_L, KEY_SHIFT],
+	"run": [KEY_W], "stance": [KEY_X], "sweep": [KEY_Z], "roll": [KEY_C],
 }
 const PAD_BUTTONS := {
 	"move_left": [JOY_BUTTON_DPAD_LEFT], "move_right": [JOY_BUTTON_DPAD_RIGHT],
@@ -71,6 +70,7 @@ static func read() -> Dictionary:
 		"punch": Input.is_action_just_pressed("punch"),
 		"kick": Input.is_action_just_pressed("kick"),
 		"sweep": Input.is_action_just_pressed("sweep"),
+		"roll": Input.is_action_just_pressed("roll"),
 		"block": Input.is_action_pressed("block"),
 		"run": Input.is_action_pressed("run"),
 		"stance": Input.is_action_just_pressed("stance"),
