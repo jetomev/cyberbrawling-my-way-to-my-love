@@ -57,8 +57,10 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] S: what it does is Javier's call (asked through the team); unmapped until then
 - [ ] Each day with work: write or rewrite that day's report on the shelf (the build says if it's missing)
 - [ ] From the recordings: the long fall after a flying kick from the car hangs stiff (D-30); "Wushu Basics" (Commons, CC BY-SA 3.0, studied 11-02): knees stay tucked high, arms spread wide, legs unfold only ~100 ms before touchdown
-- [ ] From the recordings: the punches and kicks (CMU 135: front, round, side kick, lunge punch) (D-30)
-- [ ] The sweep, its own move on Z (Javier 19:28): recorded motion like the rest, in the demo and the clips; CMU has no leg sweep, so its source is open (Z is freed, does nothing yet)
+- [x] From the recordings: the kicks (round kick high and straight on a tall standing leg, snap kicks chambered and snapping, side kick faster and tall); the punches checked, already matching (D-30)
+- [x] Side-by-sides for the punches and kicks too, seen along each blow (D-30)
+- [ ] The power punch leans far more than the recorded lunge punch (9-14 degrees); the sheet asks ~60% weight forward: the testers' call
+- [x] The sweep on Z, drawn from the posture sheet (no recorded sweep exists in our libraries); first pass, the testers judge it
 - [ ] The run's first two frames snap to standing (ease in from the stroll's legs)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
