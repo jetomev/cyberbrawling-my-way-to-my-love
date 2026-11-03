@@ -4,7 +4,8 @@ extends SceneTree
 ## close-ups and timed strips. Also "landing:touch:start:end" for the first landing after the flying kick: from 6 frames
 ## before the feet touch down to 10 frames after he is back up (the team's third review asked to see it frame by frame);
 ## and "<state>-cycle-frames:start:start:end" for the first stretch of the guard, the fighting shuffle, the everyday
-## walk (a whole cycle, up to 70 frames), the run and both stance switches (up to 30 frames each); and "plainjump:touch:crouch:end" for the first jump
+## walk (a whole cycle, up to 70 frames), the run and both stance switches (up to 30 frames each), the first roll
+## (all of it, up to 40); and "plainjump:touch:crouch:end" for the first jump
 ## with no blow in the air, from its crouch to just after it lands.
 ## Run headless: godot --headless --path game -s res://tools/demo_moments.gd
 
@@ -65,10 +66,10 @@ func _initialize() -> void:
 			elif prev == "land" and key != "land" and jump_clean and jump_from >= 0 and jump_touch >= 0:
 				printed_jump = true
 				print("plainjump:%d:%d:%d" % [jump_touch, jump_from, frame + 12])
-		if key in ["idle", "walk", "stroll", "run", "to_walk", "to_fight"]:
+		if key in ["idle", "walk", "stroll", "run", "to_walk", "to_fight", "roll"]:
 			if not cycles.has(key):
 				cycles[key] = [frame, frame, false]
-			elif not cycles[key][2] and frame == cycles[key][1] + 1 and frame - cycles[key][0] < (70 if key == "stroll" else 30):
+			elif not cycles[key][2] and frame == cycles[key][1] + 1 and frame - cycles[key][0] < {"stroll": 70, "roll": 40}.get(key, 30):
 				cycles[key][1] = frame
 			else:
 				cycles[key][2] = true
