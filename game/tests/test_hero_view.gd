@@ -260,6 +260,7 @@ func test_the_roll_goes_over_the_shoulder_not_the_head() -> void:
 		p["tumble_dir"] = 1.0
 		v.apply(p)
 		seen += 1
-		check(v.points()["head"].y <= -8.0, "roll@%d (turned %.0f): the head clear of the street (%.0f px)" % [tick, p["tumble"], -v.points()["head"].y])
+		# (the testers, 2026-11-02 22:33, on 98a076f: at 8 px the head still came too close: tucked clear)
+		check(v.points()["head"].y <= -20.0, "roll@%d (turned %.0f): the head clear of the street (%.0f px)" % [tick, p["tumble"], -v.points()["head"].y])
 	check(seen >= 2, "the roll passes upside down (%d frames)" % seen)
 	v.free()

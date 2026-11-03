@@ -19,6 +19,7 @@ var body_y := 0.0  # the body's height off the street (sync sets it); a roll mov
 ## hand or foot jumped up to 131 px in one frame; a steady run's own biggest swing is about 36)
 const LOCOMOTION := ["idle", "walk", "stand", "stroll", "run", "to_walk", "to_fight"]
 const BLEND_TICKS := 6
+const HEAD_CLEAR := 22.0  # rolling, the head stays this far above the street
 var last_state := ""
 var last_pose := {}
 var blend_from := {}
@@ -252,6 +253,9 @@ func apply(pose: Dictionary, grounded := true) -> void:
 				at = (n as Node2D).transform * at
 				n = n.get_parent()
 			for end in [Vector2.ZERO, Vector2(Poses.BONES[name][3], 0.0)]:  # each part's joint and its far end (the head's top)
-				lowest = maxf(lowest, (pos + turn * (flip * (at * end))).y)
+				# he rolls on his back and shoulders; the tucked head stays HEAD_CLEAR above the street (the testers,
+				# 2026-11-02 22:33: it came too close)
+				var y: float = (pos + turn * (flip * (at * end))).y + (HEAD_CLEAR if name == "head" else 0.0)
+				lowest = maxf(lowest, y)
 		body.rotation = turn.get_rotation()
 		body.position = pos - Vector2(0.0, lowest - body_y)
