@@ -66,12 +66,15 @@ func test_a_blow_from_the_walk_stance_raises_the_guard_first() -> void:
 
 func test_the_keys_are_javiers() -> void:
 	var k: Dictionary = Controls.KEYS
-	for pair in [["punch", KEY_A], ["kick", KEY_B], ["block", KEY_D], ["run", KEY_W], ["stance", KEY_X]]:
+	for pair in [["punch", KEY_A], ["kick", KEY_B], ["block", KEY_D], ["run", KEY_W], ["stance", KEY_X], ["sweep", KEY_Z]]:
 		check(pair[1] in k[pair[0]], "%s is on %s" % [pair[0], OS.get_keycode_string(pair[1])])
 	for move in ["move_left", "move_right", "move_up", "move_down"]:
 		for key in [KEY_A, KEY_S, KEY_D, KEY_W]:
 			check(not key in k[move], "%s doesn't move him" % OS.get_keycode_string(key))
 	check(not KEY_X in k["kick"], "X isn't a kick any more")
+	for action in k:
+		if action != "sweep":
+			check(not KEY_Z in k[action], "Z is only the sweep (not %s)" % action)
 
 
 func test_standing_easy_strolling_and_running_look_it() -> void:

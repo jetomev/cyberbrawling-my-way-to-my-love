@@ -64,10 +64,14 @@ counts once. The table lives in `game/scripts/sim/moves.gd`.
 Javier, 2026-11-02 18:19 (through the assistant team): "Power Button is part of the 3 punch combination, it is the
 last punch. The side kick (to the face) is part of the 3 kick combo, the low kick could be the first kick of the 3
 kick combo (down, middle, side up)." So K opens with the low kick in every chain. The hook, the front kick and the
-spinning kick keep their poses but no press reaches them for now (enemies may use them); a sweep is not built.
+spinning kick keep their poses but no press reaches them for now (enemies may use them).
+
+**The sweep is its own move, on Z** (Javier, 2026-11-02 19:28, through the assistant team, on where the sweep
+goes: "Z key"). It is built with the punches and kicks, from recorded motion like the rest (reference only),
+and goes in the demo and the clips. Until then Z does nothing; no gamepad button for it yet.
 
 The team's starter list opened K,K,K with a low kick and K,P,K with a front kick. The first press can't know which
-chain follows, so both open with the front kick.
+chain follows, so both open with the same kick: the low kick since Javier's combos (above).
 
 ### Blocks, enemy combos, counters (D-19, Javier 2026-11-01, 23:00)
 > "Please include blocks too. Enemies should have combos too, and depending on the type kick/punch and early block

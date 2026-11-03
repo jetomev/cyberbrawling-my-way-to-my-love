@@ -49,7 +49,7 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 - `game/` — the Godot 4 project. `scripts/test.sh` runs its tests headless, inside a memory and CPU fence with a
   time limit, logs to `logs/`, and fails if the number of tests ever drops below `game/tests/FLOOR`.
 - `scripts/play.sh` plays it in a window (keyboard: the arrows move, A punch, B kick, hold D to block, hold W to run,
-  X switches between the fight stance and the walk stance, Space jump; gamepad: stick or d-pad, X punch, B kick,
+  X switches between the fight stance and the walk stance, Space jump, Z the sweep (coming); gamepad: stick or d-pad, X punch, B kick,
   A jump, hold Y or RB to block, hold LB to run, click the left stick to switch stance). **F1 opens the feel lab**: change walk and run speed, jump, punch and kick timing and more
   while you play; F8 saves your changes for next time. `scripts/record.sh` records the scripted demo to a contact
   sheet and a clip.

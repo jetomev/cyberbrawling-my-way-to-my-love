@@ -5,7 +5,9 @@ extends RefCounted
 ## Keyboard (Javier, 2026-11-02 18:48: "ASDW are not key for walking. Let's do: A for punches, B for kicks, D for
 ## blocking, W for running, X to swtich stance (fight/walk)"): A punch, B kick, D block (hold), W run (hold), X switch
 ## stance; the arrows move (what moves the hero is his call still: MOVE_KEYS is the one place to change it); Space
-## jump; the old J/Z punch, K kick, L/Shift block still work.
+## jump; the old J punch, K kick, L/Shift block still work. Z is the sweep (Javier, 2026-11-02 19:28, through the
+## assistant team, on where the sweep goes: "Z key"), its own move, built with the punches and kicks from recorded
+## motion; until then Z does nothing (no gamepad button for it yet).
 ## Gamepad: left stick or d-pad moves, X/Square punch, B/Circle kick, A/Cross jump, Y/Triangle or RB block (hold),
 ## LB run (hold), the left stick's click switches stance.
 
@@ -20,8 +22,8 @@ const MOVE_KEYS := {
 const KEYS := {
 	"move_left": MOVE_KEYS["move_left"], "move_right": MOVE_KEYS["move_right"],
 	"move_up": MOVE_KEYS["move_up"], "move_down": MOVE_KEYS["move_down"],
-	"punch": [KEY_A, KEY_J, KEY_Z], "kick": [KEY_B, KEY_K], "jump": [KEY_SPACE], "block": [KEY_D, KEY_L, KEY_SHIFT],
-	"run": [KEY_W], "stance": [KEY_X],
+	"punch": [KEY_A, KEY_J], "kick": [KEY_B, KEY_K], "jump": [KEY_SPACE], "block": [KEY_D, KEY_L, KEY_SHIFT],
+	"run": [KEY_W], "stance": [KEY_X], "sweep": [KEY_Z],
 }
 const PAD_BUTTONS := {
 	"move_left": [JOY_BUTTON_DPAD_LEFT], "move_right": [JOY_BUTTON_DPAD_RIGHT],
