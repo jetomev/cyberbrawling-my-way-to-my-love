@@ -61,7 +61,9 @@ fail() { echo "FAILED $*"; exit 1; }
     echo "  hands, feet), \`strips/NN-move-hit.png\` (every frame from 100 ms before the hit to 50 ms after) and"
     echo "  \`strips/NN-landing-N.png\` (every frame of the flying kick's landing, from the air until he is back up),"
     echo "  \`strips/NN-<walk|stroll|run|to_walk|to_fight>-cycle-frames-N.png\` (every frame of the walking, running and stance switches),"
-    echo "  \`clips/NN-move.mp4\` and \`clips/NN-move-half.mp4\` (each move moving, close up, at full speed and at half speed)"
+    echo "  \`clips/NN-move.mp4\` and \`clips/NN-move-half.mp4\` (each move moving, close up, at full speed and at half speed),"
+    echo "  \`frames/NN-move.png\` (every frame of that clip, in order, 60 a second, ten to a row, each with its time from"
+    echo "  the hit, or from the first frame of a walk or run cycle; half speed is the same frames)"
     if [ "$SBS" = yes ]; then
       echo "- Side by side: \`reference/NN-<move>-side-by-side.png\` (jump, flying kick, walk, stance; power punch, cross, jab,"
       echo "  body kick, round kick, side kick: each seen along the way the blow goes), the hero (top) beside the"
@@ -87,7 +89,7 @@ fail() { echo "FAILED $*"; exit 1; }
   # Javier, 2026-11-02 20:14 (through the assistant team): "It is only one report a day, not so many." Builds live in
   # their own folder outside the repo, where the assistant team reads them; the shelf gets one plain report a day.
   BUILDS="${CYBERBRAWLING_BUILDS:-$HOME/Documents/Cyberbrawling/builds}"
-  mkdir -p "$BUILDS/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/build.md "$BUILDS/$NAME/" \
+  mkdir -p "$BUILDS/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/frames "$OUT"/build.md "$BUILDS/$NAME/" \
     && { [ "$SBS" != yes ] || cp -r "$OUT"/reference "$BUILDS/$NAME/"; } \
     || fail "could not copy to the builds folder"
   echo "in the builds folder: $BUILDS/$NAME"

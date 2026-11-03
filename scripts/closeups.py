@@ -19,6 +19,9 @@ game's pixels; the movie can be smaller) this cuts, for each move:
 - clips/NN-<move>.mp4 and clips/NN-<move>-half.mp4: the move moving, close on the whole body, from a few frames before
   it starts to a few after it ends, at full speed and at half speed (Javier, 2026-11-02 evening: "stiff as a tree";
   the stills had been hiding it).
+- frames/NN-<move>.png: every frame of that clip, in order, at the game's 60 frames a second, ten to a row, each with
+  its time (from the hit; a walk or run cycle, from its first frame), on the clip's own fixed framing (the testers read
+  pictures only; until 2026-11-02 they cut these by hand from the clips, and a cropping slip showed how that goes).
 
 Usage: scripts/closeups.py <frames dir> <marks file> <out dir> move:land:start:end [...]
 Prints an OK line with the counts.
@@ -123,6 +126,24 @@ def strip(steps, land, move, path, still, at, k, u, w, h):
 
 CLIP_PAD = 8  # frames before and after a move in its clip
 CLIP_SIZE = 480
+SHEET_SIZE = 240  # a frame sheet's tile side
+SHEET_COLUMNS = 10
+
+
+def frame_sheet(frames, start, end, zero, label, path, at, k, u, w, h):
+    """Every frame of the clip (the same span and the same fixed framing), in order, ten to a row, each with its time
+    from frame `zero`."""
+    span = [f for f in range(start - CLIP_PAD, end + CLIP_PAD + 1) if (frames / f"f{f:08d}.png").exists()]
+    side, x, y = boxes([at(f, k) for f in span], u, w, h)[0]
+    rows = -(-len(span) // SHEET_COLUMNS)
+    when = f"%{{eif\\:(n+{span[0] - zero})*1000/60\\:d}} ms"
+    vf = (f"crop={side}:{side}:{x}:{y},scale={SHEET_SIZE}:{SHEET_SIZE}:flags=lanczos,"
+          f"drawtext=text='{label} {when}':x=5:y=5:fontsize=17:fontcolor=white:box=1:boxcolor=black@0.6,"
+          f"tile={SHEET_COLUMNS}x{rows}:padding=2:color=0x16161c,format=rgb24")
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-framerate", "60", "-start_number", str(span[0]),
+                    "-i", str(frames / "f%08d.png"), "-frames:v", str(len(span)), "-vf", vf, "-frames:v", "1",
+                    str(path)], check=True)
+    return len(span)
 
 
 def clip(frames, start, end, label, path, at, k, u, w, h):
@@ -146,7 +167,7 @@ def main():
     for item in sys.argv[4:]:
         move, land, start, end = item.split(":")
         moves.append((move, int(land), int(start), int(end)))
-    for d in ["closeups", "strips", "moves", "clips"]:
+    for d in ["closeups", "strips", "moves", "clips", "frames"]:
         (out / d).mkdir(parents=True, exist_ok=True)
 
     def still(frame):
@@ -158,6 +179,7 @@ def main():
         return {p: (x * k, y * k) for p, (x, y) in marks[frame].items()}
 
     rows, strips, tiles = [], [], []
+    sheets = 0
     for n, (move, land, start, end) in enumerate(moves):
         w, h = png_size(still(land))
         k = w / GAME_W
@@ -175,6 +197,9 @@ def main():
         rows.append(row)
         label = move.replace("-cycle-frames", "").replace("-frames", "")
         clip(frames, start, end, label, out / "clips" / f"{n:02d}-{label}.mp4", at, k, u, w, h)
+        sheets += 1
+        frame_sheet(frames, start, end, start if "-cycle" in move else land, label,
+                    out / "frames" / f"{n:02d}-{label}.png", at, k, u, w, h)
         if move == "landing" or move.endswith("-frames"):
             # every frame of a window: the landing, or any "<move>-frames:<hit>:<start>:<end>" asked for by hand
             frames_all = list(range(start, end + 1))
@@ -201,7 +226,7 @@ def main():
         lines.append(line)
     stack(lines, "vstack", out / "moves.png")
     print(f"OK {len(moves)} moves: moves.png, {len(rows)} close-up rows, {len(strips)} timed strips "
-          f"(every {STEP} frames = {round(STEP * 1000 / 60)} ms, and every frame around each hit)")
+          f"(every {STEP} frames = {round(STEP * 1000 / 60)} ms, and every frame around each hit), {sheets} frame sheets")
 
 
 if __name__ == "__main__":
