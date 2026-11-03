@@ -238,3 +238,20 @@ func test_starting_to_run_flows_from_the_last_step() -> void:
 	for name in cases:
 		var c: Array = _worst_jump(cases[name])
 		check(c[0] <= steady + 6.0, "%s: the biggest jump of a hand or foot is %.0f px (frame %d; a steady run's is %.0f)" % [name, c[0], c[1], steady])
+
+
+func test_the_roll_goes_over_the_shoulder_not_the_head() -> void:
+	# a real roll tucks the chin to the chest: upside down, the upper back and shoulder take the street, not the head
+	var t := Tuning.fresh()
+	var v = HeroView.new()
+	var seen := 0
+	for tick in t["roll_ticks"]:
+		var p := Poses.angles("roll", tick, t)
+		if p["tumble"] < 150.0 or p["tumble"] > 210.0:
+			continue
+		p["tumble_dir"] = 1.0
+		v.apply(p)
+		seen += 1
+		check(v.points()["head"].y <= -8.0, "roll@%d (turned %.0f): the head clear of the street (%.0f px)" % [tick, p["tumble"], -v.points()["head"].y])
+	check(seen >= 2, "the roll passes upside down (%d frames)" % seen)
+	v.free()
