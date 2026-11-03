@@ -74,7 +74,9 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] The roll from the team's roll reference: side-on dip with the guiding arm, timed evasion (only while round), 1.3 body lengths; credits in the README
 - [x] The testers' session on f744019: power punch load 1.5x the guard (third time), no standing knee kneels (any move), the flying kick lands staggered and absorbs into the guard
 - [x] Pictures: a running flying kick shown whole; the sweep seen from above
-- [ ] Still unjudged by the testers: the sweep's circle, walking and running pace, the flying take-off, play
+- [x] The testers' session on 66ce4c6 (00:57): power punch load measured (2.3 shoulder widths already; the fault was the hips over the front foot and the back knee near the street) and made a horse stance, hips centred, knees out; the sweep's foot goes a full circle; measurements in the build notes; the roll's shoulders up close; every frame sheet checked whole
+- [ ] Spins flip around the hips, so the foot he spins on jumps across in one frame (sweep, spinning kick): flip around that foot instead (changes those moves' reach)
+- [ ] Still unjudged by the testers: the roll's shoulder support, natural pace, smoothness at either speed, whole moves, play
 - [x] The run's first steps no longer snap: starting and stopping blend from the last drawn pose (was a 131 px jump)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
