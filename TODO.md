@@ -54,13 +54,17 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] The testers' first joint session on a26ccd7: standing heel to the target (side and round kick; a drawing bug), the power punch loads low and wide, the round kick's waist rolls through, the elbow level at head height (D-27)
 - [x] W alone runs the way he faces, an arrow steers it (Javier played: "S and W don't work")
 - [x] Javier's play of a7c202b: a flying side kick (not the crane), a brisker walk (1.5 legs/s), a real run (0.6 s strides, 2.4 legs, runs tall) (D-30)
-- [ ] S: what it does is Javier's call (asked through the team); unmapped until then
+- [x] S: the kick (Javier's final keys, 21:56)
 - [ ] Each day with work: write or rewrite that day's report on the shelf (the build says if it's missing)
 - [ ] From the recordings: the long fall after a flying kick from the car hangs stiff (D-30); "Wushu Basics" (Commons, CC BY-SA 3.0, studied 11-02): knees stay tucked high, arms spread wide, legs unfold only ~100 ms before touchdown
 - [x] From the recordings: the kicks (round kick high and straight on a tall standing leg, snap kicks chambered and snapping, side kick faster and tall); the punches checked, already matching (D-30)
 - [x] Side-by-sides for the punches and kicks too, seen along each blow (D-30)
 - [ ] The power punch leans far more than the recorded lunge punch (9-14 degrees); the sheet asks ~60% weight forward: the testers' call
 - [x] The sweep on Z, drawn from the posture sheet (no recorded sweep exists in our libraries); first pass, the testers judge it
+- [x] Javier's final keys (21:56): A punch, S kick, D block, W run, X stance, Z sweep, C roll, Space jump; a guard holds them
+- [x] The evasion roll on C, the way the arrows point, from common technique; evades 70% of it
+- [ ] The roll from a recording: CMU 128_09 "Run Roll Underneath" found; download waits on Javier's own yes
+- [x] Every build: a frame sheet of every move (every frame, in order, timed), for the testers
 - [ ] The run's first two frames snap to standing (ease in from the stroll's legs)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
