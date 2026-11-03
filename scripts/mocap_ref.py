@@ -330,7 +330,7 @@ def strikes(skel, frames, limb):
                     d = (t[0] - f[0], t[2] - f[2])
                     return math.degrees(math.acos(max(-1.0, min(1.0, (d[0] * ux + d[1] * uz) / max(math.hypot(*d), 1e-6)))))
 
-                m = {"end": end, "start": a, "peak": peak, "back": b,
+                m = {"end": end, "start": a, "peak": peak, "back": b, "axis": (ux, uz),
                      "out_ms": (peak - a) / FPS * 1000.0, "held_ms": (hold[-1] - hold[0]) / FPS * 1000.0,
                      "in_ms": (b - peak) / FPS * 1000.0,
                      "reach": dist[peak] - rest, "height": at(peak, end)[1] - at(peak, "root")[1],
@@ -357,6 +357,16 @@ def strikes(skel, frames, limb):
     return sorted(out, key=lambda m: m["peak"])
 
 
+def along_view(skel, frames, axis):
+    """2D, seen from the side of a strike: x along the way the blow goes (axis, from strikes()), y up, the street at
+    y = 0, x from the first frame's hips."""
+    poses = [pose(skel, f) for f in frames]
+    ux, uz = axis
+    floor = min(min(q["ltoes"][1], q["rtoes"][1]) for q in poses)
+    x0 = poses[0]["root"][0] * ux + poses[0]["root"][2] * uz
+    return [{k: (v[0] * ux + v[2] * uz - x0, v[1] - floor) for k, v in q.items()} for q in poses]
+
+
 def cmd_strikes(take, limb):
     skel, frames = load(take)
     found = strikes(skel, frames, limb)
@@ -366,7 +376,7 @@ def cmd_strikes(take, limb):
     print(f"{take}, {limb} strikes: {len(found)} (leg {leg:.1f}; lengths below are in legs)")
     for m in found:
         extra = " ".join(f"{k} {v / leg if k in ('reach', 'height', 'chamber', 'hips_moved', 'spare_hand', 'front_step') else v:.2f}"
-                         if isinstance(v, float) else f"{k} {v}" for k, v in m.items() if k not in ("start", "peak", "back"))
+                         if isinstance(v, float) else f"{k} {v}" for k, v in m.items() if k not in ("start", "peak", "back", "axis"))
         print(f"  {m['start'] / FPS:6.2f}s  {extra}")
 
 

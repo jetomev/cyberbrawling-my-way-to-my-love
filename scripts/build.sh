@@ -63,7 +63,8 @@ fail() { echo "FAILED $*"; exit 1; }
     echo "  \`strips/NN-<walk|stroll|run|to_walk|to_fight>-cycle-frames-N.png\` (every frame of the walking, running and stance switches),"
     echo "  \`clips/NN-move.mp4\` and \`clips/NN-move-half.mp4\` (each move moving, close up, at full speed and at half speed)"
     if [ "$SBS" = yes ]; then
-      echo "- Side by side: \`reference/NN-<jump|flying_kick|walk|stance>-side-by-side.png\`, the hero (top) beside the"
+      echo "- Side by side: \`reference/NN-<move>-side-by-side.png\` (jump, flying kick, walk, stance; power punch, cross, jab,"
+      echo "  body kick, round kick, side kick: each seen along the way the blow goes), the hero (top) beside the"
       echo "  recording his movement was measured from (below, a stick figure scaled to the same leg length, on the same"
       echo "  street line), lined up on the move's events; each column gives both times. The recorded jump is a small"
       echo "  forward hop (the feet rise about a fifth of the hip height) and the game jump clears a crate, so compare"

@@ -45,6 +45,31 @@ def anchors_for(name, win):
     raise KeyError(name)
 
 
+# The punches and kicks with a recorded counterpart (CMU 135): the move's name in the demo, the take, hand or foot,
+# which strike of the take (in time order), and a label. The rest have none and get no picture.
+STRIKES = {
+    "power_punch": ("135_09", "hand", 1, "power punch / lunge punch (stepping)"),
+    "cross": ("135_09", "hand", 6, "cross / reverse punch (in place)"),
+    "punch": ("135_09", "hand", 7, "jab / punch (in place)"),
+    "body_kick": ("135_04", "foot", 0, "body kick / front snap kick"),
+    "roundhouse": ("135_07", "foot", 0, "round kick"),
+    "side_kick": ("135_11", "foot", 0, "side kick (recorded to the body, ours to the face)"),
+}
+
+
+def strike_anchors(name, win):
+    """For a strike: the recording's view along that blow, and the hero lined up on start, hit and end."""
+    take, limb, which, label = STRIKES[name]
+    skel, rec = mocap_ref.load(take)
+    found = mocap_ref.strikes(skel, rec, limb)
+    m = found[min(which, len(found) - 1)]
+    view = mocap_ref.along_view(skel, rec, m["axis"])
+    hit, start, end = win
+    ms = lambda i: i * 1000.0 / mocap_ref.FPS
+    anchors = [(start, ms(m["start"])), (hit, ms(m["peak"])), (end, ms(m["peak"]) + (end - hit) * 1000.0 / 60.0)]
+    return take, anchors, start - 2, end, view, label
+
+
 def ms_at(anchors, frame):
     """The recording's time for a hero frame: straight lines between the anchors (and beyond the ends)."""
     pts = sorted(anchors)
@@ -71,12 +96,18 @@ def main():
                "idle-cycle-frames": "stance"}.get(name)
         if key:
             wins[key] = (int(land), int(start), int(end))
+        elif name in STRIKES:
+            wins[name] = (int(land), int(start), int(end))
     (out / "reference").mkdir(parents=True, exist_ok=True)
     made = 0
-    for n, name in enumerate(["jump", "flying_kick", "walk", "stance"]):
+    for n, name in enumerate(["jump", "flying_kick", "walk", "stance"] + list(STRIKES)):
         if name not in wins:
             continue
-        take, anchors, first, last = anchors_for(name, wins[name])
+        if name in STRIKES:
+            take, anchors, first, last, view, label = strike_anchors(name, wins[name])
+        else:
+            take, anchors, first, last = anchors_for(name, wins[name])
+            view, label = None, name.replace("_", " ")
         hero_frames = sorted({round(first + i * (last - first) / (COLUMNS - 1)) for i in range(COLUMNS)})
         hero_frames = [f for f in hero_frames if f in marks]
         w, h = closeups.png_size(frames / f"f{hero_frames[0]:08d}.png")
@@ -88,8 +119,9 @@ def main():
         # the same body size: the same leg length (our rig's thigh and shin are 62 + 58 px in the 1920x1080 game; the
         # recording's are measured on its first frame). (Hip heights don't compare: the hero's guard is a crouch.)
         hero_leg = 120.0 * k * zoom
-        skel, rec = mocap_ref.load(take)
-        view = mocap_ref.side_view(skel, rec)
+        if view is None:
+            skel, rec = mocap_ref.load(take)
+            view = mocap_ref.side_view(skel, rec)
         r0 = view[0]
         rec_leg = sum(((r0[b][0] - r0[a][0]) ** 2 + (r0[b][1] - r0[a][1]) ** 2) ** 0.5
                       for a, b in [("lhipjoint", "lfemur"), ("lfemur", "ltibia")])
@@ -123,7 +155,7 @@ def main():
             d.text((c * CELL + 4, CELL + 2), f"hero {hero_ms:.0f} ms", fill=(240, 240, 240))
             d.text((c * CELL + 4, 2 * CELL + 20), f"{take} {ms:.0f} ms", fill=(200, 200, 210))
             d.line([((c + 1) * CELL - 1, 0), ((c + 1) * CELL - 1, 2 * CELL + 36)], fill=(20, 20, 26), width=2)
-        d.text((4, 4), name.replace("_", " "), fill=(255, 220, 120))
+        d.text((4, 4), label, fill=(255, 220, 120))
         path = out / "reference" / f"{n:02d}-{name}-side-by-side.png"
         sheet.save(path)
         made += 1
