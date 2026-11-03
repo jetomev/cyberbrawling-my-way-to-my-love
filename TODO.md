@@ -78,7 +78,8 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] The roll's close-up showed him hovering over the top: now placed by his drawn outline, hand then back then hips (46be0b9)
 - [ ] The roll: four frames between the hand and the back where the tucked head holds him a few px up
 - [x] The testers' session on 46be0b9 (01:56): power punch load, roll's shoulder support and head clearance, the full sweep drawing all PASS; nothing sent back
-- [ ] Spins flip around the hips, so the foot he spins on jumps across in one frame (sweep 96 px, spinning kick 122 px). Tried 11-03 night (e5739f7): foot drawn in under the hips + the sweeping leg shortened past the camera; jumps gone but it read as kneeling and bunched, reverted (0922751). Ask the team: accept the one-frame jump, or another way (narrowing the drawing edge-on is against their third review)
+- [x] The testers' session at 02:29: the sweep turns on a planted forefoot, hips carried over it (bfe0316); sweep reach 195 (was 120), Javier to judge in play; the spin frame by frame with its circle (sweep-spin)
+- [ ] Still jumping in the frame a spin flips: the sweep's long leg, head and hands (kept long and broad as asked); the spinning kick's pivot foot (not on the hero's keys)
 - [ ] Still unjudged by the testers: the roll's shoulder support, natural pace, smoothness at either speed, whole moves, play
 - [x] The run's first steps no longer snap: starting and stopping blend from the last drawn pose (was a 131 px jump)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
