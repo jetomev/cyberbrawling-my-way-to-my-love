@@ -51,6 +51,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] From the recordings: the jump (a crouch first, extension, legs swinging forward), the flying kick (the front kick's shape), the everyday walk (real cadence), a live guard (solo) (D-30)
 - [x] Side by side in every build: the hero beside the recording, same moments, same leg length, for the jump, flying kick, walk and stance (the testers' ask) (D-30)
 - [x] Builds off the shelf: ~/Documents/Cyberbrawling/builds/; one plain report a day on the shelf, cyberbrawling-report-YYYY-MM-DD.md (Javier 20:14)
+- [x] The testers' first joint session on a26ccd7: standing heel to the target (side and round kick; a drawing bug), the power punch loads low and wide, the round kick's waist rolls through, the elbow level at head height (D-27)
 - [ ] Each day with work: write or rewrite that day's report on the shelf (the build says if it's missing)
 - [ ] From the recordings: the long fall after a flying kick from the car hangs stiff (D-30); "Wushu Basics" (Commons, CC BY-SA 3.0, studied 11-02): knees stay tucked high, arms spread wide, legs unfold only ~100 ms before touchdown
 - [ ] From the recordings: the punches and kicks (CMU 135: front, round, side kick, lunge punch) (D-30)
