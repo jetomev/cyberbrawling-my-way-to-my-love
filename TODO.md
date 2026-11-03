@@ -46,6 +46,10 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] Javier: do the hook, the front kick and the spinning kick come back somewhere (or stay for enemies)? (D-28)
 - [x] Walking and running, the walk stance and X to switch; A punch, B kick, D block, W run (solo) (D-29)
 - [ ] Javier: what moves the hero (the G13 stick or the arrow keys)? Did he mean keyboard keys or the gamepad's A/B/X? (D-29)
+- [x] Moving clips of every move in every build, full speed and half (solo) (D-22)
+- [ ] Javier: yes to basing the movement on recorded human motion (CMU), reference only, takes downloaded outside the repo? (team's proposal, 2026-11-02 evening)
+- [ ] If yes: asf/amc reader + reference strips beside the hero; then flying kick, jump, walk, stance; then the punches and kicks
+- [ ] The run's first two frames snap to standing (ease in from the stroll's legs)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
 - [ ] That enemy's own combos; the right hit or a perfect block interrupts them and can disarm him; a block takes less pain (solo)
