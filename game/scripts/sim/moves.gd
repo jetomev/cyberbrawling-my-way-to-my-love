@@ -52,7 +52,9 @@ const TABLE := {
 	# Z: the back sweep (Javier, 2026-11-02 19:28: "Z key"), its own move outside the combos; the posture sheet's: sink
 	# low, spin on the front foot with the back leg straight along the street, hands near the floor; the biggest
 	# wind-up of the low moves. No recorded sweep exists in the libraries we use: drawn from the sheet.
-	"sweep": {"startup": 12, "active": 6, "recovery": 20, "reach": 120.0, "low": 0.0, "high": 50.0, "damage": 2,
+	# (reach: he turns round his planted front foot, which carries the long sweeping leg well out in front: 195, was
+	# 120 before the turn kept that foot planted; the testers, 02:29 on 0922751)
+	"sweep": {"startup": 12, "active": 6, "recovery": 20, "reach": 195.0, "low": 0.0, "high": 50.0, "damage": 2,
 		"effect": "knockdown", "limb": "leg_b_lower"},  # a back sweep catches the ankles with the heel and calf
 	# in the air: one per jump
 	"air_kick": {"low": 30.0, "high": 170.0, "damage": 3, "effect": "", "limb": "foot_f"},

@@ -310,6 +310,45 @@ func test_the_roll_goes_hand_then_back() -> void:
 	v.free()
 
 
+func test_the_sweep_turns_on_a_planted_forefoot() -> void:
+	# the testers (02:29 on 0922751): the sweep's supporting foot jumped across in a single frame as he spun. "Keep the
+	# same forefoot planted, turn the heel around it, carry the knee and hips smoothly over it, and keep the other leg
+	# long and the body broad (no kneeling, no narrowing)". Measured on the drawing, frame to frame
+	var t := Tuning.fresh()
+	var v = HeroView.new()
+	var prev = null
+	var ball0 = null
+	var foot := 0.0
+	var hips := 0.0
+	var drift := 0.0
+	var over := false
+	for tick in Moves.length("sweep", t):
+		var p := Poses.angles("sweep", tick, t)
+		v.apply(p)
+		var q: Dictionary = v.points()
+		var ball: Vector2 = _at(v, "toe_f")
+		if ball0 == null:
+			ball0 = ball
+		drift = maxf(drift, ball.distance_to(ball0))
+		if prev != null:
+			foot = maxf(foot, (q["foot_f"] as Vector2).distance_to(prev["foot_f"]))
+			hips = maxf(hips, (q["hip"] as Vector2).distance_to(prev["hip"]))
+		if p["spin"] > 150.0 and p["spin"] < 210.0 and q["hip"].x > ball0.x:
+			over = true  # half way round, the hips have come over to the far side of the foot
+		var b := Poses.bake(p, true)
+		check((Poses._end("leg_f_lower", b)[0] as Vector2).y - (Poses._end("leg_f_upper", b)[0] as Vector2).y >= 20.0,
+			"sweep@%d: the supporting knee well off the street, no kneeling" % tick)
+		check(absf(v.body.scale.x) == 1.0, "sweep@%d: the body keeps its full width" % tick)
+		prev = q
+	check(drift <= 10.0, "the forefoot stays planted (%.0f px from where it was at most)" % drift)
+	check(foot <= 10.0, "the supporting foot never jumps (%.0f px in a frame at most)" % foot)
+	check(hips <= 40.0, "the hips are carried smoothly over it (%.0f px in a frame at most)" % hips)
+	check(over, "half way round, the hips have come over to the far side of the foot")
+	var leg := Poses.bake(Poses.angles("sweep", Moves.data("sweep", t)["startup"], t), true)
+	check(absf(leg["leg_b_lower"]) <= 15.0, "the other leg long at the hit (knee %.0f)" % absf(leg["leg_b_lower"]))
+	v.free()
+
+
 func test_the_flying_kick_lands_into_a_balanced_guard() -> void:
 	# the testers' joint session on f744019 (23:29): the flying kick's landing is abrupt; it should absorb into a
 	# balanced guard. Through the touchdown no hand or foot jumps further in a frame than in a steady run, and the hips

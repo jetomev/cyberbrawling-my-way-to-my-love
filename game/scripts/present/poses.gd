@@ -763,6 +763,16 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 	# legs bend to keep them (before, the settle wiped it out and the idle's breathing never showed)
 	out["hip_y"] += pose.get("hip_y", 0.0)
 	out["hip_x"] = pose.get("hip_x", 0.0)
+	# turning on one planted foot (a spin, that foot pivoting on its ball): the hips are carried over it as he comes
+	# edge-on, and on over to its other side as he comes round (the testers, 02:29: "carry the knee and hips smoothly
+	# over it"); with the view turning the drawing about that foot's ball (hero_view.gd), nothing jumps at the flip
+	var spin_now: float = pose.get("spin", 0.0)
+	if cos(deg_to_rad(spin_now)) < 0.9999:  # turned at all (a half turn too)
+		for side in anchors:
+			if absf(pose.get("pivot_" + side, 0.0)) > 0.5:
+				out["hip_x"] = lerpf(out["hip_x"], (anchors[side] as Vector2).x, 1.0 - absf(cos(deg_to_rad(spin_now))))
+				out["spin_on"] = 1.0 if side == "f" else 2.0
+				break
 	out["hip"] = pelvis
 	for side in ["f", "b"]:
 		if not anchors.has(side):
@@ -1005,7 +1015,20 @@ static func tip(bone: String, pose: Dictionary, grounded := true) -> Vector2:
 
 
 ## … and where it is drawn: past a quarter turn of a spin the view flips the drawing to face the other way (his back
-## to us), so a foot reaching back in the pose reaches forward on the screen (the back sweep's hit).
+## to us), so a foot reaching back in the pose reaches forward on the screen (the back sweep's hit); and turning on a
+## planted foot, the drawing turns about that foot.
 static func drawn_tip(bone: String, pose: Dictionary, grounded := true) -> Vector2:
-	var at := tip(bone, pose, grounded)
-	return Vector2(-at.x, at.y) if cos(deg_to_rad(pose.get("spin", 0.0))) < 0.0 else at
+	var baked := bake(pose, grounded)
+	var at: Vector2 = _end(bone, baked)[0]
+	var flip := -1.0 if cos(deg_to_rad(pose.get("spin", 0.0))) < 0.0 else 1.0
+	var shift := 0.0
+	var on: float = baked.get("spin_on", 0.0)
+	if on > 0.0:
+		# turning on a planted foot the view turns the drawing about that foot's ball (hero_view.gd), so the ball stays
+		# where it was planted; the foot draws shorter as it swings round (never below a third)
+		var side := "f" if on < 1.5 else "b"
+		var ankle: float = (_end("leg_%s_lower" % side, baked)[0] as Vector2).x
+		var swing := cos(deg_to_rad(baked["pivot_" + side]))
+		var x := maxf(absf(swing), 0.35) * (signf(swing) if swing != 0.0 else 1.0)
+		shift = (ankle + FOOT_LENGTH) - flip * (ankle + FOOT_LENGTH * x)
+	return Vector2(flip * at.x + shift, at.y)

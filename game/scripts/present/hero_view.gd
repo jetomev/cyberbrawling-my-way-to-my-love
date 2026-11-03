@@ -278,6 +278,19 @@ func apply(pose: Dictionary, grounded := true) -> void:
 	# its lowest point on the street: he rolls along it, never through it
 	body.rotation = 0.0
 	body.position = Vector2(0.0, body_y)
+	# turning on one planted foot, the drawing turns about that foot's ball: it stays where it was planted while the heel
+	# swings round it and the body comes round over it (the testers, 02:29 on 0922751: the sweep's supporting foot
+	# jumped across in a single frame as he spun; "keep the same forefoot planted, turn the heel around it")
+	var on: float = baked.get("spin_on", 0.0)
+	if on > 0.0:
+		var side := "f" if on < 1.5 else "b"
+		var planted: float = ((Poses._end("leg_%s_lower" % side, baked)[0] as Vector2).x + Poses.FOOT_LENGTH) * facing
+		var t := Transform2D.IDENTITY
+		var n: Node = bones["toe_" + side]
+		while n != self:
+			t = (n as Node2D).transform * t
+			n = n.get_parent()
+		body.position.x += planted - t.origin.x
 	var tumble: float = pose.get("tumble", 0.0)
 	if tumble != 0.0:
 		var turn := Transform2D(deg_to_rad(tumble * pose.get("tumble_dir", 1.0)), Vector2.ZERO)
