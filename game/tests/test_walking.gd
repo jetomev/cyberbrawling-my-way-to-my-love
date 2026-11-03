@@ -145,3 +145,17 @@ func test_w_alone_runs_the_way_he_faces() -> void:
 	check(g.x < x2 - 40.0, "and W alone keeps running the new way (%.0f px)" % (g.x - x2))
 	run_for(g, 10, {})
 	check(g.state != "run", "letting go of W stops the run")
+
+
+func test_z_sweeps() -> void:
+	# Javier, 2026-11-02 19:28 (through the assistant team): "Z key" for the sweep, its own move, outside the combos
+	var f = Fighter.new()
+	f.step({"punch": true})
+	run_for(f, 12)
+	eq(f.chain, "P", "a jab starts a chain")
+	f.step({"sweep": true})
+	run_for(f, 2)
+	eq(f.state, "sweep", "Z: the sweep")
+	eq(f.chain, "", "it is no link of a chain (a P after it opens a new one)")
+	run_for(f, 90)
+	eq(f.state, "idle", "and he rises back to his guard")

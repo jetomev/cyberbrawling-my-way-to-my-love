@@ -7,7 +7,8 @@ extends RefCounted
 ## stance; the arrows move (what moves the hero is his call still: MOVE_KEYS is the one place to change it); Space
 ## jump; the old J punch, K kick, L/Shift block still work. Z is the sweep (Javier, 2026-11-02 19:28, through the
 ## assistant team, on where the sweep goes: "Z key"), its own move, built with the punches and kicks from recorded
-## motion; until then Z does nothing (no gamepad button for it yet).
+## motion (no recorded sweep exists in the libraries we use, so it is drawn from the posture sheet). No gamepad button
+## for it yet.
 ## Gamepad: left stick or d-pad moves, X/Square punch, B/Circle kick, A/Cross jump, Y/Triangle or RB block (hold),
 ## LB run (hold), the left stick's click switches stance.
 
@@ -69,6 +70,7 @@ static func read() -> Dictionary:
 		"jump": Input.is_action_just_pressed("jump"),
 		"punch": Input.is_action_just_pressed("punch"),
 		"kick": Input.is_action_just_pressed("kick"),
+		"sweep": Input.is_action_just_pressed("sweep"),
 		"block": Input.is_action_pressed("block"),
 		"run": Input.is_action_pressed("run"),
 		"stance": Input.is_action_just_pressed("stance"),

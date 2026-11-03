@@ -32,7 +32,8 @@ extends RefCounted
 ##   as a hook's forearm does coming across the body; "upper_f" / "upper_b" do the same for the upper arm (an elbow
 ##   out to the side, as on a hook's load). Hits are measured on the same shortened arm.
 ## - "tall" (0 to 1) on one leg, how far he rises onto it: 0 keeps the stance's bend (a front kick's standing knee,
-##   about 40 degrees as recorded), 1 stands on a straight leg (a round kick or side kick, recorded within 8 degrees)
+##   about 40 degrees as recorded), 1 stands on a straight leg (a round kick or side kick, recorded within 8 degrees);
+##   below 0 he sinks onto it (-1: a deep squat on the one leg, as a sweep spins low)
 
 const Moves := preload("res://scripts/sim/moves.gd")
 
@@ -85,6 +86,7 @@ const LEAD_CAP := {"power_punch": 1}
 ## hit the hips are over while the chest is still coming round; it keeps turning through the next 50 ms.
 const SHOULDER_LAG := {"roundhouse": 3}
 const FOOT_LENGTH := 24.0  # ankle to the ball of the foot
+const SQUAT_LEG := 72.0  # hip to ankle in a deep squat on one leg ("tall" -1)
 const TOE_LENGTH := 11.0  # an ankle higher than foot + toes lets the foot point
 
 ## The guard, the fighter's home stance (Javier, 2026-11-02 morning: "posture and movements ... still terrible"; the
@@ -124,7 +126,7 @@ const WALK_STEP := 8
 const FORE_SHORT := 0.4  # a forearm pointing straight at the camera draws at 40% of its length
 ## How far into its start-up a strike is cocked (the wind-up moment). Most cock late (0.7), so the blow reads as a
 ## snap; the swinging ones cock early, so the swing round to the target lasts long enough to be seen.
-const WINDUP_AT := {"hook": 0.4, "roundhouse": 0.45, "spin_kick": 0.6, "knee": 0.34, "side_kick": 0.55, "power_punch": 0.4, "body_kick": 0.5, "front_kick": 0.5}
+const WINDUP_AT := {"hook": 0.4, "roundhouse": 0.45, "spin_kick": 0.6, "knee": 0.34, "side_kick": 0.55, "power_punch": 0.4, "body_kick": 0.5, "front_kick": 0.5, "sweep": 0.35}
 ## Where a covering fist sits: from the middle of the head, forward and a little down, in front of the jaw. Far enough
 ## forward to show past the face: the far hand is drawn behind the head, and at (16, 16) it hid there, so all one saw
 ## of it was its forearm across the chest (the assistant team's third review, 2026-11-02).
@@ -210,6 +212,21 @@ const SHOTS := {
 		["tuck", {"turn": 0.0, "torso": 0.0, "head": 6.0, "hip_turn": 0.0, "hip_y": 0.0,
 			"leg_f_upper": -60.0, "leg_f_lower": 90.0, "leg_b_upper": -40.0, "leg_b_lower": 95.0,
 			"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -70.0, "arm_f_lower": -15.0, "arm_b_upper": 75.0, "arm_b_lower": -15.0}]],
+	# Z: the back sweep (the posture sheet; no recorded sweep exists in the libraries we use): sink low into the bow
+	# stance with the hands going down; spin on the front foot, the back leg straight and low along the street, the
+	# hands on or near the floor; the leg comes round to the ankles in front; finish the circle; rise to guard
+	"sweep": [["start", {}],
+		["windup", {"tall": -1.0, "hip_y": 38.0, "step_f": 8.0, "torso": 26.0, "head": -8.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+			"arm_f_upper": 30.0, "arm_f_lower": -20.0, "arm_b_upper": 20.0, "arm_b_lower": -20.0}],
+		["sweep", {"spin": 180.0, "pivot_f": 180.0, "tall": -1.0, "hip_y": 38.0, "torso": 34.0, "head": -10.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": -68.0, "leg_b_lower": 0.0}],
+		["active", {"spin": 330.0, "pivot_f": 330.0, "tall": -1.0, "hip_y": 38.0, "torso": 28.0, "head": -6.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": -68.0, "leg_b_lower": 0.0}],
+		["active_end", {"spin": 360.0, "pivot_f": 360.0, "tall": -1.0, "hip_y": 38.0, "torso": 24.0, "head": -4.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": -66.0, "leg_b_lower": 0.0}],
+		["follow", {"spin": 360.0, "pivot_f": 360.0, "tall": -0.5, "torso": 14.0, "cover_f": 0.0, "cover_b": 0.0,
+			"arm_f_upper": 30.0, "arm_f_lower": -40.0, "arm_b_upper": 20.0, "arm_b_lower": -40.0, "leg_b_upper": -60.0, "leg_b_lower": 90.0}],
+		["end", {"spin": 360.0, "pivot_f": 360.0}]],
 	"climb": [["start", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hand_f": -30.0, "hand_b": -30.0, "arm_f_upper": -165.0, "arm_f_lower": 0.0, "arm_b_upper": -150.0, "arm_b_lower": 0.0,
 			"leg_f_upper": -20.0, "leg_f_lower": 30.0, "hip_y": 0.0}],
 		["climb_mid", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hand_f": 60.0, "hand_b": 60.0, "arm_f_upper": -60.0, "arm_f_lower": -30.0, "arm_b_upper": -40.0, "arm_b_lower": -30.0,
@@ -711,7 +728,9 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 		var to: Vector2 = (anchors[side] as Vector2) - (_end("hip", out)[0] as Vector2)
 		var full: float = BONES["leg_%s_upper" % side][3] + BONES["leg_%s_lower" % side][3] - 1.0
 		# (a two-bone leg bends fast as it shortens: tall goes to the solver's own limit, half a px short, never locked)
-		var want: float = lerpf(minf((STANCE[side] as Vector2).length(), full), full + 0.5, clampf(pose.get("tall", 0.0), 0.0, 1.0))
+		var stance_len: float = minf((STANCE[side] as Vector2).length(), full)
+		var tall: float = clampf(pose.get("tall", 0.0), -1.0, 1.0)
+		var want: float = lerpf(stance_len, full + 0.5, tall) if tall >= 0.0 else lerpf(stance_len, SQUAT_LEG, -tall)
 		if absf(to.x) < want:
 			out["hip_y"] += to.y - sqrt(want * want - to.x * to.x)
 	# a rising heel ("rise_"). On one leg (no flat foot left) the whole body goes up onto its toes. Otherwise the leg

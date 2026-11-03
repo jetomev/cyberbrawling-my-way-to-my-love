@@ -49,6 +49,11 @@ const TABLE := {
 		"effect": "", "limb": "arm_f_upper"},
 	"roundhouse": {"startup": 9, "active": 5, "recovery": 16, "reach": 128.0, "low": 100.0, "high": 230.0, "damage": 3,
 		"effect": "stagger", "limb": "foot_b"},
+	# Z: the back sweep (Javier, 2026-11-02 19:28: "Z key"), its own move outside the combos; the posture sheet's: sink
+	# low, spin on the front foot with the back leg straight along the street, hands near the floor; the biggest
+	# wind-up of the low moves. No recorded sweep exists in the libraries we use: drawn from the sheet.
+	"sweep": {"startup": 12, "active": 6, "recovery": 20, "reach": 120.0, "low": 0.0, "high": 50.0, "damage": 2,
+		"effect": "knockdown", "limb": "foot_b"},
 	# in the air: one per jump
 	"air_kick": {"low": 30.0, "high": 170.0, "damage": 3, "effect": "", "limb": "foot_f"},
 	"hammer_fist": {"startup": 4, "active": 8, "recovery": 0, "reach": 70.0, "low": 20.0, "high": 160.0, "damage": 2,

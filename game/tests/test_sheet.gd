@@ -315,3 +315,27 @@ func test_the_elbow_strikes_level() -> void:
 		check(absf(sin(deg_to_rad(fore))) <= sin(deg_to_rad(15.0)), "elbow@%d (+%d ms): the forearm level (%.0f degrees from level)" % [tick, (tick - hit) * 50 / 3, rad_to_deg(asin(absf(sin(deg_to_rad(fore)))))])
 		var point: Vector2 = Poses._end("arm_f_upper", b)[0]
 		check(absf(point.y - mid("head", b).y) <= 24.0, "elbow@%d: at head height (%.0f px from the head's middle)" % [tick, point.y - mid("head", b).y])
+
+
+func test_the_sweep() -> void:
+	# the posture sheet's back sweep (no recorded sweep exists in the libraries we use; drawn from the sheet): sink low
+	# into the bow stance; spin on the front foot, the back leg straight and low, hands on or near the floor; finish the
+	# circle; rise to guard. The biggest wind-up of the low moves.
+	var t := Tuning.fresh()
+	var d := Moves.data("sweep", t)
+	check(d["startup"] >= 2 * Moves.data("kick", t)["startup"], "the biggest wind-up of the low moves (%d frames)" % d["startup"])
+	check(d["high"] <= 60.0, "it goes for the ankles (up to %.0f px)" % d["high"])
+	var g := Poses.bake(Poses.angles("idle", 0, t), true)
+	var w := at("sweep", "windup", t)
+	var sink: float = (Poses._end("hip", w)[0] as Vector2).y - (Poses._end("hip", g)[0] as Vector2).y
+	check(sink >= 30.0, "it sinks low first (%.0f px)" % sink)
+	var hit := at("sweep", "active", t)
+	check(absf(hit["leg_b_lower"]) <= 15.0, "the back leg straight (%.0f)" % absf(hit["leg_b_lower"]))
+	var street: float = (Poses._end("leg_f_lower", hit)[0] as Vector2).y
+	var foot: Vector2 = Poses._end("leg_b_lower", hit)[0]
+	check(street - foot.y <= 40.0, "and low, along the street (%.0f px up)" % (street - foot.y))
+	for side in ["f", "b"]:
+		var hand: Vector2 = Poses._end("hand_" + side, Poses.bake(Poses.angles("sweep", Poses.moment("sweep", "sweep", t), t), true))[0]
+		check(street - hand.y <= 60.0, "mid-spin the %s hand on or near the floor (%.0f px up)" % [side, street - hand.y])
+	check(fmod(Poses.angles("sweep", Moves.length("sweep", t) - 1, t)["spin"], 360.0) == 0.0, "it finishes the circle")
+	check(Poses.angles("sweep", Poses.moment("sweep", "sweep", t), t)["spin"] >= 120.0, "spinning round on the front foot")

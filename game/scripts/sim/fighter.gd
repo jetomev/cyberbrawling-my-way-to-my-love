@@ -3,8 +3,8 @@ extends RefCounted
 ## the same result, so tests and the bot can drive it bare. The hero uses it now; enemies will too.
 ##
 ## Space: x runs along the street, z is the depth of the street (0 = far edge), y is height above the street.
-## An input is a Dictionary: {mx: -1..1, mz: -1..1, jump, punch, kick, block, run, stance: bool}; jump, punch, kick
-## and stance are "pressed this tick"; block and run are "held" (D-19: hold to guard; its first moments are a perfect
+## An input is a Dictionary: {mx: -1..1, mz: -1..1, jump, punch, kick, sweep, block, run, stance: bool}; jump, punch,
+## kick, sweep and stance are "pressed this tick"; block and run are "held" (D-19: hold to guard; its first moments are a perfect
 ## block). Two stances (Javier, 2026-11-02 18:48: "W for running, X to swtich stance (fight/walk)"): the fight stance
 ## (guard "idle", the shuffle "walk") and the walk stance (relaxed "stand", the everyday walk "stroll"); X switches
 ## between them through a short "to_walk" / "to_fight"; running ("run" held: alone, the way he faces; with an arrow, that way) works from either and
@@ -57,7 +57,7 @@ func step(inp: Dictionary) -> void:
 	var mx: float = clampf(inp.get("mx", 0.0), -1.0, 1.0)
 	var mz: float = clampf(inp.get("mz", 0.0), -1.0, 1.0)
 	clock += 1
-	for b in ["jump", "punch", "kick"]:
+	for b in ["jump", "punch", "kick", "sweep"]:
 		if inp.get(b, false):
 			# during a blow, a press is kept until the blow ends, so a rhythm of presses chains a combo; a press
 			# hard on the heels of the last one (a bounced or doubled tap) is dropped, so it can't fire twice
@@ -241,6 +241,13 @@ func _start(action: String, mx: float) -> void:
 			vy = Tuning.takeoff_speed(tune)
 			vx = mx * tune["jump_speed"]
 			_enter("jump")
+	elif action == "sweep":
+		# its own move on Z (Javier, 2026-11-02 19:28), outside the combos: it ends any chain
+		vx = 0.0
+		attack_serial += 1
+		chain = ""
+		chain_left = 0
+		_enter("sweep")
 	else:
 		vx = 0.0
 		attack_serial += 1
