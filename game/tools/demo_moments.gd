@@ -5,7 +5,8 @@ extends SceneTree
 ## before the feet touch down to 10 frames after he is back up (the team's third review asked to see it frame by frame);
 ## and "<state>-cycle-frames:start:start:end" for the first stretch of the guard, the fighting shuffle, the everyday
 ## walk (a whole cycle, up to 70 frames), the run and both stance switches (up to 30 frames each), the first roll
-## (all of it, up to 40), the run (a full second, up to 60); and "plainjump:touch:crouch:end" for the first jump
+## (all of it, up to 40), the run (a full second, up to 60); and "runkick-frames:hit:start:end", the running flying kick from its first
+## running step to half a second after it lands; and "plainjump:touch:crouch:end" for the first jump
 ## with no blow in the air, from its crouch to just after it lands.
 ## Run headless: godot --headless --path game -s res://tools/demo_moments.gd
 
@@ -36,6 +37,9 @@ func _initialize() -> void:
 	var jump_clean := false
 	var jump_touch := -1
 	var printed_jump := false
+	var run_from := -1  # the running flying kick: from its first running step to well after it lands
+	var squat_after_run := false
+	var rk := [-1, -1, -1]  # hit, start, touch
 	for i in Demo.length():
 		f.step(Demo.input_at(i))
 		w.step_hits([f])
@@ -66,6 +70,16 @@ func _initialize() -> void:
 			elif prev == "land" and key != "land" and jump_clean and jump_from >= 0 and jump_touch >= 0:
 				printed_jump = true
 				print("plainjump:%d:%d:%d" % [jump_touch, jump_from, frame + 12])
+		if key == "run" and prev != "run":
+			run_from = frame
+		if key == "jump_squat" and prev != "jump_squat":
+			squat_after_run = prev == "run"
+		if key == "air_kick" and squat_after_run and rk[1] < 0:
+			rk[1] = run_from
+		if key == "air_kick" and rk[1] >= 0 and rk[0] < 0 and f.attack_phase() == "active":
+			rk[0] = frame
+		if rk[0] >= 0 and rk[2] < 0 and key == "land":
+			rk[2] = frame
 		if key in ["idle", "walk", "stroll", "run", "to_walk", "to_fight", "roll"]:
 			if not cycles.has(key):
 				cycles[key] = [frame, frame, false]
@@ -82,6 +96,8 @@ func _initialize() -> void:
 			land[key] = frame
 	for key in cycles:
 		print("%s-cycle-frames:%d:%d:%d" % [key, cycles[key][0], cycles[key][0], cycles[key][1]])
+	if rk[2] >= 0:
+		print("runkick-frames:%d:%d:%d" % [rk[0], rk[1], mini(rk[2] + 30, Demo.length() - 1 + MOVIE_OFFSET)])
 	if land.has(prev) and not seen.has(prev):
 		print("%s:%d:%d:%d" % [prev, land[prev], start[prev], last[prev]])
 	quit(0)

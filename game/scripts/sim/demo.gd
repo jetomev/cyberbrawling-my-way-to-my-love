@@ -32,6 +32,11 @@ const STEPS := [
 	# judge steady running), and X back to the fight stance
 	[1, {"stance": true}], [16, {}], [66, {"mx": 1.0}], [60, {"mx": 1.0, "run": true}], [12, {}],
 	[1, {"stance": true}], [20, {}],
+	# then a running flying kick, the whole of it for the testers (2026-11-02 23:29: "the flying kick as one sequence from
+	# its running approach through take-off, flight and landing"): back up the street to make room, then run, jump and
+	# kick, and land in the open street
+	[40, {"mx": -1.0, "run": true}], [10, {}], [24, {"mx": 1.0, "run": true}],
+	[1, {"mx": 1.0, "run": true, "jump": true}], [9, {"mx": 1.0}], [1, {"kick": true}], [60, {}],
 ]
 
 
