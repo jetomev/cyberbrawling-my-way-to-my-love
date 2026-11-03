@@ -22,7 +22,8 @@ const BLEND_TICKS := 6
 const AIR := ["air_kick", "hammer_fist"]  # (a plain jump already lands smoothly: test_landing)
 const LANDING := ["land", "idle", "stand", "walk", "stroll", "run"]
 const LAND_BLEND_TICKS := 18
-const HEAD_CLEAR := 22.0  # rolling, the head stays this far above the street
+const HEAD_CLEAR := 12.0  # rolling, the head's drawn outline stays this far above the street
+const OUTLINE_SINK := 5.0  # a standing foot's outline sits this far into the street line; a roll's does the same
 var last_state := ""
 var last_pose := {}
 var blend_from := {}
@@ -285,22 +286,29 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		var pos := Vector2(0.0, body_y) + hip - turn * hip
 		var lowest := -INF
 		contact = ""
+		# by the drawn outline itself, every corner of every part (the testers, 00:57 on 66ce4c6: the close-up showed him
+		# hovering; placed by the bones' centre lines, his back's thickness was only guessed). He rolls on his back and
+		# shoulders; the tucked head's outline stays HEAD_CLEAR above the street (the testers, 2026-11-02 22:33)
 		for name in bones:
-			var at := Transform2D.IDENTITY
-			var n: Node = bones[name]
-			while n != body:
-				at = (n as Node2D).transform * at
-				n = n.get_parent()
-			for end in [Vector2.ZERO, Vector2(Poses.BONES[name][3], 0.0)]:  # each part's joint and its far end (the head's top)
-				# he rolls on his back and shoulders; the tucked head stays HEAD_CLEAR above the street (the testers,
-				# 2026-11-02 22:33: it came too close)
-				var y: float = (pos + turn * (flip * (at * end))).y + (HEAD_CLEAR if name == "head" else 0.0)
-				# … and his back and shoulders touch with their surface, half their drawn thickness out from the bone (the
-				# testers, 00:57 on 66ce4c6: the close-up showed him hovering on the head's clearance, nothing touching)
-				if name in ["belly", "chest", "shoulder_f", "shoulder_b"]:
-					y += Poses.BONES[name][4] * 0.5 * absf(cos((turn * flip * at).get_rotation()))
-				if y > lowest:
-					lowest = y
-					contact = name
+			var part: Node = bones[name].get_node_or_null("Part")
+			if part == null:
+				continue
+			var shapes: Array = part.find_children("*", "Polygon2D", true, false)
+			if part is Polygon2D:
+				shapes.append(part)
+			for poly in shapes:
+				if not (poly as CanvasItem).visible:
+					continue
+				var at := Transform2D.IDENTITY
+				var n: Node = poly
+				while n != body:
+					at = (n as Node2D).transform * at
+					n = n.get_parent()
+				var whole := turn * flip * at
+				for q in (poly as Polygon2D).polygon:
+					var y: float = (pos + whole * q).y + (HEAD_CLEAR if name == "head" else -OUTLINE_SINK)
+					if y > lowest:
+						lowest = y
+						contact = name
 		body.rotation = turn.get_rotation()
 		body.position = pos - Vector2(0.0, lowest - body_y)

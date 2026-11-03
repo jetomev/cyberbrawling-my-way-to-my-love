@@ -253,7 +253,7 @@ const SHOTS := {
 	# in a tight ball (knees to the chest), never over the head; come up facing the same way, back to guard
 	"roll": [["start", {}],
 		["roll_down", {"turn": 50.0, "hip_y": 40.0, "torso": 75.0, "head": 120.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -85.0, "arm_f_lower": -20.0, "arm_b_upper": -75.0, "arm_b_lower": -20.0, "tumble": 0.0}],
-		["roll_over", {"turn": 40.0, "torso": 115.0, "head": 120.0, "cover_f": 0.0, "cover_b": 0.0, "leg_f_upper": -125.0, "leg_f_lower": 140.0, "leg_b_upper": -115.0, "leg_b_lower": 140.0, "arm_f_upper": -110.0, "arm_f_lower": -20.0, "arm_b_upper": -40.0, "arm_b_lower": -110.0, "tumble": 180.0}],
+		["roll_over", {"turn": 40.0, "torso": 115.0, "head": 120.0, "cover_f": 0.0, "cover_b": 0.0, "leg_f_upper": -105.0, "leg_f_lower": 140.0, "leg_b_upper": -105.0, "leg_b_lower": 140.0, "arm_f_upper": -110.0, "arm_f_lower": -20.0, "arm_b_upper": -40.0, "arm_b_lower": -110.0, "tumble": 180.0}],
 		["roll_up", {"turn": 15.0, "hip_y": 28.0, "torso": 26.0, "head": 10.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -30.0, "arm_f_lower": -70.0, "arm_b_upper": -20.0, "arm_b_lower": -70.0, "tumble": 340.0}],
 		["end", {"tumble": 360.0}]],
 	"climb": [["start", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hand_f": -30.0, "hand_b": -30.0, "arm_f_upper": -165.0, "arm_f_lower": 0.0, "arm_b_upper": -150.0, "arm_b_lower": 0.0,

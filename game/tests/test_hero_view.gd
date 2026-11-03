@@ -281,9 +281,10 @@ func test_the_roll_dips_side_on_with_the_arm_guiding() -> void:
 
 func test_the_roll_goes_hand_then_back() -> void:
 	# the testers asked to see the shoulder carrying the roll (00:57 on 66ce4c6); the close-up showed him hovering on
-	# the head's clearance with nothing touching. Now the guiding hand touches first, then the back carries him, upper
-	# back to lower back (whose surface is the hips' too), and he comes up onto his feet. Between the hand and the back
-	# he still sits on the head's clearance for a few frames (68 ms): a known gap, held from growing
+	# the head's clearance with nothing touching. Now he is placed by his drawn outline: the guiding hand touches first,
+	# then the back carries him, upper back to lower back (whose surface is the hips' too), and he comes up onto his
+	# feet. Between the hand and the back the tucked head's clearance holds him a few px up for four frames (67 ms):
+	# held there
 	var t := Tuning.fresh()
 	var v = HeroView.new()
 	var order: Array[String] = []
@@ -304,7 +305,7 @@ func test_the_roll_goes_hand_then_back() -> void:
 		if part != "" and (order.is_empty() or order[-1] != part):
 			order.append(part)
 	eq(order, ["hand", "back"] as Array[String], "the guiding hand, then the back")
-	check(back >= 6, "the back carries him for a tenth of a second or more (%d frames)" % back)
+	check(back >= 8, "the back carries him for more than a tenth of a second (%d frames)" % back)
 	check(on_head <= 4, "on the head's clearance for at most 4 frames (%d)" % on_head)
 	v.free()
 
