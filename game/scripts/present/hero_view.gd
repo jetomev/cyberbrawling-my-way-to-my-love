@@ -195,12 +195,14 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		part.z_index = -1 if far else 0
 		var drawn_far: bool = spec[5] == 1
 		part.modulate = Color.WHITE if far == drawn_far else (Color(1.55, 1.55, 1.5) if drawn_far else Color(0.65, 0.65, 0.66))
-	# a standing foot swung round on its ball: shorter as it turns, pointing back past 90
+	# a standing foot swung round on its ball: shorter as it turns, pointing back past 90. The toe moves with the foot
+	# (the testers, 2026-11-02 20:30: the toe was left out in front, so the heel never showed to the target)
 	for side in ["f", "b"]:
 		var swing := cos(deg_to_rad(baked["pivot_" + side]))
 		var x := maxf(absf(swing), 0.35) * (signf(swing) if swing != 0.0 else 1.0)
 		for n in ["foot_" + side, "toe_" + side]:
 			bones[n].get_node("Part").scale.x = x
+		bones["toe_" + side].position = Poses.BONES["toe_" + side][1] * Vector2(x, 1.0)
 	# an upper arm or forearm pointing at the camera draws shorter: its drawn part shrinks along the bone and the next
 	# joint moves in to match (moving the joint, not scaling the bone, so nothing below it is skewed)
 	for side in ["f", "b"]:

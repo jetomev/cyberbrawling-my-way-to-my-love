@@ -147,3 +147,30 @@ func test_the_close_up_points_follow_the_drawing() -> void:
 	v.body.scale.x = -1.0
 	check(v.points()["hand_b"].x < 0.0, "facing left, the points turn with the body")
 	v.free()
+
+
+func _at(v, name: String) -> Vector2:
+	var t := Transform2D.IDENTITY
+	var n: Node = v.bones[name]
+	while n != v:
+		t = (n as Node2D).transform * t
+		n = n.get_parent()
+	return t.origin
+
+
+func test_a_pivoted_standing_foot_shows_its_heel_to_the_target() -> void:
+	# the testers' joint session (2026-11-02 20:30) on build a26ccd7: on the side kick and the round kick the standing
+	# foot's toe still pointed at the target at the hit and just after. The pose had the pivot; the drawing flipped the
+	# foot back but left the toe out in front. At the hit and 50 ms after, the toe is behind the ankle (heel forward).
+	var t := Tuning.fresh()
+	var v = HeroView.new()
+	v.apply(Poses.angles("idle", 0, t))
+	check(_at(v, "toe_f").x > _at(v, "foot_f").x + 10.0, "in the guard the front toe points ahead (the check can see a toe ahead)")
+	for pair in [["side_kick", "b"], ["roundhouse", "f"]]:
+		var hit: int = Moves.data(pair[0], t)["startup"]
+		for tick in [hit, hit + 3]:
+			v.apply(Poses.angles(pair[0], tick, t))
+			var ankle := _at(v, "foot_" + pair[1])
+			var toe := _at(v, "toe_" + pair[1])
+			check(toe.x < ankle.x - 10.0, "%s@%d: the standing toe points away from the target, heel to it (toe %.0f, ankle %.0f)" % [pair[0], tick, toe.x, ankle.x])
+	v.free()

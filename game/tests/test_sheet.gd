@@ -270,3 +270,48 @@ func test_the_side_kick() -> void:
 	check(not Poses._planted(hit, "f"), "the whole body on the one standing foot")
 	check(absf(Poses.angles("side_kick", Poses.moment("side_kick", "follow", t), t)["leg_f_lower"]) >= 90.0, "then the leg folds back")
 	check(Moves.length("side_kick", t) >= 36, "slower: about two-thirds of a second (%d frames)" % Moves.length("side_kick", t))
+
+
+static func _wide(b: Dictionary) -> float:
+	return (Poses._end("leg_f_lower", b)[0] as Vector2).x - (Poses._end("leg_b_lower", b)[0] as Vector2).x
+
+
+func test_the_power_punch_loads_low_and_wide() -> void:
+	# the testers' joint session (2026-11-02 20:30) on a26ccd7: no clear wide loading crouch 100 to 50 ms before
+	# contact; it went from the guard straight into the drive. Every frame of that window: hips well down, feet wide.
+	var t := Tuning.fresh()
+	var g := Poses.bake(Poses.angles("idle", 0, t), true)
+	var hip0: float = (Poses._end("hip", g)[0] as Vector2).y
+	var hit: int = Moves.data("power_punch", t)["startup"]
+	for tick in range(hit - 6, hit - 2):
+		var b := Poses.bake(Poses.angles("power_punch", tick, t), true)
+		var drop: float = (Poses._end("hip", b)[0] as Vector2).y - hip0
+		check(drop >= 12.0, "power_punch@%d (%d ms before): the hips sink into the load (%.0f px)" % [tick, (hit - tick) * 50 / 3, drop])
+		check(_wide(b) >= _wide(g) + 10.0, "power_punch@%d: the stance widens (%.0f px, guard %.0f)" % [tick, _wide(b), _wide(g)])
+
+
+func test_the_round_kicks_waist_rolls_through() -> void:
+	# the testers' joint session: the waist should roll through. The waist (hips) is over at the hit while the chest
+	# is still coming round, and the chest keeps turning through 50 ms after: nothing frozen at the hit.
+	var t := Tuning.fresh()
+	var hit: int = Moves.data("roundhouse", t)["startup"]
+	var p := Poses.angles("roundhouse", hit, t)
+	check(absf(cos(deg_to_rad(p["turn_upper"]))) < absf(cos(deg_to_rad(p["turn"]))) - 0.2, "at the hit the chest is narrower than the waist (turned less: %.0f against %.0f)" % [p["turn_upper"], p["turn"]])
+	var prev: float = p["turn_upper"]
+	for tick in range(hit + 1, hit + 4):
+		var q := Poses.angles("roundhouse", tick, t)
+		check(q["turn_upper"] > prev + 5.0, "roundhouse@%d: the chest still turning through (%.0f after %.0f)" % [tick, q["turn_upper"], prev])
+		prev = q["turn_upper"]
+
+
+func test_the_elbow_strikes_level() -> void:
+	# the testers' joint session: from contact to 100 ms after, the forearm sloped across the face; the posture sheet
+	# has it level at head height
+	var t := Tuning.fresh()
+	var hit: int = Moves.data("elbow", t)["startup"]
+	for tick in range(hit, hit + 7):
+		var b := Poses.bake(Poses.angles("elbow", tick, t), true)
+		var fore: float = rad_to_deg(Poses._end("arm_f_lower", b)[1])
+		check(absf(sin(deg_to_rad(fore))) <= sin(deg_to_rad(15.0)), "elbow@%d (+%d ms): the forearm level (%.0f degrees from level)" % [tick, (tick - hit) * 50 / 3, rad_to_deg(asin(absf(sin(deg_to_rad(fore)))))])
+		var point: Vector2 = Poses._end("arm_f_upper", b)[0]
+		check(absf(point.y - mid("head", b).y) <= 24.0, "elbow@%d: at head height (%.0f px from the head's middle)" % [tick, point.y - mid("head", b).y])
