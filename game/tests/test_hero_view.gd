@@ -197,3 +197,44 @@ func test_the_roll_turns_a_full_circle_along_the_street() -> void:
 	v.apply(Poses.angles("idle", 0, t))
 	check(absf(v.body.rotation_degrees) < 0.5, "upright again after it")
 	v.free()
+
+
+func _worst_jump(script: Array, skip := 0) -> Array:
+	# drive a fighter through [ticks, input] steps; the biggest frame-to-frame jump of a drawn foot or hand, with the
+	# body's own travel taken out, and the frame it happened on
+	var f = Fighter.new()
+	var v = HeroView.new()
+	var last := {}
+	var worst := 0.0
+	var at := -1
+	var n := 0
+	for step in script:
+		for i in step[0]:
+			f.step(step[1])
+			v.sync(f, 0.0)
+			var pts: Dictionary = v.points()
+			if not last.is_empty() and n >= skip:
+				for k in ["foot_f", "foot_b", "hand_f", "hand_b"]:
+					var d: float = ((pts[k] - pts["hip"]) - (last[k] - last["hip"])).length()
+					if d > worst:
+						worst = d
+						at = n
+			last = pts
+			n += 1
+	v.free()
+	return [worst, at]
+
+
+func test_starting_to_run_flows_from_the_last_step() -> void:
+	# the run's first steps snapped: they eased in from standing, not from wherever the legs were. Into a run from the
+	# everyday walk and from the fighting shuffle, and out of it again, no foot or hand jumps further in one frame than
+	# it does in a steady run (plus a little)
+	var steady: float = _worst_jump([[60, {"mx": 1.0, "run": true}]], 20)[0]
+	var cases := {
+		"from the walk": [[1, {"stance": true}], [20, {}], [37, {"mx": 1.0}], [20, {"mx": 1.0, "run": true}]],
+		"from the shuffle": [[29, {"mx": 1.0}], [20, {"mx": 1.0, "run": true}]],
+		"stopping": [[30, {"mx": 1.0, "run": true}], [20, {}]],
+	}
+	for name in cases:
+		var c: Array = _worst_jump(cases[name])
+		check(c[0] <= steady + 6.0, "%s: the biggest jump of a hand or foot is %.0f px (frame %d; a steady run's is %.0f)" % [name, c[0], c[1], steady])

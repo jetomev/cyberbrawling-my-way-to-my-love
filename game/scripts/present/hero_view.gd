@@ -14,6 +14,15 @@ var shadow: Polygon2D
 var tint := Color.WHITE
 var facing := 1.0
 var body_y := 0.0  # the body's height off the street (sync sets it); a roll moves the body about it
+## Switching between standing, walking, shuffling and running, the drawing blends from the last pose it drew into the
+## new one over BLEND_TICKS frames (the run's first steps eased in from standing, wherever the legs really were, so a
+## hand or foot jumped up to 131 px in one frame; a steady run's own biggest swing is about 36)
+const LOCOMOTION := ["idle", "walk", "stand", "stroll", "run", "to_walk", "to_fight"]
+const BLEND_TICKS := 6
+var last_state := ""
+var last_pose := {}
+var blend_from := {}
+var blend_left := 0
 var since_touch := 999  # frames since the feet last touched down (for the landing's sink and rise)
 var was_grounded := true
 
@@ -142,6 +151,14 @@ func sync(f, ground_y: float) -> void:
 	var floor_y: float = f.world.floor_at(f.x, f.z, f.y) if f.world != null else 0.0
 	var pose := Poses.landing(Poses.angles(f.state, f.t, f.tune), since_touch if grounded else -1, f.y - floor_y, f.vy < 0.0)
 	pose["tumble_dir"] = float(f.roll_dir)
+	if f.state != last_state and last_state in LOCOMOTION and f.state in LOCOMOTION and not last_pose.is_empty():
+		blend_from = last_pose
+		blend_left = BLEND_TICKS
+	last_state = f.state
+	if blend_left > 0:
+		pose = Poses.blend(blend_from, pose, 1.0 - float(blend_left) / (BLEND_TICKS + 1))
+		blend_left -= 1
+	last_pose = pose
 	apply(pose, grounded)
 	body.modulate = Color(1.6, 1.6, 1.9) if f.blocking() == "perfect" else Color.WHITE  # a perfect block flashes
 
