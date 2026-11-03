@@ -52,7 +52,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Side by side in every build: the hero beside the recording, same moments, same leg length, for the jump, flying kick, walk and stance (the testers' ask) (D-30)
 - [x] Builds off the shelf: ~/Documents/Cyberbrawling/builds/; one plain report a day on the shelf, cyberbrawling-report-YYYY-MM-DD.md (Javier 20:14)
 - [ ] Each day with work: write or rewrite that day's report on the shelf (the build says if it's missing)
-- [ ] From the recordings: the long fall after a flying kick from the car hangs stiff (D-30)
+- [ ] From the recordings: the long fall after a flying kick from the car hangs stiff (D-30); "Wushu Basics" (Commons, CC BY-SA 3.0, studied 11-02): knees stay tucked high, arms spread wide, legs unfold only ~100 ms before touchdown
 - [ ] From the recordings: the punches and kicks (CMU 135: front, round, side kick, lunge punch) (D-30)
 - [ ] The sweep, its own move on Z (Javier 19:28): recorded motion like the rest, in the demo and the clips; CMU has no leg sweep, so its source is open (Z is freed, does nothing yet)
 - [ ] The run's first two frames snap to standing (ease in from the stroll's legs)

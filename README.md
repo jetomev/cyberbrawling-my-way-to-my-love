@@ -79,4 +79,8 @@ The hero's movement is drawn by hand from measurements of recorded human motion:
 obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217." Thank you, Carnegie
 Mellon University. The recordings themselves are not part of this game or this repository.
 
+The jumping kicks' timing and shapes were also studied (only watched and measured, nothing copied) from "Wushu
+Basics" by Atoomenergie, on Wikimedia Commons under CC BY-SA 3.0
+(https://commons.wikimedia.org/wiki/File:Wushu_Basics.ogv). Thank you.
+
 Made by Javier and Claude, a human and an AI building together.
