@@ -7,7 +7,7 @@ extends RefCounted
 ## and stance are "pressed this tick"; block and run are "held" (D-19: hold to guard; its first moments are a perfect
 ## block). Two stances (Javier, 2026-11-02 18:48: "W for running, X to swtich stance (fight/walk)"): the fight stance
 ## (guard "idle", the shuffle "walk") and the walk stance (relaxed "stand", the everyday walk "stroll"); X switches
-## between them through a short "to_walk" / "to_fight"; running ("run", run held while moving) works from either and
+## between them through a short "to_walk" / "to_fight"; running ("run" held: alone, the way he faces; with an arrow, that way) works from either and
 ## comes back to it. A blow, a block or a press from the walk stance raises the guard first ("to_fight"): the press
 ## waits through it. A world (street_world.gd) is optional: without one the street is empty.
 ## Attacks and combos live in moves.gd: the state is the move's name ("punch", "cross", "spin_kick", …).
@@ -148,6 +148,8 @@ func _rest() -> String:
 
 
 func _ground(mx: float, mz: float, run := false) -> void:
+	if run and mx == 0.0:
+		mx = float(facing)  # W alone runs the way he faces; an arrow steers it (Javier, 2026-11-02: "W don't work")
 	var moving: bool = mx != 0.0 or (mz != 0.0 and not tune["flat_line"])
 	var speed := "walk_speed"
 	if run and moving:

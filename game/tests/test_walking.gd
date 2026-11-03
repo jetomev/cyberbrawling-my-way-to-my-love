@@ -127,3 +127,21 @@ func test_planted_feet_hold_their_place_walking_and_running() -> void:
 					last[side] = world
 				else:
 					last.erase(side)
+
+
+func test_w_alone_runs_the_way_he_faces() -> void:
+	# Javier played build e7e1320 (2026-11-02, through the assistant team): "S and W don't work". W only ran while an
+	# arrow was held too. Now W alone runs the way he faces, and an arrow still steers it.
+	var g = Fighter.new()
+	var x0: float = g.x
+	run_for(g, 10, {"run": true})
+	eq(g.state, "run", "W alone: he runs")
+	check(g.x > x0 + 40.0, "forward, the way he faces (%.0f px)" % (g.x - x0))
+	var x1: float = g.x
+	run_for(g, 10, {"run": true, "mx": -1.0})
+	check(g.x < x1 - 40.0 and g.facing == -1, "an arrow still steers the run (%.0f px)" % (g.x - x1))
+	var x2: float = g.x
+	run_for(g, 10, {"run": true})
+	check(g.x < x2 - 40.0, "and W alone keeps running the new way (%.0f px)" % (g.x - x2))
+	run_for(g, 10, {})
+	check(g.state != "run", "letting go of W stops the run")
