@@ -36,17 +36,29 @@ func test_a_jump_extends_then_reaches_for_the_landing() -> void:
 	check(fall["leg_f_lower"] <= 30.0, "reaching for the street, the knees only a little bent")
 
 
-func test_the_flying_kick_has_the_front_kicks_shape() -> void:
-	# CMU 135_04: the knee comes up with the spine leaning forward over it; the leg snaps out as the body comes
-	# upright; a moment held; then it folds back to the chamber
+func test_the_flying_kick_is_a_flying_side_kick() -> void:
+	# Javier played build a7c202b (2026-11-02 21:21, through the assistant team): "the flying kick, has to look like a
+	# flying kick, not like a karate kid movie kick, is weird". The classic flying side kick: at the hit the body is
+	# side-on and leans back away from the target, the kicking leg is driven out straight at hip height or above,
+	# the other leg tucked tight under him. Then ("Wushu Basics", Commons, CC BY-SA 3.0) the knees stay tucked and
+	# the arms go out wide for balance until the legs reach for the street.
 	var t := Tuning.fresh()
 	var d := Moves.data("air_kick", t)
-	check(d["startup"] >= 6, "time to show the chamber before the kick (%d frames)" % d["startup"])
-	check(Poses.angles("air_kick", 0, t)["torso"] >= 15.0, "in the chamber the body leans over the knee")
 	var hit := Poses.angles("air_kick", d["startup"], t)
-	check(hit["torso"] <= 8.0, "at the kick the body is upright")
-	check(Poses.angles("air_kick", 0, t)["leg_f_lower"] >= 100.0, "the chamber: the knee up, the foot folded under it")
-	check(Poses.angles("air_kick", Poses.moment("air_kick", "recoil", t), t)["leg_f_lower"] >= 120.0, "after it, the leg folds back")
+	var b := Poses.bake(hit, false)
+	check(hit["turn"] >= 70.0, "side-on at the hit (turned %.0f)" % hit["turn"])
+	check(hit["torso"] <= -25.0, "leaning back, away from the target (%.0f)" % hit["torso"])
+	check(absf(b["leg_f_lower"]) <= 10.0, "the kicking leg straight (%.0f)" % absf(b["leg_f_lower"]))
+	var foot: Vector2 = Poses._end("leg_f_lower", b)[0]
+	var hip: Vector2 = Poses._end("hip", b)[0]
+	check(foot.y <= hip.y + 10.0 and foot.x > hip.x + 90.0, "driven out at hip height or above (%.0f px out, %.0f px under the hips)" % [foot.x - hip.x, foot.y - hip.y])
+	check(absf(b["leg_b_lower"]) >= 100.0, "the other leg tucked tight under him (knee %.0f)" % absf(b["leg_b_lower"]))
+	check(not (Poses.angles("air_kick", 0, t)["leg_f_upper"] < -60.0 and absf(Poses.angles("air_kick", 0, t)["leg_f_lower"]) > 100.0 and Poses.angles("air_kick", 0, t)["torso"] > 10.0), "no crane: the knee isn't held up front with the body leaning over it")
+	for tick in range(Poses.moment("air_kick", "recoil", t), Poses.moment("air_kick", "recoil", t) + 30):
+		var f := Poses.bake(Poses.angles("air_kick", tick, t), false)
+		var wide: float = absf((Poses._end("hand_f", f)[0] as Vector2).x - (Poses._end("hand_b", f)[0] as Vector2).x)
+		check(wide >= 60.0, "air_kick@%d: the arms out wide for balance (%.0f px apart)" % [tick, wide])
+		check(absf(f["leg_f_lower"]) >= 60.0 and absf(f["leg_b_lower"]) >= 60.0, "air_kick@%d: the knees stay tucked (%.0f, %.0f)" % [tick, absf(f["leg_f_lower"]), absf(f["leg_b_lower"])])
 
 
 func test_an_everyday_walk_has_a_real_cadence() -> void:
@@ -68,6 +80,36 @@ func test_an_everyday_walk_has_a_real_cadence() -> void:
 				swing_knee = maxf(swing_knee, absf(b["leg_%s_lower" % side]))
 	check(arm_hi - arm_lo <= 24.0, "a small arm swing (%.0f degrees end to end)" % (arm_hi - arm_lo))
 	check(swing_knee >= 45.0, "the swinging knee bends, the heel up behind (%.0f)" % swing_knee)
+
+
+
+func test_the_walk_and_the_run_keep_a_real_pace() -> void:
+	# Javier (2026-11-02 21:21): "Walk is too slow, and running looks weird." Measured on CMU 16 (leg = thigh + shin):
+	# an easy walk 1.33 legs a second, a stride of 1.47 legs; a jog about 4 legs a second, a stride every ~0.6 s
+	# (about 2.4 legs), elbows bent 100-120, each arm swinging about 35 degrees, the swinging knee folding to ~90.
+	var t := Tuning.fresh()
+	var leg: float = Poses.BONES["leg_f_upper"][3] + Poses.BONES["leg_f_lower"][3]
+	var walk: float = t["stroll_speed"] * 60.0 / leg
+	check(walk >= 1.4 and walk <= 1.9, "a brisk walk: %.2f legs a second (an easy one is 1.33)" % walk)
+	var wstride: float = t["stroll_speed"] * Poses.STROLL_CYCLE / leg
+	check(wstride >= 1.3 and wstride <= 1.7, "a real stride walking: %.2f legs" % wstride)
+	var cyc: float = Poses.RUN_CYCLE / 60.0
+	check(cyc >= 0.5 and cyc <= 0.7, "running, a stride every %.2f s (not quick little steps)" % cyc)
+	var rstride: float = t["run_speed"] * Poses.RUN_CYCLE / leg
+	check(rstride >= 2.0, "long strides running: %.2f legs" % rstride)
+	var lo := INF
+	var hi := -INF
+	var sink := 0.0
+	var stand_hip: float = (Poses._end("hip", Poses.bake(Poses.angles("stand", 0, t), true))[0] as Vector2).y
+	for tt in range(Poses.WALK_EASE_IN, Poses.WALK_EASE_IN + Poses.RUN_CYCLE):
+		var p := Poses.angles("run", tt, t)
+		var b := Poses.bake(p, true)
+		lo = minf(lo, p["arm_f_upper"])
+		hi = maxf(hi, p["arm_f_upper"])
+		check(absf(b["arm_f_lower"]) >= 80.0, "run@%d: the elbow bent (%.0f)" % [tt, absf(b["arm_f_lower"])])
+		sink = maxf(sink, (Poses._end("hip", b)[0] as Vector2).y - stand_hip)
+	check(hi - lo >= 50.0, "the arms drive: %.0f degrees end to end" % (hi - lo))
+	check(sink <= 16.0, "running tall, not a crouched shuffle (the hips sink %.0f px at most)" % sink)
 
 
 func test_the_guard_is_alive() -> void:

@@ -107,11 +107,11 @@ const STANCE := {"f": Vector2(44.0, 100.0), "b": Vector2(-63.0, 100.0)}
 ## (Javier, 2026-11-02 18:48: the hero walks and runs, X switches between the fight stance and the walk stance).
 const RELAXED := {"f": Vector2(12.0, 118.0), "b": Vector2(-10.0, 118.0)}
 ## The everyday walk: each foot planted most of the cycle, the legs passing each other, the arms swinging against them.
-const STROLL_CYCLE := 64  # (CMU 16_15: about 1.1 s a cycle at an easy walk)
-const STROLL_STEP := 26
+const STROLL_CYCLE := 58  # a brisk walk, about 1 s a cycle and a stride of 1.45 legs (CMU 16_15: 1.11 s, 1.47 legs)
+const STROLL_STEP := 24
 ## The run: knees high, arms bent and pumping, a lean forward, and a moment with both feet off the street.
-const RUN_CYCLE := 24
-const RUN_STEP := 15
+const RUN_CYCLE := 36  # a stride every 0.6 s, 2.4 legs long (CMU 16_08 at a jog); at 0.4 s it was quick little steps
+const RUN_STEP := 27  # each foot on the street a quarter of the cycle: the rest is swing, with a flight between steps
 ## The walk is a fighter's shuffle, not a stroll (Javier, 2026-11-02 morning): the front foot steps out, the back foot
 ## follows, the feet never pass each other and the stance never breaks. A cycle of WALK_CYCLE ticks; each foot spends
 ## WALK_STEP of them in the air and the rest planted, sliding back under the body at exactly the walking speed, so a
@@ -187,19 +187,27 @@ const SHOTS := {
 		["active_end", {"step_f": 8.0, "cover_f": 0.0, "hip_x": 3.0, "hip_turn": 3.0, "arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 6.0, "head": 4.0}],
 		["follow", {"step_f": 4.0, "hip_x": 1.0, "torso": 9.0}],
 		["end", {}]],
-	# the flying kick (CMU 135_04, a front kick, for its shape): the knee up in a chamber with the body leaning over it,
-	# the leg snaps out as the body comes upright, it holds a moment, folds back to the chamber, then the legs come
-	# under him for the landing; hands up the whole way
-	"air_kick": [["start", {"leg_f_upper": -72.0, "leg_f_lower": 118.0, "leg_b_upper": 14.0, "leg_b_lower": 70.0,
-			"torso": 20.0, "head": -10.0, "hip_y": 0.0}],
-		["startup", {"leg_f_upper": -100.0, "leg_f_lower": 4.0, "leg_b_upper": 26.0, "leg_b_lower": 80.0, "torso": 6.0,
-			"head": 4.0, "hip_y": 0.0}],
-		["active_end", {"leg_f_upper": -100.0, "leg_f_lower": 4.0, "leg_b_upper": 26.0, "leg_b_lower": 80.0, "torso": 6.0,
-			"head": 4.0, "hip_y": 0.0}],
-		["recoil", {"leg_f_upper": -92.0, "leg_f_lower": 135.0, "leg_b_upper": 10.0, "leg_b_lower": 70.0, "torso": 4.0,
-			"head": 4.0, "hip_y": 0.0}],
-		["tuck", {"leg_f_upper": -40.0, "leg_f_lower": 60.0, "leg_b_upper": -20.0, "leg_b_lower": 40.0, "torso": 6.0,
-			"head": 14.0, "hip_y": 0.0}]],
+	# the flying kick: a flying side kick (Javier, 2026-11-02 21:21: "has to look like a flying kick, not like a karate
+	# kid movie kick"). Off the jump the knee chambers to the side with both legs drawn up; at the hit the body is
+	# side-on and leans back away from the target, the kicking leg driven out straight, heel first, the other leg tucked
+	# tight under him, the lead fist guarding and the rear arm back. Then ("Wushu Basics", Commons, CC BY-SA 3.0) the
+	# legs fold up, the body comes round, the arms go out wide for balance, and the knees stay tucked until the legs
+	# reach for the street (landing())
+	"air_kick": [["start", {"turn": 55.0, "torso": -14.0, "head": 10.0, "hip_turn": -10.0, "hip_y": 0.0,
+			"leg_f_upper": -78.0, "leg_f_lower": 125.0, "leg_b_upper": -45.0, "leg_b_lower": 130.0,
+			"cover_b": 0.0, "arm_b_upper": 40.0, "arm_b_lower": -70.0}],
+		["startup", {"turn": 85.0, "torso": -52.0, "head": 34.0, "hip_turn": -26.0, "hip_y": 0.0,
+			"leg_f_upper": -104.0, "leg_f_lower": 0.0, "leg_b_upper": -88.0, "leg_b_lower": 150.0,
+			"cover_b": 0.0, "arm_b_upper": 70.0, "arm_b_lower": -30.0}],
+		["active_end", {"turn": 85.0, "torso": -52.0, "head": 34.0, "hip_turn": -26.0, "hip_y": 0.0,
+			"leg_f_upper": -104.0, "leg_f_lower": 0.0, "leg_b_upper": -88.0, "leg_b_lower": 150.0,
+			"cover_b": 0.0, "arm_b_upper": 70.0, "arm_b_lower": -30.0}],
+		["recoil", {"turn": 35.0, "torso": -10.0, "head": 10.0, "hip_turn": -8.0, "hip_y": 0.0,
+			"leg_f_upper": -75.0, "leg_f_lower": 115.0, "leg_b_upper": -45.0, "leg_b_lower": 120.0,
+			"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -75.0, "arm_f_lower": -15.0, "arm_b_upper": 80.0, "arm_b_lower": -15.0}],
+		["tuck", {"turn": 0.0, "torso": 0.0, "head": 6.0, "hip_turn": 0.0, "hip_y": 0.0,
+			"leg_f_upper": -60.0, "leg_f_lower": 90.0, "leg_b_upper": -40.0, "leg_b_lower": 95.0,
+			"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -70.0, "arm_f_lower": -15.0, "arm_b_upper": 75.0, "arm_b_lower": -15.0}]],
 	"climb": [["start", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hand_f": -30.0, "hand_b": -30.0, "arm_f_upper": -165.0, "arm_f_lower": 0.0, "arm_b_upper": -150.0, "arm_b_lower": 0.0,
 			"leg_f_upper": -20.0, "leg_f_lower": 30.0, "hip_y": 0.0}],
 		["climb_mid", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hand_f": 60.0, "hand_b": 60.0, "arm_f_upper": -60.0, "arm_f_lower": -30.0, "arm_b_upper": -40.0, "arm_b_lower": -30.0,
@@ -436,7 +444,7 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 					if t < WALK_EASE_IN:
 						pose = blend(full(STAND), pose, float(t) / WALK_EASE_IN)
 				elif state == "run":
-					pose.merge(_gait(t, RUN_CYCLE, RUN_STEP, tune["run_speed"], 64.0, 38.0, true), true)
+					pose.merge(_gait(t, RUN_CYCLE, RUN_STEP, tune["run_speed"], 64.0, 40.0, true, 0.7), true)
 					if t < WALK_EASE_IN:
 						pose = blend(full(STAND), pose, float(t) / WALK_EASE_IN)
 				return pose
@@ -518,27 +526,31 @@ static func sink_at(since: int) -> float:
 ## stays planted, sliding back under the body at `speed`, so it holds its place on the street; the back foot is half a
 ## cycle behind, so the legs pass each other. The arms swing against the legs by `arm` degrees. In a run the swing
 ## is longer than the stance, so twice a cycle both feet are off the street, and the body lifts in that moment.
-static func _gait(t: int, cycle: int, step: int, speed: float, lift: float, arm: float, heel_first := false) -> Dictionary:
+## "ahead" is how far in front a foot lands, as a share of the half-stride: 1 lands as far ahead as it leaves behind;
+## a runner lands closer under the body (the hips don't drop to reach far ahead) and pushes off further behind.
+static func _gait(t: int, cycle: int, step: int, speed: float, lift: float, arm: float, heel_first := false, ahead := 1.0) -> Dictionary:
 	var reach := speed * float(cycle - step) * 0.5
+	var front := reach * ahead
+	var back := 2.0 * reach - front
 	var out := {"feet": 1.0, "relaxed": 1.0, "rise_b": 0.0}
 	var airborne := 0
 	for side in ["f", "b"]:
 		var u := (t + (0 if side == "f" else cycle / 2)) % cycle
 		if u < step:
 			var k := float(u) / step
-			out["step_" + side] = lerpf(-reach, reach, k * k * (3.0 - 2.0 * k))
+			out["step_" + side] = lerpf(-back, front, k * k * (3.0 - 2.0 * k))
 			# the heel lifts behind straight after the push-off (the lift comes early in the swing), as recorded walks
 			# and runs show; the toe then skims forward
 			out["lift_" + side] = lift * sin(PI * (pow(k, 0.55) if heel_first else k))
 			airborne += 1
 		else:
-			out["step_" + side] = reach - speed * float(u - step)
+			out["step_" + side] = front - speed * float(u - step)
 			out["lift_" + side] = 0.0
 	# the arms against the legs: the near arm forward as the far leg comes forward, and the other way about
 	out["arm_f_upper"] = -8.0 - arm * out["step_b"] / maxf(reach, 1.0)
 	out["arm_b_upper"] = 8.0 - arm * out["step_f"] / maxf(reach, 1.0)
 	if airborne == 2:
-		out["hip_y"] = -14.0 if lift > 40.0 else -4.0  # both feet off the street: the body is in the air
+		out["hip_y"] = -20.0 if lift > 40.0 else -4.0  # both feet off the street: the body is in the air, at its highest
 	return out
 
 

@@ -5,7 +5,7 @@ extends RefCounted
 const DEFAULTS := {
 	# moving along the street (x) and up/down its depth (z, the shallow street of D-13)
 	"walk_speed": 4.0,
-	"stroll_speed": 2.2,  # the walk stance's everyday walk: a real easy walk at this scale (CMU 16_15: 1.15 s a cycle)
+	"stroll_speed": 3.0,  # the walk stance's walk: brisk, 1.5 legs a second (CMU 16_15's easy walk is 1.33; Javier, 2026-11-02 21:21: "Walk is too slow")
 	"run_speed": 8.0,  # W held (Javier, 2026-11-02 18:48: "the character needs to be able to walk, and run")
 	"stance_switch_ticks": 8,  # X: from the fight stance to the walk stance and back
 	"depth_speed": 2.4,
