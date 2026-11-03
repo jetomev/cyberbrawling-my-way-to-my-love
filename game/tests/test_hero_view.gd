@@ -279,6 +279,36 @@ func test_the_roll_dips_side_on_with_the_arm_guiding() -> void:
 	check(absf(b["arm_f_lower"]) >= 15.0 and absf(b["arm_f_lower"]) <= 70.0, "curved like a hoop, not locked or folded (elbow %.0f)" % absf(b["arm_f_lower"]))
 
 
+func test_the_roll_goes_hand_then_back() -> void:
+	# the testers asked to see the shoulder carrying the roll (00:57 on 66ce4c6); the close-up showed him hovering on
+	# the head's clearance with nothing touching. Now the guiding hand touches first, then the back carries him, upper
+	# back to lower back (whose surface is the hips' too), and he comes up onto his feet. Between the hand and the back
+	# he still sits on the head's clearance for a few frames (68 ms): a known gap, held from growing
+	var t := Tuning.fresh()
+	var v = HeroView.new()
+	var order: Array[String] = []
+	var back := 0
+	var on_head := 0
+	for tick in t["roll_ticks"]:
+		var p := Poses.angles("roll", tick, t)
+		if p["tumble"] == 0.0:
+			continue
+		p["tumble_dir"] = 1.0
+		v.apply(p)
+		var part: String = {"hand_f": "hand", "hand_b": "hand", "arm_f_lower": "hand", "chest": "back", "shoulder_f": "back",
+			"shoulder_b": "back", "belly": "back", "hip": "hips"}.get(v.contact, "")
+		if part == "back":
+			back += 1
+		if v.contact == "head" or v.contact == "neck":
+			on_head += 1
+		if part != "" and (order.is_empty() or order[-1] != part):
+			order.append(part)
+	eq(order, ["hand", "back"] as Array[String], "the guiding hand, then the back")
+	check(back >= 6, "the back carries him for a tenth of a second or more (%d frames)" % back)
+	check(on_head <= 4, "on the head's clearance for at most 4 frames (%d)" % on_head)
+	v.free()
+
+
 func test_the_flying_kick_lands_into_a_balanced_guard() -> void:
 	# the testers' joint session on f744019 (23:29): the flying kick's landing is abrupt; it should absorb into a
 	# balanced guard. Through the touchdown no hand or foot jumps further in a frame than in a steady run, and the hips

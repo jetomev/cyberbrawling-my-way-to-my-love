@@ -197,6 +197,10 @@ func points() -> Dictionary:
 	return out
 
 
+## Rolling, the part that sets his height on the street (the head counts with its clearance), for the tests.
+var contact := ""
+
+
 ## Where the shoulders are drawn (between the two shoulder joints), in the same space as points(): for the close-up of the
 ## shoulder carrying the roll (the testers, 00:57 on 66ce4c6). Kept out of points(), whose parts frame every close-up.
 func shoulder_point() -> Vector2:
@@ -280,6 +284,7 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		var hip: Vector2 = flip * (bones["hip"].position as Vector2)
 		var pos := Vector2(0.0, body_y) + hip - turn * hip
 		var lowest := -INF
+		contact = ""
 		for name in bones:
 			var at := Transform2D.IDENTITY
 			var n: Node = bones[name]
@@ -290,6 +295,12 @@ func apply(pose: Dictionary, grounded := true) -> void:
 				# he rolls on his back and shoulders; the tucked head stays HEAD_CLEAR above the street (the testers,
 				# 2026-11-02 22:33: it came too close)
 				var y: float = (pos + turn * (flip * (at * end))).y + (HEAD_CLEAR if name == "head" else 0.0)
-				lowest = maxf(lowest, y)
+				# … and his back and shoulders touch with their surface, half their drawn thickness out from the bone (the
+				# testers, 00:57 on 66ce4c6: the close-up showed him hovering on the head's clearance, nothing touching)
+				if name in ["belly", "chest", "shoulder_f", "shoulder_b"]:
+					y += Poses.BONES[name][4] * 0.5 * absf(cos((turn * flip * at).get_rotation()))
+				if y > lowest:
+					lowest = y
+					contact = name
 		body.rotation = turn.get_rotation()
 		body.position = pos - Vector2(0.0, lowest - body_y)
