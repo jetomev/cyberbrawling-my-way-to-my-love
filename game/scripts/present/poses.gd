@@ -35,7 +35,9 @@ extends RefCounted
 ##   about 40 degrees as recorded), 1 stands on a straight leg (a round kick or side kick, recorded within 8 degrees);
 ##   below 0 he sinks onto it (-1: a deep squat on the one leg, as a sweep spins low);
 ## - "tumble" (degrees) turns the whole drawing round in the picture's plane, around the hips, the way a roll goes
-##   (hero_view.gd: the lowest drawn point stays on the street, so he rolls along it)
+##   (hero_view.gd: the lowest drawn point stays on the street, so he rolls along it);
+## - "land_spread" (0 or 1) falling to the street, the feet spread into the guard stance before they touch (a flying
+##   kick lands staggered) instead of reaching together (a two-footed jump, as recorded)
 
 const Moves := preload("res://scripts/sim/moves.gd")
 
@@ -67,11 +69,11 @@ const BONES := {
 
 ## Keys a pose may hold besides bones: shared or automatic parts that bake() turns into bone angles.
 const SOFT_KEYS := ["hip_x", "hip_y", "hip_turn", "torso", "open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b",
-	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head", "relaxed", "tall", "tumble"]
+	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head", "relaxed", "tall", "tumble", "land_spread"]
 ## Keys that switch something on rather than bend it: a follow-through never carries them further.
 const SWITCH_KEYS := ["open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b",
 	"fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b",
-	"spin_head", "relaxed", "tall", "tumble"]
+	"spin_head", "relaxed", "tall", "tumble", "land_spread"]
 
 ## The whip (D-21): in a strike the hips move first and the fist or foot arrives last. Each key is read this many
 ## ticks ahead on the move's curve, so the hips lead, the spine follows, then the shoulder and the upper limb; the
@@ -109,7 +111,7 @@ const GUARD := {
 	"leg_f_upper": -47.3, "leg_f_lower": 48.9, "leg_b_upper": 22.6, "leg_b_lower": 19.9, "hip_y": 0.0,
 	"open_f": 0.0, "open_b": 0.0, "hip_x": 0.0, "hip_turn": 0.0, "cover_f": 1.0, "cover_b": 1.0, "rise_f": 0.0,
 	"rise_b": 0.15, "spin": 0.0, "turn": 0.0, "pivot_f": 0.0, "pivot_b": 45.0, "fore_f": 0.0, "fore_b": 0.0,
-	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0, "relaxed": 0.0, "tall": 0.0, "tumble": 0.0,
+	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0, "relaxed": 0.0, "tall": 0.0, "tumble": 0.0, "land_spread": 0.0,
 }
 const HEAD_LEAD := 6  # on a spin the head looks round first: it reads the spin this many frames ahead
 ## Where the ankles stand in the guard, from the hip joint: the guard's legs are solved for these spots.
@@ -213,10 +215,10 @@ const SHOTS := {
 		["active_end", {"turn": 85.0, "torso": -22.0, "head": 12.0, "hip_turn": -10.0, "hip_y": 0.0,
 			"leg_f_upper": -104.0, "leg_f_lower": 0.0, "leg_b_upper": -88.0, "leg_b_lower": 150.0,
 			"cover_b": 0.0, "arm_b_upper": 70.0, "arm_b_lower": -30.0}],
-		["recoil", {"turn": 35.0, "torso": -10.0, "head": 10.0, "hip_turn": -8.0, "hip_y": 0.0,
+		["recoil", {"land_spread": 1.0, "turn": 35.0, "torso": -10.0, "head": 10.0, "hip_turn": -8.0, "hip_y": 0.0,
 			"leg_f_upper": -75.0, "leg_f_lower": 115.0, "leg_b_upper": -45.0, "leg_b_lower": 120.0,
 			"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -75.0, "arm_f_lower": -15.0, "arm_b_upper": 80.0, "arm_b_lower": -15.0}],
-		["tuck", {"turn": 0.0, "torso": 0.0, "head": 6.0, "hip_turn": 0.0, "hip_y": 0.0,
+		["tuck", {"land_spread": 1.0, "turn": 0.0, "torso": 0.0, "head": 6.0, "hip_turn": 0.0, "hip_y": 0.0,
 			"leg_f_upper": -60.0, "leg_f_lower": 90.0, "leg_b_upper": -40.0, "leg_b_lower": 95.0,
 			"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -70.0, "arm_f_lower": -15.0, "arm_b_upper": 75.0, "arm_b_lower": -15.0}]],
 	# Z: the back sweep (the posture sheet; no recorded sweep exists in the libraries we use): sink low into the bow
@@ -535,6 +537,8 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 ## staying where they landed. It runs on into the guard. since = frames since the touchdown, or -1 in the air.
 const REACH_HEIGHT := 48.0
 const LAND_REACH := {"leg_f_upper": -22.0, "leg_f_lower": 22.0, "leg_b_upper": -18.0, "leg_b_lower": 24.0}  # CMU 16_05 at touchdown
+const STAGGER_HEIGHT := 90.0
+const LAND_STAGGER := {"leg_f_upper": -47.3, "leg_f_lower": 48.9, "leg_b_upper": 22.6, "leg_b_lower": 19.9}  # the guard's legs
 const SINK := 14.0
 const LAND_PEAK := 4
 const LAND_SETTLE := 14
@@ -543,11 +547,16 @@ const LAND_SETTLE := 14
 static func landing(pose: Dictionary, since: int, height: float, falling: bool) -> Dictionary:
 	var out := pose.duplicate()
 	if since < 0:
-		if falling and height < REACH_HEIGHT:
-			var k := clampf(1.0 - height / REACH_HEIGHT, 0.0, 1.0)
+		# a flying kick lands staggered: its feet spread into the guard stance in the air, so they don't jump into it at
+		# touchdown (the testers, f744019: the landing was abrupt; the back foot jumped 70 px in one frame)
+		var stagger: bool = out.get("land_spread", 0.0) > 0.5
+		var reach_from := STAGGER_HEIGHT if stagger else REACH_HEIGHT
+		if falling and height < reach_from:
+			var k := clampf(1.0 - height / reach_from, 0.0, 1.0)
 			k = k * k * (3.0 - 2.0 * k)
-			for key in LAND_REACH:
-				out[key] = lerpf(out.get(key, 0.0), LAND_REACH[key], k)
+			var to: Dictionary = LAND_STAGGER if stagger else LAND_REACH
+			for key in to:
+				out[key] = lerpf(out.get(key, 0.0), to[key], k)
 		return out
 	var dip := sink_at(since)
 	out["hip_y"] = out.get("hip_y", 0.0) + dip

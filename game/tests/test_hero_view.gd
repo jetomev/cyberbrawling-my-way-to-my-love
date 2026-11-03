@@ -277,3 +277,45 @@ func test_the_roll_dips_side_on_with_the_arm_guiding() -> void:
 	var hand: Vector2 = Poses._end("hand_f", b)[0]
 	check(hand.x > shoulder.x + 20.0 and hand.y > shoulder.y + 30.0, "the leading arm reaching forward and down (hand %.0f ahead, %.0f below the shoulder)" % [hand.x - shoulder.x, hand.y - shoulder.y])
 	check(absf(b["arm_f_lower"]) >= 15.0 and absf(b["arm_f_lower"]) <= 70.0, "curved like a hoop, not locked or folded (elbow %.0f)" % absf(b["arm_f_lower"]))
+
+
+func test_the_flying_kick_lands_into_a_balanced_guard() -> void:
+	# the testers' joint session on f744019 (23:29): the flying kick's landing is abrupt; it should absorb into a
+	# balanced guard. Through the touchdown no hand or foot jumps further in a frame than in a steady run, and the hips
+	# sink and come back up over several frames
+	var steady: float = _worst_jump([[60, {"mx": 1.0, "run": true}]], 20)[0]
+	var f = Fighter.new(Tuning.fresh(), 1200.0)
+	var v = HeroView.new()
+	var last := {}
+	var worst := 0.0
+	var at := -1
+	var hips := []
+	var touch := -1
+	var script := [[1, {"jump": true, "mx": 1.0}], [8, {"mx": 1.0}], [1, {"kick": true}], [80, {}]]
+	var n := 0
+	for st in script:
+		for i in st[0]:
+			var was_air: bool = not f.on_ground()
+			f.step(st[1])
+			v.sync(f, 0.0)
+			var pts: Dictionary = v.points()
+			if was_air and f.on_ground() and touch < 0:
+				touch = n
+			if touch >= 0:
+				hips.append(pts["hip"].y - v.body.position.y)
+				if not last.is_empty() and n - touch <= 20:
+					for k in ["foot_f", "foot_b", "hand_f", "hand_b"]:
+						var d: float = ((pts[k] - pts["hip"]) - (last[k] - last["hip"])).length()
+						if d > worst:
+							worst = d
+							at = n - touch
+			last = pts
+			n += 1
+	check(touch >= 0, "it lands")
+	check(worst <= steady + 6.0, "landing, no hand or foot jumps more than in a steady run (%.0f px, %d frames after touchdown; run %.0f)" % [worst, at, steady])
+	var deepest := 0
+	for i in hips.size():
+		if hips[i] > hips[deepest]:
+			deepest = i
+	check(hips[deepest] - hips[0] >= 8.0 and deepest >= 2, "the knees take it: the hips sink (%.0f px, deepest %d frames in)" % [hips[deepest] - hips[0], deepest])
+	v.free()

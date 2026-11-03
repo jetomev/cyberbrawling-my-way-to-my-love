@@ -19,11 +19,15 @@ var body_y := 0.0  # the body's height off the street (sync sets it); a roll mov
 ## hand or foot jumped up to 131 px in one frame; a steady run's own biggest swing is about 36)
 const LOCOMOTION := ["idle", "walk", "stand", "stroll", "run", "to_walk", "to_fight"]
 const BLEND_TICKS := 6
+const AIR := ["air_kick", "hammer_fist"]  # (a plain jump already lands smoothly: test_landing)
+const LANDING := ["land", "idle", "stand", "walk", "stroll", "run"]
+const LAND_BLEND_TICKS := 18
 const HEAD_CLEAR := 22.0  # rolling, the head stays this far above the street
 var last_state := ""
 var last_pose := {}
 var blend_from := {}
 var blend_left := 0
+var blend_total := BLEND_TICKS
 var since_touch := 999  # frames since the feet last touched down (for the landing's sink and rise)
 var was_grounded := true
 
@@ -155,9 +159,24 @@ func sync(f, ground_y: float) -> void:
 	if f.state != last_state and last_state in LOCOMOTION and f.state in LOCOMOTION and not last_pose.is_empty():
 		blend_from = last_pose
 		blend_left = BLEND_TICKS
+		blend_total = BLEND_TICKS
+	elif f.state != last_state and last_state in AIR and f.state in LANDING and not last_pose.is_empty():
+		# touching down out of a jump or an air blow: the arms and legs come from where they were in the air (the
+		# testers, f744019: the flying kick's landing was abrupt, a 155 px jump of a hand in one frame)
+		blend_from = last_pose
+		blend_left = LAND_BLEND_TICKS
+		blend_total = LAND_BLEND_TICKS
 	last_state = f.state
 	if blend_left > 0:
-		pose = Poses.blend(blend_from, pose, 1.0 - float(blend_left) / (BLEND_TICKS + 1))
+		var mixed := Poses.blend(blend_from, pose, 1.0 - float(blend_left) / (blend_total + 1))
+		if blend_total == LAND_BLEND_TICKS:
+			# landing: only the upper body comes from the air; the legs and feet take the landing as it is, so the
+			# planted feet stay where they touched down
+			for k in pose:
+				if (k as String).begins_with("leg_") or (k as String).begins_with("step_") or (k as String).begins_with("lift_") \
+						or (k as String).begins_with("rise_") or (k as String).begins_with("pivot_") or k in ["feet", "hip_x", "hip_y"]:
+					mixed[k] = pose[k]
+		pose = mixed
 		blend_left -= 1
 	last_pose = pose
 	apply(pose, grounded)
