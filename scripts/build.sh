@@ -4,7 +4,7 @@
 # 2. the recorded demo (scripts/record.sh): a clip and a contact sheet;
 # 3. for every move (scripts/closeups.py): a still as it lands, close-ups of the hips, hands and feet, and a timed
 #    strip of close-ups through the whole move (the team's asks, 2026-11-02: the hero is small in the demo frame, and
-#    they read pictures, not video);
+#    they read pictures, not video); the hero beside the recordings his movement was measured from (D-30);
 # 4. a short build note; 5. all of it copied to the review shelf, where the assistant team critiques it first.
 # The shelf's folder is set outside the repo: $REVIEW_SHELF, or the first line of .review-shelf (git-ignored).
 # Without one, the build stays in scratch/build/ and says so. Logs to logs/build-<stamp>.log (+ -latest).
@@ -39,6 +39,13 @@ fail() { echo "FAILED $*"; exit 1; }
   [ -n "$MOMENTS" ] || fail "no moves found in the demo"
   python3 "$ROOT/scripts/closeups.py" "$REC/frames" "$OUT/marks.txt" "$OUT" $MOMENTS || fail "could not cut the stills"
   echo "$(echo $MOMENTS | wc -w) moves: $(echo $MOMENTS | sed 's/:[0-9:]*//g')"
+  # the hero beside the recordings he was measured from (D-30); the recordings live outside the repo, so a machine
+  # without them builds without these pictures and the note says so
+  SBS="no"
+  if [ -d "$HOME/Programs/cyberbrawling-reference/cmu" ]; then
+    python3 "$ROOT/scripts/reference_strips.py" "$REC/frames" "$OUT/marks.txt" "$OUT" $MOMENTS || fail "could not draw the side-by-sides"
+    SBS="yes"
+  fi
   echo "== 4. the note"
   {
     echo "# Build $NAME"
@@ -54,6 +61,15 @@ fail() { echo "FAILED $*"; exit 1; }
     echo "  \`strips/NN-landing-N.png\` (every frame of the flying kick's landing, from the air until he is back up),"
     echo "  \`strips/NN-<walk|stroll|run|to_walk|to_fight>-cycle-frames-N.png\` (every frame of the walking, running and stance switches),"
     echo "  \`clips/NN-move.mp4\` and \`clips/NN-move-half.mp4\` (each move moving, close up, at full speed and at half speed)"
+    if [ "$SBS" = yes ]; then
+      echo "- Side by side: \`reference/NN-<jump|flying_kick|walk|stance>-side-by-side.png\`, the hero (top) beside the"
+      echo "  recording his movement was measured from (below, a stick figure scaled to the same leg length, on the same"
+      echo "  street line), lined up on the move's events; each column gives both times. The flying kick compares the"
+      echo "  leg's shape only (the recorded kick is done standing); the stance row is the recorded kicker standing"
+      echo "  ready before his kick. Reference: CMU, mocap.cs.cmu.edu (never in the game)."
+    else
+      echo "- Side by side: not drawn (no reference recordings on this machine)"
+    fi
     echo "- Moves in the demo: $(echo $MOMENTS | sed 's/:[0-9:]*//g')"
     echo
     echo "## What changed since the last push"
@@ -67,6 +83,7 @@ fail() { echo "FAILED $*"; exit 1; }
   SHELF="${REVIEW_SHELF:-$(head -n 1 "$ROOT/.review-shelf" 2>/dev/null)}"
   if [ -n "$SHELF" ] && [ -d "$SHELF" ]; then
     mkdir -p "$SHELF/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/build.md "$SHELF/$NAME/" \
+      && { [ "$SBS" != yes ] || cp -r "$OUT"/reference "$SHELF/$NAME/"; } \
       || fail "could not copy to the shelf"
     echo "on the shelf: $SHELF/$NAME"
   else

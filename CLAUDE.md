@@ -115,10 +115,12 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   team, after "stiff as a tree ... that flying kick ... terrible": "yes to the switch: YES"; "yes to downloading a few
   recordings into a folder kept out of the game; 'reference only' (we measure and draw our own poses): YES"; "what
   moves the hero ...: Arrow Keys"). CMU's recordings (mocap.cs.cmu.edu, picked by hand, no crawling) live in
-  `~/Programs/cyberbrawling-reference/`, never in this repo, its builds or its data. `scripts/mocap_ref.py` measures
+  `~/Programs/cyberbrawling-reference/`, never in this repo, the game it exports or its data. `scripts/mocap_ref.py` measures
   them (timing, joint angles, heights, from the side); we write our own poses from the numbers; CMU is thanked in the
   README. Order: flying kick, jump, walk, stance; then the punches and kicks. `game/tests/test_reference.gd` holds
-  the measured facts. Every build has moving clips (full and half speed).
+  the measured facts. Every build has moving clips (full and half speed) and, from 2026-11-02 (the testers' ask),
+  side-by-sides: the hero beside the recording, same moments, same leg length, same street line
+  (`scripts/reference_strips.py`, into the build's `reference/` on the shelf, never into the game).
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 

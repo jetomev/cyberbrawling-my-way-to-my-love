@@ -3,8 +3,9 @@ extends SceneTree
 ## (the active blow; for climb and block, 8 ticks in), its first frame and its last, for scripts/build.sh's stills,
 ## close-ups and timed strips. Also "landing:touch:start:end" for the first landing after the flying kick: from 6 frames
 ## before the feet touch down to 10 frames after he is back up (the team's third review asked to see it frame by frame);
-## and "<state>-cycle-frames:start:start:end" for the first stretch of the fighting shuffle, the everyday walk, the
-## run and both stance switches (up to 30 frames each).
+## and "<state>-cycle-frames:start:start:end" for the first stretch of the guard, the fighting shuffle, the everyday
+## walk (a whole cycle, up to 70 frames), the run and both stance switches (up to 30 frames each); and "plainjump:touch:crouch:end" for the first jump
+## with no blow in the air, from its crouch to just after it lands.
 ## Run headless: godot --headless --path game -s res://tools/demo_moments.gd
 
 const Fighter := preload("res://scripts/sim/fighter.gd")
@@ -30,6 +31,10 @@ func _initialize() -> void:
 	var touch := -1
 	var printed_landing := false
 	var cycles := {}  # walking, running and switching stance: their first stretch, frame by frame (capped)
+	var jump_from := -1  # a plain jump (crouch, flight, landing, no blow in the air), for the side-by-side with a recording
+	var jump_clean := false
+	var jump_touch := -1
+	var printed_jump := false
 	for i in Demo.length():
 		f.step(Demo.input_at(i))
 		w.step_hits([f])
@@ -48,10 +53,22 @@ func _initialize() -> void:
 			elif touch >= 0 and key != "land":
 				printed_landing = true
 				print("landing:%d:%d:%d" % [touch, touch - 6, mini(frame + 9, Demo.length() - 1 + MOVIE_OFFSET)])
-		if key in ["walk", "stroll", "run", "to_walk", "to_fight"]:
+		if not printed_jump:
+			if key == "jump_squat" and prev != "jump_squat":
+				jump_from = frame
+				jump_clean = true
+				jump_touch = -1
+			elif key in ["air_kick", "hammer_fist"]:
+				jump_clean = false
+			elif key == "land" and prev != "land":
+				jump_touch = frame
+			elif prev == "land" and key != "land" and jump_clean and jump_from >= 0 and jump_touch >= 0:
+				printed_jump = true
+				print("plainjump:%d:%d:%d" % [jump_touch, jump_from, frame + 12])
+		if key in ["idle", "walk", "stroll", "run", "to_walk", "to_fight"]:
 			if not cycles.has(key):
 				cycles[key] = [frame, frame, false]
-			elif not cycles[key][2] and frame == cycles[key][1] + 1 and frame - cycles[key][0] < 30:
+			elif not cycles[key][2] and frame == cycles[key][1] + 1 and frame - cycles[key][0] < (70 if key == "stroll" else 30):
 				cycles[key][1] = frame
 			else:
 				cycles[key][2] = true
