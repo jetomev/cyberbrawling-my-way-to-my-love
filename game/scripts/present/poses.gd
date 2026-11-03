@@ -82,13 +82,14 @@ const LEAD := {"hip_x": 3, "hip_turn": 3, "hip_y": 3, "spin": 3, "turn": 3, "piv
 ## Moves whose body may run at most this many frames ahead. The power punch loads low and wide and then drives all at
 ## once (the testers' joint session, 2026-11-02 20:30: no loading crouch showed 100 to 50 ms before contact, because
 ## the hips, three frames ahead, were already driving out of it).
-const LEAD_CAP := {"power_punch": 1}
+const LEAD_CAP := {"power_punch": 1, "sweep": 1}
 ## Moves whose shoulders trail the hips by this many frames more than the move's own clock, so the waist is seen
 ## rolling through (the testers' joint session: on the round kick the waist and chest both froze at the hit). At the
 ## hit the hips are over while the chest is still coming round; it keeps turning through the next 50 ms.
 const SHOULDER_LAG := {"roundhouse": 3}
 const FOOT_LENGTH := 24.0  # ankle to the ball of the foot
 const SQUAT_LEG := 72.0  # hip to ankle in a deep squat on one leg ("tall" -1)
+const KNEE_CLEAR := 15.0  # a swinging knee stays at least this far above the street
 const TOE_LENGTH := 11.0  # an ankle higher than foot + toes lets the foot point
 
 ## The guard, the fighter's home stance (Javier, 2026-11-02 morning: "posture and movements ... still terrible"; the
@@ -218,7 +219,7 @@ const SHOTS := {
 	# stance with the hands going down; spin on the front foot, the back leg straight and low along the street, the
 	# hands on or near the floor; the leg comes round to the ankles in front; finish the circle; rise to guard
 	"sweep": [["start", {}],
-		["windup", {"tall": -1.0, "hip_y": 38.0, "step_f": 8.0, "torso": 26.0, "head": -8.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+		["windup", {"tall": -1.0, "hip_y": 32.0, "step_b": -75.0, "step_f": 8.0, "torso": 26.0, "head": -8.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
 			"arm_f_upper": 30.0, "arm_f_lower": -20.0, "arm_b_upper": 20.0, "arm_b_lower": -20.0}],
 		["sweep", {"spin": 180.0, "pivot_f": 180.0, "tall": -1.0, "hip_y": 38.0, "torso": 34.0, "head": -10.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
 			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": -68.0, "leg_b_lower": 0.0}],
@@ -807,6 +808,10 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 		if low > 0.0:
 			_reach_with_leg(out, side, (_end("leg_%s_lower" % side, out)[0] as Vector2) - Vector2(0, low))
 			_settle_foot(out, side, grounded)
+		# … and a swinging knee: it never sinks into the street either (a sweep's leg coming round knelt through it)
+		if grounded and (_end("leg_%s_upper" % side, out)[0] as Vector2).y > -KNEE_CLEAR:
+			_lift_knee(out, side)
+			_settle_foot(out, side, grounded)
 	_cover(out, pose)
 	return out
 
@@ -845,6 +850,27 @@ static func _cover(out: Dictionary, pose: Dictionary) -> void:
 
 static func _planted(out: Dictionary, side: String) -> bool:
 	return -(_end("leg_%s_lower" % side, out)[0] as Vector2).y <= FOOT_LENGTH + TOE_LENGTH
+
+
+## Lifts a swinging leg's knee to KNEE_CLEAR above the street, the thigh keeping its side, the shin reaching back
+## toward where the ankle was (straight along that line if it can't reach it).
+static func _lift_knee(out: Dictionary, side: String) -> void:
+	var upper := "leg_%s_upper" % side
+	var lower := "leg_%s_lower" % side
+	var hip_end: Array = _end("hip", out)
+	var joint: Vector2 = hip_end[0] + (BONES[upper][1] as Vector2).rotated(hip_end[1])
+	var knee: Vector2 = _end(upper, out)[0]
+	var ankle: Vector2 = _end(lower, out)[0]
+	var l1: float = BONES[upper][3]
+	var l2: float = BONES[lower][3]
+	var dy := clampf(-KNEE_CLEAR - joint.y, -l1, l1)
+	var dx := sqrt(maxf(l1 * l1 - dy * dy, 0.0)) * (1.0 if knee.x >= joint.x else -1.0)
+	var thigh := Vector2(dx, dy).angle()
+	var k2 := joint + Vector2(dx, dy)
+	var want := Vector2(ankle.x, minf(ankle.y, -2.0))
+	var shin := (want - k2).angle()
+	out[upper] = rad_to_deg(thigh - hip_end[1]) - BONES[upper][2]
+	out[lower] = rad_to_deg(shin - thigh) - BONES[lower][2]
 
 
 ## Bends a leg so its ankle lands on target (two bones, the knee pointing forward, as knees do).

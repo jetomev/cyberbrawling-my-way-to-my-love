@@ -339,3 +339,24 @@ func test_the_sweep() -> void:
 		check(street - hand.y <= 60.0, "mid-spin the %s hand on or near the floor (%.0f px up)" % [side, street - hand.y])
 	check(fmod(Poses.angles("sweep", Moves.length("sweep", t) - 1, t)["spin"], 360.0) == 0.0, "it finishes the circle")
 	check(Poses.angles("sweep", Poses.moment("sweep", "sweep", t), t)["spin"] >= 120.0, "spinning round on the front foot")
+
+
+func test_the_sweep_sinks_into_a_bow_stance_not_a_kneel() -> void:
+	# reviewing build 5b34f9a's frame sheet: sinking for the sweep he knelt, the back shin flat on the street. The
+	# sheet's "sink low into the bow stance": the front knee deep, the back leg long behind, its knee off the street
+	# (the sink, before the leg starts to come round: from the wind-up on, a leg swinging round in front of him folds in
+	# a side view, which a leg can't show shorter yet; there the general rule holds it off the street, see below)
+	var t := Tuning.fresh()
+	for tick in range(1, Poses.moment("sweep", "windup", t)):
+		var b := Poses.bake(Poses.angles("sweep", tick, t), true)
+		var street: float = (Poses._end("leg_f_lower", b)[0] as Vector2).y
+		var hip: Vector2 = Poses._end("hip", b)[0]
+		var ankle: Vector2 = Poses._end("leg_b_lower", b)[0]
+		var knee: Vector2 = Poses._end("leg_b_upper", b)[0]
+		check(hip.distance_to(ankle) >= 100.0, "sweep@%d: the back leg long behind (%.0f px hip to ankle)" % [tick, hip.distance_to(ankle)])
+		check(street - knee.y >= 15.0, "sweep@%d: the back knee off the street (%.0f px)" % [tick, street - knee.y])
+
+	for tick in range(Poses.moment("sweep", "windup", t), Poses.moment("sweep", "active", t)):
+		var b := Poses.bake(Poses.angles("sweep", tick, t), true)
+		var street: float = (Poses._end("leg_f_lower", b)[0] as Vector2).y
+		check(street - (Poses._end("leg_b_upper", b)[0] as Vector2).y >= 14.0, "sweep@%d: coming round, the back knee never through the street" % tick)
