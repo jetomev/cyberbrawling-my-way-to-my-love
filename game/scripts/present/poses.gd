@@ -228,7 +228,7 @@ const SHOTS := {
 		["active_end", {"spin": 360.0, "pivot_f": 360.0, "tall": -1.0, "hip_y": 38.0, "torso": 24.0, "head": -4.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
 			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": -66.0, "leg_b_lower": 0.0}],
 		["follow", {"spin": 360.0, "pivot_f": 360.0, "tall": -0.5, "torso": 14.0, "cover_f": 0.0, "cover_b": 0.0,
-			"arm_f_upper": 30.0, "arm_f_lower": -40.0, "arm_b_upper": 20.0, "arm_b_lower": -40.0, "leg_b_upper": -60.0, "leg_b_lower": 90.0}],
+			"arm_f_upper": 30.0, "arm_f_lower": -40.0, "arm_b_upper": 20.0, "arm_b_lower": -40.0, "leg_b_upper": -64.0, "leg_b_lower": 12.0}],
 		["end", {"spin": 360.0, "pivot_f": 360.0}]],
 	# C: the evasion roll (Javier, 2026-11-02 21:56). No recorded roll yet (CMU 128_09 "Run Roll Underneath" waits on
 	# Javier's yes to download), so common technique: drop into a crouch with the chin tucked and the arms reaching down,

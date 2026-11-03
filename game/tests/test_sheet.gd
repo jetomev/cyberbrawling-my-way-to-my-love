@@ -360,3 +360,22 @@ func test_the_sweep_sinks_into_a_bow_stance_not_a_kneel() -> void:
 		var b := Poses.bake(Poses.angles("sweep", tick, t), true)
 		var street: float = (Poses._end("leg_f_lower", b)[0] as Vector2).y
 		check(street - (Poses._end("leg_b_upper", b)[0] as Vector2).y >= 14.0, "sweep@%d: coming round, the back knee never through the street" % tick)
+
+
+func test_the_sweep_sweeps_long_and_low() -> void:
+	# the testers' joint session (2026-11-02 22:33) on 98a076f: the sweeping leg was bent; it should sweep long and
+	# low. From the spin's start through the follow-through the back leg stays straight (knee within 25) and its foot
+	# low (within 45 px of the street), but for the frames he is edge-on (the leg then points at the camera, which a
+	# flat drawing can't show long)
+	var t := Tuning.fresh()
+	var checked := 0
+	for tick in range(Poses.moment("sweep", "sweep", t), Poses.moment("sweep", "follow", t) + 1):
+		var p := Poses.angles("sweep", tick, t)
+		if absf(cos(deg_to_rad(p["spin"]))) < 0.35:
+			continue
+		checked += 1
+		var b := Poses.bake(p, true)
+		var street: float = (Poses._end("leg_f_lower", b)[0] as Vector2).y
+		check(absf(b["leg_b_lower"]) <= 25.0, "sweep@%d: the sweeping leg straight (knee %.0f)" % [tick, absf(b["leg_b_lower"])])
+		check(street - (Poses._end("leg_b_lower", b)[0] as Vector2).y <= 45.0, "sweep@%d: and low (%.0f px up)" % [tick, street - (Poses._end("leg_b_lower", b)[0] as Vector2).y])
+	check(checked >= 6, "enough frames to judge (%d)" % checked)
