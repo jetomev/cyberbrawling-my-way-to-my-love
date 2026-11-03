@@ -75,6 +75,8 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] The testers' session on f744019: power punch load 1.5x the guard (third time), no standing knee kneels (any move), the flying kick lands staggered and absorbs into the guard
 - [x] Pictures: a running flying kick shown whole; the sweep seen from above
 - [x] The testers' session on 66ce4c6 (00:57): power punch load measured (2.3 shoulder widths already; the fault was the hips over the front foot and the back knee near the street) and made a horse stance, hips centred, knees out; the sweep's foot goes a full circle; measurements in the build notes; the roll's shoulders up close; every frame sheet checked whole
+- [x] The roll's close-up showed him hovering over the top: now placed by his drawn outline, hand then back then hips (46be0b9)
+- [ ] The roll: four frames between the hand and the back where the tucked head holds him a few px up
 - [ ] Spins flip around the hips, so the foot he spins on jumps across in one frame (sweep, spinning kick): flip around that foot instead (changes those moves' reach)
 - [ ] Still unjudged by the testers: the roll's shoulder support, natural pace, smoothness at either speed, whole moves, play
 - [x] The run's first steps no longer snap: starting and stopping blend from the last drawn pose (was a 131 px jump)
