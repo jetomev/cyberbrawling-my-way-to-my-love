@@ -11,7 +11,7 @@ take-off, the top, the touchdown, the deepest of the landing, back up) and sprea
 jump is not timed like a real one. Each column says both times, so where the timing differs it shows.
 
 Reference only: the recordings (CMU, mocap.cs.cmu.edu) are read from outside this repository (scripts/mocap_ref.py);
-these pictures go to the build folder on the review shelf, never into the game.
+these pictures go to the build's folder in ~/Documents/Cyberbrawling/builds, never into the game.
 
 Usage: scripts/reference_strips.py <frames dir> <marks file> <out dir> <demo moments...>
 Writes <out dir>/reference/NN-<move>-side-by-side.png. Prints an OK line.

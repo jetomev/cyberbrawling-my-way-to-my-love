@@ -7,5 +7,5 @@ scratch/
 logs/
 __pycache__/
 
-# The review shelf folder for scripts/build.sh (set per machine, never committed)
+# Javier's shelf, where the one daily report goes (set per machine, never committed)
 .review-shelf

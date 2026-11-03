@@ -5,9 +5,10 @@
 # 3. for every move (scripts/closeups.py): a still as it lands, close-ups of the hips, hands and feet, and a timed
 #    strip of close-ups through the whole move (the team's asks, 2026-11-02: the hero is small in the demo frame, and
 #    they read pictures, not video); the hero beside the recordings his movement was measured from (D-30);
-# 4. a short build note; 5. all of it copied to the review shelf, where the assistant team critiques it first.
-# The shelf's folder is set outside the repo: $REVIEW_SHELF, or the first line of .review-shelf (git-ignored).
-# Without one, the build stays in scratch/build/ and says so. Logs to logs/build-<stamp>.log (+ -latest).
+# 4. a short build note; 5. all of it copied to the builds folder (~/Documents/Cyberbrawling/builds, or
+# $CYBERBRAWLING_BUILDS), where the assistant team critiques it first. Javier's shelf (first line of .review-shelf,
+# git-ignored, or $REVIEW_SHELF) gets one plain report a day, cyberbrawling-report-YYYY-MM-DD.md, written by hand;
+# the build says whether today's exists. Logs to logs/build-<stamp>.log (+ -latest).
 # Usage: scripts/build.sh
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -81,15 +82,24 @@ fail() { echo "FAILED $*"; exit 1; }
     echo '`~/Programs/cyberbrawling-my-way-to-my-love/scripts/play.sh`'
   } > "$OUT/build.md"
   rm -rf "$OUT/moves"
-  echo "== 5. the review shelf"
+  echo "== 5. the builds folder"
+  # Javier, 2026-11-02 20:14 (through the assistant team): "It is only one report a day, not so many." Builds live in
+  # their own folder outside the repo, where the assistant team reads them; the shelf gets one plain report a day.
+  BUILDS="${CYBERBRAWLING_BUILDS:-$HOME/Documents/Cyberbrawling/builds}"
+  mkdir -p "$BUILDS/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/build.md "$BUILDS/$NAME/" \
+    && { [ "$SBS" != yes ] || cp -r "$OUT"/reference "$BUILDS/$NAME/"; } \
+    || fail "could not copy to the builds folder"
+  echo "in the builds folder: $BUILDS/$NAME"
   SHELF="${REVIEW_SHELF:-$(head -n 1 "$ROOT/.review-shelf" 2>/dev/null)}"
   if [ -n "$SHELF" ] && [ -d "$SHELF" ]; then
-    mkdir -p "$SHELF/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/build.md "$SHELF/$NAME/" \
-      && { [ "$SBS" != yes ] || cp -r "$OUT"/reference "$SHELF/$NAME/"; } \
-      || fail "could not copy to the shelf"
-    echo "on the shelf: $SHELF/$NAME"
+    REPORT="$SHELF/cyberbrawling-report-$(date +%Y-%m-%d).md"
+    if [ -f "$REPORT" ]; then
+      echo "today's report for Javier: $REPORT (add this build to it)"
+    else
+      echo "today's report for Javier NOT WRITTEN YET: $REPORT"
+    fi
   else
-    echo "no review shelf set (\$REVIEW_SHELF or .review-shelf): the build stays in $OUT"
+    echo "no shelf set (\$REVIEW_SHELF or .review-shelf): no daily report to check"
   fi
   echo "OK build $NAME"
 ) > "$LOG" 2>&1
