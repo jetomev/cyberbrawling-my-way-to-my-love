@@ -28,8 +28,9 @@ const STEPS := [
 	[1, {"sweep": true}], [75, {}],
 	# (forward first, into the open street: a roll back from here ran into the crate behind him and tumbled on the spot)
 	[1, {"roll": true}], [45, {}], [1, {"roll": true, "mx": -1.0}], [45, {}],
-	# then X to the walk stance, an everyday walk, a run (W held), and X back to the fight stance
-	[1, {"stance": true}], [16, {}], [66, {"mx": 1.0}], [22, {"mx": 1.0, "run": true}], [12, {}],
+	# then X to the walk stance, an everyday walk, a run of a full second (W held: enough strides for the testers to
+	# judge steady running), and X back to the fight stance
+	[1, {"stance": true}], [16, {}], [66, {"mx": 1.0}], [60, {"mx": 1.0, "run": true}], [12, {}],
 	[1, {"stance": true}], [20, {}],
 ]
 
