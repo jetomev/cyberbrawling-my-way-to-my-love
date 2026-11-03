@@ -206,7 +206,8 @@ def shoulder_closeup(frames, start, end, zero, label, sheet_path, clip_path, mar
     """The shoulders up close through a move (the testers, 00:57 on 66ce4c6: "show the shoulder carrying the roll"): a
     square that follows the shoulders, big enough to show the street under them, with a ring on the shoulder mark;
     every frame on a sheet, timed, and clips at full and half speed. Returns False without shoulder marks."""
-    from PIL import Image, ImageDraw
+    from PIL import Image, ImageDraw, ImageFont
+    font = ImageFont.load_default(size=30)
     span = [f for f in range(start - CLIP_PAD, end + CLIP_PAD + 1) if (frames / f"f{f:08d}.png").exists()]
     if not all("shoulder" in marks.get(f, {}) for f in span):
         return False
@@ -225,8 +226,8 @@ def shoulder_closeup(frames, start, end, zero, label, sheet_path, clip_path, mar
         cx, cy = (sx - x) * CLIP_SIZE / side, (sy - y) * CLIP_SIZE / side
         d.ellipse([cx - 14, cy - 14, cx + 14, cy + 14], outline=(255, 200, 80), width=3)
         ms = int((f - zero) * 1000 / 60)
-        d.rectangle([0, 0, 300, 30], fill=(0, 0, 0))
-        d.text((8, 8), f"{label}, the shoulders (ringed) {ms} ms", fill=(255, 255, 255))
+        d.rectangle([0, 0, CLIP_SIZE, 44], fill=(0, 0, 0))
+        d.text((8, 6), f"roll {ms} ms · shoulders ringed", fill=(255, 255, 255), font=font)
         crop.save(tmp / f"f{i:05d}.png")
         sheet.paste(crop.resize((SHEET_SIZE, SHEET_SIZE)), ((i % cols) * (SHEET_SIZE + 2), (i // cols) * (SHEET_SIZE + 2)))
     sheet.save(sheet_path)

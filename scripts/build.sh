@@ -54,7 +54,7 @@ fail() { echo "FAILED $*"; exit 1; }
   # measurements on the drawing for the notes, and every frame sheet checked to cover its whole move (the testers,
   # 00:57 on 66ce4c6: "measure it yourself ... and put that number in the build notes"; "make sure each sheet covers
   # the whole action start to finish")
-  MEASURE="$(timeout 60 "$ROOT/scripts/capped.sh" godot --headless --path "$ROOT/game" -s res://tools/measure.gd 2>/dev/null)"
+  MEASURE="$(timeout 60 "$ROOT/scripts/capped.sh" godot --headless --path "$ROOT/game" -s res://tools/measure.gd 2>/dev/null | grep -v '^Godot')"
   echo "$MEASURE" | grep -q '^- Power punch' || fail "could not measure the drawing"
   WHOLE="$(python3 - "$MEASURE" $MOMENTS <<'PY'
 import sys
