@@ -31,6 +31,7 @@ var vy := 0.0
 var facing := 1  # 1 = right, -1 = left
 var state := "idle"
 var stance := "fight"  # "fight" (the guard) or "walk" (relaxed)
+var squat_mx := 0.0  # the stick when the jump was pressed: a running jump still carries forward from its crouch
 var t := 0  # ticks spent in the current state
 var queue: Array[String] = []  # buttons pressed early, in order, waiting for the fighter to be free
 var buffer_left := 0  # once free, how long the waiting presses stay good
@@ -94,6 +95,12 @@ func step(inp: Dictionary) -> void:
 		"land":
 			if t >= tune["land_ticks"]:
 				_enter(_rest())
+		"jump_squat":
+			# the crouch before take-off, feet planted; then the legs drive him up (the stick steers the jump)
+			if t >= tune["jump_squat_ticks"]:
+				vy = Tuning.takeoff_speed(tune)
+				vx = (mx if mx != 0.0 else squat_mx) * tune["jump_speed"]
+				_enter("jump")
 		"climb":
 			_climb()
 		_:
@@ -142,7 +149,12 @@ func _rest() -> String:
 
 func _ground(mx: float, mz: float, run := false) -> void:
 	var moving: bool = mx != 0.0 or (mz != 0.0 and not tune["flat_line"])
-	vx = mx * tune["run_speed" if run and moving else "walk_speed"]
+	var speed := "walk_speed"
+	if run and moving:
+		speed = "run_speed"
+	elif stance == "walk":
+		speed = "stroll_speed"
+	vx = mx * tune[speed]
 	var nx := clampf(x + vx, tune["street_left"], tune["street_right"])
 	if mx != 0.0:
 		facing = 1 if mx > 0.0 else -1
@@ -218,10 +230,15 @@ func _air(mx: float) -> void:
 
 func _start(action: String, mx: float) -> void:
 	if action == "jump":
-		vy = Tuning.takeoff_speed(tune)
-		vx = mx * tune["jump_speed"]
 		chain = ""
-		_enter("jump")
+		vx = 0.0
+		if tune["jump_squat_ticks"] > 0:
+			squat_mx = mx
+			_enter("jump_squat")  # a crouch first: recorded jumps load the legs before they leave the ground
+		else:
+			vy = Tuning.takeoff_speed(tune)
+			vx = mx * tune["jump_speed"]
+			_enter("jump")
 	else:
 		vx = 0.0
 		attack_serial += 1

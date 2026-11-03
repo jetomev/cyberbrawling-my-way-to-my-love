@@ -26,7 +26,7 @@ const STEPS := [
 	[1, {"jump": true}], [6, {}], [1, {"punch": true}], [50, {}],
 	[40, {"block": true}], [1, {"block": true, "punch": true}], [40, {}],
 	# then X to the walk stance, an everyday walk, a run (W held), and X back to the fight stance
-	[1, {"stance": true}], [16, {}], [25, {"mx": 1.0}], [26, {"mx": 1.0, "run": true}], [12, {}],
+	[1, {"stance": true}], [16, {}], [66, {"mx": 1.0}], [22, {"mx": 1.0, "run": true}], [12, {}],
 	[1, {"stance": true}], [20, {}],
 ]
 

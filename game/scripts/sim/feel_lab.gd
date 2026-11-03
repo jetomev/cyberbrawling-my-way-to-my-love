@@ -7,10 +7,12 @@ const Tuning := preload("res://scripts/sim/tuning.gd")
 ## [key, label, step, min, max]
 const SETTINGS := [
 	["walk_speed", "Walk speed (px/tick)", 0.25, 1.0, 12.0],
+	["stroll_speed", "Everyday walk speed (px/tick)", 0.1, 0.5, 8.0],
 	["run_speed", "Run speed (px/tick)", 0.25, 2.0, 20.0],
 	["depth_speed", "Up/down the street (px/tick)", 0.2, 0.5, 8.0],
 	["jump_height", "Jump height (px)", 10.0, 40.0, 400.0],
 	["jump_air_ticks", "Jump air time (ticks)", 2, 12, 90],
+	["jump_squat_ticks", "Jump crouch before take-off (ticks)", 1, 0, 12],
 	["jump_speed", "Running jump speed (px/tick)", 0.25, 0.0, 14.0],
 	["air_steer", "Steering in the air (0-1)", 0.1, 0.0, 1.0],
 	["land_ticks", "Landing pause (ticks)", 1, 0, 20],

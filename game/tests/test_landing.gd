@@ -27,7 +27,7 @@ func test_the_sink_and_the_rise() -> void:
 
 func test_the_legs_reach_for_the_street() -> void:
 	var t := Tuning.fresh()
-	var air := Poses.angles("jump", 0, t)
+	var air := Poses.angles("air_kick", Poses.moment("air_kick", "recoil", t), t)  # after a flying kick, the leg folded
 	var tucked: Vector2 = Poses._end("leg_f_lower", Poses.bake(air, false))[0]
 	var near: Vector2 = Poses._end("leg_f_lower", Poses.bake(Poses.landing(air, -1, 6.0, true), false))[0]
 	check(near.y > tucked.y + 20.0, "falling the last few px, the feet reach down (%.0f px lower)" % (near.y - tucked.y))
@@ -43,6 +43,7 @@ func test_a_real_landing_sinks_and_rises_without_snapping() -> void:
 	var hands := []
 	var feet := []
 	var touch := -1
+	var was_up := false
 	for i in 120:
 		f.step({"jump": i == 2})
 		v.sync(f, 0.0)
@@ -50,7 +51,8 @@ func test_a_real_landing_sinks_and_rises_without_snapping() -> void:
 		hips.append((p["hip"] as Vector2).y - v.body.position.y)
 		hands.append(p["hand_b"])
 		feet.append(p["foot_f"])
-		if touch < 0 and i > 3 and f.on_ground():
+		was_up = was_up or not f.on_ground()
+		if touch < 0 and was_up and f.on_ground():
 			touch = i
 	check(touch > 0, "he jumps and lands (touchdown at tick %d)" % touch)
 	if touch < 0:

@@ -5,6 +5,7 @@ extends RefCounted
 const DEFAULTS := {
 	# moving along the street (x) and up/down its depth (z, the shallow street of D-13)
 	"walk_speed": 4.0,
+	"stroll_speed": 2.2,  # the walk stance's everyday walk: a real easy walk at this scale (CMU 16_15: 1.15 s a cycle)
 	"run_speed": 8.0,  # W held (Javier, 2026-11-02 18:48: "the character needs to be able to walk, and run")
 	"stance_switch_ticks": 8,  # X: from the fight stance to the walk stance and back
 	"depth_speed": 2.4,
@@ -15,6 +16,7 @@ const DEFAULTS := {
 	# jumping: height and time in the air decide gravity and the take-off speed
 	"jump_height": 150.0,
 	"jump_air_ticks": 40,
+	"jump_squat_ticks": 4,  # the crouch before take-off (recorded jumps crouch, then drive up: CMU 16_01, 16_05)
 	"jump_speed": 6.0,  # a running jump goes faster than walking, so a crate can be cleared
 	"air_steer": 0.5,  # how much the stick can change a jump that's already going (0 = none, 1 = full)
 	"land_ticks": 4,
@@ -27,8 +29,8 @@ const DEFAULTS := {
 	"kick_active": 3,
 	"kick_recovery": 9,
 	"kick_reach": 112.0,
-	"air_kick_startup": 3,  # the flying kick: pressed in the air, out until landing
-	"air_kick_active": 10,
+	"air_kick_startup": 6,  # the flying kick: chamber, then out (6 frames, the shortest that shows the chamber; was 3)
+	"air_kick_active": 6,  # held out (was 10: a rigid hold); then it folds back, out until landing
 	"air_kick_reach": 140.0,
 	"hit_depth": 28.0,  # how far up/down the street a blow still connects
 	# a button pressed a little early still counts, so moves chain without frame-perfect timing

@@ -111,6 +111,14 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
   change); read as keyboard keys, not the gamepad's A/B/X. The fight stance (guard, shuffle) and the walk stance
   (standing easy, an everyday walk); a short switch between them; running from either and back; a blow or a block
   from the walk stance raises the guard first and the press waits. The demo ends with the switch, a walk and a run.
+- **D-30** **Movement from recorded human motion, reference only** (Javier, 2026-11-02 19:09, through the assistant
+  team, after "stiff as a tree ... that flying kick ... terrible": "yes to the switch: YES"; "yes to downloading a few
+  recordings into a folder kept out of the game; 'reference only' (we measure and draw our own poses): YES"; "what
+  moves the hero ...: Arrow Keys"). CMU's recordings (mocap.cs.cmu.edu, picked by hand, no crawling) live in
+  `~/Programs/cyberbrawling-reference/`, never in this repo, its builds or its data. `scripts/mocap_ref.py` measures
+  them (timing, joint angles, heights, from the side); we write our own poses from the numbers; CMU is thanked in the
+  README. Order: flying kick, jump, walk, stance; then the punches and kicks. `game/tests/test_reference.gd` holds
+  the measured facts. Every build has moving clips (full and half speed).
 - **D-17** **Weekday morning runs: yes** (Javier, 2026-11-01). He works 8:00–17:00; one scheduled session on this PC
   at 9:00 Mon–Fri, done by 12:00, rules in `docs/UNATTENDED.md`.
 

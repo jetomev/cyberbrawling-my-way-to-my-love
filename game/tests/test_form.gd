@@ -182,11 +182,13 @@ func test_the_spinning_kicks_sweep_with_a_bent_knee() -> void:
 
 
 func test_the_flying_kick_tucks_the_knee_to_land() -> void:
+	# (since the recorded front kick: chamber, out, a moment held, folded back to the chamber, then the legs under him)
 	var t := Tuning.fresh()
 	var kicking := Poses.angles("air_kick", Moves.data("air_kick", t)["startup"], t)
+	var folded := Poses.angles("air_kick", Poses.moment("air_kick", "recoil", t), t)
 	var after := Poses.angles("air_kick", Poses.moment("air_kick", "tuck", t), t)
 	check(kicking["leg_f_lower"] < 10.0, "the flying kick is straight when it lands (%.0f)" % kicking["leg_f_lower"])
-	check(after["leg_f_lower"] > 80.0, "then the knee pulls back in (%.0f)" % after["leg_f_lower"])
+	check(folded["leg_f_lower"] > 100.0, "then the leg folds back to its chamber (%.0f)" % folded["leg_f_lower"])
 	var b := Poses.bake(after, false)
 	var foot: Vector2 = Poses._end("leg_f_lower", b)[0]
 	check(absf(foot.x) < 70.0, "the foot comes back under the body for the landing (%.0f px out)" % foot.x)

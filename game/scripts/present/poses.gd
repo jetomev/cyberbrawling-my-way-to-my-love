@@ -99,8 +99,8 @@ const STANCE := {"f": Vector2(44.0, 100.0), "b": Vector2(-63.0, 100.0)}
 ## (Javier, 2026-11-02 18:48: the hero walks and runs, X switches between the fight stance and the walk stance).
 const RELAXED := {"f": Vector2(12.0, 118.0), "b": Vector2(-10.0, 118.0)}
 ## The everyday walk: each foot planted most of the cycle, the legs passing each other, the arms swinging against them.
-const STROLL_CYCLE := 32
-const STROLL_STEP := 13
+const STROLL_CYCLE := 64  # (CMU 16_15: about 1.1 s a cycle at an easy walk)
+const STROLL_STEP := 26
 ## The run: knees high, arms bent and pumping, a lean forward, and a moment with both feet off the street.
 const RUN_CYCLE := 24
 const RUN_STEP := 15
@@ -137,7 +137,7 @@ const LOOPS := {
 	"stand": [90, [0, STAND], [45, {"feet": 1.0, "relaxed": 1.0, "cover_f": 0.0, "cover_b": 0.0, "pivot_b": 0.0, "rise_b": 0.0,
 		"arm_f_upper": -6.0, "arm_f_lower": -18.0, "arm_b_upper": 10.0, "arm_b_lower": -18.0, "torso": 4.0, "neck": 0.0,
 		"head": 0.0, "hip_y": 1.5}]],
-	"stroll": [32, [0, STAND], [16, STAND]],
+	"stroll": [64, [0, STAND], [32, STAND]],
 	"run": [24, [0, RUN], [12, RUN]],
 	"walk": [20, [0, {"feet": 1.0, "hip_y": 2.0, "hip_turn": -3.0, "torso": 12.0}],
 		[5, {"feet": 1.0, "hip_y": -2.0, "hip_turn": 0.0, "torso": 11.0}],
@@ -149,8 +149,23 @@ const LOOPS := {
 ## follow-through, then eases back to the guard; an empty "follow" means "carry the hit a little further", a written
 ## one is the move's own (a jab snaps straight back, a push kick holds, a front kick folds back to its chamber).
 const SHOTS := {
-	"jump": [["start", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0,
-		"arm_f_upper": -70.0, "arm_b_upper": -45.0, "hip_y": 0.0}]],
+	"jump": [["start", {"cover_f": 0.0, "cover_b": 0.0, "torso": 8.0, "head": 14.0, "leg_f_upper": 4.0, "leg_f_lower": 26.0,
+			"leg_b_upper": 8.0, "leg_b_lower": 24.0, "arm_f_upper": 38.0, "arm_f_lower": -78.0, "arm_b_upper": 42.0,
+			"arm_b_lower": -76.0, "hip_y": 0.0}],
+		["rise", {"cover_f": 0.0, "cover_b": 0.0, "torso": 6.0, "head": 18.0, "leg_f_upper": -6.0, "leg_f_lower": 42.0,
+			"leg_b_upper": -2.0, "leg_b_lower": 38.0, "arm_f_upper": 46.0, "arm_f_lower": -88.0, "arm_b_upper": 50.0,
+			"arm_b_lower": -86.0, "hip_y": 0.0}],
+		["peak", {"cover_f": 0.0, "cover_b": 0.0, "torso": 6.0, "head": 20.0, "leg_f_upper": -14.0, "leg_f_lower": 40.0,
+			"leg_b_upper": -10.0, "leg_b_lower": 34.0, "arm_f_upper": 46.0, "arm_f_lower": -76.0, "arm_b_upper": 46.0,
+			"arm_b_lower": -78.0, "hip_y": 0.0}],
+		["fall", {"cover_f": 0.0, "cover_b": 0.0, "torso": 6.0, "head": 20.0, "leg_f_upper": -22.0, "leg_f_lower": 22.0,
+			"leg_b_upper": -18.0, "leg_b_lower": 22.0, "arm_f_upper": 38.0, "arm_f_lower": -58.0, "arm_b_upper": 36.0,
+			"arm_b_lower": -56.0, "hip_y": 0.0}]],
+	# the crouch before take-off (CMU 16_05, 200 ms before it leaves the ground): the hips drop, the knees bend, the
+	# spine leans well forward, the arms swing back; then the legs drive him up
+	"jump_squat": [["start", {}],
+		["end", {"cover_f": 0.0, "cover_b": 0.0, "hip_y": 16.0, "torso": 40.0, "head": -22.0, "arm_f_upper": 32.0,
+			"arm_f_lower": -60.0, "arm_b_upper": 36.0, "arm_b_lower": -62.0}]],
 	# the touchdown itself: the arms still open from the air, coming in to the guard over the landing; the sink and
 	# rise of the legs is landing(), timed from the touchdown and running on into the guard
 	"land": [["start", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -60.0, "arm_f_lower": -90.0, "arm_b_upper": -30.0,
@@ -164,14 +179,19 @@ const SHOTS := {
 		["active_end", {"step_f": 8.0, "cover_f": 0.0, "hip_x": 3.0, "hip_turn": 3.0, "arm_f_upper": -98.0, "arm_f_lower": 0.0, "torso": 6.0, "head": 4.0}],
 		["follow", {"step_f": 4.0, "hip_x": 1.0, "torso": 9.0}],
 		["end", {}]],
-	"air_kick": [["start", {"cover_f": 0.0, "cover_b": 0.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0,
-		"arm_f_upper": -70.0, "arm_b_upper": -45.0, "hip_y": 0.0}],
-		["startup", {"cover_f": 0.0, "cover_b": 0.0, "leg_f_upper": -92.0, "leg_f_lower": -4.0, "leg_b_upper": 34.0, "leg_b_lower": 85.0, "torso": -22.0,
-			"head": 14.0, "arm_f_upper": -30.0, "arm_f_lower": -60.0, "arm_b_upper": 40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
-		["active_end", {"cover_f": 0.0, "cover_b": 0.0, "leg_f_upper": -92.0, "leg_f_lower": -4.0, "leg_b_upper": 34.0, "leg_b_lower": 85.0, "torso": -22.0,
-			"head": 14.0, "arm_f_upper": -30.0, "arm_f_lower": -60.0, "arm_b_upper": 40.0, "arm_b_lower": -40.0, "hip_y": 0.0}],
-		["tuck", {"cover_f": 0.0, "cover_b": 0.0, "leg_f_upper": -70.0, "leg_f_lower": 105.0, "leg_b_upper": -10.0, "leg_b_lower": 95.0, "torso": 4.0,
-			"arm_f_upper": -60.0, "arm_f_lower": -90.0, "arm_b_upper": -30.0, "arm_b_lower": -80.0, "hip_y": 0.0}]],
+	# the flying kick (CMU 135_04, a front kick, for its shape): the knee up in a chamber with the body leaning over it,
+	# the leg snaps out as the body comes upright, it holds a moment, folds back to the chamber, then the legs come
+	# under him for the landing; hands up the whole way
+	"air_kick": [["start", {"leg_f_upper": -72.0, "leg_f_lower": 118.0, "leg_b_upper": 14.0, "leg_b_lower": 70.0,
+			"torso": 20.0, "head": -10.0, "hip_y": 0.0}],
+		["startup", {"leg_f_upper": -100.0, "leg_f_lower": 4.0, "leg_b_upper": 26.0, "leg_b_lower": 80.0, "torso": 6.0,
+			"head": 4.0, "hip_y": 0.0}],
+		["active_end", {"leg_f_upper": -100.0, "leg_f_lower": 4.0, "leg_b_upper": 26.0, "leg_b_lower": 80.0, "torso": 6.0,
+			"head": 4.0, "hip_y": 0.0}],
+		["recoil", {"leg_f_upper": -92.0, "leg_f_lower": 135.0, "leg_b_upper": 10.0, "leg_b_lower": 70.0, "torso": 4.0,
+			"head": 4.0, "hip_y": 0.0}],
+		["tuck", {"leg_f_upper": -40.0, "leg_f_lower": 60.0, "leg_b_upper": -20.0, "leg_b_lower": 40.0, "torso": 6.0,
+			"head": 14.0, "hip_y": 0.0}]],
 	"climb": [["start", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hand_f": -30.0, "hand_b": -30.0, "arm_f_upper": -165.0, "arm_f_lower": 0.0, "arm_b_upper": -150.0, "arm_b_lower": 0.0,
 			"leg_f_upper": -20.0, "leg_f_lower": 30.0, "hip_y": 0.0}],
 		["climb_mid", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "hand_f": 60.0, "hand_b": 60.0, "arm_f_upper": -60.0, "arm_f_lower": -30.0, "arm_b_upper": -40.0, "arm_b_lower": -30.0,
@@ -316,10 +336,18 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 			match state:
 				"land": return tune["land_ticks"]
 				"to_walk", "to_fight": return tune["stance_switch_ticks"]
+				"jump_squat": return tune["jump_squat_ticks"]
 				"climb": return tune["climb_ticks"]
 			return Moves.length(state, tune)
 		"climb_mid":
 			return tune["climb_ticks"] / 2
+		# a jump's flight, at the same fractions of the air time as the recording (CMU 16_05)
+		"rise":
+			return int(tune["jump_air_ticks"] * 0.22)
+		"peak":
+			return int(tune["jump_air_ticks"] * 0.5)
+		"fall":
+			return int(tune["jump_air_ticks"] * 0.82)
 	var d := Moves.data(state, tune)
 	match name:
 		"windup":
@@ -333,8 +361,10 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 			return d["startup"] + d["active"] - 1
 		"follow":
 			return d["startup"] + d["active"] - 1 + maxi(2, int(d["recovery"] * 0.35))
+		"recoil":
+			return d["startup"] + d["active"] - 1 + 5  # after a flying kick the leg folds back to its chamber
 		"tuck":
-			return d["startup"] + d["active"] - 1 + 6  # after a flying kick, the knee pulls back in for the landing
+			return d["startup"] + d["active"] - 1 + 12  # then the legs come under him for the landing
 	return 0
 
 
@@ -383,12 +413,16 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 					pose.merge(_walk_feet(t, tune), true)
 					if t < WALK_EASE_IN:
 						pose = blend(full({"feet": 1.0}), pose, float(t) / WALK_EASE_IN)  # from the guard, no jump
+				elif state == "idle":
+					# a fighter's light bounce on top of the slow weight rock: the knees give a few px twice a second
+					pose["hip_y"] = pose.get("hip_y", 0.0) + 3.0 * (0.5 - 0.5 * cos(TAU * float(t % 30) / 30.0))
+					pose["torso"] = pose.get("torso", 0.0) + 1.0 * sin(TAU * float(t % 30) / 30.0)
 				elif state == "stroll":
-					pose.merge(_gait(t, STROLL_CYCLE, STROLL_STEP, tune["walk_speed"], 10.0, 22.0), true)
+					pose.merge(_gait(t, STROLL_CYCLE, STROLL_STEP, tune["stroll_speed"], 24.0, 7.5, true), true)
 					if t < WALK_EASE_IN:
 						pose = blend(full(STAND), pose, float(t) / WALK_EASE_IN)
 				elif state == "run":
-					pose.merge(_gait(t, RUN_CYCLE, RUN_STEP, tune["run_speed"], 64.0, 38.0), true)
+					pose.merge(_gait(t, RUN_CYCLE, RUN_STEP, tune["run_speed"], 64.0, 38.0, true), true)
 					if t < WALK_EASE_IN:
 						pose = blend(full(STAND), pose, float(t) / WALK_EASE_IN)
 				return pose
@@ -429,7 +463,7 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 ## his weight (a sink of up to SINK px, deepest LAND_PEAK frames in) and he rises again by LAND_SETTLE frames, the feet
 ## staying where they landed. It runs on into the guard. since = frames since the touchdown, or -1 in the air.
 const REACH_HEIGHT := 48.0
-const LAND_REACH := {"leg_f_upper": -28.0, "leg_f_lower": 22.0, "leg_b_upper": 12.0, "leg_b_lower": 26.0}
+const LAND_REACH := {"leg_f_upper": -22.0, "leg_f_lower": 22.0, "leg_b_upper": -18.0, "leg_b_lower": 24.0}  # CMU 16_05 at touchdown
 const SINK := 14.0
 const LAND_PEAK := 4
 const LAND_SETTLE := 14
@@ -467,7 +501,7 @@ static func sink_at(since: int) -> float:
 ## stays planted, sliding back under the body at `speed`, so it holds its place on the street; the back foot is half a
 ## cycle behind, so the legs pass each other. The arms swing against the legs by `arm` degrees. In a run the swing
 ## is longer than the stance, so twice a cycle both feet are off the street, and the body lifts in that moment.
-static func _gait(t: int, cycle: int, step: int, speed: float, lift: float, arm: float) -> Dictionary:
+static func _gait(t: int, cycle: int, step: int, speed: float, lift: float, arm: float, heel_first := false) -> Dictionary:
 	var reach := speed * float(cycle - step) * 0.5
 	var out := {"feet": 1.0, "relaxed": 1.0, "rise_b": 0.0}
 	var airborne := 0
@@ -476,8 +510,9 @@ static func _gait(t: int, cycle: int, step: int, speed: float, lift: float, arm:
 		if u < step:
 			var k := float(u) / step
 			out["step_" + side] = lerpf(-reach, reach, k * k * (3.0 - 2.0 * k))
-			# running, the heel flicks up straight after the push-off (the lift comes early in the swing)
-			out["lift_" + side] = lift * sin(PI * (pow(k, 0.6) if lift > 40.0 else k))
+			# the heel lifts behind straight after the push-off (the lift comes early in the swing), as recorded walks
+			# and runs show; the toe then skims forward
+			out["lift_" + side] = lift * sin(PI * (pow(k, 0.55) if heel_first else k))
 			airborne += 1
 		else:
 			out["step_" + side] = reach - speed * float(u - step)

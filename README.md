@@ -75,4 +75,8 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 To everyone who made the side-scrolling brawlers of the arcades and the living room, and to the Godot community for
 an engine anyone can build with.
 
+The hero's movement is drawn by hand from measurements of recorded human motion: "The data used in this project was
+obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217." Thank you, Carnegie
+Mellon University. The recordings themselves are not part of this game or this repository.
+
 Made by Javier and Claude, a human and an AI building together.

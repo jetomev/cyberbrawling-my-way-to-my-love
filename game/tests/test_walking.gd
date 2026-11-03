@@ -24,7 +24,7 @@ func test_x_switches_between_the_fight_stance_and_the_walk_stance() -> void:
 	eq(f.state, "stand", "and stands easy")
 	run_for(f, 3, {"mx": 1.0})
 	eq(f.state, "stroll", "moving in the walk stance is an everyday walk")
-	check(is_equal_approx(f.vx, f.tune["walk_speed"]), "at the walking speed")
+	check(is_equal_approx(f.vx, f.tune["stroll_speed"]), "at an everyday walking speed")
 	f.step({"stance": true})
 	eq([f.stance, f.state], ["fight", "to_fight"], "X again: back to the fight stance")
 	run_for(f, f.tune["stance_switch_ticks"] + 1)
@@ -111,7 +111,7 @@ func test_standing_easy_strolling_and_running_look_it() -> void:
 
 func test_planted_feet_hold_their_place_walking_and_running() -> void:
 	var t := Tuning.fresh()
-	for gait in [["stroll", t["walk_speed"], Poses.STROLL_CYCLE], ["run", t["run_speed"], Poses.RUN_CYCLE]]:
+	for gait in [["stroll", t["stroll_speed"], Poses.STROLL_CYCLE], ["run", t["run_speed"], Poses.RUN_CYCLE]]:
 		var last := {}
 		for tt in range(Poses.WALK_EASE_IN + 1, Poses.WALK_EASE_IN + 2 * gait[2]):
 			var p := Poses.angles(gait[0], tt, t)

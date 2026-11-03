@@ -67,7 +67,9 @@ func test_flat_line_has_no_depth() -> void:
 func test_jump_reaches_its_height_and_lands_on_time() -> void:
 	var f = Fighter.new()
 	f.step({"jump": true})
-	eq(f.state, "jump", "jump starts on the press")
+	eq(f.state, "jump_squat", "the press starts a crouch")
+	run(f, NONE, f.tune["jump_squat_ticks"])
+	eq(f.state, "jump", "and after it he leaves the ground")
 	var apex := 0.0
 	var air := 1
 	while f.state == "jump" and air < 200:
@@ -96,7 +98,7 @@ func test_a_running_jump_carries_forward() -> void:
 	run(f, {"mx": 1.0}, 5)
 	var x0: float = f.x  # (jump_speed carries it)
 	f.step({"mx": 1.0, "jump": true})
-	while f.state == "jump":
+	while f.state in ["jump_squat", "jump"]:
 		f.step(NONE)
 	check(f.x - x0 > 100.0, "the jump carried the hero forward (%.0f px)" % (f.x - x0))
 

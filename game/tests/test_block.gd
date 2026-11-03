@@ -55,8 +55,9 @@ func test_attack_straight_out_of_the_guard() -> void:
 func test_no_block_in_the_air_and_a_held_block_waits_for_the_blow() -> void:
 	var f = Fighter.new()
 	f.step({"jump": true})
-	f.step({"block": true})
-	eq(f.state, "jump", "no guarding in the air")
+	for i in f.tune["jump_squat_ticks"] + 1:
+		f.step({"block": true})
+	eq(f.state, "jump", "no guarding in the air (nor in the crouch before it)")
 	var g = Fighter.new()
 	g.step({"kick": true})
 	g.step({"block": true})
