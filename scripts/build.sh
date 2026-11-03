@@ -44,6 +44,10 @@ fail() { echo "FAILED $*"; exit 1; }
   timeout 60 "$ROOT/scripts/capped.sh" godot --headless --path "$ROOT/game" -s res://tools/sweep_above.gd 2>/dev/null \
     | grep -E '^[0-9]+ |^hit' > "$OUT/sweep_above.txt" && python3 "$ROOT/scripts/sweep_above.py" "$OUT/sweep_above.txt" \
     "$OUT/frames/sweep-from-above.png" || fail "could not draw the sweep from above"
+  # the sweep's spin frame by frame with its whole circle in view (the testers, 02:29 on 0922751)
+  SWEEP="$(echo $MOMENTS | tr ' ' '\n' | grep '^sweep:' | head -n 1)"
+  [ -n "$SWEEP" ] && python3 "$ROOT/scripts/sweep_spin.py" "$REC/frames" "$OUT/marks.txt" "$OUT/sweep_above.txt" "$SWEEP" \
+    "$OUT/frames/sweep-spin.png" "$OUT/clips/sweep-spin.mp4" || fail "could not draw the sweep's spin with its circle"
   # the hero beside the recordings he was measured from (D-30); the recordings live outside the repo, so a machine
   # without them builds without these pictures and the note says so
   SBS="no"
@@ -98,6 +102,8 @@ PY
     echo "- \`frames/sweep-from-above.png\`: the sweep's foot path seen from above, a dot a frame (worked out from the pose's"
     echo "  spin and the foot's reach; the game draws only from the side). \`frames/NN-runkick.png\` and the runkick strips"
     echo "  and clips: the running flying kick whole, from the first running step to half a second after landing"
+    echo "- \`frames/sweep-spin.png\` and \`clips/sweep-spin.mp4\` / \`-half.mp4\`: the sweep's spin, every frame, the side view"
+    echo "  with the street held still beside the foot's whole circle from above, that frame's place on it lit"
     if [ "$SBS" = yes ]; then
       echo "- Side by side: \`reference/NN-<move>-side-by-side.png\` (jump, flying kick, walk, stance; power punch, cross, jab,"
       echo "  body kick, round kick, side kick: each seen along the way the blow goes), the hero (top) beside the"
