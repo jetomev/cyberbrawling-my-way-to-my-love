@@ -86,4 +86,9 @@ The jumping kicks' timing and shapes were also studied (only watched and measure
 Basics" by Atoomenergie, on Wikimedia Commons under CC BY-SA 3.0
 (https://commons.wikimedia.org/wiki/File:Wushu_Basics.ogv). Thank you.
 
+The roll's shape was studied (nothing copied) from references the assistant team gathered: Eadweard Muybridge's
+"Running somersault" and "Back somersault" plates from *Animal Locomotion* (1887, public domain), and the forward-roll
+photos "Mae ukemi.jpg" by Hoosic06 (CC BY-SA 3.0) and "Aikido falling forward mae ukemi.jpg" by Macchina23
+(CC BY-SA 4.0), both on Wikimedia Commons. Thank you.
+
 Made by Javier and Claude, a human and an AI building together.
