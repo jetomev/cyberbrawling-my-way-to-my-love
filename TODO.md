@@ -53,6 +53,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Builds off the shelf: ~/Documents/Cyberbrawling/builds/; one plain report a day on the shelf, cyberbrawling-report-YYYY-MM-DD.md (Javier 20:14)
 - [x] The testers' first joint session on a26ccd7: standing heel to the target (side and round kick; a drawing bug), the power punch loads low and wide, the round kick's waist rolls through, the elbow level at head height (D-27)
 - [x] W alone runs the way he faces, an arrow steers it (Javier played: "S and W don't work")
+- [x] Javier's play of a7c202b: a flying side kick (not the crane), a brisker walk (1.5 legs/s), a real run (0.6 s strides, 2.4 legs, runs tall) (D-30)
 - [ ] S: what it does is Javier's call (asked through the team); unmapped until then
 - [ ] Each day with work: write or rewrite that day's report on the shelf (the build says if it's missing)
 - [ ] From the recordings: the long fall after a flying kick from the car hangs stiff (D-30); "Wushu Basics" (Commons, CC BY-SA 3.0, studied 11-02): knees stay tucked high, arms spread wide, legs unfold only ~100 ms before touchdown
