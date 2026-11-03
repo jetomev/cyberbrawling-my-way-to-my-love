@@ -63,9 +63,10 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] The sweep on Z, drawn from the posture sheet (no recorded sweep exists in our libraries); first pass, the testers judge it
 - [x] Javier's final keys (21:56): A punch, S kick, D block, W run, X stance, Z sweep, C roll, Space jump; a guard holds them
 - [x] The evasion roll on C, the way the arrows point, from common technique; evades 70% of it
+- [x] The roll goes over the shoulder, chin tucked (the head had taken the street)
 - [ ] The roll from a recording: CMU 128_09 "Run Roll Underneath" found; download waits on Javier's own yes
 - [x] Every build: a frame sheet of every move (every frame, in order, timed), for the testers
-- [ ] The run's first two frames snap to standing (ease in from the stroll's legs)
+- [x] The run's first steps no longer snap: starting and stopping blend from the last drawn pose (was a 131 px jump)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
 - [ ] That enemy's own combos; the right hit or a perfect block interrupts them and can disarm him; a block takes less pain (solo)
