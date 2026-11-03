@@ -6,11 +6,13 @@ sticks, knives, swords — keep it, switch between what you've collected, and sa
 
 It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 
-> **Status: Stage 1, the feel in grey boxes (2026-11-01).** A grey hero built from cut-out parts on 21 bones (spine,
-> neck, shoulders, fists and open hands, feet that plant, toes) walks the
-> shallow street, jumps, punches, kicks and flying-kicks, and chains three-hit **combos** into finishers (jab, cross,
-> hook; front kick, body kick, spinning kick; and more); kicks smash crates; cars are climbed and jumped off; nothing
-> is ever walked through. A feel lab (F1) changes the feel while you play. No enemies yet, no art yet.
+> **Status: Stage 1, the feel in grey boxes (2026-11-02).** A grey hero built from cut-out parts on 21 bones (spine,
+> neck, shoulders, fists and open hands, feet that plant, toes) stands in a low fighting stance, shuffles, switches to
+> an everyday walk, runs, jumps, punches, kicks and flying-kicks, blocks, and chains three-hit **combos** into
+> finishers (jab, cross, power punch; low kick, body kick, side kick to the face; and more); kicks smash crates; cars
+> are climbed and jumped off; nothing is ever walked through. The jump, the flying kick, the walk and the guard are
+> drawn from measurements of recorded human motion; the punches and kicks are next. A feel lab (F1) changes the feel
+> while you play. No enemies yet, no art yet.
 > First level playable: mid-December 2026. Whole game: by 21 March 2027 at the latest. It ships with **KognogOS 1.0** (April 2027).
 
 | | |
@@ -53,7 +55,8 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
   A jump, hold Y or RB to block, hold LB to run, click the left stick to switch stance). **F1 opens the feel lab**: change walk and run speed, jump, punch and kick timing and more
   while you play; F8 saves your changes for next time. `scripts/record.sh` records the scripted demo to a contact
   sheet and a clip.
-- `scripts/build.sh` is a build: the tests, the recorded demo, a still of every move, and a note, handed to the
+- `scripts/build.sh` is a build: the tests, the recorded demo, stills, close-ups and timed strips of every move,
+  moving clips at full and half speed, the hero side by side with the recorded motion, and a note, handed to the
   reviewers first.
 - `TODO.md` — the live list.
 - `docs/schedule.json` — the timeline: every task's dates and the gates where Javier plays it; `scripts/gantt.py`
