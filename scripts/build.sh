@@ -40,6 +40,10 @@ fail() { echo "FAILED $*"; exit 1; }
   [ -n "$MOMENTS" ] || fail "no moves found in the demo"
   python3 "$ROOT/scripts/closeups.py" "$REC/frames" "$OUT/marks.txt" "$OUT" $MOMENTS || fail "could not cut the stills"
   echo "$(echo $MOMENTS | wc -w) moves: $(echo $MOMENTS | sed 's/:[0-9:]*//g')"
+  # the sweep from above (the testers, 2026-11-02 23:29: its circle can't show from the side)
+  timeout 60 "$ROOT/scripts/capped.sh" godot --headless --path "$ROOT/game" -s res://tools/sweep_above.gd 2>/dev/null \
+    | grep -E '^[0-9]+ |^hit' > "$OUT/sweep_above.txt" && python3 "$ROOT/scripts/sweep_above.py" "$OUT/sweep_above.txt" \
+    "$OUT/frames/sweep-from-above.png" || fail "could not draw the sweep from above"
   # the hero beside the recordings he was measured from (D-30); the recordings live outside the repo, so a machine
   # without them builds without these pictures and the note says so
   SBS="no"
@@ -66,6 +70,9 @@ fail() { echo "FAILED $*"; exit 1; }
     echo "  the hit, or from the first frame of a walk or run cycle; half speed is the same frames), and beside each"
     echo "  \`frames/NN-move-street.png\` and \`clips/NN-move-street.mp4\` / \`-street-half.mp4\`: the same with the street held"
     echo "  still (the game's camera follows him; the build undoes its panning), so his travel along the street shows"
+    echo "- \`frames/sweep-from-above.png\`: the sweep's foot path seen from above, a dot a frame (worked out from the pose's"
+    echo "  spin and the foot's reach; the game draws only from the side). \`frames/NN-runkick.png\` and the runkick strips"
+    echo "  and clips: the running flying kick whole, from the first running step to half a second after landing"
     if [ "$SBS" = yes ]; then
       echo "- Side by side: \`reference/NN-<move>-side-by-side.png\` (jump, flying kick, walk, stance; power punch, cross, jab,"
       echo "  body kick, round kick, side kick: each seen along the way the blow goes), the hero (top) beside the"
