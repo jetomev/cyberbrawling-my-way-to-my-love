@@ -49,6 +49,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Javier: the arrow keys move the hero (2026-11-02 19:09) (D-29)
 - [x] Recorded motion, reference only: CMU takes outside the repo, scripts/mocap_ref.py, the README credit (D-30)
 - [x] From the recordings: the jump (a crouch first, extension, legs swinging forward), the flying kick (the front kick's shape), the everyday walk (real cadence), a live guard (solo) (D-30)
+- [x] Side by side in every build: the hero beside the recording, same moments, same leg length, for the jump, flying kick, walk and stance (the testers' ask) (D-30)
 - [ ] From the recordings: the long fall after a flying kick from the car hangs stiff (D-30)
 - [ ] From the recordings: the punches and kicks (CMU 135: front, round, side kick, lunge punch) (D-30)
 - [ ] The run's first two frames snap to standing (ease in from the stroll's legs)
