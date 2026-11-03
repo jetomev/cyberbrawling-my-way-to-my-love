@@ -60,7 +60,7 @@ func _ready() -> void:
 	var at := args.find("--marks")
 	if demo and at >= 0 and at + 1 < args.size():
 		marks = FileAccess.open(args[at + 1], FileAccess.WRITE)
-		marks.store_line("# frame tick then x y in the 1920x1080 game for: hip hand_f hand_b foot_f foot_b head(top)")
+		marks.store_line("# frame tick then x y in the 1920x1080 game for: hip hand_f hand_b foot_f foot_b head(top) street(0,0)")
 		RenderingServer.frame_pre_draw.connect(_mark)
 
 
@@ -88,6 +88,10 @@ func _mark() -> void:
 	for p in hero_view.points().values():
 		var s: Vector2 = to_screen * p
 		line += " %d %d" % [roundi(s.x), roundi(s.y)]
+	# and where a fixed spot of the street (the world's origin) is on screen: the camera follows the hero, so this is
+	# how the build holds the street still in its pictures and shows his travel (the testers, 2026-11-02 22:33)
+	var street: Vector2 = get_viewport().get_canvas_transform() * Vector2.ZERO
+	line += " %d %d" % [roundi(street.x), roundi(street.y)]
 	marks.store_line(line)
 	marks.flush()
 	frame += 1

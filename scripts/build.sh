@@ -63,7 +63,9 @@ fail() { echo "FAILED $*"; exit 1; }
     echo "  \`strips/NN-<walk|stroll|run|to_walk|to_fight>-cycle-frames-N.png\` (every frame of the walking, running and stance switches),"
     echo "  \`clips/NN-move.mp4\` and \`clips/NN-move-half.mp4\` (each move moving, close up, at full speed and at half speed),"
     echo "  \`frames/NN-move.png\` (every frame of that clip, in order, 60 a second, ten to a row, each with its time from"
-    echo "  the hit, or from the first frame of a walk or run cycle; half speed is the same frames)"
+    echo "  the hit, or from the first frame of a walk or run cycle; half speed is the same frames), and beside each"
+    echo "  \`frames/NN-move-street.png\` and \`clips/NN-move-street.mp4\` / \`-street-half.mp4\`: the same with the street held"
+    echo "  still (the game's camera follows him; the build undoes its panning), so his travel along the street shows"
     if [ "$SBS" = yes ]; then
       echo "- Side by side: \`reference/NN-<move>-side-by-side.png\` (jump, flying kick, walk, stance; power punch, cross, jab,"
       echo "  body kick, round kick, side kick: each seen along the way the blow goes), the hero (top) beside the"

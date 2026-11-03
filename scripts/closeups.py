@@ -22,6 +22,10 @@ game's pixels; the movie can be smaller) this cuts, for each move:
 - frames/NN-<move>.png: every frame of that clip, in order, at the game's 60 frames a second, ten to a row, each with
   its time (from the hit; a walk or run cycle, from its first frame), on the clip's own fixed framing (the testers read
   pictures only; until 2026-11-02 they cut these by hand from the clips, and a cropping slip showed how that goes).
+- frames/NN-<move>-street.png and clips/NN-<move>-street.mp4 (and -street-half.mp4): the same frames with the STREET
+  held still instead of the hero: the game's camera follows him, so the build undoes its panning (each marks line
+  ends with where the street's origin is on screen) and crops a box as wide as his whole travel. His travel along the
+  street shows (the testers, 2026-11-02 22:33: "keep the camera fixed on the street").
 
 Usage: scripts/closeups.py <frames dir> <marks file> <out dir> move:land:start:end [...]
 Prints an OK line with the counts.
@@ -54,6 +58,8 @@ def read_marks(path):
             continue
         n = [int(v) for v in line.split()]
         marks[n[0]] = {p: (n[2 + 2 * i], n[3 + 2 * i]) for i, p in enumerate(PARTS)}
+        if len(n) >= 4 + 2 * len(PARTS):
+            marks[n[0]]["street"] = (n[2 + 2 * len(PARTS)], n[3 + 2 * len(PARTS)])
     return marks
 
 
@@ -146,6 +152,54 @@ def frame_sheet(frames, start, end, zero, label, path, at, k, u, w, h):
     return len(span)
 
 
+STREET_TILE_H = 240  # a street-fixed sheet's tile height (its width follows the travel)
+
+
+def street_fixed(frames, start, end, zero, label, sheet_path, clip_path, marks, k, u):
+    """The clip's frames with the street held still: each crop moves with the camera's pan, the box as wide as the
+    whole travel. A sheet (every frame, timed) and clips at full and half speed. Returns False without street marks."""
+    from PIL import Image, ImageDraw
+    span = [f for f in range(start - CLIP_PAD, end + CLIP_PAD + 1) if (frames / f"f{f:08d}.png").exists()]
+    if not all("street" in marks.get(f, {}) for f in span):
+        return False
+    sx0 = marks[span[0]]["street"][0] * k
+    world = [(x * k - (marks[f]["street"][0] * k - sx0), y * k) for f in span for n, (x, y) in marks[f].items() if n in PARTS]
+    pad = 0.7 * u
+    x0, x1 = min(p[0] for p in world) - pad, max(p[0] for p in world) + pad
+    y0, y1 = min(p[1] for p in world) - pad, max(p[1] for p in world) + pad
+    if y1 - y0 < 2.8 * u:
+        y0, y1 = (y0 + y1) / 2 - 1.4 * u, (y0 + y1) / 2 + 1.4 * u
+    bw, bh = int(x1 - x0), int(y1 - y0)
+    tw = max(1, round(bw * STREET_TILE_H / bh))
+    cols = max(1, min(10, 2400 // (tw + 2)))
+    rows = -(-len(span) // cols)
+    sheet = Image.new("RGB", (cols * (tw + 2), rows * (STREET_TILE_H + 2)), (22, 22, 28))
+    tmp = clip_path.parent / f".street-{clip_path.stem}"
+    tmp.mkdir(exist_ok=True)
+    for i, f in enumerate(span):
+        dx = marks[f]["street"][0] * k - sx0
+        img = Image.open(frames / f"f{f:08d}.png").convert("RGB")
+        tile = img.crop((int(x0 + dx), int(y0), int(x0 + dx) + bw, int(y0) + bh)).resize((tw, STREET_TILE_H))
+        d = ImageDraw.Draw(tile)
+        ms = int((f - zero) * 1000 / 60)
+        d.rectangle([0, 0, 150, 20], fill=(0, 0, 0))
+        d.text((4, 4), f"{label} {ms} ms", fill=(255, 255, 255))
+        sheet.paste(tile, ((i % cols) * (tw + 2), (i // cols) * (STREET_TILE_H + 2)))
+        big = img.crop((int(x0 + dx), int(y0), int(x0 + dx) + bw, int(y0) + bh))
+        big = big.resize((max(2, round(bw * CLIP_SIZE / bh)) // 2 * 2, CLIP_SIZE))
+        big.save(tmp / f"f{i:05d}.png")
+    sheet.save(sheet_path)
+    for speed, suffix in [(1, ""), (2, "-half")]:
+        vf = (f"setpts={speed}*PTS," if speed > 1 else "") + "format=yuv420p"
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-framerate", "60", "-i", str(tmp / "f%05d.png"),
+                        "-vf", vf, "-r", "60", "-c:v", "libx264",
+                        str(clip_path.with_name(clip_path.stem + suffix + ".mp4"))], check=True)
+    for png in tmp.glob("f*.png"):
+        png.unlink()
+    tmp.rmdir()
+    return True
+
+
 def clip(frames, start, end, label, path, at, k, u, w, h):
     """The move at full speed and at half speed, on one fixed frame that holds the whole body throughout."""
     span = [f for f in range(start - CLIP_PAD, end + CLIP_PAD + 1) if (frames / f"f{f:08d}.png").exists()]
@@ -180,6 +234,7 @@ def main():
 
     rows, strips, tiles = [], [], []
     sheets = 0
+    streets = 0
     for n, (move, land, start, end) in enumerate(moves):
         w, h = png_size(still(land))
         k = w / GAME_W
@@ -200,6 +255,10 @@ def main():
         sheets += 1
         frame_sheet(frames, start, end, start if "-cycle" in move else land, label,
                     out / "frames" / f"{n:02d}-{label}.png", at, k, u, w, h)
+        if street_fixed(frames, start, end, start if "-cycle" in move else land, label,
+                        out / "frames" / f"{n:02d}-{label}-street.png", out / "clips" / f"{n:02d}-{label}-street.mp4",
+                        marks, k, u):
+            streets += 1
         if move == "landing" or move.endswith("-frames"):
             # every frame of a window: the landing, or any "<move>-frames:<hit>:<start>:<end>" asked for by hand
             frames_all = list(range(start, end + 1))
@@ -226,7 +285,7 @@ def main():
         lines.append(line)
     stack(lines, "vstack", out / "moves.png")
     print(f"OK {len(moves)} moves: moves.png, {len(rows)} close-up rows, {len(strips)} timed strips "
-          f"(every {STEP} frames = {round(STEP * 1000 / 60)} ms, and every frame around each hit), {sheets} frame sheets")
+          f"(every {STEP} frames = {round(STEP * 1000 / 60)} ms, and every frame around each hit), {sheets} frame sheets, {streets} street-fixed")
 
 
 if __name__ == "__main__":
