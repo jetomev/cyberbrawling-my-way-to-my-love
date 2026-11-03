@@ -79,8 +79,9 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] The roll: four frames between the hand and the back where the tucked head holds him a few px up
 - [x] The testers' session on 46be0b9 (01:56): power punch load, roll's shoulder support and head clearance, the full sweep drawing all PASS; nothing sent back
 - [x] The testers' session at 02:29: the sweep turns on a planted forefoot, hips carried over it (bfe0316); sweep reach 195 (was 120), Javier to judge in play; the spin frame by frame with its circle (sweep-spin)
+- [x] The testers' session at 04:00: the sweep PASSES (planted pivot foot, broad body, long sweeping leg, the full circle drawn); nothing sent back; everything judgeable from pictures has now passed
 - [ ] Still jumping in the frame a spin flips: the sweep's long leg, head and hands (kept long and broad as asked); the spinning kick's pivot foot (not on the hero's keys)
-- [ ] Still unjudged by the testers: the roll's shoulder support, natural pace, smoothness at either speed, whole moves, play
+- [ ] Waits for Javier's own play (pictures can't show it): smooth movement and natural pace at full and half speed, whole moves, the sweep's circle moving, the spinning kick, the sweep's reach 195
 - [x] The run's first steps no longer snap: starting and stopping blend from the last drawn pose (was a 131 px jump)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
