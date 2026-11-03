@@ -235,7 +235,9 @@ func test_the_roundhouse_and_the_spin_kick_land_differently() -> void:
 	var t := Tuning.fresh()
 	var r := Poses.angles("roundhouse", Moves.data("roundhouse", t)["startup"], t)
 	var s := Poses.angles("spin_kick", Moves.data("spin_kick", t)["startup"], t)
-	check(r["leg_b_lower"] > 30.0, "the roundhouse lands with the knee still bent, sweeping through (%.0f)" % r["leg_b_lower"])
+	# the knee bent while it sweeps round, then (recorded, CMU 135_07: within 13 degrees) straight at the hit
+	var sw := Poses.angles("roundhouse", Poses.moment("roundhouse", "sweep", t), t)
+	check(sw["leg_b_lower"] > 30.0, "the roundhouse sweeps round with the knee still bent (%.0f)" % sw["leg_b_lower"])
 	check(s["leg_f_lower"] < 10.0, "the spin kick lands with the leg straight (%.0f)" % s["leg_f_lower"])
 	check(r["turn"] >= 150.0, "the roundhouse's waist and shoulders are turned over, his back to us (%.0f)" % r["turn"])
 	check(fmod(s["spin"], 360.0) == 0.0 and s["turn"] == 0.0, "the spin kick lands facing front")

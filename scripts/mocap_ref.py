@@ -11,6 +11,7 @@ scratch/ (git-ignored).
   scripts/mocap_ref.py strip   <take> <from_s> <to_s> <step_ms> [--out file.png]   a stick figure every step_ms
   scripts/mocap_ref.py measure <take> <from_s> <to_s> <step_ms>                    angles and heights, our rig's terms
   scripts/mocap_ref.py events  <take>                                               feet off and on the ground, the peak
+  scripts/mocap_ref.py strikes <take> <hand|foot>                                   every punch or kick: timing, shape
 
 <take> is e.g. 16_05 (the subject's .asf is found beside it). Seen from the side, facing right: x forward, y up.
 """
@@ -282,12 +283,101 @@ def cmd_events(take):
     print(f"  hips highest at {top / FPS * 1000.0:.0f} ms ({hip[top]:.1f}), lowest at {low / FPS * 1000.0:.0f} ms ({hip[low]:.1f})")
 
 
+def _flat(v):
+    return (v[0], v[2])
+
+
+def strikes(skel, frames, limb):
+    """Every strike with the hands ("hand") or the feet ("foot") in a take. Each is seen along the way the blow goes
+    (a side kick goes out sideways to the hips, so a plain side view would hide it): x toward the target, y up.
+    Returns a list of dicts: the start, the full extension and the return (frame numbers), and the measurements."""
+    poses = [pose(skel, f) for f in frames]
+    floor = min(min(q["ltoes"][1], q["rtoes"][1]) for q in poses)
+    ends = {"hand": ("lwrist", "rwrist"), "foot": ("ltoes", "rtoes")}[limb]
+    out = []
+    for end in ends:
+        side = end[0]
+        other = "r" if side == "l" else "l"
+        dist = [math.dist(_flat(q[end]), _flat(q["root"])) for q in poses]
+        rest = sorted(dist)[len(dist) // 4]  # a quiet reach: most of the time the limb is home
+        top = max(dist)
+        if top - rest < 6.0:
+            continue
+        i = 1
+        while i < len(dist) - 1:
+            if dist[i] > rest + 0.6 * (top - rest) and dist[i] >= dist[i - 1] and dist[i] >= dist[i + 1]:
+                peak = max(range(i, min(len(dist), i + 30)), key=lambda k: dist[k])
+                lo = rest + 0.1 * (dist[peak] - rest)
+                a = peak
+                while a > 0 and dist[a] > lo:
+                    a -= 1
+                b = peak
+                while b < len(dist) - 1 and dist[b] > lo:
+                    b += 1
+                hold = [k for k in range(a, b + 1) if dist[k] >= dist[peak] - 0.05 * (dist[peak] - rest)]
+                q = poses[peak]
+                ax = (_flat(q[end])[0] - _flat(q["root"])[0], _flat(q[end])[1] - _flat(q["root"])[1])
+                n = math.hypot(*ax)
+                ux, uz = ax[0] / n, ax[1] / n
+
+                def at(k, j):
+                    v = poses[k][j]
+                    return ((v[0] - poses[a]["root"][0]) * ux + (v[2] - poses[a]["root"][2]) * uz, v[1] - floor)
+
+                def yaw(k, s2):
+                    f = poses[k][s2 + "foot"]
+                    t = poses[k][s2 + "toes"]
+                    d = (t[0] - f[0], t[2] - f[2])
+                    return math.degrees(math.acos(max(-1.0, min(1.0, (d[0] * ux + d[1] * uz) / max(math.hypot(*d), 1e-6)))))
+
+                m = {"end": end, "start": a, "peak": peak, "back": b,
+                     "out_ms": (peak - a) / FPS * 1000.0, "held_ms": (hold[-1] - hold[0]) / FPS * 1000.0,
+                     "in_ms": (b - peak) / FPS * 1000.0,
+                     "reach": dist[peak] - rest, "height": at(peak, end)[1] - at(peak, "root")[1],
+                     "lean": angle(at(peak, "root"), at(peak, "thorax")) + 90.0,
+                     "hips_moved": at(peak, "root")[0] - at(a, "root")[0]}
+                if limb == "foot":
+                    # from the kicking leg's hip joint (the game's "hip" is the hip joint, not the middle of the pelvis)
+                    m["height"] = at(peak, end)[1] - at(peak, side + "hipjoint")[1]
+                    m["chamber"] = max(at(k, side + "femur")[1] - at(k, side + "hipjoint")[1] for k in range(a, peak + 1))
+                    m["thigh_up"] = max(-angle(at(k, side + "hipjoint"), at(k, side + "femur")) if at(k, side + "femur")[0] > at(k, side + "hipjoint")[0] else -90.0 for k in range(a, peak + 1))
+                    m["knee_at_hit"] = bend(at(peak, side + "hipjoint"), at(peak, side + "femur"), at(peak, side + "tibia"))
+                    m["stand_knee"] = bend(at(peak, other + "hipjoint"), at(peak, other + "femur"), at(peak, other + "tibia"))
+                    m["stand_toe_start"] = yaw(a, other)
+                    m["stand_toe_hit"] = yaw(peak, other)
+                    m["chamber_ms"] = (max(range(a, peak + 1), key=lambda k: at(k, side + "femur")[1]) - a) / FPS * 1000.0
+                else:
+                    m["elbow_at_hit"] = bend(at(peak, side + "clavicle"), at(peak, side + "humerus"), at(peak, side + "radius"))
+                    m["spare_hand"] = at(peak, other + "wrist")[1] - at(peak, "lowerneck")[1]
+                    m["front_step"] = max(at(peak, "ltibia")[0], at(peak, "rtibia")[0]) - max(at(a, "ltibia")[0], at(a, "rtibia")[0])
+                out.append(m)
+                i = b + 1
+            else:
+                i += 1
+    return sorted(out, key=lambda m: m["peak"])
+
+
+def cmd_strikes(take, limb):
+    skel, frames = load(take)
+    found = strikes(skel, frames, limb)
+    leg = None
+    s0 = pose(skel, frames[0])
+    leg = math.dist(s0["lhipjoint"], s0["lfemur"]) + math.dist(s0["lfemur"], s0["ltibia"])
+    print(f"{take}, {limb} strikes: {len(found)} (leg {leg:.1f}; lengths below are in legs)")
+    for m in found:
+        extra = " ".join(f"{k} {v / leg if k in ('reach', 'height', 'chamber', 'hips_moved', 'spare_hand', 'front_step') else v:.2f}"
+                         if isinstance(v, float) else f"{k} {v}" for k, v in m.items() if k not in ("start", "peak", "back"))
+        print(f"  {m['start'] / FPS:6.2f}s  {extra}")
+
+
 def main():
     if len(sys.argv) < 3:
         sys.exit(__doc__)
     cmd, take = sys.argv[1], sys.argv[2]
     if cmd == "events":
         return cmd_events(take)
+    if cmd == "strikes":
+        return cmd_strikes(take, sys.argv[3])
     a, b, step = float(sys.argv[3]), float(sys.argv[4]), float(sys.argv[5])
     if cmd == "strip":
         out = sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else f"scratch/ref-{take}.png"

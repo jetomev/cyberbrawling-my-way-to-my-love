@@ -69,7 +69,8 @@ func test_the_back_bends_into_kicks() -> void:
 		var b := Poses.bake(Poses.angles(m, Moves.data(m, t)["startup"], t), true)
 		check(b["hip"] < -5.0, "%s: the pelvis tips back (%.0f)" % [m, b["hip"]])
 		var chest: float = rad_to_deg(Poses._end("chest", b)[1])
-		check(chest < -95.0 + 0.0 or chest > -60.0, "%s: the chest leans away from upright (%.0f)" % [m, chest])
+		# (forward: the recorded front kick leans 10-14 degrees into it, CMU 135_04; back: at least 5)
+		check(chest < -95.0 or chest > -78.0, "%s: the chest leans away from upright (%.0f)" % [m, chest])
 
 
 func test_a_raised_leg_keeps_its_aim() -> void:

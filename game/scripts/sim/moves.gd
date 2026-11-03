@@ -41,8 +41,9 @@ const TABLE := {
 		"effect": "", "limb": "foot_b"},
 	"spin_kick": {"startup": 10, "active": 5, "recovery": 18, "reach": 90.0, "low": 120.0, "high": 260.0, "damage": 3,
 		"effect": "knockdown", "limb": "foot_f"},
-	# K, K, K: the side kick to the face, heel first, the whole body on the standing foot (slower: about 0.7 s)
-	"side_kick": {"startup": 14, "active": 4, "recovery": 24, "reach": 130.0, "low": 170.0, "high": 280.0, "damage": 3,
+	# K, K, K: the side kick to the face, heel first, the whole body on the standing foot (slower: about 0.7 s in all,
+	# out in 167 ms as recorded, CMU 135_11: 150-190)
+	"side_kick": {"startup": 10, "active": 4, "recovery": 28, "reach": 130.0, "low": 170.0, "high": 280.0, "damage": 3,
 		"effect": "knockdown", "limb": "foot_f"},
 	"elbow": {"startup": 4, "active": 3, "recovery": 10, "reach": 80.0, "low": 140.0, "high": 230.0, "damage": 2,
 		"effect": "", "limb": "arm_f_upper"},

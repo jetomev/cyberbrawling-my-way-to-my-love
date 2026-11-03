@@ -121,3 +121,50 @@ func test_the_guard_is_alive() -> void:
 		lo = minf(lo, y)
 		hi = maxf(hi, y)
 	check(hi - lo >= 2.0, "within half a second the knees give and come back (%.1f px)" % (hi - lo))
+
+
+static func _thigh_up(b: Dictionary, side: String) -> float:
+	# degrees above level, the thigh pointing forward (our rig: 0 = forward, -90 = straight up)
+	return -rad_to_deg(Poses._end("leg_%s_upper" % side, b)[1])
+
+
+func test_the_kicks_as_recorded() -> void:
+	# CMU 135 (reference only), measured along the way each kick goes (scripts/mocap_ref.py strikes <take> foot), from
+	# the kicking leg's hip joint, in leg lengths (thigh + shin). Where the posture sheet says otherwise it wins (the
+	# front kick's lean back a touch at the hit; the round kick's full heel turn, which the testers asked for).
+	var t := Tuning.fresh()
+	var leg: float = Poses.BONES["leg_f_upper"][3] + Poses.BONES["leg_f_lower"][3]
+	# the round kick (135_07, four kicks): about 180 ms out; the thigh chambered 23-30 degrees up; at the hit the leg
+	# straight (under 13), the foot 0.44 legs above the hip, the body upright (within 4), the standing leg straight
+	var rd := Moves.data("roundhouse", t)
+	var ms: float = rd["startup"] * 1000.0 / 60.0
+	check(ms >= 150.0 and ms <= 220.0, "round kick: %.0f ms out (recorded ~180)" % ms)
+	var up := -INF
+	for tick in range(0, rd["startup"]):
+		up = maxf(up, _thigh_up(Poses.bake(Poses.angles("roundhouse", tick, t), true), "b"))
+	check(up >= 20.0, "round kick: the knee chambered high first (thigh %.0f degrees up)" % up)
+	var r := Poses.bake(Poses.angles("roundhouse", rd["startup"], t), true)
+	check(absf(r["leg_b_lower"]) <= 15.0, "round kick: the leg straight at the hit (knee %.0f)" % absf(r["leg_b_lower"]))
+	var h: float = ((Poses._end("hip", r)[0] as Vector2).y - (Poses._end("leg_b_lower", r)[0] as Vector2).y) / leg
+	check(h >= 0.35, "round kick: the foot high, %.2f legs above the hip (recorded 0.44)" % h)
+	check(absf(Poses.angles("roundhouse", rd["startup"], t)["torso"]) <= 10.0, "round kick: upright at the hit (%.0f)" % Poses.angles("roundhouse", rd["startup"], t)["torso"])
+	check(absf(r["leg_f_lower"]) <= 15.0, "round kick: the standing leg straight (knee %.0f)" % absf(r["leg_f_lower"]))
+	# the front snap kick (135_04, three kicks): about 110-130 ms out; at the hit the thigh 36-48 degrees up and the
+	# knee still bent 40-68 (it snaps), the foot 0.3-0.4 legs above the hip; the body kick leans forward 10-14
+	for pair in [["body_kick", "b"], ["front_kick", "f"]]:
+		var d := Moves.data(pair[0], t)
+		var b := Poses.bake(Poses.angles(pair[0], d["startup"], t), true)
+		var thigh := _thigh_up(b, pair[1])
+		check(thigh >= 30.0, "%s: the thigh well up at the hit (%.0f degrees)" % [pair[0], thigh])
+		var knee: float = absf(b["leg_%s_lower" % pair[1]])
+		check(knee >= 25.0 and knee <= 70.0, "%s: the knee still bent as it snaps (%.0f)" % [pair[0], knee])
+		var fh: float = ((Poses._end("hip", b)[0] as Vector2).y - (Poses._end("leg_%s_lower" % pair[1], b)[0] as Vector2).y) / leg
+		check(fh >= 0.25 and fh <= 0.55, "%s: the foot %.2f legs above the hip (recorded 0.3-0.4)" % [pair[0], fh])
+	check(Poses.angles("body_kick", Moves.data("body_kick", t)["startup"], t)["torso"] >= 0.0, "the body kick doesn't lean back")
+	# the side kick (135_11, seven kicks): 150-190 ms out, the leg straight, the standing leg straight, leaning away
+	var sd := Moves.data("side_kick", t)
+	ms = sd["startup"] * 1000.0 / 60.0
+	check(ms >= 150.0 and ms <= 200.0, "side kick: %.0f ms out (recorded 150-190)" % ms)
+	var sk := Poses.bake(Poses.angles("side_kick", sd["startup"], t), true)
+	# (recorded within 8; the leg solver never locks a knee, so a straight standing leg draws at 10-15)
+	check(absf(sk["leg_b_lower"]) <= 15.0, "side kick: the standing leg straight (knee %.0f)" % absf(sk["leg_b_lower"]))
