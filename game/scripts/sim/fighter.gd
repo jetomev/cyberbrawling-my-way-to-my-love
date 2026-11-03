@@ -290,9 +290,10 @@ func _roll() -> void:
 			z = nz
 
 
-## True while a roll can't be hit (most of it; he comes up open).
+## True while a roll can't be hit: only while he is round, over the shoulder; in the dip and coming up he is open,
+## so a dodge has to be timed (the team's roll reference, 2026-11-02).
 func evading() -> bool:
-	return state == "roll" and t < int(tune["roll_ticks"] * tune["roll_evade"])
+	return state == "roll" and t >= int(tune["roll_ticks"] * tune["roll_evade_from"]) and t < int(tune["roll_ticks"] * tune["roll_evade_to"])
 
 
 ## "perfect" in a block's first perfect_block_ticks, "block" after that, "" when not blocking.

@@ -172,13 +172,17 @@ func test_z_sweeps() -> void:
 func test_c_rolls_the_way_the_arrows_point() -> void:
 	# Javier (21:56): "c for evation role (direction of the keys)". An evasion roll along the street the way the arrows
 	# point (forward if none), facing the threat the whole time; it evades for most of the roll, then he is open again.
-	var f = Fighter.new()
+	var f = Fighter.new(Tuning.fresh(), 1200.0)  # (room behind him: the street's left edge is near the start)
 	var x0: float = f.x
 	f.step({"roll": true, "mx": -1.0})
 	eq(f.state, "roll", "C: the roll")
-	check(f.evading(), "while rolling he can't be hit")
-	run_for(f, f.tune["roll_ticks"] - 4)
-	check(f.x < x0 - 100.0, "it goes the way the arrow points: back (%.0f px)" % (f.x - x0))
+	# the team's roll reference (2026-11-02): he can't be hit only while round (over the shoulder), not in the dip or
+	# coming up, so a dodge has to be timed
+	check(not f.evading(), "in the dip he can still be hit")
+	run_for(f, f.tune["roll_ticks"] / 2)
+	check(f.evading(), "round, over the shoulder, he can't be hit")
+	run_for(f, f.tune["roll_ticks"] / 2 - 4)
+	check(f.x < x0 - 250.0, "it goes the way the arrow points: back, more than a body length (%.0f px)" % (f.x - x0))
 	eq(f.facing, 1, "still facing the threat")
 	check(not f.evading(), "coming up out of it, he's open again")
 	run_for(f, 10)
@@ -187,7 +191,7 @@ func test_c_rolls_the_way_the_arrows_point() -> void:
 	var gx: float = g.x
 	g.step({"roll": true})
 	run_for(g, g.tune["roll_ticks"])
-	check(g.x > gx + 100.0, "no arrow: a forward roll (%.0f px)" % (g.x - gx))
+	check(g.x > gx + 250.0, "no arrow: a forward roll (%.0f px)" % (g.x - gx))
 	var h = Fighter.new()
 	var z0: float = h.z
 	h.step({"roll": true, "mz": 1.0})

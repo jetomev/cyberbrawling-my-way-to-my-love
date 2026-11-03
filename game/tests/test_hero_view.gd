@@ -264,3 +264,16 @@ func test_the_roll_goes_over_the_shoulder_not_the_head() -> void:
 		check(v.points()["head"].y <= -20.0, "roll@%d (turned %.0f): the head clear of the street (%.0f px)" % [tick, p["tumble"], -v.points()["head"].y])
 	check(seen >= 2, "the roll passes upside down (%d frames)" % seen)
 	v.free()
+
+
+func test_the_roll_dips_side_on_with_the_arm_guiding() -> void:
+	# the team's roll reference (judo and aikido forward rolls): in the dip he is side-on, chin tucked, the leading arm
+	# reaching forward and down, curved like a hoop, to guide him over the shoulder
+	var t := Tuning.fresh()
+	var p := Poses.angles("roll", Poses.moment("roll", "roll_down", t), t)
+	check(p["turn"] >= 40.0, "side-on in the dip (turned %.0f)" % p["turn"])
+	var b := Poses.bake(p, true)
+	var shoulder: Vector2 = Poses._end("shoulder_f", b)[0]
+	var hand: Vector2 = Poses._end("hand_f", b)[0]
+	check(hand.x > shoulder.x + 20.0 and hand.y > shoulder.y + 30.0, "the leading arm reaching forward and down (hand %.0f ahead, %.0f below the shoulder)" % [hand.x - shoulder.x, hand.y - shoulder.y])
+	check(absf(b["arm_f_lower"]) >= 15.0 and absf(b["arm_f_lower"]) <= 70.0, "curved like a hoop, not locked or folded (elbow %.0f)" % absf(b["arm_f_lower"]))
