@@ -105,6 +105,22 @@ fail() { echo "FAILED $*"; exit 1; }
     else
       echo "today's report for Javier NOT WRITTEN YET: $REPORT"
     fi
+    # the newest report's facts (between <!-- facts --> and <!-- /facts -->) come from the machine, never typed by hand
+    # (2026-11-02 night: three wrong numbers typed into the report in one evening)
+    NEWEST="$(ls "$SHELF"/cyberbrawling-report-*.md 2>/dev/null | sort | tail -n 1)"
+    if [ -n "$NEWEST" ] && grep -q '<!-- facts -->' "$NEWEST"; then
+      WAITING="$(git -C "$ROOT" rev-list --count origin/main..HEAD 2>/dev/null)"
+      FACTS="$(printf '%s\n' "- Newest build: \`~/Documents/Cyberbrawling/builds/$NAME/\`" \
+        "- Tests: $TESTS" "- Changes saved here and not on GitHub yet: $WAITING")"
+      python3 - "$NEWEST" "$FACTS" <<'PY' || fail "could not refresh the report's facts"
+import re, sys
+path, facts = sys.argv[1], sys.argv[2]
+text = open(path).read()
+new = re.sub(r"<!-- facts -->.*?<!-- /facts -->", lambda m: "<!-- facts -->\n" + facts + "\n<!-- /facts -->", text, flags=re.S)
+open(path, "w").write(new)
+PY
+      echo "facts refreshed in $NEWEST"
+    fi
   else
     echo "no shelf set (\$REVIEW_SHELF or .review-shelf): no daily report to check"
   fi
