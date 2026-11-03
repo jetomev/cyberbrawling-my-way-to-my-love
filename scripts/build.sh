@@ -77,6 +77,10 @@ fail() { echo "FAILED $*"; exit 1; }
       echo "- Side by side: not drawn (no reference recordings on this machine)"
     fi
     echo "- Moves in the demo: $(echo $MOMENTS | sed 's/:[0-9:]*//g')"
+    echo "- Drawn with no recording behind them: the sweep (Z, from the posture sheet; no recorded sweep exists in the"
+    echo "  libraries we use) and the roll (C, from common technique; CMU 128_09 \"Run Roll Underneath\" is the candidate,"
+    echo "  waiting on Javier's own yes to download). The low kick, knee, hook, uppercut, elbow and push kick have no"
+    echo "  recorded counterpart either; they follow the posture sheet."
     echo
     echo "## What changed since the last push"
     git -C "$ROOT" log --format='- %h %s' origin/main..HEAD 2>/dev/null
