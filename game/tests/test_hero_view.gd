@@ -108,10 +108,17 @@ func test_demo_shows_every_move() -> void:
 	var f = Fighter.new(Tuning.fresh(), 400.0, 80.0, w)
 	var seen := {}
 	var past_crate_two_on_ground := false
+	var roll_from := INF
+	var roll_went := 0.0
 	for i in Demo.length():
+		var was: String = f.state
 		f.step(Demo.input_at(i))
 		w.step_hits([f])
 		seen[f.state] = true
+		if f.state == "roll" and was != "roll" and roll_from == INF:
+			roll_from = f.x
+		if was == "roll" and f.state != "roll" and roll_went == 0.0:
+			roll_went = absf(f.x - roll_from)
 		if f.x > 2724.0 and f.y == 0.0 and f.state != "climb":
 			past_crate_two_on_ground = true
 	for s in STATES + ["cross", "power_punch", "push_kick", "body_kick", "side_kick", "knee", "uppercut", "elbow", "roundhouse", "hammer_fist", "sweep", "roll"]:
@@ -119,6 +126,7 @@ func test_demo_shows_every_move() -> void:
 	check(w.objects[0]["broken"], "it smashes the first crate")
 	check(not w.objects[2]["broken"] and past_crate_two_on_ground, "it jumps the second crate")
 	check(not w.objects[1]["broken"], "the car survives")
+	check(roll_went >= 100.0, "the demo's first roll travels along the street, not stuck on something (%.0f px)" % roll_went)
 	var presses := 0
 	var button_steps := 0
 	for st in Demo.STEPS:

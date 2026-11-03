@@ -5,7 +5,7 @@ extends RefCounted
 ## The route on the grey street (street_world.grey_street): smash the first crate with two kicks, walk on, climb the
 ## car, walk across its roof and flying-kick off the end, step down the street and jump the second crate, then the
 ## combos (moves.gd): jab-cross-power punch, jab-cross-push kick, low kick-body kick-side kick, jab-knee-uppercut, low kick-elbow-roundhouse, and a
-## hammer fist from a jump, a block, the sweep (Z), a roll back and a roll forward (C); then the walk stance: switching to it, an everyday walk, a run, and back.
+## hammer fist from a jump, a block, the sweep (Z), a roll forward and a roll back (C); then the walk stance: switching to it, an everyday walk, a run, and back.
 const STEPS := [
 	[30, {}],
 	[150, {"mx": 1.0}],
@@ -26,7 +26,8 @@ const STEPS := [
 	[1, {"jump": true}], [6, {}], [1, {"punch": true}], [50, {}],
 	[40, {"block": true}], [1, {"block": true, "punch": true}], [40, {}],
 	[1, {"sweep": true}], [75, {}],
-	[1, {"roll": true, "mx": -1.0}], [45, {}], [1, {"roll": true}], [45, {}],
+	# (forward first, into the open street: a roll back from here ran into the crate behind him and tumbled on the spot)
+	[1, {"roll": true}], [45, {}], [1, {"roll": true, "mx": -1.0}], [45, {}],
 	# then X to the walk stance, an everyday walk, a run (W held), and X back to the fight stance
 	[1, {"stance": true}], [16, {}], [66, {"mx": 1.0}], [22, {"mx": 1.0, "run": true}], [12, {}],
 	[1, {"stance": true}], [20, {}],
