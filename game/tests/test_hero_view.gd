@@ -310,27 +310,6 @@ func test_the_roll_goes_hand_then_back() -> void:
 	v.free()
 
 
-func test_the_sweep_turns_on_its_foot() -> void:
-	# the sweep turns on the front foot: that foot stays put through the whole turn (it jumped 96 px in one frame at
-	# each quarter turn, when the drawing flips round), and the sweeping foot comes round past the camera instead of
-	# jumping across (it jumped 222 px). Measured on the drawing, frame to frame
-	var t := Tuning.fresh()
-	var v = HeroView.new()
-	var prev = null
-	var pivot := 0.0
-	var sweeping := 0.0
-	for tick in Moves.length("sweep", t):
-		v.apply(Poses.angles("sweep", tick, t))
-		var q: Dictionary = v.points()
-		if prev != null:
-			pivot = maxf(pivot, (q["foot_f"] as Vector2).distance_to(prev["foot_f"]))
-			sweeping = maxf(sweeping, (q["foot_b"] as Vector2).distance_to(prev["foot_b"]))
-		prev = q
-	check(pivot <= 16.0, "the foot he turns on never jumps (%.0f px in a frame at most)" % pivot)
-	check(sweeping <= 70.0, "the sweeping foot comes round, never jumps across (%.0f px in a frame at most)" % sweeping)
-	v.free()
-
-
 func test_the_flying_kick_lands_into_a_balanced_guard() -> void:
 	# the testers' joint session on f744019 (23:29): the flying kick's landing is abrupt; it should absorb into a
 	# balanced guard. Through the touchdown no hand or foot jumps further in a frame than in a steady run, and the hips

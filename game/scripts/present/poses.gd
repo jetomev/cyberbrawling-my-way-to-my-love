@@ -40,8 +40,7 @@ extends RefCounted
 ##   kick lands staggered) instead of reaching together (a two-footed jump, as recorded);
 ## - "knees_out" (0 to 1) the back knee points back instead of forward: a horse stance, whose knees point out over
 ##   their own feet, seen from the front (the power punch's load). On the way the knee turns through pointing at the
-##   camera, where the leg shows straight;
-## - "spin_short_b" (0 or 1) the back leg, held out along a spin, draws shorter as it points at the camera (the sweep)
+##   camera, where the leg shows straight
 
 const Moves := preload("res://scripts/sim/moves.gd")
 
@@ -73,11 +72,11 @@ const BONES := {
 
 ## Keys a pose may hold besides bones: shared or automatic parts that bake() turns into bone angles.
 const SOFT_KEYS := ["hip_x", "hip_y", "hip_turn", "torso", "open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b",
-	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head", "relaxed", "tall", "tumble", "land_spread", "knees_out", "spin_short_b"]
+	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head", "relaxed", "tall", "tumble", "land_spread", "knees_out"]
 ## Keys that switch something on rather than bend it: a follow-through never carries them further.
 const SWITCH_KEYS := ["open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b",
 	"fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b",
-	"spin_head", "relaxed", "tall", "tumble", "land_spread", "knees_out", "spin_short_b"]
+	"spin_head", "relaxed", "tall", "tumble", "land_spread", "knees_out"]
 
 ## The whip (D-21): in a strike the hips move first and the fist or foot arrives last. Each key is read this many
 ## ticks ahead on the move's curve, so the hips lead, the spine follows, then the shoulder and the upper limb; the
@@ -97,7 +96,7 @@ const SHOULDER_LAG := {"roundhouse": 3}
 ## 50 ms before contact, as the testers asked, then drives all at once, the body two frames ahead of the fist.
 const LOAD_END := {"power_punch": 1}
 const FOOT_LENGTH := 24.0  # ankle to the ball of the foot
-const SQUAT_LEG := 66.0  # hip to ankle in a deep squat on one leg ("tall" -1: the sweep, the foot under the hips)
+const SQUAT_LEG := 72.0  # hip to ankle in a deep squat on one leg ("tall" -1)
 const KNEE_CLEAR := 15.0  # a swinging knee stays at least this far above the street
 const KNEE_STAND := 14.0  # a standing knee stays at least this far above its ankle (no kneeling)
 ## His shoulder width, outside to outside. The game draws him from the side, where it never shows, so it comes from
@@ -120,7 +119,7 @@ const GUARD := {
 	"leg_f_upper": -47.3, "leg_f_lower": 48.9, "leg_b_upper": 22.6, "leg_b_lower": 19.9, "hip_y": 0.0,
 	"open_f": 0.0, "open_b": 0.0, "hip_x": 0.0, "hip_turn": 0.0, "cover_f": 1.0, "cover_b": 1.0, "rise_f": 0.0,
 	"rise_b": 0.15, "spin": 0.0, "turn": 0.0, "pivot_f": 0.0, "pivot_b": 45.0, "fore_f": 0.0, "fore_b": 0.0,
-	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0, "relaxed": 0.0, "tall": 0.0, "tumble": 0.0, "land_spread": 0.0, "knees_out": 0.0, "spin_short_b": 0.0,
+	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0, "relaxed": 0.0, "tall": 0.0, "tumble": 0.0, "land_spread": 0.0, "knees_out": 0.0,
 }
 const HEAD_LEAD := 6  # on a spin the head looks round first: it reads the spin this many frames ahead
 ## Where the ankles stand in the guard, from the hip joint: the guard's legs are solved for these spots.
@@ -235,19 +234,17 @@ const SHOTS := {
 	# hands on or near the floor; the leg comes round to the ankles in front; finish the circle; rise to guard. The leg
 	# stays straight out behind him while the whole body turns once, so the foot goes all the way round (the testers,
 	# 00:57 on 66ce4c6: seen from above it cut through the middle and covered only part of the circle); it passes the
-	# enemy's ankles halfway round, his back to the enemy, the way a back sweep does. Sinking, he draws the front foot in
-	# under his hips and turns on it there (a one-legged squat over the support foot), so the drawing, which turns
-	# about the spot under him, turns about that foot: it stays put (it jumped 96 px in a frame at each quarter turn)
+	# enemy's ankles halfway round, his back to the enemy, the way a back sweep does
 	"sweep": [["start", {}],
-		["windup", {"spin_short_b": 1.0, "tall": -1.0, "hip_y": 36.0, "step_b": -75.0, "step_f": -44.0, "torso": 26.0, "head": -8.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+		["windup", {"tall": -1.0, "hip_y": 32.0, "step_b": -75.0, "step_f": 8.0, "torso": 26.0, "head": -8.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
 			"arm_f_upper": 30.0, "arm_f_lower": -20.0, "arm_b_upper": 20.0, "arm_b_lower": -20.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
-		["sweep", {"spin_short_b": 1.0, "step_f": -44.0, "spin": 120.0, "pivot_f": 120.0, "tall": -1.0, "hip_y": 38.0, "torso": 34.0, "head": -10.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+		["sweep", {"spin": 120.0, "pivot_f": 120.0, "tall": -1.0, "hip_y": 38.0, "torso": 34.0, "head": -10.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
 			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
-		["active", {"spin_short_b": 1.0, "step_f": -44.0, "spin": 180.0, "pivot_f": 180.0, "tall": -1.0, "hip_y": 38.0, "torso": 28.0, "head": -6.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+		["active", {"spin": 180.0, "pivot_f": 180.0, "tall": -1.0, "hip_y": 38.0, "torso": 28.0, "head": -6.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
 			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
-		["active_end", {"spin_short_b": 1.0, "step_f": -44.0, "spin": 260.0, "pivot_f": 260.0, "tall": -1.0, "hip_y": 38.0, "torso": 24.0, "head": -4.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+		["active_end", {"spin": 260.0, "pivot_f": 260.0, "tall": -1.0, "hip_y": 38.0, "torso": 24.0, "head": -4.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
 			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
-		["follow", {"spin_short_b": 1.0, "step_f": -44.0, "spin": 360.0, "pivot_f": 360.0, "tall": -0.8, "hip_y": 30.0, "torso": 18.0, "cover_f": 0.0, "cover_b": 0.0,
+		["follow", {"spin": 360.0, "pivot_f": 360.0, "tall": -0.8, "hip_y": 30.0, "torso": 18.0, "cover_f": 0.0, "cover_b": 0.0,
 			"arm_f_upper": 30.0, "arm_f_lower": -40.0, "arm_b_upper": 20.0, "arm_b_lower": -40.0, "leg_b_upper": 66.0, "leg_b_lower": 6.0}],
 		["end", {"spin": 360.0, "pivot_f": 360.0}]],
 	# C: the evasion roll (Javier, 2026-11-02 21:56). No recorded roll yet (CMU 128_09 "Run Roll Underneath" waits on
@@ -858,20 +855,6 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 		if grounded and (_end("leg_%s_upper" % side, out)[0] as Vector2).y > -KNEE_CLEAR:
 			_lift_knee(out, side)
 			_settle_foot(out, side, grounded)
-	# a back leg held straight out along a spin ("spin_short_b") points at the camera as it comes round: its reach along
-	# the street shrinks by the turn while the foot stays as low, so the foot sweeps through instead of jumping across
-	# when the drawing flips (the sweep's foot jumped 222 px). The leg is re-aimed and drawn shorter to match
-	var along: float = clampf(pose.get("spin_short_b", 0.0), 0.0, 1.0)
-	if along > 0.0:
-		var k := lerpf(1.0, maxf(absf(cos(deg_to_rad(out["spin"]))), 0.12), along)
-		var hip_end: Array = _end("hip", out)
-		var joint: Vector2 = hip_end[0] + (BONES["leg_b_upper"][1] as Vector2).rotated(hip_end[1])
-		var leg: Vector2 = (_end("leg_b_lower", out)[0] as Vector2) - joint
-		var seen := Vector2(leg.x * k, leg.y)
-		var share: float = seen.length() / maxf(leg.length(), 1.0)
-		out["leg_b_upper"] += rad_to_deg(seen.angle() - leg.angle())
-		out["short_b_upper"] = out.get("short_b_upper", 1.0) * share
-		out["short_b_lower"] = out.get("short_b_lower", 1.0) * share
 	_cover(out, pose)
 	return out
 
