@@ -69,6 +69,9 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] The sweep sinks into a bow stance, not a kneel; a swinging knee never goes through the street (any move)
 - [x] The demo rolls forward first (a roll back ran into the crate)
 - [x] Every build refreshes the newest shelf report's facts (build, tests, changes waiting): no hand-typed numbers
+- [x] The testers' joint session on 98a076f: roll head 20+ px clear, flying kick leans back only a touch, sweep long and low, power punch loads wider
+- [x] Street-fixed frame sheets and clips in every build, so the travel shows
+- [ ] Still unjudged by the testers: walking pace, steady running, the flying take-off
 - [x] The run's first steps no longer snap: starting and stopping blend from the last drawn pose (was a 131 px jump)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
 - [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
