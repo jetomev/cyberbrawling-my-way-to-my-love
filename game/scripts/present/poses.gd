@@ -358,8 +358,8 @@ const SHOTS := {
 	# pulled back to the hip on purpose, kung fu style; hold it a beat (the freeze), then step back to guard
 	"power_punch": [["start", {}],
 		# loads low and wide (the back foot slides back, the hips sink and sit back) and holds it, then drives all at once
-		["windup", {"hip_y": 16.0, "hip_x": -8.0, "step_b": -16.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
-		["load", {"hip_y": 16.0, "hip_x": -8.0, "step_b": -16.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
+		["windup", {"hip_y": 16.0, "hip_x": -8.0, "step_b": -30.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
+		["load", {"hip_y": 16.0, "hip_x": -8.0, "step_b": -30.0, "turn": -15.0, "hip_turn": -6.0, "cover_b": 0.0, "arm_b_upper": 30.0, "arm_b_lower": -110.0, "torso": 4.0}],
 		["active", {"step_f": 30.0, "step_b": -4.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 60.0}],
 		["active_end", {"step_f": 30.0, "step_b": -4.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 60.0}],
 		["follow", {"step_f": 30.0, "step_b": -4.0, "hip_x": 34.0, "hip_y": 8.0, "rise_b": 0.15, "pivot_b": 70.0, "hip_turn": 18.0, "torso": 16.0, "head": 2.0, "cover_b": 0.0, "arm_b_upper": -90.0, "arm_b_lower": 0.0, "cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -110.0, "turn": 62.0}],

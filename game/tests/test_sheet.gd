@@ -287,7 +287,8 @@ func test_the_power_punch_loads_low_and_wide() -> void:
 		var b := Poses.bake(Poses.angles("power_punch", tick, t), true)
 		var drop: float = (Poses._end("hip", b)[0] as Vector2).y - hip0
 		check(drop >= 12.0, "power_punch@%d (%d ms before): the hips sink into the load (%.0f px)" % [tick, (hit - tick) * 50 / 3, drop])
-		check(_wide(b) >= _wide(g) + 10.0, "power_punch@%d: the stance widens (%.0f px, guard %.0f)" % [tick, _wide(b), _wide(g)])
+		# (the testers, 2026-11-02 22:33, on 98a076f: the load still too narrow; now 25 px wider than the guard at least)
+		check(_wide(b) >= _wide(g) + 25.0, "power_punch@%d: the stance widens (%.0f px, guard %.0f)" % [tick, _wide(b), _wide(g)])
 
 
 func test_the_round_kicks_waist_rolls_through() -> void:
