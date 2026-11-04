@@ -162,7 +162,7 @@ const LYING := {"tumble": -88.0, "torso": 0.0, "neck": 0.0, "head": -6.0, "cover
 	"arm_f_upper": -25.0, "arm_f_lower": -10.0, "arm_b_upper": -8.0, "arm_b_lower": -10.0,
 	"leg_f_upper": -30.0, "leg_f_lower": 50.0, "leg_b_upper": -5.0, "leg_b_lower": 10.0, "pivot_b": 0.0, "rise_b": 0.0}
 ## The states where he lies, falls or rises: the drawing is placed by its outline (no planted feet).
-const OFF_FEET := ["knockdown", "down", "ko", "get_up", "launch"]
+const OFF_FEET := ["knockdown", "down", "ko", "get_up", "launch", "tumble"]
 
 ## Looping states: [loop length in ticks, [tick, changes from GUARD], ...]
 const LOOPS := {
@@ -438,6 +438,7 @@ const SHOTS := {
 		["fall_mid", {"torso": -10.0, "head": -10.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 80.0, "arm_f_lower": -20.0, "arm_b_upper": 100.0, "arm_b_lower": -20.0, "leg_f_upper": -60.0, "leg_f_lower": 50.0, "leg_b_upper": -30.0, "leg_b_lower": 40.0, "tumble": -55.0}],
 		["end", LYING]],
 	"down": [["start", LYING]],
+	"tumble": [["start", LYING]],  # rolling down the stairs, lying, carried down the steps by the level
 	"ko": [["start", LYING]],
 	# getting back up: rolls to sit, a knee under him, stands into the guard
 	"get_up": [["start", LYING],

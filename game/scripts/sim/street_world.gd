@@ -6,6 +6,11 @@ extends RefCounted
 
 const BODY_HALF_WIDTH := 24.0  # how far a fighter's body reaches left and right of their x
 const BODY_HALF_DEPTH := 6.0
+## The stairs (the team's level 3 page, "the game's stairs question, answered"): one straight flight at the back of the
+## street, rising left to right from its foot (x0) to a landing at its top (the last LANDING px, at "top" height),
+## one fighter deep (z0..z1). Walked up and down like the street; from the side it's a wall.
+const STEP_UP := 24.0  # how far up a stride can step onto the slope (more than this and it's the side of the flight)
+const LANDING := 120.0
 
 ## Each object: {id, kind, x0, x1, z0, z1, top, climbable, breakable, strength, broken}
 var objects: Array[Dictionary] = []
@@ -16,7 +21,8 @@ var items: Array[Dictionary] = []
 
 func add(kind: String, x0: float, x1: float, z0: float, z1: float, top: float, climbable := true, strength := 0) -> Dictionary:
 	var o := {"id": objects.size(), "kind": kind, "x0": x0, "x1": x1, "z0": z0, "z1": z1, "top": top,
-		"climbable": climbable, "breakable": strength > 0, "strength": strength, "broken": false, "solid": kind != "ladder"}
+		"climbable": climbable, "breakable": strength > 0, "strength": strength, "broken": false,
+		"solid": not kind in ["ladder", "stairs"]}
 	objects.append(o)
 	return o
 
@@ -42,20 +48,26 @@ func _covers(o: Dictionary, x: float, z: float) -> bool:
 		and z > o["z0"] - BODY_HALF_DEPTH and z < o["z1"] + BODY_HALF_DEPTH
 
 
-## True when a body at (x, z) with its feet at height y would be inside something.
+## True when a body at (x, z) with its feet at height y would be inside something (the side of a flight of stairs
+## too: the slope is more than a stride above his feet there).
 func blocks(x: float, z: float, y: float) -> bool:
 	for o in objects:
 		if o["solid"] and not o["broken"] and y < o["top"] - 0.5 and _covers(o, x, z):
 			return true
+		if o["kind"] == "stairs" and _on_flight(o, x, z) and step_height(o, x) > y + STEP_UP:
+			return true
 	return false
 
 
-## The highest surface under (x, z) that is not above the feet: an object's top, or the street (0).
+## The highest surface under (x, z) that is not above the feet: an object's top, a step of the stairs within a
+## stride, or the street (0).
 func floor_at(x: float, z: float, y: float) -> float:
 	var best := 0.0
 	for o in objects:
 		if o["solid"] and not o["broken"] and o["top"] <= y + 0.5 and o["top"] > best and _covers(o, x, z):
 			best = o["top"]
+		elif o["kind"] == "stairs" and _on_flight(o, x, z) and step_height(o, x) <= y + STEP_UP:
+			best = maxf(best, step_height(o, x))
 	return best
 
 
@@ -64,7 +76,40 @@ func ahead(x: float, z: float, y: float, dir: int, step := 6.0) -> Dictionary:
 	for o in objects:
 		if o["solid"] and not o["broken"] and y < o["top"] - 0.5 and _covers(o, x + dir * step, z):
 			return o
+		if o["kind"] == "stairs" and _on_flight(o, x + dir * step, z) and step_height(o, x + dir * step) > y + STEP_UP:
+			return o
 	return {}
+
+
+## The stairs: the height of the step at x (the street at the foot, "top" on the landing).
+static func step_height(o: Dictionary, x: float) -> float:
+	return o["top"] * clampf((x - o["x0"]) / maxf(1.0, o["x1"] - LANDING - o["x0"]), 0.0, 1.0)
+
+
+## The step under (x, z) if it's on a flight's footprint (else 0): where something placed there stands.
+static func step_height_at(w, x: float, z: float) -> float:
+	for o in w.objects:
+		if o["kind"] == "stairs" and x >= o["x0"] and x <= o["x1"] and z >= o["z0"] - 2.0 and z <= o["z1"] + 2.0:
+			return step_height(o, x)
+	return 0.0
+
+
+## Over the flight's footprint (one fighter deep: only the depth the steps take, not a body's width either side).
+func _on_flight(o: Dictionary, x: float, z: float) -> bool:
+	return x >= o["x0"] and x <= o["x1"] and z >= o["z0"] - 2.0 and z <= o["z1"] + 2.0
+
+
+## The flight a body at (x, z, y) stands on (its feet on a step, within a stride), or {}.
+func stairs_under(x: float, z: float, y: float) -> Dictionary:
+	for o in objects:
+		if o["kind"] == "stairs" and _on_flight(o, x, z) and absf(step_height(o, x) - y) <= STEP_UP:
+			return o
+	return {}
+
+
+## On the slope itself, below the top landing: where a push kick or knockdown sends him tumbling.
+static func on_slope(o: Dictionary, x: float) -> bool:
+	return x > o["x0"] and x < o["x1"] - LANDING
 
 
 ## A ladder (leaning on something tall at the back of the street: a stall's awning) the body at (x, z, y) stands at:
@@ -112,4 +157,6 @@ func draw_order(f) -> int:
 	for o in objects:
 		if not o["broken"] and f.y >= o["top"] - 0.5 and f.y > 0.0 and _covers(o, f.x, f.z):
 			z = maxi(z, int(o["z1"]) + 1)
+		elif o["kind"] == "stairs" and f.y > 0.0 and _on_flight(o, f.x, f.z):
+			z = maxi(z, int(o["z1"]) + 1)  # on the steps: drawn on them, not behind their front
 	return z

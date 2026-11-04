@@ -2,6 +2,8 @@ extends Node2D
 ## Draws what stands on the street (street_world.gd) as grey boxes with a top and a front, each at its own depth so
 ## fighters pass in front of or behind it. A broken crate becomes a low heap of boards.
 
+const StreetWorld := preload("res://scripts/sim/street_world.gd")
+
 ## The props as the team's props sheet has them (art-in 2026-11-03), in the picked look, "Neon ink" (bold dark
 ## outlines, two tones, a thin neon rim on the lit edge): a wooden crate, a boxy old car, an orange-and-white road
 ## barrier, a red hydrant, a green metal dumpster, black speakers. Grey-box stand-ins until the team's pictures land.
@@ -146,6 +148,9 @@ func _draw_object(n: Node2D, o: Dictionary) -> void:
 			n.draw_rect(r, EDGE, false, 2.0)
 		return
 	var top: float = o["top"]
+	if o["kind"] == "stairs":  # a flight up the back of the room: treads and risers, the landing, a banister in front
+		_draw_stairs(n, o, near, far)
+		return
 	if o["kind"] == "ladder":  # two rails and rungs, leaning on what it reaches
 		for rx in [o["x0"], o["x1"] - 6.0]:
 			n.draw_rect(Rect2(rx, near - top, 6.0, top), Color(0.55, 0.42, 0.25))
@@ -190,3 +195,35 @@ func _draw_object(n: Node2D, o: Dictionary) -> void:
 		for wx in [o["x0"] + w * 0.2, o["x1"] - w * 0.2]:  # wheels
 			n.draw_circle(Vector2(wx, near - 4.0), 24.0, Color(0.12, 0.12, 0.14))
 		n.draw_rect(Rect2(o["x0"] + w * 0.2, near - top + 12.0, w * 0.6, top * 0.35), base.lightened(0.35))
+
+
+## The stairs (the team's level 3 page): steps of about 40 px from the foot up to the landing, the space under the
+## flight closed in dark, a banister on the front side in the neon-ink rim.
+const STEP_W := 40.0
+const WOOD := Color(0.42, 0.3, 0.22)
+
+
+func _draw_stairs(n: Node2D, o: Dictionary, near: float, far: float) -> void:
+	var land_x: float = o["x1"] - StreetWorld.LANDING
+	var side := PackedVector2Array([Vector2(o["x0"], near), Vector2(land_x, near - o["top"]), Vector2(o["x1"], near - o["top"]),
+		Vector2(o["x1"], near)])
+	n.draw_colored_polygon(side, WOOD.darkened(0.45))  # the flight's side, closed underneath
+	var x: float = o["x0"]
+	while x < land_x - 0.5:
+		var h: float = StreetWorld.step_height(o, minf(x + STEP_W, land_x))
+		var w: float = minf(STEP_W, land_x - x)
+		n.draw_rect(Rect2(x, far - h, w, near - far), WOOD.lightened(0.15))  # the tread
+		n.draw_rect(Rect2(x, near - h, w, h - StreetWorld.step_height(o, x) + 2.0), WOOD)  # the riser
+		n.draw_rect(Rect2(x, far - h, w, near - far), EDGE, false, 2.0)
+		x += STEP_W
+	n.draw_rect(Rect2(land_x, far - o["top"], o["x1"] - land_x, near - far), WOOD.lightened(0.2))  # the landing
+	n.draw_rect(Rect2(land_x, far - o["top"], o["x1"] - land_x, near - far), EDGE, false, 3.0)
+	n.draw_polyline(side, EDGE, 4.0)
+	var rail := 90.0  # the banister, along the front edge, a hand's height above the steps
+	n.draw_line(Vector2(o["x0"], near - rail), Vector2(land_x, near - o["top"] - rail), RIM, 4.0)
+	n.draw_line(Vector2(land_x, near - o["top"] - rail), Vector2(o["x1"], near - o["top"] - rail), RIM, 4.0)
+	var px: float = o["x0"]
+	while px <= land_x:
+		var h: float = StreetWorld.step_height(o, px)
+		n.draw_line(Vector2(px, near - h), Vector2(px, near - h - rail), EDGE, 3.0)
+		px += STEP_W * 3.0

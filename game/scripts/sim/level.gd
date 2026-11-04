@@ -59,6 +59,12 @@ const WHISTLE_EVERY := 480  # the lookout whistles in two more goons this often 
 const WHISTLE_RANGE := 1000.0
 const HUG_TICKS := 70  # the bear hug: this long without wriggling free, and he throws the hero down
 const HURL_DAMAGE := 3.0
+## The stairs (the team's level 3 page): a push kick or any knockdown on the slope rolls him to the foot, bowling over
+## anyone below him; a bit more damage than a plain knockdown and about two seconds before he's up (feel lab)
+const TUMBLE_SPEED := 10.0  # px a tick down the flight
+const TUMBLE_DAMAGE := 1.5
+const TUMBLE_DOWN_EXTRA := 46  # on top of down_ticks and get_up_ticks: about 2 s on the street in all
+const ON_STAIRS_MAX := 2  # enemies on the slope at once; the rest wait at the top or the foot
 const MAX_ON_SCREEN := 5  # never more than five enemies at once; the rest wait off screen (the team's fairness rules)
 const OFF_SCREEN := 1150.0  # "from the left/right": they walk in from this far beyond the wave's spot
 const AMBUSH := 260.0  # a hidden enemy jumps out when the hero comes this close
@@ -95,6 +101,7 @@ var wet := true  # Big Mama's kitchen floor by the sink
 var mopped := false  # she's mopped it once (at half health)
 var blocks_in_row := 0  # the hero's blocks in a row against her (her hot soup)
 var hug := {}  # the bear hug under way: {by (the grabber's entry), at (tick)}
+var tumbling := {}  # fighter -> the flight he's rolling down
 var cat_fed := false  # level 1's stray cat, fed (it follows him, and turns up in level 2)
 var cat := Vector2(-1.0e9, 0.0)  # where the cat is (x, z): by its bins, or at his heels once fed
 var cat_with := 0  # how long he's stood by it
@@ -244,6 +251,7 @@ func step(inp: Dictionary) -> void:
 		friend.step(tutor.think())
 	for e in enemies:
 		if not e["gone"]:
+			e["was"] = [e["f"].x, e["f"].y, e["f"].z]  # where he stood, should the stairs be full
 			var think: Dictionary = e["brain"].think()
 			if think.get("throw", false):
 				e["volley"] = RECORDS.duplicate()  # his records go one after another
@@ -267,6 +275,7 @@ func step(inp: Dictionary) -> void:
 	_kitchen()
 	_cat()
 	_roster_tricks()
+	_stairs()
 	_switches()
 	_waves()
 	_links()
@@ -364,6 +373,60 @@ func _roster_tricks() -> void:
 			hug = {}
 
 
+## The stairs: the knocked-down tumble to the foot (skittles on the way), and no more than ON_STAIRS_MAX enemies on the
+## slope (one more stepping on is put back where he stood).
+func _stairs() -> void:
+	for ev in events:
+		var d = ev.get("target")
+		if d == null or ev.get("result", "") != "hit" or tumbling.has(d) or world == null:
+			continue
+		var st: Dictionary = world.stairs_under(d.x, d.z, d.y)
+		if st.is_empty() or d.y < 1.0 or not StreetWorld.on_slope(st, d.x):
+			continue
+		if ev.get("move", "") == "push_kick" or d.state in ["knockdown", "launch"]:
+			_tumble(d, st)
+	for f in tumbling.keys():
+		var st: Dictionary = tumbling[f]
+		var nx: float = f.x - TUMBLE_SPEED
+		for g in everyone():  # whoever he rolls into goes down with him
+			if g != f and not tumbling.has(g) and g.hittable() and g.x < f.x and g.x >= nx - 2.0 * Fight.BODY_HALF_WIDTH \
+					and world.stairs_under(g.x, g.z, g.y) == st and g.y >= 1.0:
+				_tumble(g, st)
+		if nx > st["x0"]:
+			f.x = nx
+			f.y = StreetWorld.step_height(st, nx)
+			continue
+		f.x = st["x0"] - 30.0
+		f.y = 0.0
+		f.health = maxf(0.0, f.health - TUMBLE_DAMAGE)
+		f._enter("ko" if f.health <= 0.0 else "down")
+		f.t = -TUMBLE_DOWN_EXTRA
+		tumbling.erase(f)
+	var on_slope := []
+	for e in enemies:
+		var f = e["f"]
+		if e["gone"] or tumbling.has(f) or f.y < 1.0 or world == null:
+			continue
+		var st: Dictionary = world.stairs_under(f.x, f.z, f.y)
+		if not st.is_empty() and StreetWorld.on_slope(st, f.x):
+			on_slope.append(e)
+	for e in on_slope.slice(ON_STAIRS_MAX):
+		var was: Array = e.get("was", [])
+		var st_was: Dictionary = {} if was.is_empty() else world.stairs_under(was[0], was[2], was[1])
+		if not was.is_empty() and (st_was.is_empty() or was[1] < 1.0 or not StreetWorld.on_slope(st_was, was[0])):
+			e["f"].x = was[0]  # the flight's full: he waits where he was, at the foot or on the landing
+			e["f"].y = was[1]
+			e["f"].z = was[2]
+
+
+func _tumble(f, st: Dictionary) -> void:
+	f.queue.clear()
+	f._enter("tumble")
+	tumbling[f] = st
+	if f == hero and not hug.is_empty():
+		hug = {}
+
+
 ## The stray cat (level 1, screen 7): stand by it a moment and it's fed; then it trots at his heels.
 func _cat() -> void:
 	if cat.x < -1.0e8:
@@ -439,6 +502,9 @@ func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave
 	t["flat_line"] = tune.get("flat_line", false)
 	var f = Fighter.new(t, x, z, world)
 	f.team = 1
+	var st: Dictionary = world.stairs_under(x, z, StreetWorld.step_height_at(world, x, z))
+	if not st.is_empty():
+		f.y = StreetWorld.step_height(st, x)  # placed on a flight of stairs (the team's Snick on the top step)
 	f.can_climb = false  # enemies don't climb ladders (level 2)
 	f.facing = -1 if x > hero.x else 1
 	if weapon != "":
@@ -512,9 +578,21 @@ func next_door() -> float:
 	if not cleared(on):
 		return -1.0
 	for l in plan.get("links", []):
+		if int(l["from"]) == on and l.get("kind", "") == "stairs" and int(l["to"]) > on:
+			var st: Dictionary = stairs_of(l)
+			# up the flight: first onto its bottom step, then on up to the landing's end
+			return st["x1"] if not hero.flight().is_empty() else st["x0"] + 30.0
 		if int(l["from"]) == on and not l.get("auto", false) and int(l["to"]) > on:
 			return float(l["x"])
 	return -1.0
+
+
+## The flight a stairs link stands on (its landing at the link's x).
+func stairs_of(l: Dictionary) -> Dictionary:
+	for o in floors[int(l["from"])]["world"].objects:
+		if o["kind"] == "stairs" and l["x"] >= o["x0"] and l["x"] <= o["x1"]:
+			return o
+	return {}
 
 
 ## A floor's waves all beaten?
@@ -536,18 +614,24 @@ func _links() -> void:
 	for l in plan.get("links", []):
 		if int(l["from"]) != on:
 			continue
+		if l.get("kind", "") == "stairs":  # up a flight inside the screen: the landing's end leads on to the floor above
+			if not hero.flight().is_empty() and hero.x >= l["x"] and hero.on_ground():
+				_go_to(int(l["to"]), l["to_x"])
+				return
+			continue
 		var auto: bool = l.get("auto", false)
 		var at_door: bool = absf(hero.x - l["x"]) <= DOORWAY and hero.z <= DOORWAY_Z
 		if (auto and hero.x >= l["x"] and cleared(on)) or (not auto and at_door and hero.on_ground()):
-			_go_to(int(l["to"]), l["to_x"])
+			_go_to(int(l["to"]), l["to_x"], l.get("to_y", 0.0), l.get("to_z", 80.0))  # (to_y, to_z: back onto a landing)
 			return
 
 
-func _go_to(floor_index: int, x: float) -> void:
+func _go_to(floor_index: int, x: float, at_y := 0.0, at_z := 80.0) -> void:
 	on = floor_index
 	hero.world = world
 	hero.x = x
-	hero.z = 80.0
+	hero.y = at_y
+	hero.z = at_z
 	hero._enter("idle")
 	arrived_x = x
 	_maybe_boss()

@@ -3,6 +3,8 @@ extends RefCounted
 ## enemy still standing, lines up on the street, throws the hero's combos and raises its guard now and then. Seeded,
 ## so a run replays the same. Not clever: steady, so a fight it loses or can't finish is a finding.
 
+const Brain := preload("res://scripts/sim/brain.gd")
+
 var me
 var dice := RandomNumberGenerator.new()
 var tick := 0
@@ -32,6 +34,8 @@ func think(enemies: Array) -> Dictionary:
 		inp["mx"] = 1.0 if goal < 0.0 or goal > me.x else -1.0  # nobody to fight: walk on (to the next wave, the way up)
 		_get_past(inp)
 		return inp
+	if Brain.to_the_stairs(me, foe, inp):
+		return inp
 	var dx: float = foe.x - me.x
 	var toward := 1.0 if dx >= 0.0 else -1.0
 	if block_left > 0:
@@ -49,7 +53,10 @@ func think(enemies: Array) -> Dictionary:
 	var dz: float = foe.z - me.z
 	if absf(dz) > 6.0:
 		inp["mz"] = clampf(dz / 16.0, -1.0, 1.0)
-	if absf(dx) > 115.0:
+	# pinned at the locked street's edge he can't step closer: he swings from where he is (the cross reaches 150; the
+	# roster yard, 2026-11-04: a Mechanic standing 119 px past the lock beat him three lives running)
+	var pinned: bool = (toward < 0.0 and me.x <= me.tune["street_left"] + 1.0) or (toward > 0.0 and me.x >= me.tune["street_right"] - 1.0)
+	if absf(dx) > (140.0 if pinned else 115.0):
 		inp["mx"] = toward
 	elif me.facing != int(toward):
 		inp["mx"] = toward * 0.01

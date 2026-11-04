@@ -1,0 +1,13 @@
+{
+  "name": "a flight of stairs (a test layout): the team's level 3 stairs piece, foot at 1000, 800 px of slope up 400 px, a 120 px landing, one fighter deep at the back",
+  "floors": [
+    {"name": "the shop", "length": 3000, "obstacles": [["stairs", 1000, 1920, 0, 30, 400, false, 0]], "items": [], "waves": []},
+    {"name": "the flat above", "length": 2400, "obstacles": [], "items": [], "waves": []}
+  ],
+  "links": [
+    {"from": 0, "x": 1860, "to": 1, "to_x": 300, "kind": "stairs"},
+    {"from": 1, "x": 120, "to": 0, "to_x": 1840, "to_y": 400, "to_z": 15}
+  ],
+  "switches": [],
+  "boss": {"floor": 1, "x": 2000, "kind": "thug", "health": 8}
+}

@@ -25,7 +25,8 @@ const AIR_STATES := ["jump", "air_kick", "hammer_fist"]
 const HEALS := {"food": 0.4, "takeaway": 0.4, "soda": 0.25, "apple": 0.25, "bowl": 0.4, "first_aid": 1.0, "noodles": 1.0}  # noodles: level 2's hidden bar
 ## Being hit: no input counts until the reaction ends (fight.gd decides who hits whom; take_hit() reacts); "held":
 ## in the Grabber's bear hug, where only wriggling counts (3 quick punches, or a roll)
-const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko", "dizzy", "held"]
+const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko", "dizzy", "held",
+	"tumble"]
 const ESCAPE_TAPS := 3
 
 var tune: Dictionary
@@ -210,6 +211,24 @@ func _blocked(nx: float, nz: float) -> bool:
 	return world != null and world.blocks(nx, nz, y)
 
 
+## The flight of stairs he's on, up off the street (one fighter deep: no stepping sideways off it), or {}.
+func flight() -> Dictionary:
+	if world == null or y < 1.0:
+		return {}
+	return world.stairs_under(x, z, y)
+
+
+## Feet on the step under him after moving along a flight (up or down it); a step ahead of the landing's end is as far
+## as the flight goes (the floor above is reached through the level's link there).
+func _settle() -> void:
+	if world == null or state == "launch" or state in AIR_STATES:
+		return
+	var st: Dictionary = world.stairs_under(x, z, y)
+	if not st.is_empty():
+		x = minf(x, st["x1"] - 4.0)
+		y = world.step_height(st, x)
+
+
 ## Where a free fighter rests: the guard in the fight stance, standing relaxed in the walk stance.
 func _rest() -> String:
 	return "idle" if stance == "fight" else "stand"
@@ -242,17 +261,19 @@ func _ground(mx: float, mz: float, run := false) -> void:
 	var nx := clampf(x + vx, tune["street_left"], tune["street_right"])
 	if mx != 0.0:
 		facing = 1 if mx > 0.0 else -1
+	var on_flight := not flight().is_empty()
 	if _blocked(nx, z):
 		_push(mx)
 	else:
 		x = nx
 		push_ticks = 0
-	if not tune["flat_line"]:
+	if not tune["flat_line"] and not on_flight:
 		var nz := clampf(z + mz * tune["depth_speed"], 0.0, tune["street_depth"])
 		if not _blocked(x, nz):
 			z = nz
 	if state == "climb":
 		return
+	_settle()
 	# D-14: the health bar refills from food and first-aid kits lying on the street; the hero eats what he walks over
 	# when he's hurt (an enemy leaves them)
 	# level 1's umbrella, leaning on the noodle bar: he takes it up; it will take one blow for him
@@ -521,7 +542,7 @@ func _recover() -> void:
 
 ## Can a blow land on him now? Not while falling, lying or getting up (no hitting a man when he's down).
 func hittable() -> bool:
-	return not state in ["knockdown", "down", "get_up", "ko"]
+	return not state in ["knockdown", "down", "get_up", "ko", "tumble"]
 
 
 func defeated() -> bool:
@@ -533,10 +554,13 @@ func _slide(speed: float) -> void:
 	var nx := clampf(x + knock_dir * speed, tune["street_left"], tune["street_right"])
 	if not _blocked(nx, z):
 		x = nx
+	_settle()
 
 
 func _react() -> void:
 	match state:
+		"tumble":
+			pass  # rolling down a flight of stairs: the level rolls him (level.gd _stairs) and lays him at the foot
 		"hurt", "block_hit":
 			var n: int = tune[state + "_ticks"]
 			_slide(tune["knockback"] * (1.0 - float(t) / n) * (0.5 if state == "block_hit" else 1.0))
@@ -594,10 +618,12 @@ func _roll() -> void:
 		_enter(_rest())
 		return
 	vx = roll_dir * tune["roll_speed"]
+	var on_flight := not flight().is_empty()
 	var nx := clampf(x + vx, tune["street_left"], tune["street_right"])
 	if not _blocked(nx, z):
 		x = nx
-	if not tune["flat_line"]:
+	_settle()
+	if not tune["flat_line"] and not on_flight:
 		var nz := clampf(z + roll_mz * tune["depth_speed"], 0.0, tune["street_depth"])
 		if not _blocked(x, nz):
 			z = nz

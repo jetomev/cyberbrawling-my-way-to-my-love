@@ -613,3 +613,4 @@ func test_stand_by_the_stray_cat_and_it_follows() -> void:
 	for i in 200:
 		l.step({"mx": -1.0})
 	check(absf(l.cat.x - l.hero.x) < 160.0, "it trots at his heels (%.0f, he's at %.0f)" % [l.cat.x, l.hero.x])
+

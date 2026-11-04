@@ -31,6 +31,7 @@ const BOSS := {
 	"combos": [["punch", "punch", "punch"], ["kick", "kick", "kick"], ["punch", "kick", "punch"], ["kick", "punch", "kick"],
 		["punch", "punch", "kick"]],
 }
+const TOOLBOX_RANGE := 1400.0  # how far the Wrench Mechanic goes for his toolbox
 const HANG_BACK := 130.0  # how much further off an enemy waits while it isn't his turn to attack
 
 ## The team's enemy table (art-in 2026-11-03). The Glow Punk, the warm-up: "Slap Happy", slap, slap, a two-handed
@@ -132,6 +133,26 @@ func _init(fighter, target, dice_seed := 1, how: Dictionary = THUG) -> void:
 
 
 ## This tick's input for his fighter.
+## Someone up a flight of stairs he isn't on: round to its foot and up it (the side of a flight is a wall). Fills inp
+## and returns true while he's on his way.
+static func to_the_stairs(me, foe, inp: Dictionary) -> bool:
+	var st: Dictionary = foe.flight()
+	if st.is_empty() or not me.flight().is_empty():
+		return false
+	var fx: float = st["x0"] + 20.0
+	if absf(me.x - fx) > 30.0:
+		# along the street in front of the flight (behind it, past its top end, there's no way round)
+		if me.z < st["z1"] + 30.0 and me.x > st["x0"]:
+			inp["mz"] = 1.0
+		inp["mx"] = signf(fx - me.x)
+		return true
+	var fz: float = (st["z0"] + st["z1"]) * 0.5
+	if absf(me.z - fz) > 4.0:
+		inp["mz"] = clampf((fz - me.z) / 16.0, -1.0, 1.0)
+	inp["mx"] = signf(fx - me.x) if absf(me.x - fx) > 10.0 else 1.0
+	return true
+
+
 func think() -> Dictionary:
 	var inp := {}
 	if foe == null or foe.defeated() or me.state in Fighter.HURT_STATES:
@@ -153,8 +174,8 @@ func think() -> Dictionary:
 			inp["mx"] = toward * 0.01
 		return inp
 	if kind.get("toolbox", false) and me.weapon == "" and me.world != null:  # the mechanic: off to his toolbox for a spare
-		for o in me.world.objects:
-			if o["kind"] == "toolbox" and not o["broken"]:
+		for o in me.world.objects:  # (one on this screen: he won't trek back down the street for it)
+			if o["kind"] == "toolbox" and not o["broken"] and absf((o["x0"] + o["x1"]) * 0.5 - me.x) < TOOLBOX_RANGE:
 				var tx: float = (o["x0"] + o["x1"]) * 0.5
 				if absf(me.x - tx) < 60.0:
 					me.take_weapon("wrench")
@@ -200,6 +221,8 @@ func think() -> Dictionary:
 		if me.facing != int(toward):
 			inp["mx"] = toward * 0.01
 		inp["throw"] = true
+		return inp
+	if to_the_stairs(me, foe, inp):
 		return inp
 	# line up on the street's depth, then close to the distance he wants
 	var dz: float = foe.z - me.z
