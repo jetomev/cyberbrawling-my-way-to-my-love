@@ -102,7 +102,8 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Keyboard + gamepad, dead zone, drifting-stick test (solo) (2026-11-01: brought forward for F-1, the G13 stuck stick; 51 tests)
 - [x] Both lane depths to try: flat line and shallow street (solo) (built with D-13: `scripts/play.sh --flat`, the feel lab's flat_line; tested in test_fighter and test_feel_lab)
 - [x] A grey level 1 with the boss upstairs; the bot plays it (solo) (2026-11-03: level.gd + levels/level1.json, a placeholder layout; waves lock the street, two attack at once, food and first aid, three lives then a restart; the bot wins 2 of 3 seeds; a level clip in every build)
-- [ ] Level 1's real layout and enemy table from the team (drop into levels/level1.json and brain.gd's TYPES)
+- [x] Level 1's real layout and enemy table from the team (2026-11-03: the team's seven screens, 17 enemies, props and pick-ups in levels/level1.json; the Glow Punk and the Bruiser in brain.gd and level.gd; the bot wins it on every seed)
+- [ ] Level 1's still-to-come from the team's page: DJ Volt's own fight (records, the speakers' wave, the mic stand), the sparring friend on screen 1, the umbrella, the cat
 - [ ] Javier's grey-box feel test
 
 ## Stage 2 · The look (by Sun 29 Nov) — #4

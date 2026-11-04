@@ -22,7 +22,7 @@ const DOUBLE_TAP_TICKS := 3
 const MAX_QUEUE := 2  # P then K pressed during one long blow play P then K
 const AIR_STATES := ["jump", "air_kick", "hammer_fist"]
 ## What food and first aid give back, as a share of a full health bar (D-14)
-const HEALS := {"food": 0.4, "first_aid": 1.0}
+const HEALS := {"food": 0.4, "takeaway": 0.4, "soda": 0.25, "first_aid": 1.0}
 ## Being hit: no input counts until the reaction ends (fight.gd decides who hits whom; take_hit() reacts)
 const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko", "dizzy"]
 
@@ -56,6 +56,7 @@ var max_health := 20.0
 var health := 20.0
 var weapon := ""  # what this fighter carries ("pipe", …); an enemy drops it when knocked down (take_weapon())
 var weapon_hits_left := 0  # it wears out (D-14)
+var shrugs := []  # blows (by move) that hurt him but don't make him flinch (the Bruiser's "Iron Gut": a jab)
 var no_pickup_until := -1  # knocked out of his hand, a weapon can't be grabbed straight back (until this tick)
 var knock_dir := 1  # which way the last blow drove him (+1 right, -1 left)
 var finishers_taken := 0  # combo finishers landed on him in a row (D-19: two make him dizzy)
@@ -330,6 +331,8 @@ func take_hit(blow: Dictionary, attacker) -> String:
 		return "blocked"
 	health = maxf(health - blow["damage"], 0.0)
 	_hurt(region_hit(blow, attacker), blow["damage"])
+	if blow.get("move", "") in shrugs and blow.get("effect", "") == "" and health > 0.0:
+		return "hit"  # it hurts, but he doesn't flinch: whatever he was doing goes on
 	stance = "fight"  # a hit snaps him out of the walk stance
 	queue.clear()
 	chain = ""

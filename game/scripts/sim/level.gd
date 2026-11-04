@@ -20,11 +20,18 @@ const Brain := preload("res://scripts/sim/brain.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
 
-## Enemy types by name: health, and how they fight (brain.gd tables). The team's enemy table fills this out.
+## Enemy types by name: health, how they fight (brain.gd tables), what they drop when put down for good, and blows
+## that don't make them flinch. From the team's enemy table (art-in 2026-11-03): the Glow Punk, the warm-up (slap,
+## slap, shove; drops food) and the Bruiser, the big lad (shrugs off a jab, "Iron Gut"; drops a bat).
 const KINDS := {
 	"thug": {"health": 12.0, "brain": "THUG"},
+	"glow_punk": {"health": 8.0, "brain": "GLOW_PUNK", "drops": "takeaway"},
+	"bruiser": {"health": 20.0, "brain": "BRUISER", "drops": "bat", "shrugs": ["punch"]},
 	"boss": {"health": 40.0, "brain": "BOSS"},
 }
+const MAX_ON_SCREEN := 5  # never more than five enemies at once; the rest wait off screen (the team's fairness rules)
+const OFF_SCREEN := 1150.0  # "from the left/right": they walk in from this far beyond the wave's spot
+const AMBUSH := 260.0  # a hidden enemy jumps out when the hero comes this close
 const LIVES := 3
 const LOCK_MARGIN := 700.0  # a floor "locks" this far either side of a wave until it's beaten
 const ATTACKERS := 2  # at most this many enemies attack at once; the rest wait their turn (a fair fight in a crowd)
@@ -50,6 +57,7 @@ var tick := 0
 var hero_down_for := 0
 var dice_seed := 1
 var events := []  # this tick's fight events (for sounds and the view)
+var collected := []  # what the hero has found (a matchbook, the torn photo)
 var hero_tune: Dictionary
 
 ## The floor he's on, as the game and the tests read it
@@ -106,10 +114,12 @@ func restart() -> void:
 			var obj: Dictionary = w.add(o[0], o[1], o[2], o[3], o[4], o[5], o[6], o[7])
 			if o.size() > 8:
 				obj["name"] = o[8]
+			if o.size() > 9:
+				obj["holds"] = o[9]  # a crate or a car with something inside: it falls out when it's smashed
 		for it in f.get("items", []):  # food, first aid, a weapon lying ready
 			w.drop(it[0], it[1], it[2])
 		floors.append({"name": f["name"], "length": f["length"], "world": w, "waves": f.get("waves", []), "wave": 0,
-			"active_wave": -1, "enemies": []})
+			"active_wave": -1, "enemies": [], "waiting": []})
 	on = 0
 	hero = Fighter.new(tune, 200.0, 80.0, world)
 	fight = Fight.new()
@@ -122,6 +132,7 @@ func restart() -> void:
 	tick = 0
 	hero_down_for = 0
 	events = []
+	collected = []
 	_maybe_boss()
 
 
@@ -158,7 +169,11 @@ func step(inp: Dictionary) -> void:
 		if not e["gone"]:
 			e["f"].step(e["brain"].think())
 	var all := everyone()
-	world.step_hits(all)
+	for id in world.step_hits(all):  # something smashed: whatever was inside falls out
+		var o: Dictionary = world.objects[id]
+		if o.has("holds"):
+			world.drop(o["holds"], (o["x0"] + o["x1"]) * 0.5, clampf((o["z0"] + o["z1"]) * 0.5, 0.0, tune["street_depth"]))
+	_collect()
 	Fight.separate(all)
 	events = fight.step(all, world)
 	_switches()
@@ -175,6 +190,17 @@ func _take_turns() -> void:
 		up[i]["brain"].allowed = i < ATTACKERS
 
 
+## Walking over a collectible (a matchbook, the torn photo) keeps it.
+const COLLECTIBLES := ["matchbook", "photo"]
+
+
+func _collect() -> void:
+	for it in world.items.duplicate():
+		if it["kind"] in COLLECTIBLES and absf(it["x"] - hero.x) <= 40.0 and absf(it["z"] - hero.z) <= 40.0:
+			world.items.erase(it)
+			collected.append(it["kind"])
+
+
 func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave_index := -1) -> void:
 	var t := Tuning.fresh()
 	t["health"] = health if health > 0.0 else KINDS[kind]["health"]
@@ -186,9 +212,28 @@ func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave
 	f.facing = -1 if x > hero.x else 1
 	if weapon != "":
 		f.take_weapon(weapon)
+	f.shrugs = KINDS[kind].get("shrugs", [])
 	var how: Dictionary = Brain.TYPES[KINDS[kind]["brain"]]
 	enemies.append({"f": f, "brain": Brain.new(f, hero, dice_seed * 100 + tick + enemies.size(), how), "gone": false,
-		"down_for": 0, "boss": false, "wave": wave_index})
+		"down_for": 0, "boss": false, "wave": wave_index, "kind": kind, "dropped": false})
+
+
+## Where an enemy of a wave comes in: walking in from off screen left or right, out of a door at the back of the
+## street, or already there (hidden: he waits, still, until the hero comes close, then jumps out).
+func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
+	var from: String = e.get("from", "here")
+	var x: float = at + e.get("dx", 0.0)
+	var z: float = e.get("z", 80.0)
+	match from:
+		"left":
+			x = at - OFF_SCREEN
+		"right":
+			x = at + OFF_SCREEN
+		"door":
+			z = 0.0
+	_spawn(e["kind"], x, z, e.get("weapon", ""), -1.0, wave_index)
+	if e.get("hidden", false):
+		enemies[-1]["brain"].dormant_until_within = AMBUSH
 
 
 func _waves() -> void:
@@ -197,9 +242,26 @@ func _waves() -> void:
 	if fl["active_wave"] < 0 and fl["wave"] < waves.size() and hero.x >= waves[fl["wave"]]["at"] - 300.0:
 		fl["active_wave"] = fl["wave"]
 		fl["wave"] += 1
-		for e in waves[fl["active_wave"]]["enemies"]:
-			_spawn(e["kind"], waves[fl["active_wave"]]["at"] + e["dx"], e.get("z", 80.0), e.get("weapon", ""), -1.0, fl["active_wave"])
-	if fl["active_wave"] >= 0 and not enemies.any(func(e): return e["wave"] == fl["active_wave"] and not e["gone"] and not e["f"].defeated()):
+		fl["waiting"] = (waves[fl["active_wave"]]["enemies"] as Array).duplicate()
+	# a wave's enemies come in as they may: those with "after_down" once that many of the wave are down, and never more
+	# than MAX_ON_SCREEN standing at once (the rest wait off screen)
+	if fl["active_wave"] >= 0 and not fl["waiting"].is_empty():
+		var at: float = waves[fl["active_wave"]]["at"]
+		var down: int = enemies.filter(func(e): return e["wave"] == fl["active_wave"] and e["f"].defeated()).size()
+		for e in (fl["waiting"] as Array).duplicate():
+			if standing().size() >= MAX_ON_SCREEN:
+				break
+			if int(e.get("after_down", 0)) <= down:
+				fl["waiting"].erase(e)
+				_arrive(e, at, fl["active_wave"])
+	# what the put-down leave behind (the Glow Punk his food, the Bruiser his bat)
+	for e in enemies:
+		if e["f"].defeated() and not e["dropped"]:
+			e["dropped"] = true
+			var drop: String = KINDS.get(e["kind"], {}).get("drops", "")
+			if drop != "":
+				world.drop(drop, e["f"].x, e["f"].z)
+	if fl["active_wave"] >= 0 and fl["waiting"].is_empty() and not enemies.any(func(e): return e["wave"] == fl["active_wave"] and not e["gone"] and not e["f"].defeated()):
 		fl["active_wave"] = -1  # its thugs beaten: the floor opens on (a boss waiting further on doesn't hold it)
 	var boss_down: bool = boss_spawned and enemies.any(func(e): return e["boss"] and e["f"].defeated())
 	if boss_down:

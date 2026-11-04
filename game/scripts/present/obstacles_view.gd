@@ -2,7 +2,8 @@ extends Node2D
 ## Draws what stands on the street (street_world.gd) as grey boxes with a top and a front, each at its own depth so
 ## fighters pass in front of or behind it. A broken crate becomes a low heap of boards.
 
-const COLORS := {"crate": Color(0.50, 0.45, 0.38), "car": Color(0.36, 0.42, 0.52), "barrier": Color(0.55, 0.50, 0.30)}
+const COLORS := {"crate": Color(0.50, 0.45, 0.38), "car": Color(0.36, 0.42, 0.52), "barrier": Color(0.55, 0.50, 0.30),
+	"hydrant": Color(0.72, 0.22, 0.2), "dumpster": Color(0.24, 0.38, 0.28), "speaker": Color(0.2, 0.2, 0.24)}
 const EDGE := Color(0.08, 0.08, 0.10)
 
 var world
@@ -74,7 +75,16 @@ func _draw_loose() -> void:
 		if it["kind"] == "pipe":
 			loose.draw_line(at + Vector2(-46, -4), at + Vector2(46, -10), EDGE, 12.0)
 			loose.draw_line(at + Vector2(-44, -4), at + Vector2(44, -10), Color(0.62, 0.64, 0.68), 7.0)
-		elif it["kind"] == "food":  # a takeaway box
+		elif it["kind"] == "soda":  # a can
+			loose.draw_rect(Rect2(at + Vector2(-7, -22), Vector2(14, 22)), Color(0.85, 0.2, 0.3))
+			loose.draw_rect(Rect2(at + Vector2(-7, -22), Vector2(14, 22)), EDGE, false, 2.0)
+		elif it["kind"] == "matchbook":  # a small red book of matches (to collect)
+			loose.draw_rect(Rect2(at + Vector2(-10, -8), Vector2(20, 8)), Color(0.8, 0.2, 0.2))
+			loose.draw_rect(Rect2(at + Vector2(-10, -8), Vector2(20, 8)), Color(1, 0.9, 0.5), false, 2.0)
+		elif it["kind"] == "photo":  # a torn photo (to collect)
+			loose.draw_rect(Rect2(at + Vector2(-12, -6), Vector2(24, 6)), Color(0.95, 0.93, 0.85))
+			loose.draw_rect(Rect2(at + Vector2(-12, -6), Vector2(24, 6)), EDGE, false, 2.0)
+		elif it["kind"] in ["food", "takeaway"]:  # a takeaway box
 			loose.draw_rect(Rect2(at + Vector2(-18, -22), Vector2(36, 22)), Color(0.92, 0.9, 0.84))
 			loose.draw_rect(Rect2(at + Vector2(-18, -22), Vector2(36, 22)), EDGE, false, 2.0)
 			loose.draw_rect(Rect2(at + Vector2(-18, -14), Vector2(36, 5)), Color(0.85, 0.3, 0.25))

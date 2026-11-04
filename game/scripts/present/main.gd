@@ -38,6 +38,9 @@ const END_TICKS := 240  # how long "cleared" or "out of lives" shows before the 
 const FIGHT_TICKS := 1500  # --fight: how long the recorded bot fight runs (25 s)
 
 const ENEMY_TINT := Color(1.35, 0.78, 0.72)  # the thug, reddish, so he never reads as the hero
+## Each enemy type its own colour in the grey boxes (the team's art replaces them): the Glow Punk's light-up pink,
+## the Bruiser a dark red, the boss magenta
+const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 0.55, 0.5), "boss": Color(1.6, 0.6, 1.4)}
 const ENEMY_HEALTH := 12.0
 const RESPAWN_TICKS := 180
 
@@ -261,7 +264,7 @@ func _play_level() -> void:
 		var id: int = e["f"].get_instance_id()
 		live[id] = true
 		if not level_views.has(id):
-			var v = HeroView.new(ENEMY_TINT.lerp(Color(1.6, 0.6, 0.9), 0.5) if e["f"].max_health > Level.KINDS["thug"]["health"] else ENEMY_TINT)
+			var v = HeroView.new(KIND_TINT.get(e["kind"], ENEMY_TINT))
 			add_child(v)
 			level_views[id] = v
 		level_views[id].sync(e["f"], Street.GROUND_Y)
@@ -279,8 +282,8 @@ func _play_level() -> void:
 	$Camera.zoom = Vector2.ONE * tune["camera_zoom"]
 	$Street.follow($Camera.get_screen_center_position().x)
 	if not (level.won or level.lost):
-		var where: String = "fight!" if level.active_wave >= 0 else ("the boss" if level.boss_spawned and level.standing().any(func(f): return f.max_health > Level.KINDS["thug"]["health"]) else "go →")
-		$Hud/Title.text = "Level 1   ·   %s   ·   lives %s" % [where, "♥ ".repeat(level.lives).strip_edges()]
+		var where: String = "fight!" if level.active_wave >= 0 else ("the boss" if level.enemies.any(func(e): return e["boss"] and not e["f"].defeated()) else "go →")
+		$Hud/Title.text = "%s   ·   %s   ·   lives %s" % [level.plan.get("name", "Level"), where, "♥ ".repeat(level.lives).strip_edges()]
 	bars["hero"][1].size.x = 416.0 * hero.health / hero.max_health
 	var foes: Array = level.standing()
 	bars["enemy"][0].visible = not foes.is_empty()

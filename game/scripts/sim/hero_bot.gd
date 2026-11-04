@@ -26,6 +26,7 @@ func think(enemies: Array) -> Dictionary:
 			foe = e
 	if foe == null:
 		inp["mx"] = 1.0  # nobody to fight: walk on along the street (a level's next wave, the stairs)
+		_get_past(inp)
 		return inp
 	var dx: float = foe.x - me.x
 	var toward := 1.0 if dx >= 0.0 else -1.0
@@ -55,3 +56,22 @@ func think(enemies: Array) -> Dictionary:
 	if not combo.is_empty() and tick % 9 == 0:
 		inp[combo.pop_front()] = true
 	return inp
+
+
+## Something in the way (a barrier, a crate, a car): smash it if it breaks, jump it if he can clear it, or step round it
+## along the street's depth. Never walk through (DESIGN).
+func _get_past(inp: Dictionary) -> void:
+	if me.world == null or not me.state in ["idle", "walk"]:
+		return
+	var o: Dictionary = me.world.ahead(me.x, me.z, me.y, 1, 30.0)
+	if o.is_empty():
+		return
+	if o["breakable"]:
+		inp.erase("mx")
+		if tick % 20 == 0:
+			inp["kick"] = true
+	elif o["top"] - me.y <= me.tune["jump_height"] - 5.0:
+		if tick % 30 == 0:
+			inp["jump"] = true
+	else:
+		inp["mz"] = 1.0 if o["z1"] < me.tune["street_depth"] - 10.0 else -1.0  # round it

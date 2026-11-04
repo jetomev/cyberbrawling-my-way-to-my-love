@@ -8,7 +8,7 @@ const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 
 
 func level(seed_value := 1):
-	return Level.new(Level.load_data("res://levels/level1.json"), {}, seed_value)
+	return Level.new(Level.load_data("res://tests/levels/grey_level1.json"), {}, seed_value)
 
 
 ## Puts every standing enemy down for good, as if beaten (the boss too, unless spared).
@@ -234,3 +234,120 @@ func test_the_boss_down_wins_a_multi_floor_level() -> void:
 	beat_them(l)
 	l.step({})
 	check(l.won, "the boss down for good wins it")
+
+
+## Level 1 as the team laid it out (levels/level1.json)
+func real_level(seed_value := 1):
+	return Level.new(Level.load_data("res://levels/level1.json"), {}, seed_value)
+
+
+## The wave at index w on the street: walks there (earlier waves beaten for him).
+func reach_wave(l, w: int) -> void:
+	for i in w:
+		walk_to(l, l.floors[0]["waves"][i]["at"])
+		for k in 400:
+			beat_them(l, true)
+			l.step({})
+			if l.active_wave < 0:
+				break
+	walk_to(l, l.floors[0]["waves"][w]["at"] - 250.0)
+	l.step({})
+
+
+func test_level_one_is_the_teams_layout() -> void:
+	var l = real_level()
+	eq(l.floors[0]["length"], 7 * 1920.0, "seven street screens")
+	var count := 0
+	for w in l.floors[0]["waves"]:
+		count += w["enemies"].size()
+	eq(count, 17, "17 enemies on the street")
+	eq(l.floors.size(), 2, "the street and the boss's room upstairs")
+
+
+func test_enemies_come_from_the_sides_a_door_or_hiding() -> void:
+	var l = real_level()
+	reach_wave(l, 0)
+	var at: float = l.floors[0]["waves"][0]["at"]
+	for e in l.enemies:
+		check(e["f"].x > at + Level.LOCK_MARGIN, "wave 1 walks in from off screen right, past the lock (%.0f)" % e["f"].x)
+	reach_wave(l, 1)
+	var hidden: Array = l.enemies.filter(func(e): return e["wave"] == 1 and e["brain"].dormant_until_within > 0.0)
+	eq(hidden.size(), 1, "one waits hidden (the lamppost)")
+	var x: float = hidden[0]["f"].x
+	for i in 30:
+		l.step({})
+	eq(hidden[0]["f"].x, x, "still, while the hero is further off")
+	eq(l.enemies.filter(func(e): return e["wave"] == 1).size(), 1, "the others wait until one is down")
+	beat_them(l, true)
+	l.step({})
+	l.step({})
+	var later: Array = l.enemies.filter(func(e): return e["wave"] == 1 and not e["f"].defeated())
+	eq(later.size(), 3, "one down: the other three come in")
+	check(later.any(func(e): return e["f"].z <= 10.0), "one out of a door at the back of the street")
+	check(later.filter(func(e): return e["f"].x < l.floors[0]["waves"][1]["at"] - Level.OFF_SCREEN + 60.0).size() == 2, "two from the left, behind him")
+
+
+func test_never_more_than_five_at_once() -> void:
+	var l = real_level()
+	reach_wave(l, 3)
+	var peak := 0
+	for k in 6:
+		peak = maxi(peak, l.standing().size())
+		var one = l.standing()[0] if not l.standing().is_empty() else null
+		if one != null:
+			one.health = 0.0
+			one._enter("ko")
+		for i in 3:
+			l.step({})
+	check(peak <= Level.MAX_ON_SCREEN, "at most five standing at once (peak %d)" % peak)
+
+
+func test_they_leave_their_drops_and_crates_their_contents() -> void:
+	var l = real_level()
+	reach_wave(l, 0)
+	beat_them(l, true)
+	l.step({})
+	check(l.world.items.filter(func(i): return i["kind"] == "takeaway").size() >= 2, "each Glow Punk leaves food")
+	var crate: Dictionary = l.world.objects.filter(func(o): return o.get("holds", "") == "soda")[0]
+	crate["strength"] = 0
+	crate["broken"] = true
+	l.hero.x = crate["x0"] - 60.0
+	l.hero.z = 40.0
+	var before: int = l.world.items.size()
+	# smash it the way the game does: a blow on it
+	crate["broken"] = false
+	crate["strength"] = 1
+	for i in 30:
+		l.step({"kick": i == 0})
+	check(crate["broken"], "the crate is smashed")
+	check(l.world.items.size() > before, "and the soda inside falls out")
+
+
+func test_the_bruiser_shrugs_off_a_jab() -> void:
+	var l = real_level()
+	reach_wave(l, 2)
+	for i in 120:
+		l.step({})
+	var b = l.enemies.filter(func(e): return e["kind"] == "bruiser")[0]["f"]
+	b._enter("idle")
+	var hp: float = b.health
+	b.take_hit({"damage": 1, "effect": "", "low": 120.0, "high": 230.0, "move": "punch"}, l.hero)
+	check(b.health < hp, "a jab hurts him")
+	eq(b.state, "idle", "but he doesn't flinch (Iron Gut)")
+	b.take_hit({"damage": 2, "effect": "", "low": 0.0, "high": 110.0, "move": "kick"}, l.hero)
+	eq(b.state, "hurt", "a kick does")
+
+
+func test_the_bot_plays_the_teams_level_one_through() -> void:
+	var results := []
+	for s in [1, 2, 3]:
+		var l = real_level(s)
+		var bot = HeroBot.new(l.hero, s)
+		for i in 30000:
+			if l.won or l.lost:
+				break
+			bot.me = l.hero
+			l.step(bot.think(l.standing()))
+		results.append("won" if l.won else "%s at %.0f, wave %d, %s" % ["lost" if l.lost else "stuck", l.hero.x, l.wave, l.where])
+	check(not results.any(func(r): return r.begins_with("stuck")), "the bot is never stuck: %s" % [results])
+	check(results.count("won") >= 2, "and wins on most seeds: %s" % [results])

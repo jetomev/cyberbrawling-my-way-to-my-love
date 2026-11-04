@@ -1,163 +1,288 @@
 {
-  "name": "Level 1 (grey placeholder until the team's layout lands)",
-  "about": "Javier & Claude, 2026-11-03. A stand-in layout so the level's logic, the bot and the builds run; the assistant team's level 1 layout replaces the obstacles, waves and boss below. Items: [kind, x, z] (food, first_aid, a weapon). Obstacles: [kind, x0, x1, z0, z1, top, climbable, strength]. Waves: the street locks at 'at' until its thugs are beaten; each enemy stands dx px from it.",
-  "length": 7680,
-  "obstacles": [
+ "name": "Level 1 \u00b7 Neon Row",
+ "about": "Javier & Claude, 2026-11-03, from the assistant team's level 1 layout (art-in 2026-11-03-level1-layout): seven street screens (1920 px each), the club's back stairs, the boss's room upstairs. Depth: back z 0-30, middle ~80, front ~140. Still to come from that page: the sparring friend on screen 1, the umbrella, the cat, DJ Volt's own fight (records, the speakers' wave, the mic stand).",
+ "floors": [
+  {
+   "name": "Neon Row",
+   "length": 13440,
+   "obstacles": [
     [
-      "crate",
-      1080,
-      1160,
-      40,
-      120,
-      96,
-      true,
-      4
+     "hydrant",
+     280,
+     320,
+     120,
+     160,
+     60,
+     true,
+     0
     ],
     [
-      "car",
-      2300,
-      2560,
-      30,
-      130,
-      130,
-      true,
-      0
+     "crate",
+     3500,
+     3580,
+     10,
+     70,
+     96,
+     true,
+     4,
+     "",
+     "soda"
     ],
     [
-      "crate",
-      3700,
-      3780,
-      90,
-      160,
-      96,
-      true,
-      4
+     "dumpster",
+     5300,
+     5460,
+     0,
+     60,
+     110,
+     true,
+     0
     ],
     [
-      "barrier",
-      5200,
-      5240,
-      0,
-      70,
-      220,
-      false,
-      0
+     "car",
+     8200,
+     8460,
+     90,
+     160,
+     130,
+     true,
+     6,
+     "",
+     "matchbook"
     ],
     [
-      "crate",
-      6500,
-      6580,
-      40,
-      120,
-      96,
-      true,
-      4
+     "barrier",
+     9750,
+     9790,
+     0,
+     160,
+     140,
+     false,
+     5
+    ],
+    [
+     "crate",
+     10950,
+     11030,
+     110,
+     160,
+     96,
+     true,
+     4,
+     "",
+     "first_aid"
+    ],
+    [
+     "crate",
+     11050,
+     11130,
+     110,
+     160,
+     96,
+     true,
+     4
     ]
-  ],
-  "items": [
+   ],
+   "items": [
     [
-      "food",
-      2700,
-      100
+     "bat",
+     5950,
+     140
     ],
     [
-      "food",
-      4300,
-      60
+     "takeaway",
+     9300,
+     15
     ],
     [
-      "first_aid",
-      5900,
-      100
+     "soda",
+     11750,
+     20
     ],
     [
-      "food",
-      7100,
-      90
+     "photo",
+     13150,
+     20
     ]
-  ],
-  "waves": [
+   ],
+   "waves": [
     {
-      "at": 1500,
-      "enemies": [
-        {
-          "kind": "thug",
-          "dx": 500,
-          "z": 60
-        },
-        {
-          "kind": "thug",
-          "dx": 650,
-          "z": 120,
-          "weapon": "pipe"
-        }
-      ]
+     "at": 2700,
+     "enemies": [
+      {
+       "kind": "glow_punk",
+       "from": "right",
+       "z": 60
+      },
+      {
+       "kind": "glow_punk",
+       "from": "right",
+       "z": 120
+      }
+     ]
     },
     {
-      "at": 3100,
-      "enemies": [
-        {
-          "kind": "thug",
-          "dx": 500,
-          "z": 40
-        },
-        {
-          "kind": "thug",
-          "dx": -600,
-          "z": 120
-        },
-        {
-          "kind": "thug",
-          "dx": 700,
-          "z": 90,
-          "weapon": "bat"
-        }
-      ]
+     "at": 4500,
+     "enemies": [
+      {
+       "kind": "glow_punk",
+       "dx": 340,
+       "z": 20,
+       "hidden": true
+      },
+      {
+       "kind": "glow_punk",
+       "from": "left",
+       "z": 60,
+       "after_down": 1
+      },
+      {
+       "kind": "glow_punk",
+       "from": "left",
+       "z": 130,
+       "after_down": 1
+      },
+      {
+       "kind": "glow_punk",
+       "from": "door",
+       "dx": 600,
+       "after_down": 1
+      }
+     ]
     },
     {
-      "at": 4700,
-      "enemies": [
-        {
-          "kind": "thug",
-          "dx": 500,
-          "z": 80,
-          "weapon": "knife"
-        },
-        {
-          "kind": "thug",
-          "dx": 650,
-          "z": 130
-        }
-      ]
+     "at": 6600,
+     "enemies": [
+      {
+       "kind": "bruiser",
+       "from": "right",
+       "z": 80
+      },
+      {
+       "kind": "glow_punk",
+       "from": "right",
+       "z": 30
+      },
+      {
+       "kind": "glow_punk",
+       "from": "right",
+       "z": 140
+      }
+     ]
     },
     {
-      "at": 6200,
-      "enemies": [
-        {
-          "kind": "thug",
-          "dx": 500,
-          "z": 50,
-          "weapon": "pipe"
-        },
-        {
-          "kind": "thug",
-          "dx": -550,
-          "z": 110
-        },
-        {
-          "kind": "thug",
-          "dx": 680,
-          "z": 140,
-          "weapon": "wrench"
-        }
-      ]
+     "at": 10400,
+     "enemies": [
+      {
+       "kind": "glow_punk",
+       "from": "right",
+       "z": 40
+      },
+      {
+       "kind": "glow_punk",
+       "from": "right",
+       "z": 90
+      },
+      {
+       "kind": "glow_punk",
+       "from": "right",
+       "z": 140
+      },
+      {
+       "kind": "bruiser",
+       "from": "door",
+       "dx": 300,
+       "weapon": "bat",
+       "after_down": 2
+      },
+      {
+       "kind": "glow_punk",
+       "from": "left",
+       "z": 60,
+       "after_down": 2
+      },
+      {
+       "kind": "glow_punk",
+       "from": "left",
+       "z": 120,
+       "after_down": 2
+      }
+     ]
+    },
+    {
+     "at": 12300,
+     "enemies": [
+      {
+       "kind": "glow_punk",
+       "from": "door",
+       "dx": 300
+      },
+      {
+       "kind": "glow_punk",
+       "from": "door",
+       "dx": 420
+      }
+     ]
     }
-  ],
-  "stairs": 7300,
-  "upstairs_length": 1920,
-  "boss": {
-    "kind": "boss",
-    "health": 40,
-    "weapon": "wrench"
+   ]
+  },
+  {
+   "name": "the club upstairs",
+   "length": 1920,
+   "obstacles": [
+    [
+     "speaker",
+     200,
+     280,
+     0,
+     30,
+     200,
+     false,
+     6,
+     "speaker_left"
+    ],
+    [
+     "speaker",
+     1640,
+     1720,
+     0,
+     30,
+     200,
+     false,
+     6,
+     "speaker_right"
+    ],
+    [
+     "crate",
+     150,
+     230,
+     120,
+     160,
+     96,
+     true,
+     4,
+     "",
+     "soda"
+    ]
+   ],
+   "items": [],
+   "waves": []
   }
+ ],
+ "links": [
+  {
+   "from": 0,
+   "x": 13300,
+   "to": 1,
+   "to_x": 400,
+   "auto": true
+  }
+ ],
+ "switches": [],
+ "boss": {
+  "floor": 1,
+  "x": 1100,
+  "kind": "boss",
+  "health": 40
+ }
 }

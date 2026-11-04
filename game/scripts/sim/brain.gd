@@ -33,8 +33,20 @@ const BOSS := {
 }
 const HANG_BACK := 130.0  # how much further off an enemy waits while it isn't his turn to attack
 
+## The team's enemy table (art-in 2026-11-03). The Glow Punk, the warm-up: "Slap Happy", slap, slap, a two-handed
+## shove (jab, cross, push kick by the hero's own table); no counter; quick to come again, never blocks.
+const GLOW_PUNK := {
+	"keep": 170.0, "strike": 110.0, "wait_min": 50, "wait_max": 100, "block_chance": 0.0, "block_ticks": 0,
+	"combos": [["punch", "punch", "kick"], ["punch", "punch"], ["punch"]],
+}
+## The Bruiser, the big lad: "Wrecking Ball", heavy blows (jab, cross, power punch for now; the hooks and the body slam
+## come with his own poses); shrugs off a jab (level.gd); slow to come again, blocks sometimes.
+const BRUISER := {
+	"keep": 170.0, "strike": 115.0, "wait_min": 70, "wait_max": 130, "block_chance": 0.25, "block_ticks": 24,
+	"combos": [["punch", "punch", "punch"], ["punch", "punch"], ["kick", "kick", "kick"]],
+}
 ## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
-const TYPES := {"THUG": THUG, "BOSS": BOSS}
+const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER}
 
 var me
 var foe
@@ -46,6 +58,7 @@ var pressed_on := -1  # the blow (attack serial) during which he pressed the nex
 var block_left := 0
 var read_serial := -1  # the foe's blow he already decided about
 var allowed := true  # a level lets only a couple of enemies attack at once; the others hang back, waiting their turn
+var dormant_until_within := 0.0  # hidden (the lamppost in level 1): still until the hero comes this close, then out
 
 
 func _init(fighter, target, dice_seed := 1, how: Dictionary = THUG) -> void:
@@ -63,6 +76,11 @@ func think() -> Dictionary:
 		plan.clear()
 		block_left = 0
 		return inp
+	if dormant_until_within > 0.0:
+		if absf(foe.x - me.x) > dormant_until_within:
+			return inp  # still hiding
+		dormant_until_within = 0.0
+		wait = 0  # he jumps out swinging
 	var dx: float = foe.x - me.x
 	var toward := 1.0 if dx >= 0.0 else -1.0
 	var dist := absf(dx)
