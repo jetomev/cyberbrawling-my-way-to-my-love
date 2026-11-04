@@ -3,6 +3,13 @@
 *Started 2026-11-01. Javier & Claude. Decisions in CLAUDE.md; the game in docs/DESIGN.md; dates in docs/PLAN.md.
 Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 
+## Next: Thu 2026-11-05, 6:00 (Javier stopped the day 11-04 evening)
+- [ ] A fresh build on 1fd64fc: the last full build (bf63f0b) is from before the chin blocks, the knife, the balcony gap
+  and roster v7. The 11-04 ~17:30 build stopped on a too-short clip fence (fixed, 1d6fdc0); the 17:29 one was stopped
+  for the night in its trial clips, on purpose. Then look at armed/ (blocks at the chin, the knife up) and proof_gap.
+- [ ] Waiting on the team: the docks level (6) and the controller buttons (not settled); the testers' open weapon points.
+- [ ] Waiting on Javier: throw and switch keys, pad buttons for sweep and roll, installer, the CMU download.
+
 ## Stage 0 · The kit (by Sun 8 Nov)
 - [x] Project folder, README, licence files, CLAUDE.md, TODO.md, design, plan, lessons, unattended plan
 - [x] Memory file and its MEMORY.md line
