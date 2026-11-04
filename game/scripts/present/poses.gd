@@ -1056,6 +1056,7 @@ const WEAPON_REACH := {"knife": 38.0, "stick": 112.0, "pipe": 102.0, "wrench": 6
 const HANG_HEIGHT := 92.0
 const WEAPON_SWING_REL := -78.0  # in a swing (till each weapon's own swings are drawn): through the fist, as before
 const FENCE := Vector2(50, -70)  # the free hand with a one-handed weapon: up before the chest, open (a fence)
+const CHIN_FROM_NECK := Vector2(14.0, 2.0)  # the chin from the top of the neck (feel lab: the drawn jaw's underside)
 const BLOCK_CHIN := -80.0  # every across-the-body block at chin height (the playtester's grips page, settled 11-04)
 const HILT_HANDS := ["sword", "lovelight"]  # blocking, both hands stay on the hilt; the bat and baguette slide the top hand up
 const BLOCK_LEN := 0.65  # a block's bar, seen a little from the side: most of the weapon's length
@@ -1263,7 +1264,8 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 				# raised across before the face, the free hand pushing on the far end; the bat, sword and Lovelight across
 				# at chest height, the blade flat. Seen from the side: level, the weapon hand at the front end and the bar
 				# running back across him, long enough to read (not the end-on stub the testers sent back)
-				at = Vector2(60, BLOCK_CHIN)  # all at chin height (the team's playtester, settled 11-04)
+				at = Vector2(60, BLOCK_CHIN)  # all at chin height (the team's playtester, settled 11-04): _hold puts the
+				out["block_chin"] = 1.0  # hands on the chin's measured spot in this very pose (testers, bf63f0b)
 				dir_deg = 180.0
 				out["wpn_len"] = BLOCK_LEN
 		out["hold_%sx" % w] = at.x
@@ -1305,11 +1307,15 @@ static func _hold(out: Dictionary, pose: Dictionary) -> void:
 	out["wpn_centre"] = pose.get("wpn_centre", 0.0)
 	out["hop"] = pose.get("hop", 0.0)
 	var hip := Vector2(pose.get("hip_x", 0.0), BONES["hip"][1].y + pose.get("hip_y", 0.0))
+	var chin_y: float = chin(out).y  # (a block's bar goes exactly there: the testers measured it against the chin)
 	for side in ["f", "b"]:
 		var c: float = pose.get("hold_" + side, 0.0)
 		if c <= 0.0:
 			continue
-		_reach_arm(out, side, hip + Vector2(pose.get("hold_%sx" % side, 0.0), pose.get("hold_%sy" % side, 0.0)), c)
+		var target: Vector2 = hip + Vector2(pose.get("hold_%sx" % side, 0.0), pose.get("hold_%sy" % side, 0.0))
+		if pose.get("block_chin", 0.0) > 0.0:
+			target.y = chin_y
+		_reach_arm(out, side, target, c)
 	var w: String = "b" if pose.get("wpn_side", 0.0) >= 0.5 else "f"
 	if pose.get("grip_o", 0.0) > 0.0:  # a two-handed weapon: the other hand a fist further down the handle
 		var wrist: Vector2 = _end("arm_%s_lower" % w, out)[0]
@@ -1320,6 +1326,12 @@ static func _hold(out: Dictionary, pose: Dictionary) -> void:
 		var rel: float = wrapf(pose["wpn"] - rad_to_deg(hand[1]), -180.0, 180.0)
 		out["wpn_rel"] = rad_to_deg(lerp_angle(deg_to_rad(WEAPON_SWING_REL), deg_to_rad(rel), clampf(pose.get("wpn_hold", 0.0), 0.0, 1.0)))
 		out["wpn_len"] = pose.get("wpn_len", 1.0)
+
+
+## Where his chin is in a baked pose: the top of the neck (where the head's drawing starts), a little forward and down
+## to the jaw's underside.
+static func chin(out: Dictionary) -> Vector2:
+	return (_end("neck", out)[0] as Vector2) + CHIN_FROM_NECK
 
 
 ## An arm's two-bone solve to put its wrist on a spot (the elbow down), blended in by c.
