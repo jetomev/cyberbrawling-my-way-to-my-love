@@ -9,3 +9,6 @@ __pycache__/
 
 # Javier's shelf, where the one daily report goes (set per machine, never committed)
 .review-shelf
+
+# The Dailies page as built (scripts/build_dailies.py); made fresh from the scripts
+approvals/site/

@@ -48,6 +48,11 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 - `docs/PLAN.md` — the engine, the art pipeline, the milestones and the quality bar.
 - `docs/LESSONS.md` — what our previous game project taught us, and what we do differently because of it.
 - `docs/UNATTENDED.md` — how work keeps moving on weekdays, and what always waits for Javier.
+- `docs/STYLE.md` — the look and the sound: the layers, the cut-out fighters, the colour of each level from neon to
+  grit, how music and effects are made.
+- `docs/PROMPTS.md` — the words we give ChatGPT for each batch of pictures, with the count and the cost written first.
+- `scripts/build_dailies.py` — makes the free drafts (style frames, music, sound effects; `scripts/art/`,
+  `scripts/audio/`, all from our own code, no samples, $0) and the Dailies page where Javier picks.
 - `game/` — the Godot 4 project. `scripts/test.sh` runs its tests headless, inside a memory and CPU fence with a
   time limit, logs to `logs/`, and fails if the number of tests ever drops below `game/tests/FLOOR`.
 - `scripts/play.sh` plays it in a window (keyboard: the arrows move, A punch, S kick, hold D to block, hold W to run,

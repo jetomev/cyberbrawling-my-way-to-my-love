@@ -1,0 +1,243 @@
+<title>Cyberbrawling Dailies</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a rainy night street. One column of sections; style frames in a grid, audio as rows; status chips on every item. */
+:root {
+  --bg: #110c1f; --surface: #1a1430; --raised: #241c3f; --line: #33295a;
+  --fg: #efeaff; --muted: #a99fcb; --faint: #7a70a0;
+  --seal: #ff3ea5; --seal-ink: #1a0612; --cyan: #2de2e6;
+  --ok: #2de2e6; --redo: #ffb347; --wait: #7a70a0;
+  --display: "Chakra Petch", "Rajdhani", system-ui, sans-serif;
+  --body: "Barlow", "Noto Sans", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { display: grid; gap: 14px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.hanko { width: 46px; height: 46px; border-radius: 8px; border: 3px solid var(--seal); color: var(--seal); box-shadow: 0 0 14px color-mix(in srgb, var(--seal) 60%, transparent), inset 0 0 10px color-mix(in srgb, var(--seal) 40%, transparent);
+  display: grid; place-items: center; font: 700 18px/1 var(--display); flex: none; }
+h1 { font: 700 clamp(26px, 4.4vw, 40px)/1.1 var(--display); margin: 0; text-wrap: balance; letter-spacing: .01em; }
+.lede { color: var(--muted); max-width: 68ch; margin: 0; }
+.tally { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.pill { font: 500 12px/1 var(--mono); letter-spacing: .04em; padding: 7px 10px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--muted); font-variant-numeric: tabular-nums; }
+.pill b { color: var(--fg); font-weight: 500; }
+.pill.ok b { color: var(--ok); } .pill.redo b { color: var(--redo); }
+.filters { margin-left: auto; display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.filters button { font: 500 12px/1 var(--body); color: var(--muted); background: none; border: 0; padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--raised); color: var(--fg); }
+nav.toc { display: flex; gap: 18px; flex-wrap: wrap; font: 500 12px/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; }
+nav.toc a { color: var(--muted); text-decoration: none; } nav.toc a:hover { color: var(--fg); }
+section { padding-top: 40px; display: grid; gap: 18px; }
+section > h2 { font: 700 26px/1.2 var(--display); margin: 0; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+section > h2 small { font: 500 12px/1 var(--mono); color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
+.sec-note { color: var(--muted); margin: -8px 0 0; max-width: 72ch; }
+.item { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.item[data-status="approved"] { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+.item[data-status="redo"] { border-color: color-mix(in srgb, var(--redo) 45%, var(--line)); }
+.item-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.item-head h3 { font: 600 19px/1.25 var(--display); margin: 0; }
+.where { color: var(--muted); font-size: 13.5px; margin: 0; min-width: 0; }
+.chip { margin-left: auto; font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 6px 9px; border-radius: 6px;
+  color: var(--wait); border: 1px solid currentColor; white-space: nowrap; }
+.chip[data-s="approved"] { color: var(--ok); } .chip[data-s="redo"] { color: var(--redo); }
+.takes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 900px) { .takes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.take { position: relative; border-radius: 8px; overflow: hidden; border: 2px solid transparent; background: var(--raised); padding: 0; cursor: zoom-in; }
+.take img { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.take .n { position: absolute; left: 8px; top: 8px; font: 500 11px/1 var(--mono); background: rgb(0 0 0 / .62); color: #fff; padding: 5px 7px; border-radius: 5px; }
+.take.picked { border-color: var(--seal); }
+.take.picked .n { background: var(--seal); }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.controls select, .controls textarea { font: 14px/1.4 var(--body); color: var(--fg); background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.controls textarea { flex: 1 1 260px; min-height: 40px; resize: vertical; min-width: 0; }
+.btn { font: 600 13px/1 var(--body); border-radius: 8px; padding: 11px 14px; cursor: pointer; border: 1px solid var(--line); background: var(--raised); color: var(--fg); }
+.btn.approve { background: var(--seal); border-color: var(--seal); color: var(--seal-ink); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn:focus-visible, .take:focus-visible, .filters button:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.saved { font: 12px/1 var(--mono); color: var(--faint); }
+.rows { display: grid; gap: 10px; }
+.audio-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; }
+.audio-row audio { width: 100%; min-width: 0; height: 36px; }
+.meta { font: 12px/1.4 var(--mono); color: var(--faint); font-variant-numeric: tabular-nums; }
+.variants { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.variants figure { margin: 0; display: grid; gap: 4px; }
+.variants figcaption { font: 11px/1 var(--mono); color: var(--faint); }
+.variants audio { width: 100%; height: 32px; }
+.sfx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 12px; }
+.clips { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+.clips video, .clips img { width: 100%; border-radius: 8px; background: #000; display: block; }
+.empty { border: 1px dashed var(--line); border-radius: 12px; padding: 22px; color: var(--muted); }
+.notice { border-left: 3px solid var(--redo); background: var(--surface); padding: 12px 14px; border-radius: 6px; color: var(--muted); }
+dialog { border: 0; padding: 0; background: #000; max-width: min(96vw, 1800px); border-radius: 10px; }
+dialog img { display: block; max-width: 100%; max-height: 86vh; }
+dialog::backdrop { background: rgb(0 0 0 / .82); }
+dialog .bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); color: var(--fg); font: 13px var(--mono); }
+@media (max-width: 560px) { .filters { margin-left: 0; } .audio-row { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: no-preference) { .take img { transition: transform .25s ease; } .take:hover img { transform: scale(1.02); } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><div class="hanko" aria-hidden="true">CB</div><h1>Cyberbrawling · Dailies</h1></div>
+    <p class="lede">Everything made for the game lands here first. Look, listen, then approve it or send it back with a note.
+      Only approved pieces go into the game; a note sends that piece back to the workbench.</p>
+    <div class="tally" id="tally"></div>
+    <nav class="toc" id="toc"></nav>
+  </header>
+  <div id="sections"></div>
+</div>
+<dialog id="lightbox"><div class="bar"><span id="lb-cap"></span><button class="btn" id="lb-close">Close</button></div><img id="lb-img" alt=""></dialog>
+
+<script id="manifest" type="application/json">__MANIFEST__</script>
+<script>
+const M = JSON.parse(document.getElementById("manifest").textContent);
+const reviews = {};          // item id -> {status, take, note, at}
+let db = null, filter = "all";
+try { filter = localStorage.getItem("dailies-filter") || "all"; } catch (e) {}
+
+const $ = (tag, attrs = {}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "text") el.textContent = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== undefined && v !== false) el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of kids.flat()) if (k) el.append(k);
+  return el;
+};
+const statusOf = id => reviews[id]?.status || "waiting";
+const label = s => ({ approved: "Approved", redo: "Redo", waiting: "Waiting" })[s];
+
+function allItems() { return M.sections.flatMap(s => s.items.map(i => ({ ...i, section: s.id }))); }
+
+function renderTally() {
+  const t = document.getElementById("tally"); t.replaceChildren();
+  const items = allItems(); const n = s => items.filter(i => statusOf(i.id) === s).length;
+  t.append($("span", { class: "pill ok" }, "Approved ", $("b", { text: n("approved") })),
+           $("span", { class: "pill redo" }, "Redo ", $("b", { text: n("redo") })),
+           $("span", { class: "pill" }, "Waiting ", $("b", { text: n("waiting") })),
+           $("span", { class: "pill" }, "Built ", $("b", { text: M.built })));
+  const f = $("div", { class: "filters", role: "group", "aria-label": "Show" });
+  for (const [k, txt] of [["all", "All"], ["waiting", "Waiting"], ["approved", "Approved"], ["redo", "Redo"]])
+    f.append($("button", { type: "button", "aria-pressed": String(filter === k), text: txt,
+      onclick: () => { filter = k; try { localStorage.setItem("dailies-filter", k); } catch (e) {} render(); } }));
+  t.append(f);
+}
+
+async function save(id, patch, btnRow) {
+  const prev = reviews[id] || {};
+  const next = { status: prev.status || "waiting", take: prev.take ?? null, note: prev.note || "", ...patch, at: new Date().toISOString() };
+  reviews[id] = next; refresh(id);
+  if (!db) { flash(btnRow, "Not saved: open this page signed in to claude.ai"); return; }
+  try { await db.doc("reviews/" + id).set(next); flash(btnRow, "Saved"); }
+  catch (e) { flash(btnRow, "Not saved: " + (e.message || e.code || "try again")); }
+}
+function flash(row, msg) { const s = row?.querySelector(".saved"); if (s) s.textContent = msg; }
+
+function controls(item, opts = {}) {
+  const r = reviews[item.id] || {};
+  const row = $("div", { class: "controls" });
+  const note = $("textarea", { id: "note-" + item.id, placeholder: "What should change? (needed for Redo)", "aria-label": "Note for " + item.title });
+  note.value = r.note || "";
+  const approve = $("button", { class: "btn approve", type: "button",
+    text: opts.takes ? (r.take ? `Pick ${item.takes[r.take - 1].label || "take " + r.take}` : "Click a frame, then pick it") : "Approve",
+    onclick: () => save(item.id, { status: "approved", note: note.value.trim() }, row) });
+  if (opts.takes && !r.take) approve.disabled = true;
+  const redo = $("button", { class: "btn", type: "button", text: "Redo",
+    onclick: () => { if (!note.value.trim()) { note.focus(); flash(row, "Write what should change first"); return; }
+      save(item.id, { status: "redo", note: note.value.trim() }, row); } });
+  row.append(approve, redo, note, $("span", { class: "saved", text: r.at ? "Last saved " + new Date(r.at).toLocaleString() : "" }));
+  return row;
+}
+
+function head(item) {
+  const s = statusOf(item.id);
+  return $("div", { class: "item-head" }, $("h3", { text: item.title }), $("span", { class: "chip", "data-s": s, text: label(s) }));
+}
+
+function sceneryItem(item) {
+  const r = reviews[item.id] || {};
+  const takes = $("div", { class: "takes" });
+  item.takes.forEach((t, i) => {
+    const n = i + 1;
+    takes.append($("button", { type: "button", class: "take" + (r.take === n ? " picked" : ""), "aria-label": `Take ${n} of ${item.title}, open large and pick`,
+      onclick: () => { openLightbox(t.full, `${item.title} · take ${n}`); if (r.take !== n) { reviews[item.id] = { ...r, take: n }; refresh(item.id); } } },
+      $("img", { src: t.thumb, alt: `${item.title}, take ${n}`, loading: "lazy" }), $("span", { class: "n", text: t.label || "Take " + n })));
+  });
+  return $("article", { class: "item", "data-status": statusOf(item.id), id: item.id }, head(item),
+    $("p", { class: "where", text: item.where }), takes, controls(item, { takes: true }));
+}
+
+function musicItem(item) {
+  return $("article", { class: "item", "data-status": statusOf(item.id), id: item.id }, head(item),
+    $("div", { class: "audio-row" }, $("p", { class: "where", text: item.where }), $("span", { class: "meta", text: item.meta })),
+    $("audio", { controls: true, preload: "none", src: item.src }), controls(item));
+}
+
+function sfxItem(item) {
+  return $("article", { class: "item", "data-status": statusOf(item.id), id: item.id }, head(item),
+    $("p", { class: "where", text: item.where }),
+    $("div", { class: "variants" }, item.variants.map(v => $("figure", {}, $("figcaption", { text: v.name }), $("audio", { controls: true, preload: "none", src: v.src })))),
+    controls(item));
+}
+
+function clipItem(item) {
+  return $("article", { class: "item", "data-status": statusOf(item.id), id: item.id }, head(item),
+    $("p", { class: "where", text: item.where }),
+    $("div", { class: "clips" }, item.media.map(m => m.type === "video"
+      ? $("video", { src: m.src, controls: true, loop: true, muted: true, playsinline: true, preload: "metadata" })
+      : $("img", { src: m.src, alt: item.title, loading: "lazy" }))),
+    controls(item));
+}
+
+const kinds = { scenery: sceneryItem, music: musicItem, sfx: sfxItem, clip: clipItem };
+
+// Redraw one item (and the tally) so audio playing elsewhere on the page keeps playing.
+function refresh(id) {
+  renderTally();
+  const old = document.getElementById(id); if (!old) return;
+  const sec = M.sections.find(s => s.items.some(i => i.id === id));
+  const item = sec.items.find(i => i.id === id);
+  if (filter !== "all" && statusOf(id) !== filter) { old.remove(); return; }
+  old.replaceWith(kinds[sec.kind](item));
+}
+
+function render() {
+  renderTally();
+  const toc = document.getElementById("toc"); toc.replaceChildren();
+  const host = document.getElementById("sections"); host.replaceChildren();
+  for (const sec of M.sections) {
+    toc.append($("a", { href: "#" + sec.id, text: sec.title }));
+    const list = sec.items.filter(i => filter === "all" || statusOf(i.id) === filter);
+    const body = list.length ? list.map(kinds[sec.kind])
+      : [$("div", { class: "empty", text: sec.items.length ? "Nothing here with this filter." : sec.empty })];
+    const wrap = sec.kind === "sfx" ? [$("div", { class: "sfx-grid" }, body)] : body;
+    host.append($("section", { id: sec.id }, $("h2", {}, sec.title, $("small", { text: `${sec.items.length} items` })),
+      sec.note ? $("p", { class: "sec-note", text: sec.note }) : null, ...wrap));
+  }
+}
+
+const lb = document.getElementById("lightbox");
+function openLightbox(src, cap) { document.getElementById("lb-img").src = src; document.getElementById("lb-cap").textContent = cap; lb.showModal(); }
+document.getElementById("lb-close").addEventListener("click", () => lb.close());
+lb.addEventListener("click", e => { if (e.target === lb) lb.close(); });
+
+render();
+(async () => {
+  db = await window.claude?.use?.("db") ?? null;
+  if (!db) { document.querySelector(".lede").after($("p", { class: "notice", text: "Approvals save only when this page is opened signed in to claude.ai. You can still look and listen." })); return; }
+  let first = true;
+  db.collection("reviews").onSnapshot(snap => {
+    const changed = [];
+    for (const d of snap.docs) { const v = d.data(); if (v && JSON.stringify(v) !== JSON.stringify(reviews[d.id])) { reviews[d.id] = v; changed.push(d.id); } }
+    if (first) { first = false; render(); } else changed.forEach(refresh);
+  }, () => {});
+})();
+</script>

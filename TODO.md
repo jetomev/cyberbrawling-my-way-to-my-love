@@ -99,17 +99,19 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] Javier's grey-box feel test
 
 ## Stage 2 · The look (by Sun 29 Nov) — #4
-- [ ] Style sheet docs/STYLE.md: palette per level, neon to grit (solo)
-- [ ] Prompt sheets for ChatGPT: style frames, parts sheets, level 1 layers (solo)
-- [ ] ChatGPT style frames; Javier picks one
+- [x] Style sheet docs/STYLE.md: palette per level, neon to grit (solo) (2026-11-03, Javier: "move forward please")
+- [x] Prompt sheets for ChatGPT: style frames, parts sheets, level 1 layers (solo) (docs/PROMPTS.md, count + cost per batch)
+- [x] Three free style frames we drew ourselves (A neon ink, B soft glow, C grit comic) + the colour of each level, on the Dailies page
+- [ ] Javier picks a direction; then the ChatGPT style frames, Batch 1 (6 pictures, $0 extra on ChatGPT Plus), on his yes
 - [ ] Both heroes and two enemies as parts sheets, with bruised/swollen/broken stages; Javier approves
 - [ ] Level 1 street in layers; Javier approves
-- [ ] The Dailies page
+- [x] The Dailies page (scripts/build_dailies.py; link in .dailies)
 
 ## Stage 3 · Level 1 playable (by Sun 13 Dec) — #5
 - [ ] Cut, clean and rig the approved parts (solo)
 - [ ] Level 1 layers in the game (solo)
-- [ ] First music cue and sound effects, as drafts for Javier's ear (solo)
+- [x] First music cue (level 1, a minute, loops) and 8 sound effects × 3 takes, free drafts on the Dailies page (solo)
+- [ ] Javier listens: music and effects approved or sent back
 - [ ] Level 1 boss upstairs (solo)
 - [ ] Linux build he can install; test matrix in testing/ (solo)
 - [ ] Javier plays level 1 with the matrix
