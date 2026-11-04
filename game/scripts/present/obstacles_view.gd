@@ -2,8 +2,12 @@ extends Node2D
 ## Draws what stands on the street (street_world.gd) as grey boxes with a top and a front, each at its own depth so
 ## fighters pass in front of or behind it. A broken crate becomes a low heap of boards.
 
-const COLORS := {"crate": Color(0.50, 0.45, 0.38), "car": Color(0.36, 0.42, 0.52), "barrier": Color(0.55, 0.50, 0.30),
-	"hydrant": Color(0.72, 0.22, 0.2), "dumpster": Color(0.24, 0.38, 0.28), "speaker": Color(0.2, 0.2, 0.24)}
+## The props as the team's props sheet has them (art-in 2026-11-03), in the picked look, "Neon ink" (bold dark
+## outlines, two tones, a thin neon rim on the lit edge): a wooden crate, a boxy old car, an orange-and-white road
+## barrier, a red hydrant, a green metal dumpster, black speakers. Grey-box stand-ins until the team's pictures land.
+const COLORS := {"crate": Color(0.58, 0.44, 0.28), "car": Color(0.36, 0.42, 0.52), "barrier": Color(0.95, 0.5, 0.15),
+	"hydrant": Color(0.78, 0.18, 0.16), "dumpster": Color(0.2, 0.42, 0.3), "speaker": Color(0.16, 0.16, 0.2)}
+const RIM := Color(1.0, 0.24, 0.65)  # the magenta neon rim (#ff3ea5) on the edge facing the signs
 const EDGE := Color(0.08, 0.08, 0.10)
 
 var world
@@ -88,11 +92,11 @@ func _draw_loose() -> void:
 			loose.draw_rect(Rect2(at + Vector2(-18, -22), Vector2(36, 22)), Color(0.92, 0.9, 0.84))
 			loose.draw_rect(Rect2(at + Vector2(-18, -22), Vector2(36, 22)), EDGE, false, 2.0)
 			loose.draw_rect(Rect2(at + Vector2(-18, -14), Vector2(36, 5)), Color(0.85, 0.3, 0.25))
-		elif it["kind"] == "first_aid":  # a white kit with a red cross
+		elif it["kind"] == "first_aid":  # a white kit with a GREEN cross (the team: not red, so it's no real charity's mark)
 			loose.draw_rect(Rect2(at + Vector2(-20, -24), Vector2(40, 24)), Color(0.95, 0.95, 0.95))
 			loose.draw_rect(Rect2(at + Vector2(-20, -24), Vector2(40, 24)), EDGE, false, 2.0)
-			loose.draw_rect(Rect2(at + Vector2(-3, -21), Vector2(6, 18)), Color(0.85, 0.15, 0.15))
-			loose.draw_rect(Rect2(at + Vector2(-9, -15), Vector2(18, 6)), Color(0.85, 0.15, 0.15))
+			loose.draw_rect(Rect2(at + Vector2(-3, -21), Vector2(6, 18)), Color(0.15, 0.7, 0.3))
+			loose.draw_rect(Rect2(at + Vector2(-9, -15), Vector2(18, 6)), Color(0.15, 0.7, 0.3))
 		else:  # another weapon, by its look in the hand
 			loose.draw_line(at + Vector2(-34, -4), at + Vector2(34, -8), EDGE, 10.0)
 			loose.draw_line(at + Vector2(-32, -4), at + Vector2(32, -8), Color(0.7, 0.7, 0.72), 5.0)
@@ -118,8 +122,16 @@ func _draw_object(n: Node2D, o: Dictionary) -> void:
 	var front := Rect2(o["x0"], near - top, w, top)
 	n.draw_rect(top_face, base.lightened(0.18))
 	n.draw_rect(front, base)
-	n.draw_rect(top_face, EDGE, false, 3.0)
-	n.draw_rect(front, EDGE, false, 3.0)
+	n.draw_rect(Rect2(front.position + Vector2(front.size.x * 0.6, 0), Vector2(front.size.x * 0.4, front.size.y)), base.darkened(0.25))  # the shadow tone
+	n.draw_line(front.position + Vector2(2, 2), Vector2(front.position.x + 2, front.end.y - 2), RIM, 3.0)  # the rim on the lit edge
+	n.draw_line(top_face.position + Vector2(2, 2), Vector2(top_face.end.x - 2, top_face.position.y + 2), RIM, 2.0)
+	if o["kind"] == "barrier":  # orange and white stripes
+		var stripes := int(top / 40.0)
+		for i in stripes:
+			if i % 2 == 1:
+				n.draw_rect(Rect2(front.position.x, front.position.y + i * 40.0, w, 40.0), Color(0.95, 0.95, 0.92))
+	n.draw_rect(top_face, EDGE, false, 4.0)
+	n.draw_rect(front, EDGE, false, 4.0)
 	if o["kind"] == "crate":
 		n.draw_line(front.position, front.end, EDGE, 3.0)
 		n.draw_line(Vector2(front.end.x, front.position.y), Vector2(front.position.x, front.end.y), EDGE, 3.0)
