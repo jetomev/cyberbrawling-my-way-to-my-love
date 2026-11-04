@@ -34,11 +34,11 @@ const THROW_SPEED := 14.0
 ## The fist move each press becomes with a weapon in hand (the rest stay as they are).
 const ARMED := {"punch": "swing", "cross": "backswing", "power_punch": "smash", "uppercut": "rising_swing",
 	"elbow": "handle_jab", "hammer_fist": "chop"}
-## Javier's order (2026-11-04, through the team): armed, every attack press is a weapon swing, the kicks too, each
-## weapon held the way it's really used. The kicks' swings, by their place in the chain (first press a swing, second a
-## backswing, the finisher the smash; jumping, the chop; the sweep a swing). Ready, and switched on with
-## swings_replace_kicks once the team's grip page and pose sheet are in (and the hero can drop a weapon: Coach's gloves
-## stop every swing, Madame Chrome's cane snaps only to kicks).
+## Armed, a weapon's use "subs the punches" (Javier, 2026-11-04): the punch press is the weapon's swing (ARMED above),
+## and kicks stay kicks (the team's rule). Should the team's grip page turn the kicks into swings too, this is ready:
+## by place in the chain (first press a swing, second a backswing, the finisher the smash; jumping, the chop; the sweep
+## a swing), switched on with swings_replace_kicks. Off. (On, the hero would need a way to drop a weapon: Coach's
+## gloves stop every swing, Madame Chrome's cane snaps only to kicks.)
 const ARMED_KICKS := {"kick": "swing", "body_kick": "backswing", "side_kick": "smash", "knee": "backswing",
 	"push_kick": "smash", "roundhouse": "smash", "air_kick": "chop", "sweep": "swing"}
 static var swings_replace_kicks := false

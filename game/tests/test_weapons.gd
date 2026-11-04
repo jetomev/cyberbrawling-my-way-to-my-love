@@ -222,9 +222,9 @@ func test_a_swing_on_a_guard_doesnt_wear_it() -> void:
 	eq(f.weapon_hits_left, whole, "a blocked swing doesn't wear the weapon (only a hit does)")
 
 
-## Javier's order (2026-11-04, through the team): armed, every attack press is a weapon swing, the kicks too. Ready
-## behind Weapons.swings_replace_kicks (off till the grip page, the pose sheet and a way to drop a weapon are in):
-## switched on, the kick chains become swings; off, they're kicks as before.
+## Armed, the weapon subs the punches and kicks stay kicks (Javier, 2026-11-04). Kicks as swings too is kept ready
+## behind Weapons.swings_replace_kicks, off, in case the team's grip page asks for it: switched on, the kick chains
+## become swings; off (as the game is), they're kicks.
 func test_switched_on_armed_kicks_are_swings_too() -> void:
 	Weapons.swings_replace_kicks = true
 	eq(chain_of(["kick", "kick", "kick"]), ["swing", "backswing", "smash"], "K K K armed: swing, backswing, smash")
