@@ -45,7 +45,11 @@ const KINDS := {
 	# then she's done; the pipe is her prize (and the casino key, with level 5)
 	"chrome": {"health": 40.0, "brain": "CHROME", "weapon": "cane", "drops": "pipe"},
 	# level 7's boss, Mr. Static (the team's roster): a perfect block on his baton shocks the HERO; rubber gloves his prize
-	"static": {"health": 40.0, "brain": "STATIC", "weapon": "baton", "drops": "rubber_gloves"},
+	"static": {"health": 40.0, "brain": "STATIC", "weapon": "baton", "drops": "rubber_gloves", "grip": true},
+	# level 8's boss, Velvet Rook (the team's roster): the sword from his cane, held through perfect blocks till the
+	# third on his last cut breaks it; parries the plain combos' finishers (P P P, K K K; the armed smash too)
+	"rook": {"health": 45.0, "brain": "ROOK", "weapon": "sword", "drops": "sword", "grip": true,
+		"parries": ["power_punch", "side_kick", "smash"]},
 	"coach": {"health": 40.0, "brain": "COACH", "drops": "first_aid",
 		"gloves": ["punch", "cross", "power_punch", "hook", "uppercut", "elbow", "hammer_fist", "air_punch"]},
 	# the rest of the team's roster (enemy roster v2)
@@ -98,6 +102,8 @@ const LIVE_TICKS := 30  # and it's live this long: jump as it comes down (a jump
 const SHOCK_DAMAGE := 1.5
 const TANK_REACH := 140.0  # P P K'd in this close to the water tank, he shorts out
 const TANK_DAMAGE := 3.0
+const ROOK_BREAKS := 3  # perfect blocks on his last cut that break his sword
+const CHECKMATE_EVERY := 600  # his Enforcers come at most this often (one a door switch still standing)
 const TWIN_CLIMB := 0.3  # how fast a Twin Loans brother goes up a flight, of his walk: knocked down it, about ten
 # seconds before he's back up (the team's roster, feel lab)
 const MAX_ON_SCREEN := 5  # never more than five enemies at once; the rest wait off screen (the team's fairness rules)
@@ -307,6 +313,7 @@ func step(inp: Dictionary) -> void:
 			think = _coach(e, think)
 			think = _chrome(e, think)
 			think = _static(e, think)
+			think = _rook(e, think)
 			_volley(e)
 			e["f"].step(think)
 	var all := everyone()
@@ -328,6 +335,7 @@ func step(inp: Dictionary) -> void:
 	_roster_tricks()
 	_chrome_after()
 	_static_after()
+	_rook_after()
 	_stairs()
 	_switches()
 	_waves()
@@ -665,6 +673,43 @@ func _static_after() -> void:
 			events.append({"target": hero, "result": "shocked", "kind": "live_floor"})
 
 
+## Velvet Rook (the team's roster, level 8's boss): "Checkmate" calls his Enforcers through the doors, one for each
+## door switch still standing (smash them and fewer come, none once all are smashed), not more often than
+## CHECKMATE_EVERY.
+func _rook(e: Dictionary, think: Dictionary) -> Dictionary:
+	if e.get("kind", "") != "rook" or e["f"].defeated():
+		return think
+	if think.get("checkmate", false):
+		if tick >= e.get("next_checkmate", 0):
+			e["next_checkmate"] = tick + CHECKMATE_EVERY
+			var doors: Array = world.objects.filter(func(o): return o["kind"] == "door_switch" and not o["broken"])
+			for o in doors.slice(0, 2):
+				if standing().size() < MAX_ON_SCREEN:
+					_arrive({"kind": "enforcer", "from": "door", "dx": (o["x0"] + o["x1"]) * 0.5 - hero.x}, hero.x, e["wave"])
+			early.append({"target": e["f"], "result": "checkmate", "kind": "checkmate", "called": mini(doors.size(), 2)})
+		return {}
+	return think
+
+
+## Velvet Rook after the blows: a perfect block on his last cut (the third, the overhead) counts; the third breaks his
+## sword, and he's only fists from then, slow and old.
+func _rook_after() -> void:
+	for e in enemies:
+		if e.get("kind", "") != "rook" or e["f"].defeated():
+			continue
+		var f = e["f"]
+		for ev in events:
+			if ev.get("attacker") == f and ev.get("target") == hero and ev["result"] == "perfect" and ev.get("move", "") == "smash" \
+					and f.weapon == "sword":
+				e["sword_blocks"] = e.get("sword_blocks", 0) + 1
+				if e["sword_blocks"] >= ROOK_BREAKS:
+					f.weapon_snaps = true
+					Fight._disarm(f, world, hero.x)
+					f.tune["walk_speed"] = f.tune["walk_speed"] * 0.7
+					e["brain"].kind = Brain.ROOK_OLD
+					events.append({"target": f, "result": "sword_breaks", "kind": "sword_breaks"})
+
+
 ## Twin Loans (the team's roster, level 3's boss): while one brother attacks, the other holds his guard up and waits his
 ## turn; halfway through a combo they swap places ("Interest"), so an answer meant for the one swinging lands on the
 ## one guarding; at half their health together, both rush the hero at once ("Compound"). Knocked down a flight, a
@@ -812,6 +857,7 @@ func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave
 	f.dodges = KINDS[kind].get("dodges", [])
 	f.parries = KINDS[kind].get("parries", [])
 	f.gloves = KINDS[kind].get("gloves", [])
+	f.grip = KINDS[kind].get("grip", false)
 	f.too_quick = KINDS[kind].get("too_quick", false)
 	for k in ["walk_speed", "run_speed"]:
 		f.tune[k] = f.tune[k] * KINDS[kind].get("speed", 1.0)

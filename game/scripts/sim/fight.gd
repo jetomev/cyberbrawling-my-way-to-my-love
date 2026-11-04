@@ -66,7 +66,7 @@ func step(fighters: Array, world = null) -> Array:
 			if result == "perfect":
 				a.chain = ""  # a perfect block stops his combo: the presses he'd lined up are gone
 				a.queue.clear()
-				if a.weapon != "":
+				if a.weapon != "" and not a.grip:
 					drop = _disarm(a, world, d.x)
 			if result == "hit":
 				a.finishers_taken = 0  # landing a blow of his own breaks a run of combos on him

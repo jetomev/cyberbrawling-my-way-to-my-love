@@ -9,7 +9,7 @@ const StreetWorld := preload("res://scripts/sim/street_world.gd")
 ## barrier, a red hydrant, a green metal dumpster, black speakers. Grey-box stand-ins until the team's pictures land.
 const COLORS := {"crate": Color(0.58, 0.44, 0.28), "car": Color(0.36, 0.42, 0.52), "barrier": Color(0.95, 0.5, 0.15),
 	"hydrant": Color(0.78, 0.18, 0.16), "dumpster": Color(0.2, 0.42, 0.3), "speaker": Color(0.16, 0.16, 0.2),
-	"tank": Color(0.36, 0.55, 0.7),
+	"tank": Color(0.36, 0.55, 0.7), "door_switch": Color(0.85, 0.7, 0.2),
 	"stall": Color(0.55, 0.38, 0.24), "fountain": Color(0.55, 0.56, 0.6), "cart": Color(0.45, 0.32, 0.2),
 	"tile": Color(0.85, 0.82, 0.72), "table": Color(0.62, 0.5, 0.36)}
 const RIM := Color(1.0, 0.24, 0.65)  # the magenta neon rim (#ff3ea5) on the edge facing the signs

@@ -69,6 +69,7 @@ var rubber := false  # rubber gloves on (Mr. Static's prize): a perfect block ta
 ## weapon, slow weapons he's too quick for (the Neon Dancer)
 var slam_in := -1  # frames till his floor slam lands (Mr. Static's), -1 when none: what a watcher reads to jump it
 var charging := false  # winding up for or running a charge (Coach Crusher's tackle): what a watcher reads to step aside
+var grip := false  # a perfect block doesn't knock his weapon loose (a boss's own: Velvet Rook's sword, Mr. Static's baton)
 var gloves := []  # blows his guard takes every time from the front, without raising it (Coach Crusher's big gloves)
 var dodges := []
 var parries := []

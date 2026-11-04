@@ -130,10 +130,20 @@ const STATIC := {
 	"keep": 180.0, "strike": 125.0, "wait_min": 60, "wait_max": 110, "block_chance": 0.15, "block_ticks": 18,
 	"combos": [["punch", "punch", "punch", "slam"], ["punch", "punch", "punch"]],
 }
+## Velvet Rook, level 8's boss (the team's roster): the Enforcer's three cuts, faster, then "Checkmate" (level.gd
+## _rook calls his Enforcers in); with his sword broken, only fists, slow and old (ROOK_OLD).
+const ROOK := {
+	"keep": 180.0, "strike": 150.0, "wait_min": 30, "wait_max": 60, "block_chance": 0.3, "block_ticks": 20,
+	"combos": [["punch", "punch", "punch", "checkmate"], ["punch", "punch", "punch"]],
+}
+const ROOK_OLD := {
+	"keep": 160.0, "strike": 115.0, "wait_min": 90, "wait_max": 150, "block_chance": 0.1, "block_ticks": 16,
+	"combos": [["punch", "punch"], ["punch"]],
+}
 ## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
 const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER, "DJ_VOLT": DJ_VOLT,
 	"SNICK": SNICK, "BIG_MAMA": BIG_MAMA, "WRENCH_MECHANIC": WRENCH_MECHANIC, "DOORMAN": DOORMAN,
-	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN, "COACH": COACH, "CHROME": CHROME, "STATIC": STATIC}
+	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN, "COACH": COACH, "CHROME": CHROME, "STATIC": STATIC, "ROOK": ROOK, "ROOK_OLD": ROOK_OLD}
 
 var me
 var foe

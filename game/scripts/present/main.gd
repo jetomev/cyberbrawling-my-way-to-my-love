@@ -50,6 +50,7 @@ const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 
 	"coach": Color(0.7, 0.95, 1.35),  # Coach Crusher: an old blue tracksuit
 	"chrome": Color(1.35, 1.38, 1.5),  # Madame Chrome: a silver dress
 	"static": Color(0.85, 1.1, 1.45),  # Mr. Static: a rubber suit, crackling blue
+	"rook": Color(1.15, 0.45, 0.5),  # Velvet Rook: a dark red velvet suit
 	# the rest of the roster, from the team's looks: the mechanic's blue overalls, the Doorman's black suit, the
 	# Dancer's bright tracksuit, the Enforcer's long dark coat, the lookout's neon raincoat, the Grabber's green glow
 	"wrench_mechanic": Color(0.7, 0.85, 1.25), "doorman": Color(0.45, 0.45, 0.5), "neon_dancer": Color(1.6, 1.2, 0.5),
