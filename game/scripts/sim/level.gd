@@ -83,6 +83,10 @@ var bass_at := -1  # the tick the last bass wave went out (for the view and the 
 var wet := true  # Big Mama's kitchen floor by the sink
 var mopped := false  # she's mopped it once (at half health)
 var blocks_in_row := 0  # the hero's blocks in a row against her (her hot soup)
+var cat_fed := false  # level 1's stray cat, fed (it follows him, and turns up in level 2)
+var cat := Vector2(-1.0e9, 0.0)  # where the cat is (x, z): by its bins, or at his heels once fed
+var cat_with := 0  # how long he's stood by it
+const CAT_FEED_TICKS := 60
 var friend = null  # the sparring friend (level 1's first screen), a fighter on his own side
 var tutor = null  # his lessons (sim/tutor.gd)
 var hero_tune: Dictionary
@@ -168,6 +172,11 @@ func restart() -> void:
 	blocks_in_row = 0
 	friend = null
 	tutor = null
+	cat_with = 0
+	var c: Array = plan["floors"][0].get("cat", [])
+	cat = Vector2(c[0], c[1]) if c.size() == 2 else Vector2(-1.0e9, 0.0)
+	if cat_fed:
+		cat = Vector2(hero.x - 90.0, 80.0)  # fed in an earlier level: it comes along
 	var spar: Dictionary = plan["floors"][0].get("friend", {})
 	if not spar.is_empty():
 		var t := Tuning.fresh()
@@ -242,6 +251,7 @@ func step(inp: Dictionary) -> void:
 		tutor.saw(events)
 	_bass_drop()
 	_kitchen()
+	_cat()
 	_switches()
 	_waves()
 	_links()
@@ -282,6 +292,24 @@ func _bass_drop() -> void:
 		hero._enter("idle")  # the wave tears his guard down
 		hero.take_hit({"damage": 1.0, "effect": "push", "low": 0.0, "high": 300.0, "move": "bass"}, dj[0]["f"])
 		events.append({"target": hero, "result": "bass", "kind": "bass"})
+
+
+## The stray cat (level 1, screen 7): stand by it a moment and it's fed; then it trots at his heels.
+func _cat() -> void:
+	if cat.x < -1.0e8:
+		return
+	if not cat_fed:
+		if absf(hero.x - cat.x) < 70.0 and absf(hero.z - cat.y) < 50.0 and hero.state in ["idle", "stand"]:
+			cat_with += 1
+			if cat_with >= CAT_FEED_TICKS:
+				cat_fed = true
+				collected.append("cat")
+				events.append({"target": hero, "result": "cat", "kind": "cat"})
+		else:
+			cat_with = 0
+		return
+	var want := Vector2(hero.x - hero.facing * 90.0, clampf(hero.z + 20.0, 0.0, tune["street_depth"]))
+	cat = cat.lerp(want, 0.06)
 
 
 ## Big Mama Noodle's kitchen: the soup, the wet patch, the mop, the tap (the floor's "kitchen": {wet: [x0, x1], tap: x}).

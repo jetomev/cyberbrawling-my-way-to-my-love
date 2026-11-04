@@ -242,6 +242,7 @@ func _play_level() -> void:
 				get_tree().quit()
 				return
 			if level.won and progress != null:
+				progress.cat = progress.cat or level.cat_fed  # the cat comes along (saved with the next level's start)
 				var won_no: int = progress.level + 1
 				var after: Array = story.get("after", {}).get(str(won_no), [])
 				if progress.level_won():  # the last level there is
@@ -478,6 +479,9 @@ func _after_pages() -> void:
 ## A level from its file, fresh: the hero as chosen, at full health with no pain (it heals between levels).
 func _start_level(file: String, who: String) -> void:
 	level = Level.new(Level.load_data(file), tune, 1)
+	if progress != null and progress.cat:
+		level.cat_fed = true
+		level.cat = Vector2(level.hero.x - 90.0, 80.0)
 	world = level.world
 	hero = level.hero
 	shown_world = world
@@ -538,6 +542,22 @@ func _draw_flying() -> void:
 		flying_view.draw_arc(at, 22.0, float(clock) * 0.6, float(clock) * 0.6 + 1.2, 8, Color(0.6, 0.6, 0.7), 2.0)
 	if level == null:
 		return
+	if level.cat.x > -1.0e8:  # the stray cat: a small grey cat, by its bins or at his heels
+		var c := Vector2(level.cat.x, Street.GROUND_Y + level.cat.y)
+		flying_view.draw_colored_polygon(PackedVector2Array([c + Vector2(-22, 0), c + Vector2(-20, -22), c + Vector2(12, -24),
+			c + Vector2(18, 0)]), Color(0.55, 0.55, 0.6))
+		flying_view.draw_circle(c + Vector2(20, -28), 11.0, Color(0.55, 0.55, 0.6))
+		flying_view.draw_colored_polygon(PackedVector2Array([c + Vector2(14, -36), c + Vector2(17, -46), c + Vector2(21, -37)]), Color(0.55, 0.55, 0.6))
+		flying_view.draw_colored_polygon(PackedVector2Array([c + Vector2(22, -37), c + Vector2(27, -46), c + Vector2(29, -35)]), Color(0.55, 0.55, 0.6))
+		flying_view.draw_line(c + Vector2(-22, -12), c + Vector2(-38, -34), Color(0.55, 0.55, 0.6), 4.0)
+		if not level.cat_fed and level.cat_with > 0:
+			flying_view.draw_arc(c + Vector2(0, -50), 14.0, -PI / 2, -PI / 2 + TAU * level.cat_with / level.CAT_FEED_TICKS, 16, Color(1, 0.8, 0.4), 4.0)
+	if level.hero.shield > 0:  # the umbrella, open over his head
+		var h := Vector2(level.hero.x, Street.GROUND_Y + level.hero.z - level.hero.y - 330.0)
+		flying_view.draw_arc(h, 60.0, PI, TAU, 16, Color(0.2, 0.2, 0.25), 8.0)
+		flying_view.draw_colored_polygon(PackedVector2Array([h + Vector2(-60, 0), h + Vector2(-42, -42), h + Vector2(0, -60),
+			h + Vector2(42, -42), h + Vector2(60, 0)]), Color(0.85, 0.25, 0.45, 0.9))
+		flying_view.draw_line(h, h + Vector2(0, 90), Color(0.2, 0.2, 0.25), 4.0)
 	var since: int = level.tick - level.bass_at
 	if level.bass_at > 0 and since < 30:
 		for o in level.world.objects:

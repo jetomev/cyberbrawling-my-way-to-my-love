@@ -60,6 +60,7 @@ var health := 20.0
 var weapon := ""  # what this fighter carries ("pipe", …); an enemy drops it when knocked down (take_weapon())
 var weapon_hits_left := 0  # it wears out (D-14)
 var soft := false  # a sparring friend: his blows don't hurt
+var shield := 0  # blows something he's holding will take for him (level 1's umbrella: one, then it breaks)
 var weapon_snaps := false  # his weapon breaks as it's knocked loose (level 2's pipe Bruiser: the pipe stays level 5's prize)
 var shrugs := []  # blows (by move) that hurt him but don't make him flinch (the Bruiser's "Iron Gut": a jab)
 var no_pickup_until := -1  # knocked out of his hand, a weapon can't be grabbed straight back (until this tick)
@@ -232,6 +233,13 @@ func _ground(mx: float, mz: float, run := false) -> void:
 		return
 	# D-14: the health bar refills from food and first-aid kits lying on the street; the hero eats what he walks over
 	# when he's hurt (an enemy leaves them)
+	# level 1's umbrella, leaning on the noodle bar: he takes it up; it will take one blow for him
+	if team == 0 and shield == 0 and world != null and not world.items.is_empty():
+		for it in world.items:
+			if it["kind"] == "umbrella" and absf(it["x"] - x) <= Weapons.PICK_UP_REACH and absf(it["z"] - z) <= Weapons.PICK_UP_REACH:
+				shield = 1
+				world.items.erase(it)
+				break
 	if team == 0 and health < max_health and world != null and not world.items.is_empty():
 		for it in world.items:
 			if HEALS.has(it["kind"]) and absf(it["x"] - x) <= Weapons.PICK_UP_REACH and absf(it["z"] - z) <= Weapons.PICK_UP_REACH \
@@ -361,6 +369,9 @@ func take_hit(blow: Dictionary, attacker) -> String:
 			return "guard_broken"
 		_enter("block_hit")
 		return "blocked"
+	if shield > 0:
+		shield -= 1
+		return "umbrella"  # the umbrella takes it, and breaks
 	health = maxf(health - blow["damage"], 0.0)
 	_hurt(region_hit(blow, attacker), blow["damage"])
 	if blow.get("move", "") in shrugs and blow.get("effect", "") == "" and health > 0.0:

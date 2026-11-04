@@ -104,6 +104,9 @@ func _draw_loose() -> void:
 		elif it["kind"] == "soda":  # a can
 			loose.draw_rect(Rect2(at + Vector2(-7, -22), Vector2(14, 22)), Color(0.85, 0.2, 0.3))
 			loose.draw_rect(Rect2(at + Vector2(-7, -22), Vector2(14, 22)), EDGE, false, 2.0)
+		elif it["kind"] == "umbrella":  # a folded umbrella leaning against the wall
+			loose.draw_line(at + Vector2(-6, 0), at + Vector2(14, -70), Color(0.85, 0.25, 0.45), 9.0)
+			loose.draw_line(at + Vector2(14, -70), at + Vector2(10, -82), Color(0.2, 0.2, 0.25), 3.0)
 		elif it["kind"] == "matchbook":  # a small red book of matches (to collect)
 			loose.draw_rect(Rect2(at + Vector2(-10, -8), Vector2(20, 8)), Color(0.8, 0.2, 0.2))
 			loose.draw_rect(Rect2(at + Vector2(-10, -8), Vector2(20, 8)), Color(1, 0.9, 0.5), false, 2.0)

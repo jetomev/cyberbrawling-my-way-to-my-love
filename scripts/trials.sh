@@ -15,9 +15,23 @@ for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy
   if grep -q 'dumped core' "$OUT/$T.txt"; then echo "FAILED Godot crashed as it quit (see the core dump: coredumpctl list godot)"; exit 1; fi
   ffmpeg -loglevel error -y -framerate 60 -i "$TMP/f%08d.png" -c:v libx264 -pix_fmt yuv420p "$OUT/$T.mp4"
   ffmpeg -loglevel error -y -framerate 60 -i "$TMP/f%08d.png" -vf "setpts=2*PTS" -r 60 -c:v libx264 -pix_fmt yuv420p "$OUT/$T-half.mp4"
-  # a sheet of 12 frames with the numbers on screen, for the testers, who read pictures
+  # a sheet for the testers, who read pictures: the frame of every moment the trial logged (and 4 frames after, to see
+  # it land), filled out with evenly spaced frames, in order, 24 in all (the testers, 2026-11-04: a sampled sheet missed
+  # the moments themselves)
   N=$(ls "$TMP" | grep -c '^f.*png$')
-  ffmpeg -loglevel error -y -i "$TMP/f%08d.png" -vf "select='not(mod(n\,$(( N / 12 + 1 ))))',scale=640:-1,tile=3x4:padding=4:color=black" \
+  PICK=$(python3 -c '
+import re, sys
+n, log = int(sys.argv[1]), open(sys.argv[2]).read()
+moments = sorted({f for m in re.findall(r"^frame (\d+)", log, re.M) for f in (int(m), int(m) + 4) if f < n})[:24]
+fill = [round(i * (n - 1) / 23) for i in range(24)]
+pick = set(moments)
+for f in fill:
+    if len(pick) >= 24:
+        break
+    pick.add(f)
+print("+".join("eq(n\\,%d)" % f for f in sorted(pick)))
+' "$N" "$OUT/$T.txt")
+  ffmpeg -loglevel error -y -i "$TMP/f%08d.png" -vf "select='$PICK',scale=640:-1,tile=4x6:padding=4:color=black" \
     -frames:v 1 "$OUT/$T.png"
   rm -rf "$TMP"
 done

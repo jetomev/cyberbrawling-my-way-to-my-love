@@ -584,3 +584,32 @@ func test_the_bot_plays_level_two_through() -> void:
 		results.append("won" if l.won else "%s at %.0f, wave %d, %s" % ["lost" if l.lost else "stuck", l.hero.x, l.wave, l.where])
 	check(not results.any(func(r): return r.begins_with("stuck")), "the bot is never stuck: %s" % [results])
 	check(results.count("won") >= 2, "and wins on most seeds: %s" % [results])
+
+
+func test_the_umbrella_takes_one_blow_then_breaks() -> void:
+	var l = real_level()
+	var u: Array = l.plan["floors"][0]["items"].filter(func(i): return i[0] == "umbrella")[0]
+	l.hero.x = u[1] - 80.0
+	l.hero.z = u[2]
+	for i in 40:
+		l.step({"mx": 1.0})
+	eq(l.hero.shield, 1, "walking over the umbrella, he takes it up")
+	var hp: float = l.hero.health
+	eq(l.hero.take_hit({"damage": 3, "effect": ""}, l.friend), "umbrella", "it takes the blow")
+	eq(l.hero.health, hp, "he isn't hurt")
+	eq(l.hero.shield, 0, "and it's broken")
+	eq(l.hero.take_hit({"damage": 3, "effect": ""}, l.friend), "hit", "the next blow lands")
+
+
+func test_stand_by_the_stray_cat_and_it_follows() -> void:
+	var l = real_level()
+	l.floors[0]["wave"] = l.floors[0]["waves"].size()  # the street's fights already won
+	l.hero.x = l.cat.x - 40.0
+	l.hero.z = l.cat.y
+	for i in Level.CAT_FEED_TICKS + 5:
+		l.step({})
+	check(l.cat_fed, "standing by it a moment: fed")
+	check("cat" in l.collected, "and kept")
+	for i in 200:
+		l.step({"mx": -1.0})
+	check(absf(l.cat.x - l.hero.x) < 160.0, "it trots at his heels (%.0f, he's at %.0f)" % [l.cat.x, l.hero.x])

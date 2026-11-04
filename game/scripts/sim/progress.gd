@@ -11,6 +11,7 @@ const HEROES := ["man", "woman"]
 
 var hero := ""  # "man" or "woman", once chosen
 var level := 0  # index into the level list
+var cat := false  # level 1's stray cat, fed: it comes along
 var levels: Array = []  # the level files, in order
 var path := SAVE
 
@@ -34,19 +35,21 @@ func load_save() -> void:
 	if parsed is Dictionary and parsed.get("hero", "") in HEROES:
 		hero = parsed["hero"]
 		level = clampi(int(parsed.get("level", 0)), 0, maxi(0, levels.size() - 1))
+		cat = parsed.get("cat", false)
 
 
 ## Saved at the start of every level (D-15).
 func save() -> void:
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f != null:
-		f.store_string(JSON.stringify({"hero": hero, "level": level}))
+		f.store_string(JSON.stringify({"hero": hero, "level": level, "cat": cat}))
 
 
 ## A new game: the chosen hero, from level 1, saved at once.
 func new_game(chosen: String) -> void:
 	hero = chosen if chosen in HEROES else HEROES[0]
 	level = 0
+	cat = false
 	save()
 
 

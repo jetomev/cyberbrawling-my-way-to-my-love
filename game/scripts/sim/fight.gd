@@ -49,6 +49,10 @@ func step(fighters: Array, world = null) -> Array:
 			if result == "":
 				continue
 			seen[1].append(d.get_instance_id())
+			if result == "umbrella":
+				events.append({"attacker": a, "target": d, "result": "umbrella", "move": a.state, "drop": "", "counter": false,
+					"broke": "", "worn": ""})
+				continue
 			var drop := ""
 			# D-19: the right hit (a counter, caught winding up) or a perfect block interrupts him and can disarm him;
 			# knocked down he drops it too

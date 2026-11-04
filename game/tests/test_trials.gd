@@ -121,7 +121,9 @@ func test_trial_records() -> void:
 	check(h.any(func(l): return l.contains("stepped out of its line")), "the first is dodged by stepping up the street: %s" % [h])
 	check(h.any(func(l): return l.contains("he jumped it")), "the low one is jumped: %s" % [h])
 	check(h.any(func(l): return l.contains("PERFECT")), "the last is perfect-blocked: %s" % [h])
-	check(h.any(func(l): return l.contains("his own record hits him")), "and it hits the DJ: %s" % [h])
+	check(h.any(func(l): return l.contains("HIGH")), "a high one is thrown: %s" % [h])
+	check(h.any(func(l): return l.contains("rolled under it")), "and rolled under: %s" % [h])
+	check(h.any(func(l): return l.contains("HITS DJ Volt") and l.contains("damage")), "and the returned one hits the DJ, its damage on screen: %s" % [h])
 
 
 func test_trial_bass_drop() -> void:

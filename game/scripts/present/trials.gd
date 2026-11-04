@@ -13,8 +13,8 @@ extends RefCounted
 ## disarm       a perfect block knocks his pipe loose: it leaves his hand, lies on the street, the hero picks it up
 ## counter      a jab into his kick's wind-up knocks his pipe loose
 ## dizzy        two three-punch combos in a row: dazed; then the third combo, the finishing chain, while he's dazed
-## records      DJ Volt's records, low, middle, high: one dodged by stepping up the street, one jumped, one perfect-blocked
-##              back at him
+## records      DJ Volt's records: a middle one dodged by stepping up the street, a low one jumped, a HIGH one rolled
+##              under, and a middle one perfect-blocked back into him (the hit and its damage on screen)
 ## bass_drop    the guard held two seconds while his speakers stand: the wave pushes the hero back; both speakers
 ##              smashed, the same guard: nothing
 ## scenery      the camera pans at 6 px a frame: each layer's speed on screen
@@ -105,7 +105,7 @@ func _init(trial: String, h, d) -> void:
 		"records":
 			_tough_dummy()
 			dummy.x = hero.x + 600.0
-			length = 330
+			length = 430
 		"bass_drop":
 			_tough_dummy()
 			dummy.x = hero.x + 500.0
@@ -159,17 +159,19 @@ func inputs() -> Array:
 				h["mx"] = signf(hero.world.items[0]["x"] - hero.x)  # the hero walks to the pipe
 		"records":
 			# three records from the DJ (the dummy), 90 frames apart: middle, low, middle
-			for r in [[20, 110.0, 180.0], [110, 0.0, 60.0], [200, 110.0, 180.0]]:
+			for r in [[20, 110.0, 180.0], [110, 0.0, 60.0], [200, 210.0, 280.0], [300, 110.0, 180.0]]:
 				if tick == r[0]:
 					projectiles.throw("record", dummy.x - 40.0, dummy.z, r[1], r[2], -Level.RECORD_SPEED, Level.RECORD_DAMAGE, dummy.team)
-					_say("he throws a record: %s (%d to %d px up)" % ["LOW" if r[1] == 0.0 else "MIDDLE", int(r[1]), int(r[2])])
+					_say("he throws a record: %s (%d to %d px up)" % [{0: "LOW", 110: "MIDDLE", 210: "HIGH"}[int(r[1])], int(r[1]), int(r[2])])
 			if tick >= 40 and tick < 75:
 				h["mz"] = -1.0  # the first: step up the street, out of its line
 			if tick >= 75 and tick < 110:
 				h["mz"] = 1.0  # and back
 			if tick == 150:
 				h["jump"] = true  # the low one: jump it
-			if tick >= 252 and tick < 265:
+			if tick == 236:
+				h["roll"] = true  # the high one: roll under it, timed so it passes while he's round
+			if tick >= 322 and tick < 345:
 				h["block"] = true  # the last: the guard up just as it arrives, a perfect block
 		"bass_drop":
 			if tick >= 20 and tick < 160:
@@ -209,13 +211,18 @@ func saw(events: Array) -> void:
 	if name == "records":
 		for e in projectiles.step([hero, dummy], 0.0, 4000.0):
 			if e["target"] == hero:
-				_say("the record meets the hero's guard: %s, it flies back at him" % e["result"].to_upper() if e["result"] == "perfect" else "the record HITS the hero")
+				match e["result"]:
+					"perfect": _say("the record meets the hero's guard: PERFECT, it flies back at him")
+					"blocked": _say("the record meets the hero's guard: a plain BLOCK (too early for a perfect one)")
+					_: _say("the record HITS the hero")
 			else:
-				_say("his own record hits him (sent back by the perfect block)")
+				var dmg: float = e["projectile"]["damage"]
+				_say("his own record HITS DJ Volt (sent back by the perfect block): damage %.1f, his health %.1f → %.1f" % [
+					dmg, dummy.health + dmg, dummy.health])
 		for p in projectiles.flying:
 			if not p.has("passed") and p["vx"] < 0.0 and p["x"] < hero.x - 60.0:
 				p["passed"] = true
-				_say("the record flies past: %s" % ("over him, he jumped it" if hero.y > 0.0 else "he stepped out of its line"))
+				_say("the record flies past: %s" % ("over him, he jumped it" if hero.y > 0.0 else ("he rolled under it" if hero.state == "roll" else "he stepped out of its line")))
 	for e in events:
 		var t := ""
 		if e["result"] == "perfect":

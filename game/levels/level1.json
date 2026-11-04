@@ -1,6 +1,6 @@
 {
  "name": "Level 1 \u00b7 Neon Row",
- "about": "Javier & Claude, 2026-11-03, from the assistant team's level 1 layout (art-in 2026-11-03-level1-layout): seven street screens (1920 px each), the club's back stairs, the boss's room upstairs. Depth: back z 0-30, middle ~80, front ~140. DJ Volt: records low, middle and high from range, the mic stand close in, the speakers' Bass Drop. The sparring friend on screen 1 teaches block, perfect block, the dizzy finisher. Still to come from that page: the umbrella, the cat.",
+ "about": "Javier & Claude, 2026-11-03, from the assistant team's level 1 layout (art-in 2026-11-03-level1-layout): seven street screens (1920 px each), the club's back stairs, the boss's room upstairs. Depth: back z 0-30, middle ~80, front ~140. DJ Volt: records low, middle and high from range, the mic stand close in, the speakers' Bass Drop. The sparring friend on screen 1 teaches block, perfect block, the dizzy finisher. The umbrella (takes one blow, then breaks) on screen 1; the stray cat by the bins on screen 7 (stand by it to feed it; it follows).",
  "floors": [
   {
    "name": "Neon Row",
@@ -102,6 +102,11 @@
     [
      "photo",
      13150,
+     20
+    ],
+    [
+     "umbrella",
+     960,
      20
     ]
    ],
@@ -227,7 +232,11 @@
    ],
    "friend": {
     "x": 700
-   }
+   },
+   "cat": [
+    11940,
+    15
+   ]
   },
   {
    "name": "the club upstairs",

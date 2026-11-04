@@ -105,7 +105,8 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Level 1's real layout and enemy table from the team (2026-11-03: the team's seven screens, 17 enemies, props and pick-ups in levels/level1.json; the Glow Punk and the Bruiser in brain.gd and level.gd; the bot wins it on every seed)
 - [x] DJ Volt's own fight (2026-11-03: records low, middle, high from range, dodged by stepping, jumping or a roll, a perfect block sends one back; the mic stand close in; the Bass Drop while his speakers stand; drops the bat)
 - [x] The sparring friend on screen 1 (2026-11-03: block, perfect block, the dizzy finisher, a hint each; soft blows, can't be put down, never blocks the street)
-- [ ] Level 1's still-to-come from the team's page: the umbrella, the cat
+- [x] Level 1's umbrella (takes one blow, then breaks) and the stray cat (stand by it to feed it; it follows, and comes along to level 2) (2026-11-04)
+- [x] The testers' records send-back: a HIGH record (rolled under) and the returned record hitting DJ Volt, its damage and his health on screen; every trial sheet now shows the frames of the logged moments (24 pictures)
 - [ ] Javier's grey-box feel test
 
 ## Stage 2 · The look (by Sun 29 Nov) — #4
