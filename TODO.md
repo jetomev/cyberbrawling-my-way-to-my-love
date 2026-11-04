@@ -62,6 +62,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] The power punch leans far more than the recorded lunge punch (9-14 degrees); the sheet asks ~60% weight forward: the testers' call
 - [x] The sweep on Z, drawn from the posture sheet (no recorded sweep exists in our libraries); first pass, the testers judge it
 - [x] Javier's final keys (21:56): A punch, S kick, D block, W run, X stance, Z sweep, C roll, Space jump; a guard holds them
+- [x] Only Javier's keys (his word 11-03 19:46): the old spares J, K, L, Shift cleared; test_only_javiers_keys fails on any other key (cd809c2)
 - [x] The evasion roll on C, the way the arrows point, from common technique; evades 70% of it
 - [x] The roll goes over the shoulder, chin tucked (the head had taken the street)
 - [ ] The roll from a recording: CMU 128_09 "Run Roll Underneath" found; download waits on Javier's own yes
