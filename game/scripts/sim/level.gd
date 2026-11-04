@@ -442,7 +442,10 @@ func step(inp: Dictionary) -> void:
 					and projectiles.flying.any(func(p): return p["alive"] and p["team"] == e["f"].team and p.get("catchable", false)):
 				think.erase("hurl")  # one wrench in the air at a time here (the team's level 4: the balcony, Boromir)
 			if think.get("hurl", false) and e["f"].weapon != "":
-				_hurl(e["f"])
+				# his throw winds up first: the wrench cranked back past his ear (the pose sheet's warning), then it flies
+				think.erase("hurl")
+				think["throw"] = true
+				e["f"].hurling = true
 			think = _coach(e, think)
 			think = _chrome(e, think)
 			think = _static(e, think)
@@ -539,6 +542,10 @@ func _bass_drop() -> void:
 ## ends, or a step past whoever it meets), hurting a little more than a swing.
 func _release(f) -> void:
 	if f.state != "throw" or f.t != int(Moves.data("throw", f.tune)["startup"]) or f.weapon == "":
+		return
+	if f.hurling:  # (the Wrench Mechanic's hurl, after its wind-up: his own throw, as before)
+		f.hurling = false
+		_hurl(f)
 		return
 	var what: String = f.drop_weapon()
 	var dir := float(f.facing)

@@ -88,6 +88,7 @@ var dodges := []
 var parries := []
 var too_quick := false  # the Neon Dancer on skates: every weapon but the light ones (knife, stick) misses her (roster v4)
 var held_by = null  # who holds him in a bear hug: a thrown weapon hits him instead (the team's house rule)
+var hurling := false  # the Wrench Mechanic's throw winding up: at its release it's his hurl (level.gd)
 var from_kick := false  # this blow is a weapon strike in a kick's place (Pippin's grips page): it counts as a kick
 var escape_taps := 0  # held: punches tapped so far toward wriggling free
 var weapon_snaps := false  # his weapon breaks as it's knocked loose (level 2's pipe Bruiser: the pipe stays level 5's prize)

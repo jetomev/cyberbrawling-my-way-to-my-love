@@ -44,6 +44,7 @@ func _initialize() -> void:
 		stage.add_child(v)
 		var weapon: String = bits[3] if bits.size() > 3 else ""  # (a fourth part: the weapon in hand, e.g. idle:0:ground:pipe)
 		var kind: String = bits[4] if bits.size() > 4 else ""  # (a fifth: whose way of holding it, e.g. idle:0:ground:sword:enforcer)
+		v.kind = kind
 		v._show_weapon(weapon)
 		v.apply(Poses.armed(Poses.angles(state, tick, t), state, weapon, tick, t, kind), not air)
 		var label := Label.new()

@@ -429,8 +429,10 @@ func test_one_wrench_in_the_air_where_the_floor_says_so() -> void:
 		m["brain"].plan = ["hurl"]
 		m["brain"].wait = 0
 		var before: int = l.projectiles.flying.filter(func(p): return p["alive"]).size()
-		l.step({})
-		var now: int = l.projectiles.flying.filter(func(p): return p["alive"] and p.get("catchable", false)).size()
+		var now := 0
+		for i in 20:  # (his throw winds up first: the wrench cranked back, then it flies)
+			l.step({})
+			now = maxi(now, l.projectiles.flying.filter(func(p): return p["alive"] and p.get("catchable", false)).size())
 		if flag:
 			eq(now, 1, "on the balcony: he holds his throw while one's in the air")
 			eq(m["f"].weapon, "wrench", "(and keeps his wrench for later)")
@@ -451,3 +453,22 @@ func test_a_bruisers_pipe_is_kept_only_after_madame_chrome() -> void:
 		check(not Level.load_data("res://levels/%s.json" % n).get("after_chrome", false), "%s is before her" % n)
 	for n in ["level6", "level7", "level8", "level9", "level10"]:
 		check(Level.load_data("res://levels/%s.json" % n).get("after_chrome", false), "%s is after her" % n)
+
+
+
+## The pose sheet: the Wrench Mechanic's throw shows its warning, the wrench cranked back past his ear, before it flies.
+func test_the_mechanic_winds_up_his_throw() -> void:
+	var l = street()
+	var m := bring(l, "wrench_mechanic", 300.0)
+	m["brain"].plan = ["hurl"]
+	m["brain"].wait = 0
+	var wound := -1
+	var flew := -1
+	for i in 30:
+		l.step({})
+		if wound < 0 and m["f"].state == "throw":
+			wound = i
+		if flew < 0 and l.projectiles.flying.any(func(p): return p["alive"] and p.get("catchable", false)):
+			flew = i
+	check(wound >= 0, "he winds up (the throw pose: the wrench cranked back)")
+	check(flew > wound, "and only then it flies (%d frames on)" % (flew - wound))

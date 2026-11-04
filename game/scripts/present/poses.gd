@@ -1170,6 +1170,12 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 		if w == "b":  # (the arms swap in the walk: the weapon hand hangs as the rear arm did)
 			out["arm_b_upper"] = pose.get("arm_f_upper", 0.0)
 			out["arm_b_lower"] = pose.get("arm_f_lower", 0.0)
+	elif state == "throw" and kind == "wrench_mechanic":  # his warning: the wrench cranked back (the throw pose), the
+		out["hold_" + o] = 1.0  # other arm pointing at you (the pose sheet)
+		out["hold_%sx" % o] = 82.0
+		out["hold_%sy" % o] = -78.0
+		out["cover_" + o] = 0.0
+		out["open_" + o] = 1.0
 	elif state in WEAPON_MOVES and t >= 0 and not tune.is_empty():
 		var family: String = TRACK_KIND.get(weapon, "heavy")
 		var track: Dictionary = SWING_TRACK[family]
@@ -1225,6 +1231,12 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 			if two:
 				out["grip_o"] = 1.0  # the other hand stays on the handle through the swing
 				out["cover_" + o] = 0.0
+			elif kind in ["bruiser", "bruiser_pipe"] and state == "smash" and t < keys[1]:
+				out["hold_" + w] = 1.0  # first the tip scraping along the floor (the smash's warning, the sheet), then up
+				out["hold_%sx" % w] = 52.0
+				out["hold_%sy" % w] = 18.0
+				out["wpn"] = 62.0
+				out["cover_" + w] = 0.0
 			elif kind in BOTH_ARMS_UP and state == "smash" and t >= keys[1] and t < keys[2]:
 				out["hold_" + o] = 1.0  # the warning: both arms up overhead before it comes down (the sheet)
 				out["hold_%sx" % o] = 4.0

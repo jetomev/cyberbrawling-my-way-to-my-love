@@ -241,6 +241,7 @@ func sync(f, ground_y: float) -> void:
 
 
 func _show_weapon(kind: String) -> void:
+	_show_ladle(kind == "wok" and self.kind == "big_mama")
 	if kind == weapon_drawn:
 		return
 	weapon_drawn = kind
@@ -259,6 +260,33 @@ func _show_weapon(kind: String) -> void:
 	weapon_node.polygon = PackedVector2Array([Vector2(-18, -w), Vector2(l, -w * (0.4 if kind in ["knife", "sword"] else 1.0)),
 		Vector2(l, w * (0.4 if kind in ["knife", "sword"] else 1.0)), Vector2(-18, w)])
 	weapon_node.color = look[2]
+
+
+## Big Mama's ladle, up in her strong hand like a short club (the pose sheet), beside the wok in the other.
+var ladle_node: Node2D
+const LADLE_ANGLE := -60.0  # where her ladle points (0 at the enemy, -90 up)
+func _show_ladle(on: bool) -> void:
+	if not on:
+		if ladle_node != null:
+			ladle_node.visible = false
+		return
+	if ladle_node == null:
+		ladle_node = Node2D.new()
+		ladle_node.z_index = 1
+		var handle := Polygon2D.new()
+		handle.polygon = PackedVector2Array([Vector2(-10, -4), Vector2(60, -4), Vector2(60, 4), Vector2(-10, 4)])
+		handle.color = Color(0.75, 0.77, 0.8)
+		ladle_node.add_child(handle)
+		var bowl := Polygon2D.new()
+		var pts := PackedVector2Array()
+		for k in 12:
+			pts.append(Vector2(68, 0) + Vector2.from_angle(TAU * k / 12.0) * 12.0)
+		bowl.polygon = pts
+		bowl.color = Color(0.75, 0.77, 0.8)
+		ladle_node.add_child(bowl)
+		ladle_node.rotation_degrees = -100.0  # (up from the fist)
+		bones["hand_b"].add_child(ladle_node)
+	ladle_node.visible = true
 
 
 ## Where the hips, hands, feet and the top of the head are drawn right now, in this view's own space (its origin is the spot under the
@@ -298,6 +326,8 @@ func apply(pose: Dictionary, grounded := true) -> void:
 	for name in bones:
 		var bone: Bone2D = bones[name]
 		bone.rotation_degrees = Poses.BONES[name][2] + baked[name]
+	if ladle_node != null and ladle_node.visible:  # Big Mama's ladle: up and forward like a short club, never back over her shoulder
+		ladle_node.rotation_degrees = LADLE_ANGLE - rad_to_deg(Poses._end("hand_b", baked)[1])
 	if weapon_node != null:  # the weapon's own angle in the hand (Poses._hold), and how long it draws (end-on: short)
 		var hand: Node = bones["hand_b" if baked.get("wpn_side", 0.0) >= 0.5 else "hand_f"]
 		if weapon_node.get_parent() != hand:  # (in the hand that holds it: the rear one for the pipe, wrench and bat)
