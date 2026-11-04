@@ -14,9 +14,18 @@ extends RefCounted
 ## proof_shove     a push kick on the stairs: the enemy tumbles to the foot and lies there
 ## proof_climb     a Twin Loans brother shoved down the stairs, climbing all the way back up (slowly)
 ## proof_escape    the hero walks down the flight and off its foot, back onto the street
+## proof_coach     Coach Crusher's tackle stepped aside, into the ropes, then the hero finishes him (kicks only)
+## proof_chrome    three kicks into Madame Chrome's cane wind-ups: the cane breaks, and she's done
+## proof_crane     the crane's third switch, the cab door opening, into the cab, the fight, the push kick out
+## proof_static    a kick into Mr. Static's wind-up knocks the baton loose; P P K by the tank shorts him out; finished
+## proof_rook      both door switches smashed (Checkmate calls nobody); three perfect blocks on his last cut: the sword
+##                 breaks
+## (The boss proofs start their boss part-worn where a whole fight would run to many pages: said so on screen.)
 
 const NAMES := ["proof_headbutt", "proof_doorman", "proof_dancer", "proof_enforcer", "proof_lookout", "proof_grabber",
-	"proof_swap", "proof_shove", "proof_climb", "proof_escape"]
+	"proof_swap", "proof_shove", "proof_climb", "proof_escape", "proof_coach", "proof_chrome", "proof_crane", "proof_static",
+	"proof_rook"]
+const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
 
@@ -34,6 +43,7 @@ var started := -1
 var ended := -1
 var seen_tick := -1
 var data := {}
+var bot = null
 
 
 func _init(proof: String) -> void:
@@ -96,6 +106,35 @@ func setup(level) -> void:
 			h.facing = -1
 			foe = _bring(level, "thug", 1880.0, 15.0)  # one up on the landing above him
 			zoom = 1.0
+		"proof_coach", "proof_chrome", "proof_static", "proof_rook":
+			var floor_of := {"proof_coach": 1, "proof_chrome": 2, "proof_static": 1, "proof_rook": 1}
+			level._go_to(floor_of[name], 300.0)
+			level.step({})
+			var kind: String = {"proof_coach": "coach", "proof_chrome": "chrome", "proof_static": "static", "proof_rook": "rook"}[name]
+			foe = level.enemies.filter(func(e): return e["kind"] == kind)[0]
+			foe["brain"].wait = 9999
+			foe["brain"].dormant_until_within = 0.0001  # (still, even with the hero walking past him)
+			zoom = 1.2
+			length = 2400
+			if name in ["proof_coach", "proof_static"]:
+				foe["f"].health = 10.0  # part-worn, so the finish comes in one sequence (said on screen)
+			if name == "proof_coach":
+				foe["f"].x = h.x + 420.0
+				foe["f"].z = h.z
+			if name == "proof_rook":
+				foe["f"].x = 1800.0  # beyond the second door switch: the hero never walks across his spot
+			if name == "proof_static":
+				foe["f"].x = 1450.0  # by the water tank
+				h.x = 1330.0
+				foe["f"].z = h.z
+		"proof_crane":
+			level.flipped[0] = true  # the quay's and the stack's switches already thrown (said on screen)
+			level.flipped[1] = true
+			level._go_to(2, 950.0)
+			level.step({})
+			zoom = 1.0
+			length = 2400
+			bot = HeroBot.new(h, 1)
 
 
 ## An enemy placed (on a flight if it's there), facing the hero, standing still till the script lets him go.
@@ -147,6 +186,128 @@ func inputs(level) -> Dictionary:
 	var evs: Array = level.events if fresh else []
 	var f = foe.get("f")
 	match name:
+		"proof_coach":
+			if tick == 9:
+				_start("Coach Crusher's tackle: step out of his line, and he hits the ropes (he starts part-worn: 10 of 40)")
+				level._coach(foe, {"tackle": true})
+			if (foe.has("tackle") or foe.get("tackle_next", false)) and h.state in ["idle", "walk", "block"]:
+				inp["mz"] = 1.0 if h.z < 130.0 else 0.0  # step out of his line, and stay out till he's past
+			elif tick > 9 and not foe.has("tackle") and not foe.get("tackle_next", false):
+				foe["brain"].dormant_until_within = 0.0
+				inp = _kick_at(level, f)
+			for ev in evs:
+				match ev.get("result", ""):
+					"ropes": _say("he slams into the ROPES: dazed, open (K K K now)")
+					"gives_up": _say("dizzied twice: he GIVES UP")
+			if f.defeated():
+				_end("Coach Crusher's down")
+		"proof_chrome":
+			if tick == 9:
+				_start("three kicks into Madame Chrome's cane wind-ups")
+				foe["brain"].dormant_until_within = 0.0
+				foe["brain"].wait = 0
+			if tick > 9:
+				if f.attack_phase() == "startup" and f.t <= 3 and absf(f.x - h.x) < 135.0 and h.state in Fighter.GROUND_STATES + ["block"]:
+					inp = {"kick": true}  # into the wind-up, as it starts
+				elif absf(f.x - h.x) > 110.0 or absf(f.z - h.z) > 8.0:
+					inp = {"mx": signf(f.x - h.x) if absf(f.x - h.x) > 110.0 else 0.0, "mz": clampf((f.z - h.z) / 16.0, -1.0, 1.0)}
+				else:
+					inp = {"block": true}
+			for ev in evs:
+				if ev.get("attacker") == h and ev.get("target") == f and ev.get("counter", false) and ev.get("move", "") in level.KICKS:
+					_say("a kick into her wind-up: %d of 3" % foe.get("cane_kicks", 0))
+				if ev.get("result", "") == "cane_snaps":
+					_end("the third: the CANE BREAKS, and she's done")
+		"proof_static":
+			if tick == 9:
+				_start("Mr. Static by his water tank (part-worn: 10 of 40): a kick into his baton's wind-up")
+				foe["brain"].dormant_until_within = 0.0
+				foe["brain"].wait = 0
+			if tick > 9:
+				if f.weapon == "baton":
+					if f.attack_phase() == "startup" and absf(f.x - h.x) < 190.0 and h.state in Fighter.GROUND_STATES + ["block"]:
+						inp = {"kick": true}
+					elif absf(f.x - h.x) > 150.0:
+						inp = {"mx": signf(f.x - h.x)}
+					else:
+						inp = {"block": true}
+				elif not data.has("shorted"):
+					_combo(level, inp, ["punch", "punch", "kick"], ["punch", "cross", "push_kick"])  # P P K, into the tank behind him
+					if data.get("thrown", 0) >= 3 and h.state in Fighter.GROUND_STATES:
+						data["thrown"] = 0  # (not by the tank yet: again)
+				else:
+					inp = _kick_at(level, f)
+			for ev in evs:
+				if ev.get("attacker") == h and ev.get("target") == f and ev.get("drop", "") == "baton":
+					_say("the kick into his wind-up: the BATON flies out of his hand")
+				if ev.get("result", "") == "shorts_out":
+					data["shorted"] = true
+					_say("P P K into the WATER TANK: he SHORTS OUT, dizzy")
+			if f.defeated():
+				_end("Mr. Static's down")
+		"proof_rook":
+			var doors: Array = level.world.objects.filter(func(o): return o["kind"] == "door_switch")
+			var up: Array = doors.filter(func(o): return not o["broken"])
+			if tick == 9:
+				_start("first both door switches smashed, then three perfect blocks on Velvet Rook's last cut")
+			if tick > 9 and not up.is_empty():
+				var o: Dictionary = up[0]
+				var ox: float = o["x0"] - 50.0 if h.x < o["x0"] else o["x1"] + 50.0
+				if absf(h.x - ox) > 8.0 or absf(h.z - 12.0) > 6.0:
+					inp = {"mx": signf(ox - h.x) if absf(h.x - ox) > 8.0 else 0.0, "mz": clampf((12.0 - h.z) / 16.0, -1.0, 1.0)}
+				else:
+					h.facing = 1 if o["x0"] > h.x else -1
+					inp = {"kick": tick % 18 == 0}
+			elif tick > 9:
+				if not data.has("doors_down"):
+					data["doors_down"] = tick
+					_say("both door switches SMASHED: his Enforcers can't come in")
+				if tick == data["doors_down"] + 45:
+					foe["brain"].dormant_until_within = 0.0  # (released once the hero's guard is up)
+					foe["brain"].wait = 0
+				# guard up, but dropped as his overhead starts and raised again 5 frames before it lands: a perfect block
+				var late: bool = f.state == "smash" and f.t >= 4 and f.t <= 5
+				inp = {} if late else {"block": absf(f.x - h.x) < 260.0}
+				if absf(f.x - h.x) > 200.0:
+					inp["mx"] = signf(f.x - h.x)
+			for ev in evs:
+				match ev.get("result", ""):
+					"checkmate": _say("CHECKMATE: %d Enforcers come (the door switches are down)" % ev.get("called", 0))
+					"perfect":
+						if ev.get("attacker") == f and ev.get("move", "") == "smash":
+							_say("a PERFECT block on his last cut: %d of 3" % foe.get("sword_blocks", 0))
+					"sword_breaks": _end("the third: his SWORD BREAKS")
+		"proof_crane":
+			if tick == 9:
+				_start("the crane's third switch, up top (the first two already thrown): the cab opens, into the cab")
+			bot.me = h
+			bot.goal = level.next_door()
+			bot.goal_hit = level.goal_is_switch
+			bot.jump_cue = level.crane_jump_cue()
+			inp = bot.think(level.standing())
+			var cab_op: Array = level.enemies.filter(func(e): return e["kind"] == "crane_operator" and not e["f"].defeated())
+			if level.plan["floors"][level.on].get("cab", false) and not cab_op.is_empty():
+				if foe.is_empty() or foe.get("kind", "") != "crane_operator":
+					foe = cab_op[0]  # in the cab: P P K at him, on purpose (the push kick shoves him out)
+					var k: Dictionary = foe["brain"].kind.duplicate()
+					k["block_chance"] = 0.0  # (for this proof he doesn't raise his guard: said on screen)
+					foe["brain"].kind = k
+					_say("in the cab, P P K at him (for this picture he doesn't block)")
+				inp = {}
+				_combo(level, inp, ["punch", "punch", "kick"], ["punch", "cross", "push_kick"])
+				if data.get("thrown", 0) >= 3 and h.state in Fighter.GROUND_STATES:
+					data["thrown"] = 0
+			for ev in evs:
+				match ev.get("result", ""):
+					"cab_open": _say("the third switch: the CAB door opens")
+					"horn": _say("in the cab: his HORN shoves the hero back")
+					"shoved_out": _end("P P K: SHOVED OUT of his cab, and that's it")
+			var op: Array = level.enemies.filter(func(e): return e["kind"] == "crane_operator")
+			if not op.is_empty() and op[0]["f"].defeated():
+				_end("the Crane Operator's down (by blows in the cab, not the push kick)")
+			if level.plan["floors"][level.on].get("cab", false) and not data.has("cab"):
+				data["cab"] = true
+				_say("into the cab: no room to swing a weapon")
 		"proof_headbutt":
 			if tick == 19:
 				_start("K K K at the Wrench Mechanic; the side kick at the end goes to his face")
@@ -305,6 +466,39 @@ func inputs(level) -> Dictionary:
 	return inp
 
 
+## Kicks at a boss, stepping in to reach him and lining up with him (Coach Crusher's gloves take every punch).
+func _kick_at(level, f) -> Dictionary:
+	var h = level.hero
+	var inp := {}
+	if absf(f.x - h.x) > 110.0 or absf(f.z - h.z) > 8.0:
+		inp["mx"] = signf(f.x - h.x) if absf(f.x - h.x) > 110.0 else 0.0
+		inp["mz"] = clampf((f.z - h.z) / 16.0, -1.0, 1.0)
+	elif h.facing != (1 if f.x >= h.x else -1):
+		inp["mx"] = signf(f.x - h.x) * 0.01
+	elif h.state in Fighter.GROUND_STATES and tick % 13 == 0:
+		inp["kick"] = true
+	return inp
+
+
+## A three-press combo at the proof's enemy (presses, and the moves they throw), stepping in when he's out of reach.
+func _combo(level, inp: Dictionary, presses: Array, moves: Array) -> void:
+	var h = level.hero
+	var f = foe["f"]
+	if h.state in moves and h.attack_serial != data.get("serial", -1):
+		data["serial"] = h.attack_serial  # a blow thrown (a press too soon after the last one is dropped: not counted)
+		data["thrown"] = data.get("thrown", 0) + 1
+	if data.get("thrown", 0) >= 3 or not h.state in Fighter.GROUND_STATES:
+		return
+	if absf(f.x - h.x) > 115.0 or absf(f.z - h.z) > 8.0:
+		inp["mx"] = signf(f.x - h.x) if absf(f.x - h.x) > 115.0 else 0.0
+		inp["mz"] = clampf((f.z - h.z) / 16.0, -1.0, 1.0)
+		return
+	if h.facing != (1 if f.x >= h.x else -1):
+		inp["mx"] = signf(f.x - h.x) * 0.01
+		return
+	inp[presses[data.get("thrown", 0)]] = true
+
+
 ## K K K at the proof's enemy, one press as each kick ends, stepping back in when the last drove him out of reach (the
 ## chain allows the step: a press inside the combo window still continues it).
 func _kkk(level, inp: Dictionary) -> void:
@@ -341,5 +535,14 @@ func overlay(level) -> String:
 	if name == "proof_lookout":
 		var called: Array = level.enemies.filter(func(e): return e["kind"] == "glow_punk")
 		line += "  ·  called: %d, nearest %s px off" % [called.size(), str(int(called.map(func(e): return absf(e["f"].x - h.x)).min())) if not called.is_empty() else "-"]
+	if name in ["proof_coach", "proof_static"]:
+		line += "  ·  (he starts part-worn, 10 of 40: the whole fight would run to many pages)"
+	if name == "proof_crane":
+		line += "  ·  %s  ·  switches thrown %d of 3" % [level.where, level.flipped.size()]
+	if name == "proof_rook" and f != null:
+		line += "  ·  door switches standing %d  ·  perfect blocks on his last cut %d of 3" % [
+			level.world.objects.filter(func(o): return o["kind"] == "door_switch" and not o["broken"]).size(), foe.get("sword_blocks", 0)]
+	if name == "proof_chrome" and f != null:
+		line += "  ·  kicks into the cane's wind-up %d of 3" % foe.get("cane_kicks", 0)
 	return ("PROOF: %s   ·   frame %d%s\n" % [name.trim_prefix("proof_"), tick,
 		"   ·   sequence frame %d" % (tick - started) if started >= 0 and ended < 0 else ""]) + line + ("\n" + note if note_left > 0 else "")
