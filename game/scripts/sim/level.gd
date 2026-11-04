@@ -1120,7 +1120,7 @@ func _twins() -> void:
 			if f.y >= st["top"] - 1.0 or (f.flight().is_empty() and hero.flight().is_empty() and f.state in Fighter.GROUND_STATES):
 				climbing_back.erase(f)  # back up top (or the fight's come down to the floor)
 		f.tune["walk_speed"] = e["walk"] * (TWIN_CLIMB if climbing_back.has(f) and not f.flight().is_empty() else 1.0) \
-				* (2.0 if not twins_opened and not climbing_back.has(f) and not f.flight().is_empty() else 1.0)  # (down the stairs in a hurry to open with his brother)
+				* (2.0 if not twins_opened and not compound and not climbing_back.has(f) and not f.flight().is_empty() else 1.0)  # (down the stairs in a hurry to open with his brother)
 	var up: Array = twins.filter(func(e): return not e["f"].defeated())
 	if up.size() < 2:
 		return

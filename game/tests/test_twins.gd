@@ -156,3 +156,18 @@ func test_they_open_with_their_swap_even_against_a_rush() -> void:
 	check(short["f"].health < short["f"].max_health, "his punches really landed on the short one meanwhile")
 	check(not l.enemies.any(func(e): return e["f"].unflinching and not e["f"].defeated() and not l.compound and e["brain"].plan.is_empty()),
 		"after the opening, nobody stays unflinching")
+
+
+## The tall brother hurries down the stairs only to open with his brother; once they're both at him at once (Compound)
+## there's no opening to come, and he walks at his own pace (an escape down the stairs stays an escape).
+func test_no_hurry_down_the_stairs_once_its_both_at_once() -> void:
+	var l = Level.new(Level.load_data("res://levels/level3.json"), {}, 1)
+	l._go_to(3, 150.0)
+	l.step({})
+	var tall: Dictionary = twin(l, "twin_tall")
+	check(not tall["f"].flight().is_empty(), "(he starts up on the stairs: the setup)")
+	l.step({})
+	check(tall["f"].tune["walk_speed"] > tall["walk"] * 1.5, "before the opening: he hurries down")
+	l.compound = true
+	l.step({})
+	check(is_equal_approx(tall["f"].tune["walk_speed"], tall["walk"]), "both at once: his own pace (%.1f, his %.1f)" % [tall["f"].tune["walk_speed"], tall["walk"]])
