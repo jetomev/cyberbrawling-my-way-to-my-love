@@ -208,7 +208,7 @@ func test_the_enemy_walks_up_and_hits_back() -> void:
 				hit_at = i
 	check(hit_at > 0, "he came and hit the hero")
 	check(hit_at < 300, "within five seconds (tick %d)" % hit_at)
-	check(p[0].health < 20.0, "the hero is hurt (%.0f)" % p[0].health)
+	check(p[0].health < p[0].max_health, "the hero is hurt (%.0f)" % p[0].health)
 
 
 func test_the_enemy_throws_combos_and_waits_between_attacks() -> void:

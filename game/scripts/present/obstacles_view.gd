@@ -11,6 +11,12 @@ var items := {}  # object id -> its Node2D
 
 
 func setup(street_world, street_ground_y: float) -> void:
+	for id in items:  # a new street (a level's restart, upstairs): the old things go
+		items[id].queue_free()
+	items = {}
+	if loose != null:
+		loose.queue_free()
+		loose = null
 	world = street_world
 	ground_y = street_ground_y
 	for o in world.objects:

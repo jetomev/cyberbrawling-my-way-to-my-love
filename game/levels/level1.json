@@ -1,0 +1,163 @@
+{
+  "name": "Level 1 (grey placeholder until the team's layout lands)",
+  "about": "Javier & Claude, 2026-11-03. A stand-in layout so the level's logic, the bot and the builds run; the assistant team's level 1 layout replaces the obstacles, waves and boss below. Items: [kind, x, z] (food, first_aid, a weapon). Obstacles: [kind, x0, x1, z0, z1, top, climbable, strength]. Waves: the street locks at 'at' until its thugs are beaten; each enemy stands dx px from it.",
+  "length": 7680,
+  "obstacles": [
+    [
+      "crate",
+      1080,
+      1160,
+      40,
+      120,
+      96,
+      true,
+      4
+    ],
+    [
+      "car",
+      2300,
+      2560,
+      30,
+      130,
+      130,
+      true,
+      0
+    ],
+    [
+      "crate",
+      3700,
+      3780,
+      90,
+      160,
+      96,
+      true,
+      4
+    ],
+    [
+      "barrier",
+      5200,
+      5240,
+      0,
+      70,
+      220,
+      false,
+      0
+    ],
+    [
+      "crate",
+      6500,
+      6580,
+      40,
+      120,
+      96,
+      true,
+      4
+    ]
+  ],
+  "items": [
+    [
+      "food",
+      2700,
+      100
+    ],
+    [
+      "food",
+      4300,
+      60
+    ],
+    [
+      "first_aid",
+      5900,
+      100
+    ],
+    [
+      "food",
+      7100,
+      90
+    ]
+  ],
+  "waves": [
+    {
+      "at": 1500,
+      "enemies": [
+        {
+          "kind": "thug",
+          "dx": 500,
+          "z": 60
+        },
+        {
+          "kind": "thug",
+          "dx": 650,
+          "z": 120,
+          "weapon": "pipe"
+        }
+      ]
+    },
+    {
+      "at": 3100,
+      "enemies": [
+        {
+          "kind": "thug",
+          "dx": 500,
+          "z": 40
+        },
+        {
+          "kind": "thug",
+          "dx": -600,
+          "z": 120
+        },
+        {
+          "kind": "thug",
+          "dx": 700,
+          "z": 90,
+          "weapon": "bat"
+        }
+      ]
+    },
+    {
+      "at": 4700,
+      "enemies": [
+        {
+          "kind": "thug",
+          "dx": 500,
+          "z": 80,
+          "weapon": "knife"
+        },
+        {
+          "kind": "thug",
+          "dx": 650,
+          "z": 130
+        }
+      ]
+    },
+    {
+      "at": 6200,
+      "enemies": [
+        {
+          "kind": "thug",
+          "dx": 500,
+          "z": 50,
+          "weapon": "pipe"
+        },
+        {
+          "kind": "thug",
+          "dx": -550,
+          "z": 110
+        },
+        {
+          "kind": "thug",
+          "dx": 680,
+          "z": 140,
+          "weapon": "wrench"
+        }
+      ]
+    }
+  ],
+  "stairs": 7300,
+  "upstairs_length": 1920,
+  "boss": {
+    "kind": "boss",
+    "health": 40,
+    "weapon": "wrench"
+  }
+}

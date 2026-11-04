@@ -25,6 +25,7 @@ func think(enemies: Array) -> Dictionary:
 		if not e.defeated() and (foe == null or absf(e.x - me.x) < absf(foe.x - me.x)):
 			foe = e
 	if foe == null:
+		inp["mx"] = 1.0  # nobody to fight: walk on along the street (a level's next wave, the stairs)
 		return inp
 	var dx: float = foe.x - me.x
 	var toward := 1.0 if dx >= 0.0 else -1.0
@@ -36,7 +37,7 @@ func think(enemies: Array) -> Dictionary:
 		return inp
 	if foe.attack_phase() == "startup" and absf(dx) < 200.0 and foe.attack_serial != read_serial:
 		read_serial = foe.attack_serial
-		if dice.randf() < 0.35:
+		if dice.randf() < 0.55:
 			block_left = 20
 			inp["block"] = true
 			return inp

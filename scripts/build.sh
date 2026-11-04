@@ -50,6 +50,9 @@ fail() { echo "FAILED $*"; exit 1; }
     "$OUT/frames/sweep-spin.png" "$OUT/clips/sweep-spin.mp4" || fail "could not draw the sweep's spin with its circle"
   # a whole fight: a bot plays the hero against the thugs, who fight back (Stage 1)
   "$ROOT/scripts/fight_clip.sh" "$OUT" > "$OUT/fight.txt" 2>&1 || { cat "$OUT/fight.txt"; fail "could not record the fight"; }
+  # level 1 played through by the bot: the waves, the stairs, the boss (Stage 1)
+  "$ROOT/scripts/level_clip.sh" "$OUT" > "$OUT/level.txt" 2>&1 || { cat "$OUT/level.txt"; fail "could not record level 1"; }
+  LEVEL_RESULT="$(tail -1 "$OUT/level.txt")"
   # the hero beside the recordings he was measured from (D-30); the recordings live outside the repo, so a machine
   # without them builds without these pictures and the note says so
   SBS="no"
@@ -118,6 +121,9 @@ PY
     else
       echo "- Side by side: not drawn (no reference recordings on this machine)"
     fi
+    echo "- \`clips/level1.mp4\` and \`frames/level1.png\` (a frame every 5 s): level 1 played through by the bot: four"
+    echo "  waves along the street (it locks at each until they're beaten), food and first aid lying about, the stairs, the"
+    echo "  boss upstairs; three lives. A grey placeholder layout until the team's lands. How it went: $LEVEL_RESULT"
     echo "- \`clips/fight.mp4\` / \`fight-half.mp4\` and \`frames/fight.png\` (a frame every half second): a 25 s fight, a bot"
     echo "  playing the hero against thugs who fight back (red): they walk up, throw combos with a breath between, sometimes"
     echo "  block (a white flash is a perfect block); blows make them flinch, reel, get shoved, knocked down, thrown up;"

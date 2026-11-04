@@ -21,6 +21,8 @@ const SWITCH_STATES := ["to_walk", "to_fight"]
 const DOUBLE_TAP_TICKS := 3
 const MAX_QUEUE := 2  # P then K pressed during one long blow play P then K
 const AIR_STATES := ["jump", "air_kick", "hammer_fist"]
+## What food and first aid give back, as a share of a full health bar (D-14)
+const HEALS := {"food": 0.4, "first_aid": 1.0}
 ## Being hit: no input counts until the reaction ends (fight.gd decides who hits whom; take_hit() reacts)
 const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko", "dizzy"]
 
@@ -207,6 +209,14 @@ func _ground(mx: float, mz: float, run := false) -> void:
 			z = nz
 	if state == "climb":
 		return
+	# D-14: the health bar refills from food and first-aid kits lying on the street; the hero eats what he walks over
+	# when he's hurt (an enemy leaves them)
+	if team == 0 and health < max_health and world != null and not world.items.is_empty():
+		for it in world.items:
+			if HEALS.has(it["kind"]) and absf(it["x"] - x) <= Weapons.PICK_UP_REACH and absf(it["z"] - z) <= Weapons.PICK_UP_REACH:
+				health = minf(max_health, health + HEALS[it["kind"]] * max_health)
+				world.items.erase(it)
+				break
 	# walking over a weapon with an empty hand picks it up (the bag for more than one comes with Stage 4)
 	if weapon == "" and world != null and not world.items.is_empty():
 		var it: Dictionary = Weapons.within_reach(world.items, x, z)

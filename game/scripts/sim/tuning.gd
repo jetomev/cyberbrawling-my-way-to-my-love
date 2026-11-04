@@ -49,7 +49,7 @@ const DEFAULTS := {
 	"climb_ticks": 18,
 	"climb_max": 140.0,  # taller than this can't be climbed (jump up a step, or go around)
 	# getting hit (Stage 1: an enemy that fights back): health, and how long each reaction lasts
-	"health": 20.0,  # the hero's; an enemy's tuning sets its own
+	"health": 30.0,  # the hero's (a level's waves need it: the bot lost level 1 on every seed at 20); an enemy's tuning sets its own
 	"block_damage": 0.25,  # a plain block takes a quarter of the blow (D-19: less pain than a clean hit); perfect: none
 	"hurt_ticks": 14,  # a plain hit: a flinch
 	"block_hit_ticks": 10,  # a blow taken on the guard

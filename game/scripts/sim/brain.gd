@@ -11,13 +11,30 @@ const Fighter := preload("res://scripts/sim/fighter.gd")
 const THUG := {
 	"keep": 170.0,  # waiting distance, out of the hero's jab
 	"strike": 112.0,  # how close he steps in to throw
-	"wait_min": 40,  # ticks between his attacks (a fair window for the hero)
-	"wait_max": 90,
+	"wait_min": 55,  # ticks between his attacks (a fair window for the hero)
+	"wait_max": 110,
 	"block_chance": 0.3,  # how often he raises his guard against a blow he sees coming
 	"block_ticks": 22,
 	"combos": [["punch"], ["punch", "punch"], ["kick"], ["punch", "punch", "punch"], ["kick", "kick", "kick"],
 		["kick", "punch", "kick"]],
 }
+
+## The level 1 boss: bigger, tougher (level.gd gives him his health), quicker to come again, blocks more, and his
+## combos run longer and heavier. The team's enemy table replaces these with each boss's own.
+const BOSS := {
+	"keep": 160.0,
+	"strike": 118.0,
+	"wait_min": 22,
+	"wait_max": 55,
+	"block_chance": 0.45,
+	"block_ticks": 26,
+	"combos": [["punch", "punch", "punch"], ["kick", "kick", "kick"], ["punch", "kick", "punch"], ["kick", "punch", "kick"],
+		["punch", "punch", "kick"]],
+}
+const HANG_BACK := 130.0  # how much further off an enemy waits while it isn't his turn to attack
+
+## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
+const TYPES := {"THUG": THUG, "BOSS": BOSS}
 
 var me
 var foe
@@ -28,6 +45,7 @@ var plan: Array = []  # the presses left in the combo he is throwing
 var pressed_on := -1  # the blow (attack serial) during which he pressed the next one: one press per blow
 var block_left := 0
 var read_serial := -1  # the foe's blow he already decided about
+var allowed := true  # a level lets only a couple of enemies attack at once; the others hang back, waiting their turn
 
 
 func _init(fighter, target, dice_seed := 1, how: Dictionary = THUG) -> void:
@@ -73,12 +91,12 @@ func think() -> Dictionary:
 	var dz: float = foe.z - me.z
 	if absf(dz) > 6.0:
 		inp["mz"] = clampf(dz / 16.0, -1.0, 1.0)
-	var want: float = kind["strike"] if wait == 0 else kind["keep"]
+	var want: float = kind["strike"] if wait == 0 and allowed else kind["keep"] + (0.0 if allowed else HANG_BACK)
 	if dist > want + 6.0:
 		inp["mx"] = toward
 	elif me.facing != int(toward):
 		inp["mx"] = toward * 0.01  # a tiny step just to turn and face him
-	if wait == 0 and dist <= kind["strike"] + 8.0 and absf(dz) <= me.tune["hit_depth"] and me.state in Fighter.GROUND_STATES:
+	if wait == 0 and allowed and dist <= kind["strike"] + 8.0 and absf(dz) <= me.tune["hit_depth"] and me.state in Fighter.GROUND_STATES:
 		plan = (kind["combos"][dice.randi_range(0, kind["combos"].size() - 1)] as Array).duplicate()
 		inp[plan.pop_front()] = true
 		pressed_on = -1

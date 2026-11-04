@@ -3,11 +3,13 @@ extends Node2D
 ## Options after "--": --demo plays the scripted demo (scripts/sim/demo.gd) and quits when it ends (--lab shows the
 ## feel lab during it);
 ## --fight has a bot (hero_bot.gd) play the hero against the thugs for FIGHT_TICKS and quits (the build's fight clip);
+## --bot has the bot play level 1 through and quits when it ends (prints how it went);
 ## --flat uses the flat line instead of the shallow street (D-13); --marks <file> (with --demo) writes, for every drawn
 ## frame, where the hips, hands and feet are on screen, for the reviewers' close-ups (scripts/build.sh, D-22).
 ## F1 opens the feel lab (feel_panel.gd).
-## Outside the demo a thug walks up and fights back (Stage 1; brain.gd, fight.gd): put him down and another comes;
-## put down yourself, you get up again (lives and saves come with the levels, D-15).
+## Played, it's level 1 (levels/level1.json, level.gd): waves of thugs along the street, the street locked at each
+## until it's beaten, food and first aid lying about, the stairs, the boss upstairs; three lives, then the level starts
+## again (D-15). With --fight a thug walks up and fights the bot on the free grey street.
 
 const Version := preload("res://scripts/sim/version.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
@@ -22,6 +24,9 @@ const ObstaclesView := preload("res://scripts/present/obstacles_view.gd")
 const Fight := preload("res://scripts/sim/fight.gd")
 const Brain := preload("res://scripts/sim/brain.gd")
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
+const Level := preload("res://scripts/sim/level.gd")
+const LEVEL_FILE := "res://levels/level1.json"
+const END_TICKS := 240  # how long "cleared" or "out of lives" shows before the level starts again
 const FIGHT_TICKS := 1500  # --fight: how long the recorded bot fight runs (25 s)
 
 const ENEMY_TINT := Color(1.35, 0.78, 0.72)  # the thug, reddish, so he never reads as the hero
@@ -44,6 +49,11 @@ var spawned := 0
 var hero_down_for := 0
 var bars := {}  # "hero"/"enemy" -> [back, fill] ColorRects
 var bot = null  # --fight: a bot plays the hero against the thugs (for the build's fight clip)
+var level = null  # played: level 1
+var shown_world = null  # the street the obstacles view is drawing
+var level_views := {}  # enemy fighter id -> its view
+var ended_for := 0
+var items_seen := -1
 
 
 func _ready() -> void:
@@ -60,24 +70,30 @@ func _ready() -> void:
 		add_child(feel)
 		if "--flat" in args:
 			tune["flat_line"] = true  # asked for on the command line: beats a saved setting
-	world = StreetWorld.grey_street()
+	var playing: bool = not demo and not "--fight" in args  # (--bot: the bot plays level 1, for the build's level clip)
+	if playing:
+		level = Level.new(Level.load_data(LEVEL_FILE), tune)
+		world = level.world
+	else:
+		world = StreetWorld.grey_street()
 	obstacles_view = ObstaclesView.new()
 	obstacles_view.name = "Obstacles"
 	add_child(obstacles_view)
 	obstacles_view.setup(world, Street.GROUND_Y)
-	hero = Fighter.new(tune, 400.0, 80.0, world)
+	shown_world = world
+	hero = level.hero if level != null else Fighter.new(tune, 400.0, 80.0, world)
 	hero_view = HeroView.new()
 	hero_view.name = "Hero"
 	add_child(hero_view)
-	$Street.setup(tune["street_right"], tune["street_depth"])
+	$Street.setup(level.data["length"] if level != null else tune["street_right"], tune["street_depth"])
 	$Camera.limit_left = int(tune["street_left"])
 	$Camera.limit_right = int(tune["street_right"])
 	$Hud/Title.text = "%s   ·   %s%s" % [Version.TITLE, Version.STAGE, "   ·   demo" if demo else ""]
 	hero_view.sync(hero, Street.GROUND_Y)
 	_make_bars()
-	if "--fight" in args:
+	if "--fight" in args or "--bot" in args:
 		bot = HeroBot.new(hero, 1)
-	if not demo:
+	if bot != null and level == null:
 		_spawn_enemy(hero.x + 600.0)
 	var at := args.find("--marks")
 	if demo and at >= 0 and at + 1 < args.size():
@@ -87,6 +103,9 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	if level != null:
+		_play_level()
+		return
 	var inp: Dictionary = Demo.input_at(tick) if demo else (bot.think(enemies.map(func(e): return e["f"])) if bot != null else Controls.read())
 	hero.step(inp)
 	for e in enemies:
@@ -134,6 +153,68 @@ func _mark() -> void:
 	marks.store_line(line)
 	marks.flush()
 	frame += 1
+
+
+## Level 1, played: the level steps everyone; this draws what it holds and says how it stands.
+func _play_level() -> void:
+	if level.won or level.lost:
+		ended_for += 1
+		$Hud/Title.text = "LEVEL 1 CLEARED!" if level.won else "Out of lives: level 1 starts again"
+		if ended_for >= END_TICKS:
+			ended_for = 0
+			if bot != null:
+				print("LEVEL %s at tick %d, lives %d" % ["WON" if level.won else "LOST", level.tick, level.lives])
+				get_tree().quit()
+				return
+			level.restart()
+	else:
+		if bot != null:
+			bot.me = level.hero
+		level.step(bot.think(level.standing()) if bot != null else Controls.read())
+	tick += 1
+	hero = level.hero
+	world = level.world
+	if world != shown_world:  # restarted, or up the stairs: a new street to draw
+		shown_world = world
+		obstacles_view.setup(world, Street.GROUND_Y)
+		$Street.setup(level.bounds().y, tune["street_depth"])
+		items_seen = -1
+	if world.items.size() != items_seen or not level.events.is_empty():
+		items_seen = world.items.size()
+		obstacles_view.refresh()
+	# a view for every enemy on the street; gone ones go
+	var live := {}
+	for e in level.enemies:
+		if e["gone"]:
+			continue
+		var id: int = e["f"].get_instance_id()
+		live[id] = true
+		if not level_views.has(id):
+			var v = HeroView.new(ENEMY_TINT.lerp(Color(1.6, 0.6, 0.9), 0.5) if e["f"].max_health > Level.KINDS["thug"]["health"] else ENEMY_TINT)
+			add_child(v)
+			level_views[id] = v
+		level_views[id].sync(e["f"], Street.GROUND_Y)
+		level_views[id].z_index = world.draw_order(e["f"])
+	for id in level_views.keys():
+		if not live.has(id):
+			level_views[id].queue_free()
+			level_views.erase(id)
+	hero_view.sync(hero, Street.GROUND_Y)
+	hero_view.z_index = world.draw_order(hero)
+	var b: Vector2 = level.bounds()
+	$Camera.limit_left = int(b.x)
+	$Camera.limit_right = int(maxf(b.y, b.x + 1920.0))
+	$Camera.position.x = lerpf($Camera.position.x, hero.x + hero.facing * 160.0, 0.08)
+	$Camera.zoom = Vector2.ONE * tune["camera_zoom"]
+	if not (level.won or level.lost):
+		var where: String = "the boss" if level.where == "upstairs" else ("fight!" if level.active_wave >= 0 else "go →")
+		$Hud/Title.text = "Level 1   ·   %s   ·   lives %s" % [where, "♥ ".repeat(level.lives).strip_edges()]
+	bars["hero"][1].size.x = 416.0 * hero.health / hero.max_health
+	var foes: Array = level.standing()
+	bars["enemy"][0].visible = not foes.is_empty()
+	if not foes.is_empty():
+		foes.sort_custom(func(a, c): return absf(a.x - hero.x) < absf(c.x - hero.x))
+		bars["enemy"][1].size.x = 416.0 * foes[0].health / foes[0].max_health
 
 
 func _spawn_enemy(at_x: float) -> void:

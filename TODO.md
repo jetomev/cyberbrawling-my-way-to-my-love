@@ -97,7 +97,8 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] Layers: foreground props, play lane, skyline; in front / behind (solo)
 - [x] Keyboard + gamepad, dead zone, drifting-stick test (solo) (2026-11-01: brought forward for F-1, the G13 stuck stick; 51 tests)
 - [ ] Both lane depths to try: flat line and shallow street (solo)
-- [ ] A grey level 1 with the boss upstairs; the bot plays it (solo)
+- [x] A grey level 1 with the boss upstairs; the bot plays it (solo) (2026-11-03: level.gd + levels/level1.json, a placeholder layout; waves lock the street, two attack at once, food and first aid, three lives then a restart; the bot wins 2 of 3 seeds; a level clip in every build)
+- [ ] Level 1's real layout and enemy table from the team (drop into levels/level1.json and brain.gd's TYPES)
 - [ ] Javier's grey-box feel test
 
 ## Stage 2 · The look (by Sun 29 Nov) — #4
