@@ -16,6 +16,7 @@ extends RefCounted
 
 const Fighter := preload("res://scripts/sim/fighter.gd")
 const Fight := preload("res://scripts/sim/fight.gd")
+const Moves := preload("res://scripts/sim/moves.gd")
 const Brain := preload("res://scripts/sim/brain.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
@@ -40,6 +41,9 @@ const KINDS := {
 	"twin_short": {"health": 25.0, "brain": "TWIN", "twin": true},
 	# level 4's boss, Coach Crusher (the team's roster): gloves that block every punch, so kicks only; his prize waits on
 	# the team's call (the "Last Call" combo, or a first-aid kit and his whistle): a first-aid kit for now
+	# level 5's boss, Madame Chrome (the team's roster): her chrome cane snaps after three kicks into its wind-up, and
+	# then she's done; the pipe is her prize (and the casino key, with level 5)
+	"chrome": {"health": 40.0, "brain": "CHROME", "weapon": "cane", "drops": "pipe"},
 	"coach": {"health": 40.0, "brain": "COACH", "drops": "first_aid",
 		"gloves": ["punch", "cross", "power_punch", "hook", "uppercut", "elbow", "hammer_fist", "air_punch"]},
 	# the rest of the team's roster (enemy roster v2)
@@ -80,6 +84,12 @@ const TACKLE_DAMAGE := 3.0
 const TACKLE_REACH := 70.0  # he runs into the hero when this close along the street (and on his line of the street)
 const ROPES_DAZE := 70  # the tackle missed: he slams into the ropes and is open this long
 const TACKLE_WINDUP := 30  # first he backs off a few steps, head down, then charges: time to step aside (feel lab)
+const CARD_SPEED := 12.0  # Madame Chrome's cards, three in a row at the chest and the head
+const CARD_DAMAGE := 1.0
+const CARDS := [[110.0, 180.0], [200.0, 270.0], [110.0, 180.0]]
+const CHROME_OPEN := 50  # after her cards she's open this long: no guard, no parry
+const CANE_KICKS := 3  # kicks into the cane's wind-up that snap it
+const KICKS := ["kick", "body_kick", "side_kick", "push_kick", "front_kick", "roundhouse", "spin_kick", "air_kick", "sweep"]
 const TWIN_CLIMB := 0.3  # how fast a Twin Loans brother goes up a flight, of his walk: knocked down it, about ten
 # seconds before he's back up (the team's roster, feel lab)
 const MAX_ON_SCREEN := 5  # never more than five enemies at once; the rest wait off screen (the team's fairness rules)
@@ -285,6 +295,7 @@ func step(inp: Dictionary) -> void:
 			if think.get("hurl", false) and e["f"].weapon != "":
 				_hurl(e["f"])
 			think = _coach(e, think)
+			think = _chrome(e, think)
 			_volley(e)
 			e["f"].step(think)
 	var all := everyone()
@@ -304,6 +315,7 @@ func step(inp: Dictionary) -> void:
 	_kitchen()
 	_cat()
 	_roster_tricks()
+	_chrome_after()
 	_stairs()
 	_switches()
 	_waves()
@@ -328,6 +340,9 @@ func _volley(e: Dictionary) -> void:
 	var band: Array = e["volley"].pop_front()
 	var f = e["f"]
 	var dir := 1.0 if hero.x >= f.x else -1.0
+	if e.get("kind", "") == "chrome":  # her cards
+		projectiles.throw("card", f.x + dir * 40.0, f.z, band[0], band[1], dir * CARD_SPEED, CARD_DAMAGE, f.team)
+		return
 	projectiles.throw("record", f.x + dir * 40.0, f.z, band[0], band[1], dir * RECORD_SPEED, RECORD_DAMAGE, f.team)
 
 
@@ -520,6 +535,71 @@ func _coach(e: Dictionary, think: Dictionary) -> Dictionary:
 		early.append({"target": f, "result": "ropes", "kind": "ropes"})
 		return {}
 	return {"run": true, "mx": dir}
+
+
+## Madame Chrome (the team's roster, level 5's boss): her cards, three in a row, then she's open a moment (no guard,
+## no parry), then the low cane sweep and the cane jab; any combo the hero uses twice in a row she parries from its
+## second blow (mix it up); three kicks into her cane's wind-up snap it, and then she's done.
+func _chrome(e: Dictionary, think: Dictionary) -> Dictionary:
+	if e.get("kind", "") != "chrome":
+		return think
+	var f = e["f"]
+	if f.defeated():
+		return think
+	var open: bool = tick < e.get("open_until", 0)
+	# the same combo again: from its second blow, she parries it (the finisher too: then his chain reads empty)
+	var now: String = hero.chain if hero.chain != "" else _combo_of(hero.state)
+	var again: bool = e.get("last_combo", "") != "" and now.length() >= 2 and e["last_combo"].begins_with(now)
+	f.parries = [hero.state] if again and not open else []
+	if open:
+		e["brain"].block_left = 0
+	if think.get("cards", false):
+		e["volley"] = CARDS.duplicate()
+		e["volley_at"] = tick
+		e["open_until"] = tick + RECORD_GAP * CARDS.size() + CHROME_OPEN
+		e["then"] = e["open_until"]  # then the sweep and the jab
+		e["brain"].plan.clear()
+		e["brain"].wait = 9999
+		return {}
+	if e.has("then") and tick >= e["then"]:
+		e.erase("then")
+		e["brain"].plan = ["sweep", "punch"]
+		e["brain"].wait = 0
+	return think
+
+
+## The presses a combo finisher ends (power_punch: "PPP"; the armed smash and rising swing as the punches they
+## stand for), or "" for a move that ends none.
+static func _combo_of(move: String) -> String:
+	var armed := {"smash": "PPP", "rising_swing": "PKP"}
+	if armed.has(move):
+		return armed[move]
+	for seq in Moves.COMBOS:
+		if Moves.COMBOS[seq] == move and seq.length() == Moves.FINISHER_LENGTH:
+			return seq
+	return ""
+
+
+## Madame Chrome after the blows: the combo the hero just finished on her (for her parry), and the kicks into her
+## cane's wind-up (three snap it).
+func _chrome_after() -> void:
+	for e in enemies:
+		if e.get("kind", "") != "chrome" or e["f"].defeated():
+			continue
+		var f = e["f"]
+		for ev in events:
+			if ev.get("attacker") != hero or ev.get("target") != f:
+				continue
+			if Moves.is_finisher(ev.get("move", "")):
+				e["last_combo"] = _combo_of(ev["move"])
+			if ev.get("counter", false) and ev.get("move", "") in KICKS and f.weapon == "cane":
+				e["cane_kicks"] = e.get("cane_kicks", 0) + 1
+				if e["cane_kicks"] >= CANE_KICKS:
+					f.weapon_snaps = true
+					Fight._disarm(f, world, hero.x)  # it bends and snaps
+					f.health = 0.0
+					f._enter("ko")
+					events.append({"target": f, "result": "cane_snaps", "kind": "cane_snaps"})
 
 
 ## Twin Loans (the team's roster, level 3's boss): while one brother attacks, the other holds his guard up and waits his

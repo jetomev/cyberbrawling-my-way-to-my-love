@@ -48,6 +48,7 @@ const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 
 	"big_mama": Color(1.5, 1.4, 1.25),  # Big Mama Noodle: an enormous white apron
 	"twin_tall": Color(1.3, 1.15, 0.75), "twin_short": Color(1.15, 1.0, 0.6),  # Twin Loans: matching checked suits
 	"coach": Color(0.7, 0.95, 1.35),  # Coach Crusher: an old blue tracksuit
+	"chrome": Color(1.35, 1.38, 1.5),  # Madame Chrome: a silver dress
 	# the rest of the roster, from the team's looks: the mechanic's blue overalls, the Doorman's black suit, the
 	# Dancer's bright tracksuit, the Enforcer's long dark coat, the lookout's neon raincoat, the Grabber's green glow
 	"wrench_mechanic": Color(0.7, 0.85, 1.25), "doorman": Color(0.45, 0.45, 0.5), "neon_dancer": Color(1.6, 1.2, 0.5),
@@ -608,6 +609,15 @@ func _draw_flying() -> void:
 	var clock: int = level.tick if level != null else (trial.tick if trial != null else 0)
 	for p in flying:
 		var at := Vector2(p["x"], Street.GROUND_Y + p["z"] - (p["y0"] + p["y1"]) * 0.5)
+		if p["kind"] == "card":  # Madame Chrome's playing card, spinning
+			var a := float(clock) * 0.5
+			var pts := PackedVector2Array()
+			for c in [Vector2(-12, -17), Vector2(12, -17), Vector2(12, 17), Vector2(-12, 17)]:
+				pts.append(at + c.rotated(a))
+			flying_view.draw_colored_polygon(pts, Color(0.97, 0.96, 0.92))
+			pts.append(pts[0])
+			flying_view.draw_polyline(pts, Color(0.75, 0.1, 0.2), 2.0)
+			continue
 		if p["kind"] == "ball":  # Coach Crusher's medicine ball: big, brown, stitched
 			flying_view.draw_circle(at, 26.0, Color(0.45, 0.28, 0.16))
 			flying_view.draw_arc(at, 26.0, 0.0, TAU, 20, Color(0.08, 0.08, 0.1), 3.0)

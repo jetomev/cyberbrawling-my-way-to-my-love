@@ -9,7 +9,7 @@ mkdir -p "$OUT"
 # the trials on a bare street, then the scenes on a real level (scene:<name>, present/scenes.gd: the cat)
 # (scene:<name>@<level>: the scene on that level)
 for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy records bass_drop scenery umbrella first_aid \
-    scene:cat@level1 scene:twins@roster_yard scene:coach@coach_gym; do
+    scene:cat@level1 scene:twins@roster_yard scene:coach@coach_gym scene:chrome@chrome_casino; do
   ARGS=(--trial "$T")
   if [[ "$T" == scene:* ]]; then L="${T#*@}"; T="${T#scene:}"; T="${T%@*}"; ARGS=(--level "res://levels/$L.json" --scene "$T"); fi
   TMP="$ROOT/scratch/trial-$T.$$"

@@ -118,10 +118,16 @@ const COACH := {
 	"keep": 200.0, "strike": 120.0, "wait_min": 100, "wait_max": 170, "block_chance": 0.0, "block_ticks": 0,
 	"combos": [["ball", "punch", "punch", "tackle"], ["punch", "punch"], ["ball", "punch", "punch"]],
 }
+## Madame Chrome, level 5's boss (the team's roster): three cards thrown, a low cane sweep (jump it), then a cane jab
+## (level.gd _chrome throws the cards and keeps the order; she parries a combo used twice in a row).
+const CHROME := {
+	"keep": 220.0, "strike": 150.0, "wait_min": 110, "wait_max": 190, "block_chance": 0.2, "block_ticks": 18,
+	"combos": [["cards"]],
+}
 ## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
 const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER, "DJ_VOLT": DJ_VOLT,
 	"SNICK": SNICK, "BIG_MAMA": BIG_MAMA, "WRENCH_MECHANIC": WRENCH_MECHANIC, "DOORMAN": DOORMAN,
-	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN, "COACH": COACH}
+	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN, "COACH": COACH, "CHROME": CHROME}
 
 var me
 var foe
