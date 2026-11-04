@@ -680,3 +680,22 @@ func test_the_bot_is_never_stuck_in_a_draft_level() -> void:
 			l.step(bot.think(l.standing()))
 		results.append("%s %s" % [n, "won" if l.won else ("lost on floor %d" % l.on if l.lost else "STUCK on floor %d at %.0f" % [l.on, l.hero.x])])
 	check(not results.any(func(r): return r.contains("STUCK")), "never stuck: %s" % [results])
+
+
+## A wave's late arrivals ("after_down": come in once that many of the wave are down) can always come: never waiting
+## on more than the rest of the wave (2026-11-04: level 9's lookout waited for three down after a cut left two, and
+## the screen never cleared).
+func test_every_wave_can_finish() -> void:
+	var names: Array = Level.load_data("res://levels/levels.json")["levels"].duplicate()
+	names.append_array(["roster_yard", "coach_gym", "chrome_casino", "static_plant", "rook_penthouse", "crane_docks", "tower_top"])
+	var waves := 0
+	for n in names:
+		var d: Dictionary = Level.load_data("res://levels/%s.json" % n)
+		for fi in d["floors"].size():
+			for wi in d["floors"][fi].get("waves", []).size():
+				var list: Array = d["floors"][fi]["waves"][wi].get("enemies", [])
+				waves += 1
+				for e in list:
+					check(int(e.get("after_down", 0)) <= list.size() - 1, "%s F%d wave %d: the %s waits for %d down, the wave has %d others" % [
+						n, fi, wi, e["kind"], int(e.get("after_down", 0)), list.size() - 1])
+	check(waves > 20, "the waves were really read (%d)" % waves)

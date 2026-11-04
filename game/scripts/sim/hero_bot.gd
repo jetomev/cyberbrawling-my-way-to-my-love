@@ -51,6 +51,8 @@ func think(enemies: Array) -> Dictionary:
 			return inp
 		if goal >= 0.0 and absf(me.x - goal) < 30.0:
 			inp["mz"] = -1.0  # at the doorway or ladder: into it, up
+			if absf(me.x - goal) > 4.0:
+				inp["mx"] = signf(goal - me.x) * 0.5  # (and the last steps along: from the right, a stair's side is too high)
 			return inp
 		inp["mx"] = 1.0 if goal < 0.0 or goal > me.x else -1.0  # nobody to fight: walk on (to the next wave, the way up)
 		_get_past(inp)
