@@ -60,6 +60,8 @@ fail() { echo "FAILED $*"; exit 1; }
   # the rest of the team's roster, one at a time down a plain street (the roster yard, a showcase, not a level)
   "$ROOT/scripts/level_clip.sh" "$OUT" roster_yard 1 > "$OUT/roster.txt" 2>&1 || { cat "$OUT/roster.txt"; fail "could not record the roster yard"; }
   ROSTER_RESULT="$(tail -1 "$OUT/roster.txt")"
+  # the bot's balance numbers for the team (2026-11-04): level 3 and the drafts, health per screen, deaths, damage by type
+  "$ROOT/scripts/balance.sh" "$OUT/balance.md" > "$OUT/balance.txt" 2>&1 || { cat "$OUT/balance.txt"; fail "could not run the balance numbers"; }
   # the testers' controlled trials: one thing on purpose each, its numbers on screen (2026-11-03)
   "$ROOT/scripts/trials.sh" "$OUT" > "$OUT/trials.txt" 2>&1 || { cat "$OUT/trials.txt"; fail "could not record the trials"; }
   # the hero beside the recordings he was measured from (D-30); the recordings live outside the repo, so a machine
@@ -161,6 +163,9 @@ PY
     echo "- Levels: 1, 2 and 3 SETTLED (the team's agreed pages); 4 to 10 DRAFT (from Merry's levels 2-10 page and Pippin's"
     echo "  roster v3; each level file's \"about\" lists what isn't built yet; no clips of them yet). The bot loses the drafts"
     echo "  (the crowds of Doormen and Enforcers beat it): their difficulty is for the team's settled pages."
+    echo "- \`balance.md\`: the bot's balance numbers (the team's playtester-designer): level 3 and the drafts, three runs"
+    echo "  each, health and lives leaving each screen, where lives were lost, health taken by enemy type. In short:"
+    grep '^## \|^Health taken' "$OUT/balance.md" | sed 's/^## /  - /; s/^Health taken, all 3 runs/    health taken/' | cut -c1-200
     echo "- \`clips/roster_yard.mp4\` and \`frames/roster_yard.png\`: the rest of the team's roster, one at a time, by the bot:"
     echo "  the Wrench Mechanic (ducks high kicks, hurls his wrench, his toolbox by the wall), the Doorman (shield in front),"
     echo "  the Neon Dancer (skates), the Enforcer (parries the jab), the lookout (whistles in two), the Grabber (bear hug)."
@@ -192,7 +197,7 @@ PY
   # Javier, 2026-11-02 20:14 (through the assistant team): "It is only one report a day, not so many." Builds live in
   # their own folder outside the repo, where the assistant team reads them; the shelf gets one plain report a day.
   BUILDS="${CYBERBRAWLING_BUILDS:-$HOME/Documents/Cyberbrawling/builds}"
-  mkdir -p "$BUILDS/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/frames "$OUT"/trials "$OUT"/build.md "$BUILDS/$NAME/" \
+  mkdir -p "$BUILDS/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/frames "$OUT"/trials "$OUT"/build.md "$OUT"/balance.md "$BUILDS/$NAME/" \
     && { [ "$SBS" != yes ] || cp -r "$OUT"/reference "$BUILDS/$NAME/"; } \
     || fail "could not copy to the builds folder"
   echo "in the builds folder: $BUILDS/$NAME"

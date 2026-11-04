@@ -503,6 +503,7 @@ func _roster_tricks() -> void:
 		elif tick - hug["at"] >= HUG_TICKS:
 			hero._enter("idle")
 			hero.take_hit({"damage": HURL_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "bear_hug_throw"}, g)
+			events.append({"attacker": g, "target": hero, "result": "hit", "move": "bear_hug_throw", "drop": "", "counter": false, "broke": "", "worn": ""})
 			hug["by"]["brain"].wait = 60
 			hug = {}
 
