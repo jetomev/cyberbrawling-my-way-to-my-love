@@ -417,6 +417,9 @@ func step(inp: Dictionary) -> void:
 			if think.get("records", false):
 				e["volley"] = RECORDS.duplicate()  # his records go one after another
 				e["volley_at"] = tick
+			if think.get("hurl", false) and plan["floors"][on].get("one_throw", false) \
+					and projectiles.flying.any(func(p): return p["alive"] and p["team"] == e["f"].team and p.get("catchable", false)):
+				think.erase("hurl")  # one wrench in the air at a time here (the team's level 4: the balcony, Boromir)
 			if think.get("hurl", false) and e["f"].weapon != "":
 				_hurl(e["f"])
 			think = _coach(e, think)
@@ -796,7 +799,7 @@ func _chrome_after() -> void:
 				e["last_combo"] = _combo_of(ev["move"])
 			if e["kind"] != "chrome":
 				continue
-			if ev.get("counter", false) and ev.get("move", "") in KICKS and f.weapon == "cane":
+			if ev.get("counter", false) and (ev.get("move", "") in KICKS or ev.get("from_kick", false)) and f.weapon == "cane":
 				e["cane_kicks"] = e.get("cane_kicks", 0) + 1
 				if e["cane_kicks"] >= CANE_KICKS:
 					f.weapon_snaps = true

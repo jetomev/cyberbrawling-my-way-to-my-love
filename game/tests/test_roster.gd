@@ -415,3 +415,24 @@ func test_coachs_gloves_stop_a_weapon_swing() -> void:
 	var c := bring(l, "coach", 120.0)
 	c["f"].facing = -1
 	eq(c["f"].take_hit(blow("swing", 2.0), l.hero), "blocked", "a stick swing from the front: his gloves take it")
+
+
+## The team's level 4, settled (Boromir): the balcony's Mechanics throw one at a time, never two wrenches in the air.
+## Where a floor says so ("one_throw"), a Mechanic about to hurl holds it while a wrench of theirs is still flying.
+func test_one_wrench_in_the_air_where_the_floor_says_so() -> void:
+	for flag in [false, true]:
+		var l = street()
+		l.plan["floors"][0]["one_throw"] = flag
+		var m := bring(l, "wrench_mechanic", 300.0)
+		var flying = l.projectiles.throw("wrench", l.hero.x + 900.0, l.hero.z, 120.0, 210.0, 11.0, 2.0, 1)
+		flying["catchable"] = true  # (another Mechanic's wrench, still in the air, flying off the other way)
+		m["brain"].plan = ["hurl"]
+		m["brain"].wait = 0
+		var before: int = l.projectiles.flying.filter(func(p): return p["alive"]).size()
+		l.step({})
+		var now: int = l.projectiles.flying.filter(func(p): return p["alive"] and p.get("catchable", false)).size()
+		if flag:
+			eq(now, 1, "on the balcony: he holds his throw while one's in the air")
+			eq(m["f"].weapon, "wrench", "(and keeps his wrench for later)")
+		else:
+			eq(now, 2, "anywhere else: he throws (the setup works: %d before)" % before)

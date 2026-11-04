@@ -34,14 +34,29 @@ const THROW_SPEED := 14.0
 ## The fist move each press becomes with a weapon in hand (the rest stay as they are).
 const ARMED := {"punch": "swing", "cross": "backswing", "power_punch": "smash", "uppercut": "rising_swing",
 	"elbow": "handle_jab", "hammer_fist": "chop"}
-## Armed, a weapon's use "subs the punches" (Javier, 2026-11-04): the punch press is the weapon's swing (ARMED above),
-## and kicks stay kicks (the team's rule). Should the team's grip page turn the kicks into swings too, this is ready:
-## by place in the chain (first press a swing, second a backswing, the finisher the smash; jumping, the chop; the sweep
-## a swing), switched on with swings_replace_kicks. Off. (On, the hero would need a way to drop a weapon: Coach's
-## gloves stop every swing, Madame Chrome's cane snaps only to kicks.)
-const ARMED_KICKS := {"kick": "swing", "body_kick": "backswing", "side_kick": "smash", "knee": "backswing",
-	"push_kick": "smash", "roundhouse": "smash", "air_kick": "chop", "sweep": "swing"}
-static var swings_replace_kicks := false
+## Armed, the punch press swings the weapon (ARMED above: Javier, 2026-11-04, a weapon's use "subs the punches"); the
+## kick press by the weapon's weight (Pippin's grips page, art-in 2026-11-04-weapon-grips): light weapons keep every
+## kick; heavy one-handed ones keep the low kicks (low kick, body kick, push kick, knee) and swap the high ones; the
+## two-handed ones keep just the low kick and the push kick. The strikes below stand in for his named ones till the
+## pose sheet draws them (side kick: a backhand club or a rising cut; roundhouse: a big club or an uppercut swing; the
+## knee: a knob jab, a pommel strike, the stick's butt jab; the body kick: a low swing at the knees or a thrust; the
+## flying kick: a jumping club, chop or thrust).
+const GRIPS := {"knife": "light", "stick": "light", "pipe": "heavy", "wrench": "heavy", "bat": "two", "sword": "two",
+	"lovelight": "two", "mic_stand": "two"}  # (any other: heavy, one hand)
+const KICK_SWAPS := {
+	"light": {},
+	"heavy": {"side_kick": "smash", "roundhouse": "smash", "air_kick": "chop"},
+	"two": {"knee": "handle_jab", "body_kick": "low_swing", "side_kick": "rising_swing", "roundhouse": "rising_swing",
+		"air_kick": "chop"},
+}
+const OWN_KICK_SWAPS := {"stick": {"knee": "handle_jab"}}  # the stick's butt jab in the knee's place (light, but it has a butt)
+
+
+## What a kick press becomes with this weapon in hand: a strike with it, or the kick itself.
+static func kick_armed(move: String, weapon: String) -> String:
+	if OWN_KICK_SWAPS.get(weapon, {}).has(move):
+		return OWN_KICK_SWAPS[weapon][move]
+	return KICK_SWAPS[GRIPS.get(weapon, "heavy")].get(move, move)
 ## The weapon blows, before a weapon's own numbers: the swing across, the backswing, the overhead smash, the rising
 ## swing, the handle jab, the jumping chop.
 const SWINGS := {
@@ -57,6 +72,9 @@ const SWINGS := {
 	# K P K armed: the butt of the weapon, short, in place of the elbow; it doesn't wear the weapon
 	"handle_jab": {"startup": 4, "active": 3, "recovery": 10, "low": 140.0, "high": 230.0, "damage": 1, "effect": "",
 		"limb": "hand_f", "wear": 0, "reach": 85.0},
+	# a two-handed weapon's low swing at the knees, in the body kick's place (Pippin's grips page)
+	"low_swing": {"startup": 7, "active": 4, "recovery": 14, "low": 20.0, "high": 140.0, "damage": 1, "effect": "",
+		"limb": "hand_f", "wear": 1},
 	# jump + P armed: a chop down, in place of the hammer fist
 	"chop": {"startup": 4, "active": 8, "recovery": 0, "low": 20.0, "high": 170.0, "damage": 2, "effect": "",
 		"limb": "hand_f", "wear": 1},

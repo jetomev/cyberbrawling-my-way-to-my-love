@@ -75,7 +75,7 @@ func step(fighters: Array, world = null) -> Array:
 			var worn := ""
 			if result == "hit":
 				worn = a.wear(blow.get("wear", 0)) if not a.keeps_weapon else ""  # a weapon wears only on a hit; kicks never wear it (the team's combos)
-			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "drop": drop, "counter": winding_up and result == "hit",
+			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "from_kick": a.from_kick, "drop": drop, "counter": winding_up and result == "hit",
 				"broke": d.just_broke, "worn": worn})
 		_hit[id] = seen
 	return events

@@ -88,6 +88,7 @@ var dodges := []
 var parries := []
 var too_quick := false  # the Neon Dancer on skates: every weapon but the light ones (knife, stick) misses her (roster v4)
 var held_by = null  # who holds him in a bear hug: a thrown weapon hits him instead (the team's house rule)
+var from_kick := false  # this blow is a weapon strike in a kick's place (Pippin's grips page): it counts as a kick
 var escape_taps := 0  # held: punches tapped so far toward wriggling free
 var weapon_snaps := false  # his weapon breaks as it's knocked loose (level 2's pipe Bruiser: the pipe stays level 5's prize)
 var shrugs := []  # blows (by move) that hurt him but don't make him flinch (the Bruiser's "Iron Gut": a jab)
@@ -543,10 +544,13 @@ func _hurt(part: String, amount: float) -> void:
 ## The move a combo's press becomes with the weapon in hand (the team's weapon combos: the same presses, the weapon in
 ## the fist's place); bare-handed, or with the lead arm broken, the fist move itself.
 func _armed(move: String) -> String:
+	from_kick = false
 	if weapon == "" or broken("arm_f") or no_swing:
 		return move
-	if Weapons.swings_replace_kicks and Weapons.ARMED_KICKS.has(move):
-		return Weapons.ARMED_KICKS[move]  # (only if the team's grip page turns kicks into swings: off)
+	var kicked: String = Weapons.kick_armed(move, weapon)
+	if kicked != move:
+		from_kick = true  # (a kick press turned weapon strike still breaks a wind-up the way a kick did: Pippin)
+		return kicked
 	return Weapons.ARMED.get(move, move)
 
 
