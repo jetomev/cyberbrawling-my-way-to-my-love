@@ -32,6 +32,9 @@ for w, name, a, b, label in segs:
     if name in ("grip", "block"):
         grips.append((a + b) // 2)
 tile(grips, os.path.join(out, "grips.png"), 4, 480)
+for w, name, a, b, label in segs:  # and each close-up on its own, full size
+    if name in ("grip", "block"):
+        shutil.copy(path((a + b) // 2), os.path.join(out, "%s-%s.png" % (w, name)))
 for w, items in by_weapon.items():
     os.makedirs(os.path.join(out, w), exist_ok=True)
     n = 0
@@ -42,6 +45,13 @@ for w, items in by_weapon.items():
         frames = list(range(a, b + 1))
         for page in range(0, len(frames), 30):
             tile(frames[page:page + 30], os.path.join(out, w, "%02d-%s-%d.png" % (n, name, page // 30 + 1)), 6, 320)
+        # each blow's whole movement, Ready to Ready, at full and half speed (the testers on b24110b)
+        for half, suffix in ((False, ""), (True, "-half")):
+            cmd = ["ffmpeg", "-loglevel", "error", "-y", "-framerate", "60", "-start_number", str(min(a + 1, LAST)), "-i",
+                   os.path.join(frames_dir, "f%08d.png"), "-frames:v", str(b - a + 1)]
+            cmd += (["-vf", "setpts=2*PTS", "-r", "60"] if half else []) + ["-c:v", "libx264", "-pix_fmt", "yuv420p",
+                    os.path.join(out, w, "%02d-%s%s.mp4" % (n, name, suffix))]
+            subprocess.run(cmd, check=True)
     first, last = items[0][1], items[-1][2]
     for half, suffix in ((False, ""), (True, "-half")):
         cmd = ["ffmpeg", "-loglevel", "error", "-y", "-framerate", "60", "-start_number", str(first + 1), "-i",

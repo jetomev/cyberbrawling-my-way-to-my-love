@@ -1038,7 +1038,7 @@ static func _cover(out: Dictionary, pose: Dictionary) -> void:
 const WEAPON_READY := {
 	"knife": {"at": Vector2(34, -10), "wpn": 0.0},  # belt height, close, blade forward and level
 	"stick": {"at": Vector2(46, -112), "wpn": -100.0},  # head height in front of the face, tip up and a little back
-	"pipe": {"at": Vector2(58, -90), "wpn": -48.0},  # chin height in front, tip up and forward, elbow bent
+	"pipe": {"at": Vector2(56, -74), "wpn": -45.0},  # chin height in front, tip up and forward, elbow bent
 	"wrench": {"at": Vector2(44, -62), "wpn": -35.0},  # chest height, jaw forward, tighter
 	"bat": {"at": Vector2(36, -26), "wpn": -45.0, "two": true},  # hands at the belly, a diagonal, tip at the enemy's head
 	"baguette": {"at": Vector2(36, -26), "wpn": -45.0, "two": true},  # held like the bat (Pippin)
@@ -1056,7 +1056,7 @@ const WEAPON_REACH := {"knife": 38.0, "stick": 112.0, "pipe": 102.0, "wrench": 6
 const HANG_HEIGHT := 92.0
 const WEAPON_SWING_REL := -78.0  # in a swing (till each weapon's own swings are drawn): through the fist, as before
 const FENCE := Vector2(50, -70)  # the free hand with a one-handed weapon: up before the chest, open (a fence)
-const BLOCK_AT := Vector2(46, -95)  # blocking: the weapon held across the body at chin height (the team's playtester)
+const BLOCK_AT := Vector2(62, -90)  # blocking: the weapon held across the body at chin height (the team's playtester)
 ## Each weapon's own blows (the pose sheet, art-in 2026-11-04-weapon-poses): where the weapon points at the wind-up,
 ## at contact and at the follow-through (degrees as above: 0 at the enemy, -90 up, 90 down); from its Ready before
 ## and back to it after. By the weapon, else its kind. The arms keep the swings' shared shapes for now; the weapon's
@@ -1071,10 +1071,17 @@ const SWING_TRACK := {
 	"two": {"swing": [140.0, 0.0, 30.0], "backswing": [40.0, 0.0, -20.0], "smash": [150.0, 0.0, 160.0],
 		"rising_swing": [95.0, -50.0, -80.0], "handle_jab": [170.0, 170.0, 170.0], "chop": [-100.0, 70.0, 80.0],
 		"low_swing": [130.0, 30.0, 0.0]},
-	"blade": {"swing": [-100.0, 15.0, 40.0], "backswing": [60.0, -35.0, -60.0], "smash": [120.0, 0.0, -10.0],
+	"blade": {"swing": [-100.0, 15.0, 40.0], "backswing": [60.0, -35.0, -60.0], "smash": [170.0, 0.0, -10.0],
 		"rising_swing": [70.0, -45.0, -70.0], "handle_jab": [120.0, 120.0, 120.0], "chop": [-60.0, 10.0, 20.0],
 		"low_swing": [0.0, 0.0, 0.0]},
 }
+## A weapon's own blow where it differs from its kind's (the sheet): the wrench's finisher is "the clang", the pipe's
+## first club but to the top of the head, not the floor smash.
+const OWN_TRACK := {"wrench": {"smash": [-115.0, 20.0, 50.0]}}
+const OWN_HANDS := {"wrench": {"smash": [Vector2(10, -125), Vector2(76, -96), Vector2(62, -62)]}}
+## Finishers that end standing (the testers on b24110b: the sword's ended on the ground, the bat's swung down): the
+## body keeps its height through them; only the pipe's floor smash goes down with it.
+const LOW_FINISHERS := ["pipe"]
 const TRACK_KIND := {"knife": "knife", "stick": "stick", "bat": "two", "baguette": "two", "mic_stand": "two",
 	"sword": "blade", "lovelight": "blade", "cane": "blade"}  # (any other: heavy)
 ## And where the weapon hand goes in each (from the hip joint, as WEAPON_READY): wind-up, contact, follow-through.
@@ -1165,15 +1172,24 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 		if track.has(state):
 			var keys: Array = [0, moment(state, "windup", tune), moment(state, "active", tune), moment(state, "follow", tune),
 				moment(state, "end", tune)]
+			var own: Array = OWN_TRACK.get(weapon, {}).get(state, [])
+			if not own.is_empty():
+				track = track.duplicate()
+				track[state] = own
 			out["wpn"] = _along(keys, [g["wpn"]] + track[state] + [g["wpn"]], t)
 			out["wpn_hold"] = 1.0
-			if state in LEVEL_SWINGS.get(family, []) and t >= keys[1] and t <= keys[3]:
-				var round_deg: float = _along(keys, [g["wpn"]] + track[state] + [g["wpn"]], t)
+			if state == "smash" and not weapon in LOW_FINISHERS:
+				out["hip_y"] = minf(pose.get("hip_y", 0.0), 6.0)  # (standing through it, not down on the street)
+				out["torso"] = minf(pose.get("torso", 0.0), 18.0)
+			if state in LEVEL_SWINGS.get(family, []):
+				# round the body from Ready (0) and back to it: level all the way, never through straight up or down
+				var round_deg: float = _along(keys, [0.0] + track[state] + [0.0], t)
 				var across: float = cos(deg_to_rad(round_deg))
-				out["wpn"] = 0.0 if across >= 0.0 else 180.0
+				var forward: float = 0.0 if t >= keys[1] and t <= keys[3] else g["wpn"]  # (out of the swing: its Ready angle)
+				out["wpn"] = forward if across >= 0.0 else 180.0
 				out["wpn_len"] = maxf(0.25, absf(across))
 			# the weapon hand on its own path (the sheet's wind-up, contact and follow-through), from Ready and back
-			var hands: Array = SWING_HANDS[family].get(state, [])
+			var hands: Array = OWN_HANDS.get(weapon, {}).get(state, SWING_HANDS[family].get(state, []))
 			if not hands.is_empty():
 				var path: Array = [g["at"]] + hands + [g["at"]]
 				out["hold_" + w] = 1.0
@@ -1211,6 +1227,9 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 				out["cover_" + o] = 1.0
 			elif weapon in ["shield", "wok"]:
 				pass  # a shield blocks where it's held: up in front, chin to knee
+			elif TRACK_KIND.get(weapon, "") == "blade":
+				at = Vector2(44, -70)  # a blade blocks upright before him, the edge out, both hands at chin height (a sword's guard)
+				dir_deg = -78.0
 			else:
 				at = BLOCK_AT
 				dir_deg = 0.0
