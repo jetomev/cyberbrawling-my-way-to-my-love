@@ -130,8 +130,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] Level 1 findings fixed
 - [ ] The weapon bag: collect and switch
 - [x] Story opening: choose your hero, the kidnapping (2026-11-03: the title, Him or Her, the team's opening and a moment before and after each level, the endings, the out-of-lives lines (story/story.json), the levels in order, a save at each level's start (D-15); the story's pictures come with the team's art)
-- [x] Level 2, the Night Market (2026-11-04, the team's settled layout: 19 enemies, Snick, the pipe Bruiser, stall counters, ladders, the cracked tile's noodle bar, Big Mama Noodle's kitchen; the bot wins it on most seeds)
-- [ ] Levels 3–5 on two floors; the level 5 boss (layouts from the team: levels 2-10 page)
+- [ ] Level 2; levels 3–5 on two floors; the level 5 boss (2026-11-04: level 2, the Night Market, DONE from the team's settled layout: 19 enemies, Snick, the pipe Bruiser, ladders, the noodle bar, Big Mama Noodle; levels 3–5 next, from the team's levels 2-10 page)
 - [ ] Each enemy type and boss: its own combos, counters to the hero's combos, its own way to be beaten (D-19; the team's table)
 
 ## Stage 5 · Levels 6–9 (by Sun 28 Feb)
