@@ -620,7 +620,7 @@ func _draw_flying() -> void:
 		var at := Vector2(p["x"], Street.GROUND_Y + p["z"] - (p["y0"] + p["y1"]) * 0.5)
 		if HeroView.WEAPON_LOOK.has(p["kind"]):  # a thrown weapon (the hero's, the Mechanic's wrench), spinning end over end
 			var look: Array = HeroView.WEAPON_LOOK[p["kind"]]
-			var d := Vector2.from_angle(float(clock) * 0.45) * look[0] * 0.5
+			var d: Vector2 = Vector2.from_angle(float(clock) * 0.45) * look[0] * 0.5
 			flying_view.draw_line(at - d, at + d, EDGE_INK, look[1] + 4.0)
 			flying_view.draw_line(at - d, at + d, look[2], look[1])
 			continue
