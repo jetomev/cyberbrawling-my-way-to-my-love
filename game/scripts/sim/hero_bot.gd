@@ -12,6 +12,8 @@ var combo: Array = []  # the presses of the combo under way
 var block_left := 0
 var read_serial := -1
 var goal := -1.0  # a doorway or ladder to take when the street is clear (the level tells it: level.next_door())
+var goal_hit := false  # the goal is a switch to hit, not a way through (level.goal_is_switch)
+var jump_cue := false  # something low is about to sweep through him: jump (level.crane_jump_cue())
 const COMBOS := [["punch", "punch", "punch"], ["kick", "kick", "kick"], ["punch", "kick", "punch"], ["punch", "punch", "kick"], ["sweep"]]
 
 
@@ -27,7 +29,16 @@ func think(enemies: Array) -> Dictionary:
 	for e in enemies:
 		if not e.defeated() and (foe == null or absf(e.x - me.x) < absf(foe.x - me.x)):
 			foe = e
+	if jump_cue and me.state in ["idle", "walk", "block", "run"]:
+		inp["jump"] = true  # the crane's container, low across the floor
+		return inp
 	if foe == null:
+		if goal >= 0.0 and goal_hit and absf(me.x - goal) < 60.0:
+			if me.facing != (1 if goal >= me.x else -1):
+				inp["mx"] = signf(goal - me.x) * 0.01
+			elif tick % 20 == 0:
+				inp["punch"] = true  # a switch: hit it
+			return inp
 		if goal >= 0.0 and absf(me.x - goal) < 30.0:
 			inp["mz"] = -1.0  # at the doorway or ladder: into it, up
 			return inp

@@ -48,6 +48,9 @@ const KINDS := {
 	"static": {"health": 40.0, "brain": "STATIC", "weapon": "baton", "drops": "rubber_gloves", "grip": true},
 	# level 8's boss, Velvet Rook (the team's roster): the sword from his cane, held through perfect blocks till the
 	# third on his last cut breaks it; parries the plain combos' finishers (P P P, K K K; the armed smash too)
+	# level 6's boss, the Crane Operator (the team's roster): out of reach in his cab till the three switches are thrown;
+	# P P K shoves him out of it, and that's it; the better knife his prize (it spins further once throwing comes)
+	"crane_operator": {"health": 30.0, "brain": "CRANE", "drops": "knife"},
 	"rook": {"health": 45.0, "brain": "ROOK", "weapon": "sword", "drops": "sword", "grip": true,
 		"parries": ["power_punch", "side_kick", "smash"]},
 	"coach": {"health": 40.0, "brain": "COACH", "drops": "first_aid",
@@ -102,6 +105,16 @@ const LIVE_TICKS := 30  # and it's live this long: jump as it comes down (a jump
 const SHOCK_DAMAGE := 1.5
 const TANK_REACH := 140.0  # P P K'd in this close to the water tank, he shorts out
 const TANK_DAMAGE := 3.0
+const CRANE_EVERY := 300  # the crane swings a container along the floor this often (while it runs)
+const CRANE_WARN := 60  # its warning: the horn and the container showing at the edge of the floor
+const CONTAINER_SPEED := 16.0
+const CONTAINER_WIDTH := 200.0
+const CONTAINER_TOP := 100.0  # it swings this low: jump it (a jump peaks at 150)
+const CONTAINER_DAMAGE := 3.0
+const CRATE_WARN := 40  # a crate's shadow shows this long before it lands
+const CRATE_DAMAGE := 2.0
+const CRANE_STOP := 600  # a switch stops the crane this long
+const HORN_REACH := 320.0
 const ROOK_BREAKS := 3  # perfect blocks on his last cut that break his sword
 const CHECKMATE_EVERY := 600  # his Enforcers come at most this often (one a door switch still standing)
 const TWIN_CLIMB := 0.3  # how fast a Twin Loans brother goes up a flight, of his walk: knocked down it, about ten
@@ -133,6 +146,7 @@ var lost := false  # out of lives: the level restarts (restart())
 var tick := 0
 var hero_down_for := 0
 var dice_seed := 1
+var dice := RandomNumberGenerator.new()  # the level's own chances (where the crane's crates land)
 var events := []  # this tick's fight events (for sounds and the view)
 var collected := []  # what the hero has found (a matchbook, the torn photo)
 var projectiles  # what's flying (records)
@@ -146,6 +160,7 @@ var tumbling := {}  # fighter -> the flight he's rolling down
 var compound := false  # Twin Loans at half their health: both rush the hero together
 var climbing_back := {}  # fighters tumbled down a flight, on their way back up (a Twin Loans brother: slowly)
 var live_until := -1  # Mr. Static's floor, live till this tick
+var crane := {}  # the docks' crane (the plan's "crane"): {next, container {x, dir, hit}, crates [{x, z, at}], stopped_until}
 var early := []  # events from before this tick's blows are settled (the twins' swap): joined to events after
 var cat_fed := false  # level 1's stray cat, fed (it follows him, and turns up in level 2)
 var cat := Vector2(-1.0e9, 0.0)  # where the cat is (x, z): by its bins, or at his heels once fed
@@ -238,6 +253,8 @@ func restart() -> void:
 	tumbling = {}
 	compound = false
 	live_until = -1
+	crane = {}
+	dice.seed = dice_seed * 7919 + 1
 	climbing_back = {}
 	early = []
 	friend = null
@@ -314,6 +331,7 @@ func step(inp: Dictionary) -> void:
 			think = _chrome(e, think)
 			think = _static(e, think)
 			think = _rook(e, think)
+			think = _crane_cab(e, think)
 			_volley(e)
 			e["f"].step(think)
 	var all := everyone()
@@ -336,6 +354,8 @@ func step(inp: Dictionary) -> void:
 	_chrome_after()
 	_static_after()
 	_rook_after()
+	_crane()
+	_shoved_out()
 	_stairs()
 	_switches()
 	_waves()
@@ -710,6 +730,95 @@ func _rook_after() -> void:
 					events.append({"target": f, "result": "sword_breaks", "kind": "sword_breaks"})
 
 
+## The docks' crane (the team's roster, level 6's boss): while it runs and the hero is on one of its floors, every
+## CRANE_EVERY a container swings along the floor, low (jump it, or be on another floor), then two crates drop near the
+## hero (their shadows show first). A crane switch stops it CRANE_STOP; with every switch thrown the cab opens.
+func _crane() -> void:
+	var c: Dictionary = plan.get("crane", {})
+	if c.is_empty():
+		return
+	if crane.is_empty():
+		crane = {"next": tick + CRANE_EVERY, "container": {}, "crates": [], "stopped_until": -1}
+	var on_its_floor: bool = c.get("floors", []).any(func(n): return int(n) == on)  # (numbers from a layout read as decimals)
+	var running: bool = on_its_floor and tick >= crane["stopped_until"] and not plan_boss_down()
+	var b := bounds()
+	var box: Dictionary = crane["container"]
+	if box.is_empty() and running and tick >= crane["next"] - CRANE_WARN and not crane.get("warned", false):
+		crane["warned"] = true
+		crane["from"] = -1.0 if hero.x > (b.x + b.y) * 0.5 else 1.0  # from the far side of him
+		events.append({"target": hero, "result": "crane_warn", "kind": "crane"})
+	if box.is_empty() and running and tick >= crane["next"]:
+		var dir: float = -crane.get("from", 1.0)
+		crane["container"] = {"x": b.x - CONTAINER_WIDTH if dir > 0.0 else b.y + CONTAINER_WIDTH, "dir": dir, "hit": false}
+		box = crane["container"]
+		crane["warned"] = false
+	if not box.is_empty():
+		var was_ahead: bool = (hero.x - box["x"]) * box["dir"] > 0.0
+		box["x"] += box["dir"] * CONTAINER_SPEED
+		if was_ahead and (hero.x - box["x"]) * box["dir"] <= 0.0 and not box["hit"]:
+			events.append({"target": hero, "result": "container_under", "kind": "container"})  # it went under him
+		var half := CONTAINER_WIDTH * 0.5 + Fight.BODY_HALF_WIDTH
+		if not box["hit"] and absf(box["x"] - hero.x) < half and hero.y < CONTAINER_TOP and hero.hittable():
+			box["hit"] = true
+			hero.take_hit({"damage": CONTAINER_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "container"}, {"x": box["x"] - box["dir"] * 10.0, "y": 0.0})
+			events.append({"target": hero, "result": "hit", "kind": "container", "move": "container"})
+		if (box["dir"] > 0.0 and box["x"] > b.y + CONTAINER_WIDTH) or (box["dir"] < 0.0 and box["x"] < b.x - CONTAINER_WIDTH):
+			crane["container"] = {}
+			crane["next"] = tick + CRANE_EVERY
+			for k in 2:  # then the crates, near him
+				crane["crates"].append({"x": clampf(hero.x + (k * 2 - 1) * dice.randf_range(20.0, 120.0), b.x + 40.0, b.y - 40.0),
+					"z": hero.z, "at": tick + CRATE_WARN + k * 25})
+	for cr in crane["crates"].duplicate():
+		if tick >= cr["at"]:
+			crane["crates"].erase(cr)
+			if absf(cr["x"] - hero.x) < 55.0 and absf(cr["z"] - hero.z) < 40.0 and hero.y < 60.0 and hero.hittable():
+				hero.take_hit({"damage": CRATE_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "crate"}, {"x": cr["x"], "y": 0.0})
+				events.append({"target": hero, "result": "hit", "kind": "crate", "move": "crate"})
+			else:
+				events.append({"target": hero, "result": "crate_smash", "kind": "crate"})
+	hero.no_swing = plan["floors"][on].get("cab", false)
+
+
+func plan_boss_down() -> bool:
+	return boss_spawned and enemies.filter(func(e): return e["boss"]).all(func(e): return e["f"].defeated())
+
+
+## The Crane Operator push-kicked: shoved out of his cab onto a container, and that's it.
+func _shoved_out() -> void:
+	for ev in events:
+		var d = ev.get("target")
+		if ev.get("attacker") == hero and ev.get("result", "") == "hit" and ev.get("move", "") == "push_kick":
+			for e in enemies:
+				if e["f"] == d and e.get("kind", "") == "crane_operator" and not d.defeated():
+					d.health = 0.0
+					d._enter("ko")
+					events.append({"target": d, "result": "shoved_out", "kind": "shoved_out"})
+
+
+## When the bot should jump the crane's container: it's coming at him and about to reach him.
+func crane_jump_cue() -> bool:
+	var box: Dictionary = crane.get("container", {})
+	if box.is_empty():
+		return false
+	var ahead: float = (hero.x - box["x"]) * box["dir"]  # how far it still has to come
+	# (a jump needs about 15 frames to get above it: 4 crouching, 11 rising; at 16 px a frame that's 240 px of warning)
+	return ahead > 0.0 and ahead < CONTAINER_WIDTH * 0.5 + Fight.BODY_HALF_WIDTH + 240.0
+
+
+## The Crane Operator in his cab: "horn" blasts the hero back (a push, if he's close); P P K's push kick shoves him
+## out of the cab, and that's it.
+func _crane_cab(e: Dictionary, think: Dictionary) -> Dictionary:
+	if e.get("kind", "") != "crane_operator" or e["f"].defeated():
+		return think
+	var f = e["f"]
+	if think.get("horn", false):
+		early.append({"target": f, "result": "horn", "kind": "horn"})
+		if absf(hero.x - f.x) < HORN_REACH and hero.hittable():
+			hero.take_hit({"damage": 1.0, "effect": "push", "low": 0.0, "high": 300.0, "move": "horn"}, f)
+		return {}
+	return think
+
+
 ## Twin Loans (the team's roster, level 3's boss): while one brother attacks, the other holds his guard up and waits his
 ## turn; halfway through a combo they swap places ("Interest"), so an answer meant for the one swinging lands on the
 ## one guarding; at half their health together, both rush the hero at once ("Compound"). Knocked down a flight, a
@@ -921,9 +1030,18 @@ func _waves() -> void:
 
 
 ## Where the way on is, for a bot: the x of a doorway or ladder on this floor once its waves are beaten, or -1.
+var goal_is_switch := false  # next_door() points at a switch to hit, not a way to walk through
+
+
 func next_door() -> float:
+	goal_is_switch = false
 	if not cleared(on):
 		return -1.0
+	var switches: Array = plan.get("switches", [])
+	for i in switches.size():  # the crane's switches first: they open the way up
+		if int(switches[i]["floor"]) == on and switches[i].get("crane", false) and not flipped.has(i):
+			goal_is_switch = true
+			return float(switches[i]["x"])
 	for l in plan.get("links", []):
 		if int(l["from"]) == on and l.get("kind", "") == "stairs" and int(l["to"]) > on:
 			var st: Dictionary = stairs_of(l)
@@ -1008,6 +1126,17 @@ func _switches() -> void:
 			continue
 		if box["x0"] - SWITCH_REACH <= s["x"] and s["x"] <= box["x1"] + SWITCH_REACH:
 			flipped[i] = true
+			if s.get("crane", false):  # a crane switch: it stops the crane a while; all of them open the cab
+				if not crane.is_empty():
+					crane["stopped_until"] = tick + CRANE_STOP
+				events.append({"target": hero, "result": "crane_stopped", "kind": "switch"})
+				var all_crane: Array = range(switches.size()).filter(func(k): return switches[k].get("crane", false))
+				if all_crane.all(func(k): return flipped.has(k)):
+					for fl in floors:
+						for o in fl["world"].objects:
+							if o.get("name", "") == "cab":
+								o["broken"] = true
+					events.append({"target": hero, "result": "cab_open", "kind": "switch"})
 			for fl in floors:
 				for o in fl["world"].objects:
 					if o.get("name", "") == s["opens"]:

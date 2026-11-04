@@ -1,0 +1,105 @@
+{
+  "name": "The docks (a showcase for the testers, not a level of the game)",
+  "about": "Javier & Claude, 2026-11-04. Level 6's boss from the team's roster, the Crane Operator: from his cab a container swings along the floor you're on (jump it, or climb to another floor), then crates drop (their shadows show first); a switch on each floor stops the crane a while; throw all three and the cab door opens; in the cab there's no room to swing a weapon; P P K shoves him out, and that's it. Not in levels.json: level 6 places it (three floors of containers).",
+  "floors": [
+    {
+      "name": "the quay",
+      "length": 1920,
+      "obstacles": [],
+      "items": [
+        [
+          "first_aid",
+          1200,
+          40
+        ]
+      ],
+      "waves": []
+    },
+    {
+      "name": "the container stack",
+      "length": 1920,
+      "obstacles": [],
+      "items": [],
+      "waves": []
+    },
+    {
+      "name": "the top of the stack",
+      "length": 1920,
+      "obstacles": [
+        [
+          "door",
+          1640,
+          1760,
+          0,
+          30,
+          260,
+          false,
+          0,
+          "cab"
+        ]
+      ],
+      "items": [],
+      "waves": []
+    },
+    {
+      "name": "the crane's cab",
+      "length": 900,
+      "obstacles": [],
+      "items": [],
+      "waves": [],
+      "cab": true
+    }
+  ],
+  "links": [
+    {
+      "from": 0,
+      "x": 1700,
+      "to": 1,
+      "to_x": 200
+    },
+    {
+      "from": 1,
+      "x": 1700,
+      "to": 2,
+      "to_x": 200
+    },
+    {
+      "from": 2,
+      "x": 1700,
+      "to": 3,
+      "to_x": 150
+    }
+  ],
+  "switches": [
+    {
+      "floor": 0,
+      "x": 900,
+      "opens": "",
+      "crane": true
+    },
+    {
+      "floor": 1,
+      "x": 1000,
+      "opens": "",
+      "crane": true
+    },
+    {
+      "floor": 2,
+      "x": 1100,
+      "opens": "",
+      "crane": true
+    }
+  ],
+  "crane": {
+    "floors": [
+      0,
+      1,
+      2
+    ]
+  },
+  "boss": {
+    "floor": 3,
+    "x": 650,
+    "kind": "crane_operator"
+  }
+}

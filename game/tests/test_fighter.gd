@@ -187,3 +187,17 @@ func test_same_inputs_same_fight() -> void:
 		a.step(inp)
 		b.step(inp)
 	eq(a.snapshot(), b.snapshot(), "two runs of the same inputs end identical")
+
+
+func test_hit_in_the_air_he_comes_down() -> void:
+	var w = preload("res://scripts/sim/street_world.gd").new()
+	for effect in ["knockdown", "", "push"]:
+		var f = preload("res://scripts/sim/fighter.gd").new(preload("res://scripts/sim/tuning.gd").fresh(), 400.0, 80.0, w)
+		f.step({"jump": true})
+		for i in 14:
+			f.step({})
+		check(f.y > 60.0, "up in the air (%.0f)" % f.y)
+		f.take_hit({"damage": 1.0, "effect": effect, "low": 0.0, "high": 300.0, "move": "container"}, {"x": 300.0, "y": 0.0})
+		for i in 60:
+			f.step({})
+		eq(f.y, 0.0, "hit up there (%s): he comes down, he doesn't hang in the air" % (effect if effect != "" else "a plain hit"))

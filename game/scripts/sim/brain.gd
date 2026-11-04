@@ -140,10 +140,16 @@ const ROOK_OLD := {
 	"keep": 160.0, "strike": 115.0, "wait_min": 90, "wait_max": 150, "block_chance": 0.1, "block_ticks": 16,
 	"combos": [["punch", "punch"], ["punch"]],
 }
+## The Crane Operator, level 6's boss (the team's roster), in his cab: lever, lever, then a horn blast that shoves the
+## hero back (level.gd _crane_cab blows the horn).
+const CRANE := {
+	"keep": 140.0, "strike": 110.0, "wait_min": 60, "wait_max": 110, "block_chance": 0.25, "block_ticks": 18,
+	"combos": [["punch", "punch", "horn"], ["punch", "punch"]],
+}
 ## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
 const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER, "DJ_VOLT": DJ_VOLT,
 	"SNICK": SNICK, "BIG_MAMA": BIG_MAMA, "WRENCH_MECHANIC": WRENCH_MECHANIC, "DOORMAN": DOORMAN,
-	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN, "COACH": COACH, "CHROME": CHROME, "STATIC": STATIC, "ROOK": ROOK, "ROOK_OLD": ROOK_OLD}
+	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN, "COACH": COACH, "CHROME": CHROME, "STATIC": STATIC, "ROOK": ROOK, "ROOK_OLD": ROOK_OLD, "CRANE": CRANE}
 
 var me
 var foe

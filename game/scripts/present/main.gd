@@ -51,6 +51,7 @@ const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 
 	"chrome": Color(1.35, 1.38, 1.5),  # Madame Chrome: a silver dress
 	"static": Color(0.85, 1.1, 1.45),  # Mr. Static: a rubber suit, crackling blue
 	"rook": Color(1.15, 0.45, 0.5),  # Velvet Rook: a dark red velvet suit
+	"crane_operator": Color(1.45, 1.35, 0.4),  # the Crane Operator: a neon safety vest
 	# the rest of the roster, from the team's looks: the mechanic's blue overalls, the Doorman's black suit, the
 	# Dancer's bright tracksuit, the Enforcer's long dark coat, the lookout's neon raincoat, the Grabber's green glow
 	"wrench_mechanic": Color(0.7, 0.85, 1.25), "doorman": Color(0.45, 0.45, 0.5), "neon_dancer": Color(1.6, 1.2, 0.5),
@@ -252,6 +253,10 @@ func _mark() -> void:
 
 ## Level 1, played: the level steps everyone; this draws what it holds and says how it stands.
 func _play_level() -> void:
+	if (level.won or level.lost) and scene != null:
+		scene.inputs(level)  # a scripted scene sees its ending (its last events, the win) and ends; no restart
+		_play_scene()
+		return
 	if level.won or level.lost:
 		ended_for += 1
 		if ended_for == 1:
@@ -283,6 +288,8 @@ func _play_level() -> void:
 		if bot != null:
 			bot.me = level.hero
 			bot.goal = level.next_door()
+			bot.goal_hit = level.goal_is_switch
+			bot.jump_cue = level.crane_jump_cue()
 		level.step(scene.inputs(level) if scene != null else (bot.think(level.standing()) if bot != null else Controls.read()))
 		sound.fight_tick(level.everyone(), level.events)
 		_note_breaks(level.events)
@@ -680,6 +687,34 @@ func _draw_flying() -> void:
 		flying_view.draw_line(c + Vector2(-22, -12), c + Vector2(-38, -34), Color(0.55, 0.55, 0.6), 4.0)
 		if not level.cat_fed and level.cat_with > 0:
 			flying_view.draw_arc(c + Vector2(0, -50), 14.0, -PI / 2, -PI / 2 + TAU * level.cat_with / level.CAT_FEED_TICKS, 16, Color(1, 0.8, 0.4), 4.0)
+	if not level.crane.is_empty():  # the docks' crane: its container swinging low on its cable, the crates' shadows
+		var box: Dictionary = level.crane["container"]
+		if not box.is_empty():
+			var r := Rect2(box["x"] - level.CONTAINER_WIDTH * 0.5, Street.GROUND_Y + 40.0 - level.CONTAINER_TOP, level.CONTAINER_WIDTH, level.CONTAINER_TOP)
+			flying_view.draw_line(Vector2(box["x"], r.position.y), Vector2(box["x"] - box["dir"] * 120.0, -400.0), Color(0.1, 0.1, 0.12), 4.0)
+			flying_view.draw_rect(r, Color(0.85, 0.42, 0.15))
+			for k in 9:
+				var rx: float = r.position.x + 10.0 + k * (level.CONTAINER_WIDTH - 20.0) / 8.0
+				flying_view.draw_line(Vector2(rx, r.position.y + 6), Vector2(rx, r.end.y - 6), Color(0.65, 0.3, 0.1), 3.0)
+			flying_view.draw_rect(r, Color(0.08, 0.08, 0.1), false, 4.0)
+		elif level.crane.get("warned", false):  # the horn: a flashing arrow at the side it comes from
+			var b: Vector2 = level.bounds()
+			var side: float = level.crane.get("from", 1.0)
+			var cam: Vector2 = $Camera.get_screen_center_position()
+			var ex: float = cam.x + side * 860.0
+			if level.tick % 10 < 6:
+				flying_view.draw_colored_polygon(PackedVector2Array([Vector2(ex, Street.GROUND_Y - 20.0), Vector2(ex - side * 60.0, Street.GROUND_Y - 60.0),
+					Vector2(ex - side * 60.0, Street.GROUND_Y + 20.0)]), Color(1.0, 0.75, 0.1))
+		for cr in level.crane["crates"]:
+			var left: float = cr["at"] - level.tick
+			var g := Vector2(cr["x"], Street.GROUND_Y + cr["z"])
+			var grow: float = 1.0 - clampf(left / level.CRATE_WARN, 0.0, 1.0)
+			flying_view.draw_set_transform(g, 0.0, Vector2(1.0, 0.35))
+			flying_view.draw_circle(Vector2.ZERO, 20.0 + grow * 30.0, Color(0, 0, 0, 0.25 + grow * 0.35))
+			flying_view.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+			var c := g + Vector2(-30.0, -60.0 - left * 14.0)
+			flying_view.draw_rect(Rect2(c, Vector2(60, 60)), Color(0.58, 0.44, 0.28))
+			flying_view.draw_rect(Rect2(c, Vector2(60, 60)), Color(0.08, 0.08, 0.1), false, 3.0)
 	for e in level.enemies:  # Mr. Static winding up his slam: sparks crackling over his head, growing till it lands
 		var f = e["f"]
 		if f.slam_in >= 0 and not e["gone"]:

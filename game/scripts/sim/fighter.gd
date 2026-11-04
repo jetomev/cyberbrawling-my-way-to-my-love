@@ -69,6 +69,7 @@ var rubber := false  # rubber gloves on (Mr. Static's prize): a perfect block ta
 ## weapon, slow weapons he's too quick for (the Neon Dancer)
 var slam_in := -1  # frames till his floor slam lands (Mr. Static's), -1 when none: what a watcher reads to jump it
 var charging := false  # winding up for or running a charge (Coach Crusher's tackle): what a watcher reads to step aside
+var no_swing := false  # no room to swing a weapon here (the crane's cab): fists and feet only, the weapon kept
 var grip := false  # a perfect block doesn't knock his weapon loose (a boss's own: Velvet Rook's sword, Mr. Static's baton)
 var gloves := []  # blows his guard takes every time from the front, without raising it (Coach Crusher's big gloves)
 var dodges := []
@@ -513,7 +514,7 @@ func _hurt(part: String, amount: float) -> void:
 ## The move a combo's press becomes with the weapon in hand (the team's weapon combos: the same presses, the weapon in
 ## the fist's place); bare-handed, or with the lead arm broken, the fist move itself.
 func _armed(move: String) -> String:
-	if weapon == "" or broken("arm_f"):
+	if weapon == "" or broken("arm_f") or no_swing:
 		return move
 	return Weapons.ARMED.get(move, move)
 
@@ -565,6 +566,16 @@ func defeated() -> bool:
 
 
 ## Driven along the street by a blow: stopped by the street's ends and by anything in the way.
+## Down to whatever is under him, under gravity (hit or knocked down while he was up in the air).
+func _fall() -> void:
+	var ground: float = 0.0 if world == null else world.floor_at(x, z, y)
+	if y > ground:
+		vy -= Tuning.gravity(tune)
+		y = maxf(ground, y + vy)
+		if y <= ground:
+			vy = 0.0
+
+
 func _slide(speed: float) -> void:
 	var nx := clampf(x + knock_dir * speed, tune["street_left"], tune["street_right"])
 	if not _blocked(nx, z):
@@ -573,6 +584,8 @@ func _slide(speed: float) -> void:
 
 
 func _react() -> void:
+	if state != "launch" and state != "tumble" and state != "held":
+		_fall()  # hit while up in the air (a jump, the crane's container): he comes down, he doesn't hang there
 	match state:
 		"tumble":
 			pass  # rolling down a flight of stairs: the level rolls him (level.gd _stairs) and lays him at the foot
