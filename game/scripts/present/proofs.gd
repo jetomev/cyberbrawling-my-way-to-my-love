@@ -511,9 +511,12 @@ func inputs(level) -> Dictionary:
 					data["opener"] = foe if ev.get("target") == foe["f"] else other
 					_say("they OPEN: the %s brother starts his combo (nothing rocks him till they've swapped)" % [
 						"short" if data["opener"]["kind"] == "twin_short" else "tall"])
-				if r == "swap" and not data.has("swapped"):
+				if r == "swap" and not data.has("crossing"):
+					data["crossing"] = tick
+					_say("his second blow starts: they CROSS, each walking to where the other stood")
+				if r == "swapped" and not data.has("swapped"):
 					data["swapped"] = tick
-					_say("his second blow starts: they SWAP places")
+					_say("crossed: they've SWAPPED places (%d frames, %.1f s)" % [tick - data["crossing"], (tick - data["crossing"]) / 60.0])
 			if data.has("swapped") and ended < 0:
 				var w: Dictionary = data["opener"]
 				if w["brain"].plan.is_empty() and w["f"].attack_phase() == "" and not data.has("over"):

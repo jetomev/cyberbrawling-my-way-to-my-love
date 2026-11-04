@@ -108,6 +108,8 @@ const SHOVE_DISTANCE := 1150.0  # out through the cab's open door and off the sc
 const SHOVE_HEIGHT := 140.0  # up in an arc...
 const SHOVE_DROP := 260.0  # ...and down past the cab's floor as he goes over the side
 const RING_IN := 150.0  # a ring's ropes stand this far inside the room's walls (so the camera shows them give)
+const SWAP_LANE := 45.0  # crossing, the attacker passes this far in front of where they stood, his brother behind
+const SWAP_TICKS_MAX := 150  # a crossing that hasn't arrived by then (a prop in the way) ends where they stand
 const REBOUND_TICKS := 16  # off the ropes he bounces back this long (the team's level 4: "he bounces off the ropes")
 const REBOUND_SPEED := 11.0  # px a frame at the start of the bounce, easing to nothing (about 90 px in all)
 const TACKLE_WINDUP := 30  # first he backs off a few steps, head down, then charges: time to step aside (feel lab)
@@ -186,6 +188,7 @@ var hint_until := -1
 var hints_shown := {}
 var hugs_thrown := false  # a bear hug has thrown him this level (the first is gentle where the level says)
 var rope_hit := {}  # the ropes he last slammed into (the view bends them a moment): side, z, tick
+var crossing := {}  # Twin Loans walking past each other mid-combo ("Interest"): who, from where, to where
 var twins_opened := false  # Twin Loans have opened with their swap (the team's third ruling)
 var early := []  # events from before this tick's blows are settled (the twins' swap): joined to events after
 var cat_fed := false  # level 1's stray cat, fed (it follows him, and turns up in level 2)
@@ -285,6 +288,7 @@ func restart() -> void:
 	hints_shown = {}
 	hugs_thrown = false
 	rope_hit = {}
+	crossing = {}
 	live_until = -1
 	crane = {}
 	dice.seed = dice_seed * 7919 + 1
@@ -390,7 +394,8 @@ func step(inp: Dictionary) -> void:
 	for e in enemies:
 		if not e["gone"] and not e.has("shoved"):  # (the Crane Operator flying out of his cab: _out_of_the_cab carries him)
 			e["was"] = [e["f"].x, e["f"].y, e["f"].z]  # where he stood, should the stairs be full
-			var think: Dictionary = e["brain"].think()
+			var think: Dictionary = _crossing(e) if not crossing.is_empty() and (crossing["a"] == e or crossing["b"] == e) \
+					else e["brain"].think()
 			if e.get("arguing", false) and e["brain"].dormant_until_within > 0.0:
 				think = _argue(e)
 			# never more than two swinging at once, on every level, a boss's helpers included (the balance ruling)
@@ -434,7 +439,9 @@ func step(inp: Dictionary) -> void:
 		if o.has("holds"):
 			world.drop(o["holds"], (o["x0"] + o["x1"]) * 0.5, clampf((o["z0"] + o["z1"]) * 0.5, 0.0, tune["street_depth"]))
 	_collect()
-	Fight.separate(all.filter(func(f): return f != friend))  # he never blocks the street
+	# (he never blocks the street; and the twins crossing slip past each other, two lanes or one: the shop's counter)
+	var crossers: Array = [] if crossing.is_empty() else [crossing["a"]["f"], crossing["b"]["f"]]
+	Fight.separate(all.filter(func(f): return f != friend and not crossers.has(f)))
 	events = fight.step(all, world)
 	events.append_array(early)
 	early = []
@@ -1143,7 +1150,7 @@ func _twins() -> void:
 		other["swapped"] = false
 		early.append({"target": att["f"], "result": "opening", "kind": "opening"})
 	for e in up:
-		if e["f"].unflinching and (e.get("swapped", false) or (e["brain"].plan.is_empty() and e["f"].attack_phase() == "")):
+		if e["f"].unflinching and crossing.is_empty() and (e.get("swapped", false) or (e["brain"].plan.is_empty() and e["f"].attack_phase() == "")):
 			e["f"].unflinching = false
 	if not compound and hp <= most * 0.5:  # (roster v3: at half their health)
 		compound = true
@@ -1153,6 +1160,8 @@ func _twins() -> void:
 			e["brain"].allowed = true  # both at once
 			e["f"].unflinching = false
 		return
+	if not crossing.is_empty():
+		return  # (mid-crossing: _crossing has them)
 	for i in 2:
 		var me: Dictionary = up[i]
 		var other: Dictionary = up[1 - i]
@@ -1169,21 +1178,60 @@ func _twins() -> void:
 				and (me["f"].state in Fighter.GROUND_STATES + ["block"] or other["f"].unflinching) and me["f"].flight() == other["f"].flight() \
 				and absf(me["f"].x - other["f"].x) < 500.0:  # (both on the shop floor, or both on the same stairs)
 			other["swapped"] = true  # once a combo
-			other["f"].unflinching = false  # (the opening's done)
-			var at := Vector3(me["f"].x, me["f"].y, me["f"].z)
-			me["f"].x = other["f"].x
-			me["f"].y = other["f"].y
-			me["f"].z = other["f"].z
-			other["f"].x = at.x
-			other["f"].y = at.y
-			other["f"].z = at.z
-			me["f"].facing = 1 if hero.x >= me["f"].x else -1
-			other["f"].facing = 1 if hero.x >= other["f"].x else -1
+			# they cross: each walks to where the other stood, passing on different lanes, in their own steps (the
+			# testers on cd9f7fe: "show them actually crossing", the team's "a second or two"); _crossing walks them
+			if other["f"].unflinching:
+				me["f"].unflinching = true  # (the opening's crossing: nothing rocks either of them till it's done)
+			crossing = {"a": other, "b": me, "t": 0,
+				"a_from": Vector2(other["f"].x, other["f"].z), "b_from": Vector2(me["f"].x, me["f"].z),
+				"a_to": Vector2(me["f"].x, me["f"].z), "b_to": Vector2(other["f"].x, other["f"].z)}
 			early.append({"target": other["f"], "result": "swap", "kind": "swap"})
 	if not twins_opened:
 		for e in up:
 			e["brain"].allowed = false  # till they've opened together: they hang back, guards up, and nothing rocks them
 			e["f"].unflinching = true
+
+
+## Twin Loans crossing ("Interest"): each brother walks to where the other stood, the attacker passing in front and his
+## brother behind, in their own steps; arrived, they turn to the hero and the attacker's combo goes on from there.
+## A blow that rocks either one cuts it short where they stand (nothing rocks the opener: the team's opening).
+func _crossing(e: Dictionary) -> Dictionary:
+	var c: Dictionary = crossing
+	var mine: String = "a" if c["a"] == e else "b"
+	var f = e["f"]
+	if mine == "a":
+		c["t"] += 1
+	if c["a"]["f"].state in Fighter.HURT_STATES or c["b"]["f"].state in Fighter.HURT_STATES or c["a"]["f"].defeated() \
+			or c["b"]["f"].defeated() or c["t"] > SWAP_TICKS_MAX:
+		_crossed(false)  # (rocked, down, or blocked too long: cut short where they stand)
+		return {}
+	var from: Vector2 = c[mine + "_from"]
+	var to: Vector2 = c[mine + "_to"]
+	var total: float = maxf(1.0, absf(to.x - from.x))
+	var p: float = clampf(1.0 - absf(to.x - f.x) / total, 0.0, 1.0)
+	var lane: float = (SWAP_LANE if mine == "a" else -SWAP_LANE) * sin(PI * p)  # (out to his lane mid-way, back at the end)
+	var want_z: float = clampf(lerpf(from.y, to.y, p) + lane, 0.0, tune["street_depth"])
+	var inp := {}
+	if absf(to.x - f.x) > 6.0:
+		inp["mx"] = signf(to.x - f.x)
+	if absf(want_z - f.z) > 3.0:
+		inp["mz"] = clampf((want_z - f.z) / 12.0, -1.0, 1.0)
+	if mine == "b" and inp.is_empty() and absf(c["a_to"].x - c["a"]["f"].x) <= 6.0:
+		_crossed(true)  # both there
+	return inp
+
+
+## The crossing over: where they stand, facing the hero; the opener rockable again. (false: cut short)
+func _crossed(done: bool) -> void:
+	var c: Dictionary = crossing
+	crossing = {}
+	for k in ["a", "b"]:
+		var f = c[k]["f"]
+		if not f.defeated():
+			f.facing = 1 if hero.x >= f.x else -1
+	c["a"]["f"].unflinching = false  # (the opening's done)
+	c["b"]["f"].unflinching = false
+	early.append({"target": c["a"]["f"], "result": "swapped" if done else "swap_cut", "kind": "swap"})
 
 
 ## Two of a wave squaring off (the team's level 3: two Snicks arguing over who gets the hero first): each faces the

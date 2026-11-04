@@ -58,12 +58,12 @@ func test_interest_they_swap_places_halfway_through_a_combo() -> void:
 	a["f"].z = 80.0
 	a["brain"].wait = 0
 	var swapped := -1
-	for i in 300:
+	for i in 500:
 		l.step({})
-		if l.events.any(func(ev): return ev.get("result", "") == "swap"):
+		if l.events.any(func(ev): return ev.get("result", "") == "swapped"):
 			swapped = i
 			break
-	check(swapped >= 0, "a combo starts, and halfway they swap places")
+	check(swapped >= 0, "a combo starts, and halfway they cross over, swapping places")
 	check(absf(b["f"].x - l.hero.x) < absf(a["f"].x - l.hero.x), "the guarding brother is now the near one (%.0f vs %.0f)" % [b["f"].x, a["f"].x])
 
 
@@ -171,3 +171,35 @@ func test_no_hurry_down_the_stairs_once_its_both_at_once() -> void:
 	l.compound = true
 	l.step({})
 	check(is_equal_approx(tall["f"].tune["walk_speed"], tall["walk"]), "both at once: his own pace (%.1f, his %.1f)" % [tall["f"].tune["walk_speed"], tall["walk"]])
+
+
+## The testers on cd9f7fe: the swap was a teleport. They now walk past each other, step by step, on two lanes, the
+## opening's crossing taking a second or so ("a second or two", the team's ruling), each step no longer than a walk's.
+func test_they_cross_in_their_own_steps_not_a_jump() -> void:
+	var l = Level.new(Level.load_data("res://levels/level3.json"), {}, 1)
+	l._go_to(3, 150.0)
+	var short: Dictionary = twin(l, "twin_short")
+	var tall: Dictionary = twin(l, "twin_tall")
+	var started := -1
+	var done := -1
+	var biggest := 0.0
+	var lanes := 0.0
+	var at0 := Vector2.ZERO
+	for i in 600:
+		var before := [short["f"].x, tall["f"].x]
+		l.step({})
+		if started < 0 and l.events.any(func(ev): return ev.get("result", "") == "swap"):
+			started = i
+			at0 = Vector2(short["f"].x, tall["f"].x)
+		elif started >= 0 and done < 0:
+			biggest = maxf(biggest, maxf(absf(short["f"].x - before[0]), absf(tall["f"].x - before[1])))
+			lanes = maxf(lanes, absf(short["f"].z - tall["f"].z))
+			if l.events.any(func(ev): return ev.get("result", "") == "swapped"):
+				done = i
+				break
+	check(started >= 0 and done > started, "they start crossing, and they get there")
+	var frames: int = done - started
+	check(frames >= 45 and frames <= 120, "the crossing takes about a second or two (%d frames)" % frames)
+	check(biggest <= 12.0, "in steps, never a jump (the longest step %.1f px a frame)" % biggest)
+	check(signf(short["f"].x - tall["f"].x) != signf(at0.x - at0.y), "they've passed each other (short %.0f, tall %.0f)" % [short["f"].x, tall["f"].x])
+	check(lanes > 30.0, "passing on two lanes, one in front of the other (%.0f px apart in depth)" % lanes)
