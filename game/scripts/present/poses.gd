@@ -1056,7 +1056,8 @@ const WEAPON_REACH := {"knife": 38.0, "stick": 112.0, "pipe": 102.0, "wrench": 6
 const HANG_HEIGHT := 92.0
 const WEAPON_SWING_REL := -78.0  # in a swing (till each weapon's own swings are drawn): through the fist, as before
 const FENCE := Vector2(50, -70)  # the free hand with a one-handed weapon: up before the chest, open (a fence)
-const BLOCK_FACE := ["stick", "pipe", "wrench"]  # these block before the face; the rest at chest height (the team's page)
+const BLOCK_CHIN := -80.0  # every across-the-body block at chin height (the playtester's grips page, settled 11-04)
+const HILT_HANDS := ["sword", "lovelight"]  # blocking, both hands stay on the hilt; the bat and baguette slide the top hand up
 const BLOCK_LEN := 0.65  # a block's bar, seen a little from the side: most of the weapon's length
 ## Each weapon's own blows (the pose sheet, art-in 2026-11-04-weapon-poses): where the weapon points at the wind-up,
 ## at contact and at the follow-through (degrees as above: 0 at the enemy, -90 up, 90 down); from its Ready before
@@ -1228,9 +1229,9 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 				out["hold_%sy" % o] = -126.0
 				out["cover_" + o] = 0.0
 			else:
-				out["hold_" + o] = 1.0  # the free hand back to the chest, a guard (the sheet: "pulled back to the chest")
-				out["hold_%sx" % o] = 32.0
-				out["hold_%sy" % o] = -62.0
+				out["hold_" + o] = 1.0  # the free hand back to the chest, a guard (the sheet: "pulled back to the chest");
+				out["hold_%sx" % o] = 32.0 if weapon != "knife" else 40.0  # the knife's kept up at the face (a tester, 11-04)
+				out["hold_%sy" % o] = -62.0 if weapon != "knife" else -92.0
 				out["cover_" + o] = 0.0
 				out["open_" + o] = 1.0
 	elif not state in WEAPON_MOVES and not state in LYING_STATES:
@@ -1248,8 +1249,7 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 				# raised across before the face, the free hand pushing on the far end; the bat, sword and Lovelight across
 				# at chest height, the blade flat. Seen from the side: level, the weapon hand at the front end and the bar
 				# running back across him, long enough to read (not the end-on stub the testers sent back)
-				var high: bool = weapon in BLOCK_FACE
-				at = Vector2(60, -94 if high else -62)
+				at = Vector2(60, BLOCK_CHIN)  # all at chin height (the team's playtester, settled 11-04)
 				dir_deg = 180.0
 				out["wpn_len"] = BLOCK_LEN
 		out["hold_%sx" % w] = at.x
@@ -1258,7 +1258,7 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 		out["cover_" + w] = 0.0
 		out["wpn"] = dir_deg
 		out["wpn_hold"] = 1.0
-		if two and state in BLOCK_STATES:  # blocking two-handed: hands apart on the bar, the other near its far end
+		if two and state in BLOCK_STATES and not weapon in HILT_HANDS:  # blocking two-handed: hands apart on the bar (the top hand slid up)
 			var span: float = WEAPON_REACH.get(weapon, 100.0) * BLOCK_LEN - 10.0
 			out["hold_%sx" % o] = at.x - span
 			out["hold_%sy" % o] = at.y
