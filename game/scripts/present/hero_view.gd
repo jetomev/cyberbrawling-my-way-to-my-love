@@ -206,7 +206,7 @@ func sync(f, ground_y: float) -> void:
 		var mixed := Poses.blend(blend_from, pose, 1.0 - float(blend_left) / (blend_total + 1))
 		if blend_total == ARMED_BLEND_TICKS:
 			for k in pose:  # (only the arms and the weapon: the legs and hips keep the move's own timing)
-				if not ((k as String).begins_with("arm_") or (k as String).begins_with("hand_") or (k as String).begins_with("hold_") \
+				if not ((k as String).begins_with("arm_") or (k as String).begins_with("hand_") or (k as String).begins_with("hold_") or (k as String).begins_with("grip_") \
 						or (k as String).begins_with("wpn") or (k as String).begins_with("cover_") or (k as String).begins_with("open_")):
 					mixed[k] = pose[k]
 		if blend_total == LAND_BLEND_TICKS:
@@ -296,12 +296,15 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		var bone: Bone2D = bones[name]
 		bone.rotation_degrees = Poses.BONES[name][2] + baked[name]
 	if weapon_node != null:  # the weapon's own angle in the hand (Poses._hold), and how long it draws (end-on: short)
+		var hand: Node = bones["hand_b" if baked.get("wpn_side", 0.0) >= 0.5 else "hand_f"]
+		if weapon_node.get_parent() != hand:  # (in the hand that holds it: the rear one for the pipe, wrench and bat)
+			weapon_node.reparent(hand, false)
 		weapon_node.rotation_degrees = baked.get("wpn_rel", Poses.WEAPON_SWING_REL)
 		var k: float = baked.get("wpn_len", 1.0)
 		weapon_node.scale.x = k
 		# end-on (held across the body, seen from the side): a short stub centred on the fist, not poking forward
 		var reach: float = WEAPON_LOOK.get(weapon_drawn, [100.0])[0]
-		weapon_node.position = Vector2.from_angle(weapon_node.rotation) * (-reach * k * 0.5 if k < 1.0 else 0.0)
+		weapon_node.position = Vector2.from_angle(weapon_node.rotation) * (-reach * k * 0.5 if baked.get("wpn_centre", 0.0) >= 0.5 else 0.0)
 	bones["hip"].position = Poses.BONES["hip"][1] + Vector2(baked["hip_x"], baked["hip_y"])
 	# a spin turns the whole body around the up axis. It never squashes him thin (the assistant team's third review:
 	# a turn that flattens him to a line reads wrong): the arms and legs keep their thickness, only the chest narrows
@@ -331,6 +334,8 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		var turned := over if name.begins_with("leg") or name.begins_with("foot") or name.begins_with("toe") else over_top
 		if turned < 0.0:
 			far = not far
+		if baked.get("switched", 0.0) >= 0.5:
+			far = not far  # weapon side forward: his right side leads, so the front limbs are the far ones (the pose sheet)
 		part.z_index = -1 if far else 0
 		var drawn_far: bool = spec[5] == 1
 		part.modulate = Color.WHITE if far == drawn_far else (Color(1.55, 1.55, 1.5) if drawn_far else Color(0.65, 0.65, 0.66))

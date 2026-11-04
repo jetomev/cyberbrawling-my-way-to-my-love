@@ -1077,7 +1077,33 @@ const SWING_TRACK := {
 }
 const TRACK_KIND := {"knife": "knife", "stick": "stick", "bat": "two", "baguette": "two", "mic_stand": "two",
 	"sword": "blade", "lovelight": "blade", "cane": "blade"}  # (any other: heavy)
-const SPIN_FINISHERS := ["knife", "stick"]  # their finisher is a whole turn of the body (the spinning slash, the full spin)
+## And where the weapon hand goes in each (from the hip joint, as WEAPON_READY): wind-up, contact, follow-through.
+const SWING_HANDS := {
+	"knife": {"swing": [Vector2(30, -20), Vector2(92, -30), Vector2(88, -30)], "backswing": [Vector2(12, -15), Vector2(72, -55), Vector2(42, -60)],
+		"rising_swing": [Vector2(25, 0), Vector2(72, -60), Vector2(60, -75)], "handle_jab": [Vector2(10, -45), Vector2(78, -50), Vector2(72, -50)],
+		"chop": [Vector2(40, -120), Vector2(76, -20), Vector2(70, -10)]},
+	"stick": {"swing": [Vector2(-4, -122), Vector2(80, -90), Vector2(55, -20)], "backswing": [Vector2(20, -95), Vector2(85, -85), Vector2(70, -70)],
+		"rising_swing": [Vector2(35, 15), Vector2(72, -100), Vector2(55, -120)], "handle_jab": [Vector2(20, -70), Vector2(85, -55), Vector2(80, -55)],
+		"chop": [Vector2(30, -125), Vector2(80, -40), Vector2(70, -30)]},
+	"heavy": {"swing": [Vector2(10, -125), Vector2(78, -75), Vector2(55, -10)], "backswing": [Vector2(25, 0), Vector2(80, -60), Vector2(55, -100)],
+		"smash": [Vector2(10, -128), Vector2(85, -5), Vector2(80, 0)], "rising_swing": [Vector2(35, 15), Vector2(75, -90), Vector2(55, -115)],
+		"handle_jab": [Vector2(15, -55), Vector2(80, -60), Vector2(75, -60)], "chop": [Vector2(20, -128), Vector2(80, -30), Vector2(75, -20)]},
+	"two": {"swing": [Vector2(-5, -20), Vector2(70, -60), Vector2(20, -30)], "backswing": [Vector2(40, -45), Vector2(75, -60), Vector2(30, -50)],
+		"smash": [Vector2(-10, -35), Vector2(75, -55), Vector2(10, -25)], "rising_swing": [Vector2(30, 15), Vector2(70, -80), Vector2(45, -110)],
+		"handle_jab": [Vector2(5, -25), Vector2(70, -30), Vector2(65, -30)], "chop": [Vector2(15, -128), Vector2(80, -30), Vector2(75, -20)],
+		"low_swing": [Vector2(-5, 5), Vector2(65, 20), Vector2(40, 15)]},
+	"blade": {"swing": [Vector2(20, -125), Vector2(75, -55), Vector2(60, -30)], "backswing": [Vector2(55, -20), Vector2(75, -80), Vector2(55, -100)],
+		"smash": [Vector2(10, 0), Vector2(85, -55), Vector2(70, -55)], "rising_swing": [Vector2(30, 10), Vector2(75, -85), Vector2(55, -110)],
+		"handle_jab": [Vector2(10, -20), Vector2(75, -40), Vector2(70, -40)], "chop": [Vector2(25, -120), Vector2(85, -45), Vector2(80, -40)],
+		"low_swing": [Vector2(15, -20), Vector2(92, -25), Vector2(88, -25)]},
+}
+## The weapons held weapon side forward (the right foot front, the weapon in the front hand); the rest weapon side back.
+const WEAPON_SIDE_FORWARD := ["knife", "stick", "sword", "lovelight", "cane", "baton"]
+const SPIN_FINISHERS := ["knife", "stick"]
+## Level swings, round the body at one height (the bat's swings, the sword's long slash): their track is the angle round
+## the body (180 behind him, 0 at the enemy); seen from the side the weapon stays level, pointing back or forward, and
+## draws shorter as it comes round toward the camera (it never dips past his legs).
+const LEVEL_SWINGS := {"two": ["swing", "backswing", "smash"], "blade": ["smash"]}  # their finisher is a whole turn of the body (the spinning slash, the full spin)
 const READY_STATES := ["idle", "walk", "to_fight"]
 ## The weapon's own blows (it moves with the arm through the fist) and lying on the street (it goes where the arm goes);
 ## anything else armed, a kick among them, keeps the weapon in its Ready ("kicks with the weapon held in its Ready
@@ -1096,12 +1122,19 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 	var out := pose.duplicate()
 	var g: Dictionary = WEAPON_READY.get(weapon, WEAPON_READY["pipe"])
 	var two: bool = g.get("two", false)
-	for k in ["hold_f", "hold_b", "wpn_hold", "grip_b"]:
+	# which hand holds it: his right hand, the far one (the camera sees his left side). With the weapon side forward
+	# (the knife, stick, sword) that's the front hand and his stance switches, right foot front; with it back (the pipe,
+	# wrench, bat), the rear hand, left foot front as with fists (the pose sheet)
+	var w: String = "f" if weapon in WEAPON_SIDE_FORWARD else "b"
+	var o: String = "b" if w == "f" else "f"
+	out["wpn_side"] = 0.0 if w == "f" else 1.0
+	out["switched"] = 1.0 if w == "f" else 0.0
+	for k in ["hold_f", "hold_b", "wpn_hold", "grip_o"]:
 		out[k] = 0.0
-	out["hold_fx"] = g["at"].x
-	out["hold_fy"] = g["at"].y
-	out["hold_bx"] = FENCE.x
-	out["hold_by"] = FENCE.y
+	out["hold_%sx" % w] = g["at"].x
+	out["hold_%sy" % w] = g["at"].y
+	out["hold_%sx" % o] = FENCE.x
+	out["hold_%sy" % o] = FENCE.y
 	out["wpn"] = g["wpn"]
 	out["wpn_len"] = 1.0
 	var relaxed: bool = pose.get("relaxed", 0.0) >= 0.5
@@ -1109,24 +1142,46 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 		var reach: float = WEAPON_REACH.get(weapon, 100.0)
 		out["wpn"] = minf(WEAPON_REST, rad_to_deg(asin(minf(1.0, HANG_HEIGHT / reach))))  # hanging low, tip down
 		out["wpn_hold"] = 1.0
+		if w == "b":  # (the arms swap in the walk: the weapon hand hangs as the rear arm did)
+			out["arm_b_upper"] = pose.get("arm_f_upper", 0.0)
+			out["arm_b_lower"] = pose.get("arm_f_lower", 0.0)
 	elif state in WEAPON_MOVES and t >= 0 and not tune.is_empty():
-		var track: Dictionary = SWING_TRACK[TRACK_KIND.get(weapon, "heavy")]
+		var kind: String = TRACK_KIND.get(weapon, "heavy")
+		var track: Dictionary = SWING_TRACK[kind]
 		if track.has(state):
 			var keys: Array = [0, moment(state, "windup", tune), moment(state, "active", tune), moment(state, "follow", tune),
 				moment(state, "end", tune)]
-			var vals: Array = [g["wpn"]] + track[state] + [g["wpn"]]
-			out["wpn"] = _along(keys, vals, t)
+			out["wpn"] = _along(keys, [g["wpn"]] + track[state] + [g["wpn"]], t)
 			out["wpn_hold"] = 1.0
+			if state in LEVEL_SWINGS.get(kind, []) and t >= keys[1] and t <= keys[3]:
+				var round_deg: float = _along(keys, [g["wpn"]] + track[state] + [g["wpn"]], t)
+				var across: float = cos(deg_to_rad(round_deg))
+				out["wpn"] = 0.0 if across >= 0.0 else 180.0
+				out["wpn_len"] = maxf(0.25, absf(across))
+			# the weapon hand on its own path (the sheet's wind-up, contact and follow-through), from Ready and back
+			var hands: Array = SWING_HANDS[kind].get(state, [])
+			if not hands.is_empty():
+				var path: Array = [g["at"]] + hands + [g["at"]]
+				out["hold_" + w] = 1.0
+				out["hold_%sx" % w] = _along_v(keys, path, t).x
+				out["hold_%sy" % w] = _along_v(keys, path, t).y
+				out["cover_" + w] = 0.0
 			if state == "smash" and weapon in SPIN_FINISHERS:  # a whole turn of the body, from the wind-up to the follow,
 				out["spin"] = 360.0 * clampf(float(t - keys[1]) / maxf(1.0, keys[3] - keys[1]), 0.0, 1.0)
-				out["hold_f"] = 1.0  # the arm out level at chest height through it ("the slash at chest height", the sheet)
-				out["hold_fx"] = 74.0
-				out["hold_fy"] = -62.0
-				out["cover_f"] = 0.0
+				out["hold_" + w] = 1.0  # the arm out level at chest height through it ("the slash at chest height", the sheet)
+				out["hold_%sx" % w] = 74.0
+				out["hold_%sy" % w] = -62.0
+				out["cover_" + w] = 0.0
 				out["hip_y"] = minf(pose.get("hip_y", 0.0), 6.0)  # (not the overhead smash's crouch)
 			if two:
-				out["grip_b"] = 1.0  # the other hand stays on the handle through the swing
-				out["cover_b"] = 0.0
+				out["grip_o"] = 1.0  # the other hand stays on the handle through the swing
+				out["cover_" + o] = 0.0
+			else:
+				out["hold_" + o] = 1.0  # the free hand back to the chest, a guard (the sheet: "pulled back to the chest")
+				out["hold_%sx" % o] = 32.0
+				out["hold_%sy" % o] = -62.0
+				out["cover_" + o] = 0.0
+				out["open_" + o] = 1.0
 	elif not state in WEAPON_MOVES and not state in LYING_STATES:
 		var at: Vector2 = g["at"]
 		var dir_deg: float = g["wpn"]
@@ -1134,30 +1189,31 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 			if weapon == "knife":  # never with the blade: the knife hand back to the hip, the free forearm up (Pippin)
 				at = Vector2(22, -6)
 				dir_deg = 0.0
-				out["cover_b"] = 1.0
+				out["cover_" + o] = 1.0
 			else:
 				at = BLOCK_AT
 				dir_deg = 0.0
 				out["wpn_len"] = 0.3  # across the body: seen end-on from the side, a short stub across the fists
-		out["hold_fx"] = at.x
-		out["hold_fy"] = at.y
-		out["hold_f"] = 1.0
-		out["cover_f"] = 0.0
+				out["wpn_centre"] = 1.0
+		out["hold_%sx" % w] = at.x
+		out["hold_%sy" % w] = at.y
+		out["hold_" + w] = 1.0
+		out["cover_" + w] = 0.0
 		out["wpn"] = dir_deg
 		out["wpn_hold"] = 1.0
 		if two:  # the other hand on the handle, a fist further down it
-			out["grip_b"] = 1.0
-			out["cover_b"] = 0.0
+			out["grip_o"] = 1.0
+			out["cover_" + o] = 0.0
 		elif state in BLOCK_STATES and weapon != "knife":
-			out["hold_bx"] = at.x + 6.0  # blocking one-handed: the free hand flat against the weapon's far end (end-on: by the fist)
-			out["hold_by"] = at.y + 4.0
-			out["hold_b"] = 1.0
-			out["cover_b"] = 0.0
-			out["open_b"] = 1.0
+			out["hold_%sx" % o] = at.x + 6.0  # blocking one-handed: the free hand flat on the weapon's far end (end-on: by the fist)
+			out["hold_%sy" % o] = at.y + 4.0
+			out["hold_" + o] = 1.0
+			out["cover_" + o] = 0.0
+			out["open_" + o] = 1.0
 		elif not (weapon == "knife" and state in BLOCK_STATES):
-			out["hold_b"] = 1.0  # the free hand up, open, a fence
-			out["cover_b"] = 0.0
-			out["open_b"] = 1.0
+			out["hold_" + o] = 1.0  # the free hand up, open, a fence
+			out["cover_" + o] = 0.0
+			out["open_" + o] = 1.0
 	return out
 
 
@@ -1165,18 +1221,22 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 ## a two-bone solve of the arm from the hip joint's spot (the elbow down); then works out the weapon's angle in the
 ## hand ("wpn_rel") from the way it should point.
 static func _hold(out: Dictionary, pose: Dictionary) -> void:
+	out["wpn_side"] = pose.get("wpn_side", 0.0)  # (for the drawing: which hand holds it, and a switched stance)
+	out["switched"] = pose.get("switched", 0.0)
+	out["wpn_centre"] = pose.get("wpn_centre", 0.0)
 	var hip := Vector2(pose.get("hip_x", 0.0), BONES["hip"][1].y + pose.get("hip_y", 0.0))
 	for side in ["f", "b"]:
 		var c: float = pose.get("hold_" + side, 0.0)
 		if c <= 0.0:
 			continue
 		_reach_arm(out, side, hip + Vector2(pose.get("hold_%sx" % side, 0.0), pose.get("hold_%sy" % side, 0.0)), c)
-	if pose.get("grip_b", 0.0) > 0.0:  # a two-handed weapon: the other hand a fist further down the handle
-		var wrist: Vector2 = _end("arm_f_lower", out)[0]
+	var w: String = "b" if pose.get("wpn_side", 0.0) >= 0.5 else "f"
+	if pose.get("grip_o", 0.0) > 0.0:  # a two-handed weapon: the other hand a fist further down the handle
+		var wrist: Vector2 = _end("arm_%s_lower" % w, out)[0]
 		var down: Vector2 = wrist - Vector2.from_angle(deg_to_rad(pose.get("wpn", 0.0))) * 17.0
-		_reach_arm(out, "b", down, pose.get("grip_b", 0.0))
+		_reach_arm(out, "f" if w == "b" else "b", down, pose.get("grip_o", 0.0))
 	if pose.has("wpn"):
-		var hand: Array = _end("hand_f", out)
+		var hand: Array = _end("hand_" + w, out)
 		var rel: float = wrapf(pose["wpn"] - rad_to_deg(hand[1]), -180.0, 180.0)
 		out["wpn_rel"] = rad_to_deg(lerp_angle(deg_to_rad(WEAPON_SWING_REL), deg_to_rad(rel), clampf(pose.get("wpn_hold", 0.0), 0.0, 1.0)))
 		out["wpn_len"] = pose.get("wpn_len", 1.0)
@@ -1198,6 +1258,16 @@ static func _reach_arm(out: Dictionary, side: String, target: Vector2, c: float)
 	out[upper] = lerpf(out[upper], rad_to_deg(arm - root[1]) - BONES[upper][2], c)
 	out[lower] = lerpf(out[lower], rad_to_deg(fore - arm) - BONES[lower][2], c)
 	out["hand_" + side] = lerpf(out["hand_" + side], 0.0, c)
+
+
+## A spot along keyframes, as _along: straight lines between.
+static func _along_v(keys: Array, vals: Array, t: int) -> Vector2:
+	if t <= keys[0]:
+		return vals[0]
+	for i in range(1, keys.size()):
+		if t <= keys[i]:
+			return (vals[i - 1] as Vector2).lerp(vals[i], float(t - keys[i - 1]) / maxf(1.0, keys[i] - keys[i - 1]))
+	return vals[-1]
 
 
 ## A value along keyframes: keys (ticks, rising) and vals, straight lines between, held past the ends.
