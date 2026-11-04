@@ -113,3 +113,17 @@ func test_trial_dizzy() -> void:
 		dazed = dazed or dummy.state == "dizzy"
 	check(dazed, "two combos in a row leave him dazed")
 	check(tr.history.any(func(l): return l.contains("finishing chain")), "the third combo lands while he's dazed: %s" % [tr.history.slice(-4)])
+
+
+func test_trial_records() -> void:
+	var tr = run("records")
+	var h: Array = tr.history
+	check(h.any(func(l): return l.contains("stepped out of its line")), "the first is dodged by stepping up the street: %s" % [h])
+	check(h.any(func(l): return l.contains("he jumped it")), "the low one is jumped: %s" % [h])
+	check(h.any(func(l): return l.contains("PERFECT")), "the last is perfect-blocked: %s" % [h])
+	check(h.any(func(l): return l.contains("his own record hits him")), "and it hits the DJ: %s" % [h])
+
+
+func test_trial_bass_drop() -> void:
+	var tr = run("bass_drop")
+	eq(tr.data.get("waves", 0), 1, "one wave: while the speakers stood; none once they were smashed")

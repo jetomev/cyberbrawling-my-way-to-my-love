@@ -6,7 +6,7 @@ set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$1/trials"
 mkdir -p "$OUT"
-for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy scenery; do
+for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy records bass_drop scenery; do
   TMP="$ROOT/scratch/trial-$T.$$"
   mkdir -p "$TMP"
   timeout 300 "$ROOT/scripts/capped.sh" godot --path "$ROOT/game" --write-movie "$TMP/f.png" --fixed-fps 60 \

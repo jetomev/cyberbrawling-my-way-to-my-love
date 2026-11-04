@@ -13,13 +13,20 @@ extends RefCounted
 ## disarm       a perfect block knocks his pipe loose: it leaves his hand, lies on the street, the hero picks it up
 ## counter      a jab into his kick's wind-up knocks his pipe loose
 ## dizzy        two three-punch combos in a row: dazed; then the third combo, the finishing chain, while he's dazed
+## records      DJ Volt's records, low, middle, high: one dodged by stepping up the street, one jumped, one perfect-blocked
+##              back at him
+## bass_drop    the guard held two seconds while his speakers stand: the wave pushes the hero back; both speakers
+##              smashed, the same guard: nothing
 ## scenery      the camera pans at 6 px a frame: each layer's speed on screen
 
 const Fighter := preload("res://scripts/sim/fighter.gd")
 const Weapons := preload("res://scripts/sim/weapons.gd")
 const Moves := preload("res://scripts/sim/moves.gd")
+const Projectiles := preload("res://scripts/sim/projectiles.gd")
+const Level := preload("res://scripts/sim/level.gd")
 
-const NAMES := ["combo_edge", "injuries", "broken_arm", "weapon_wear", "weapons", "disarm", "counter", "dizzy", "scenery"]
+const NAMES := ["combo_edge", "injuries", "broken_arm", "weapon_wear", "weapons", "disarm", "counter", "dizzy", "records",
+	"bass_drop", "scenery"]
 const WEAPON_ROUND := ["knife", "pipe", "wrench", "bat", "sword"]
 const SWING_EVERY := 32  # frames between swings in the weapon trials (each a fresh swing, not a chain)
 
@@ -33,6 +40,8 @@ var note := ""  # what just happened, kept on screen a moment
 var note_left := 0
 var history := []  # every note with its frame, printed at the end
 var data := {}  # numbers a trial keeps
+var projectiles = Projectiles.new()  # what's flying (the records trial)
+var held := 0  # how long the hero's guard has been up (the bass_drop trial)
 
 
 func _init(trial: String, h, d) -> void:
@@ -93,6 +102,17 @@ func _init(trial: String, h, d) -> void:
 			length = 400
 			for i in 9:  # three three-punch combos: two make him dizzy, the third lands while he's dazed
 				steps.append([10 + i * 16 + (40 if i >= 3 else 0) + (40 if i >= 6 else 0), "hero", {"punch": true}, ""])
+		"records":
+			_tough_dummy()
+			dummy.x = hero.x + 600.0
+			length = 330
+		"bass_drop":
+			_tough_dummy()
+			dummy.x = hero.x + 500.0
+			for o in [[hero.x - 200.0, "speaker_left"], [hero.x + 760.0, "speaker_right"]]:
+				var sp: Dictionary = hero.world.add("speaker", o[0], o[0] + 80.0, 0.0, 30.0, 200.0, false, 6)
+				sp["name"] = o[1]
+			length = 420
 		"scenery":
 			length = 240
 
@@ -137,6 +157,40 @@ func inputs() -> Array:
 				d["mx"] = 1.0  # the dummy backs off, leaving the pipe where it fell
 			if tick >= 110 and hero.weapon == "" and not hero.world.items.is_empty():
 				h["mx"] = signf(hero.world.items[0]["x"] - hero.x)  # the hero walks to the pipe
+		"records":
+			# three records from the DJ (the dummy), 90 frames apart: middle, low, middle
+			for r in [[20, 110.0, 180.0], [110, 0.0, 60.0], [200, 110.0, 180.0]]:
+				if tick == r[0]:
+					projectiles.throw("record", dummy.x - 40.0, dummy.z, r[1], r[2], -Level.RECORD_SPEED, Level.RECORD_DAMAGE, dummy.team)
+					_say("he throws a record: %s (%d to %d px up)" % ["LOW" if r[1] == 0.0 else "MIDDLE", int(r[1]), int(r[2])])
+			if tick >= 40 and tick < 75:
+				h["mz"] = -1.0  # the first: step up the street, out of its line
+			if tick >= 75 and tick < 110:
+				h["mz"] = 1.0  # and back
+			if tick == 150:
+				h["jump"] = true  # the low one: jump it
+			if tick >= 252 and tick < 265:
+				h["block"] = true  # the last: the guard up just as it arrives, a perfect block
+		"bass_drop":
+			if tick >= 20 and tick < 160:
+				h["block"] = true  # the guard held, speakers standing
+			if tick == 200:
+				for o in hero.world.objects:
+					if o["kind"] == "speaker":
+						o["broken"] = true
+				_say("both speakers smashed")
+			if tick >= 230 and tick < 380:
+				h["block"] = true  # the same guard, speakers gone
+			held = held + 1 if hero.blocking() != "" else 0
+			var standing: bool = hero.world.objects.any(func(o): return o["kind"] == "speaker" and not o["broken"])
+			if held >= Level.BASS_HOLD and standing:
+				held = 0
+				data["waves"] = data.get("waves", 0) + 1
+				hero._enter("idle")
+				hero.take_hit({"damage": 1.0, "effect": "push", "low": 0.0, "high": 300.0, "move": "bass"}, dummy)
+				_say("BASS DROP: the guard held %d frames with a speaker standing; the wave pushes him back" % Level.BASS_HOLD)
+			if tick == 379:
+				_say("the guard held %d frames with both speakers gone: no wave (%d wave in all)" % [150, data.get("waves", 0)])
 		"injuries":
 			if tick > 330:
 				d["mx"] = 1.0  # the dummy walks away from the hero on his broken leg
@@ -152,6 +206,16 @@ func inputs() -> Array:
 
 ## What a fight event means here, put on screen for a moment.
 func saw(events: Array) -> void:
+	if name == "records":
+		for e in projectiles.step([hero, dummy], 0.0, 4000.0):
+			if e["target"] == hero:
+				_say("the record meets the hero's guard: %s, it flies back at him" % e["result"].to_upper() if e["result"] == "perfect" else "the record HITS the hero")
+			else:
+				_say("his own record hits him (sent back by the perfect block)")
+		for p in projectiles.flying:
+			if not p.has("passed") and p["vx"] < 0.0 and p["x"] < hero.x - 60.0:
+				p["passed"] = true
+				_say("the record flies past: %s" % ("over him, he jumped it" if hero.y > 0.0 else "he stepped out of its line"))
 	for e in events:
 		var t := ""
 		if e["result"] == "perfect":
@@ -216,6 +280,13 @@ func overlay(street_speeds: Dictionary = {}) -> String:
 				where += " at x %d" % int(hero.world.items[0]["x"])
 			line = "the pipe: %s  ·  hero's guard: %s (perfect for its first %d frames)" % [where,
 				hero.blocking() if hero.blocking() != "" else "down", hero.tune["perfect_block_ticks"]]
+		"records":
+			var flying: Array = projectiles.flying.map(func(p): return "%s %d-%d px up, x %d" % ["record", int(p["y0"]), int(p["y1"]), int(p["x"])])
+			line = "flying: %s  ·  hero: %s, %d px up the street, %d px off the ground" % [", ".join(flying) if not flying.is_empty() else "nothing",
+				hero.state, int(hero.z), int(hero.y)]
+		"bass_drop":
+			var standing: int = hero.world.objects.filter(func(o): return o["kind"] == "speaker" and not o["broken"]).size()
+			line = "speakers standing: %d  ·  guard held: %d of %d frames  ·  waves so far: %d" % [standing, held, Level.BASS_HOLD, data.get("waves", 0)]
 		"dizzy":
 			line = "combo finishers landed in a row: %d  ·  dizzy: %s  ·  frames left: %d of %d" % [dummy.finishers_taken,
 				"YES" if dummy.state == "dizzy" else "no", dummy.dizzy_left, dummy.tune["dizzy_ticks"]]

@@ -311,6 +311,7 @@ func _start_trial(trial_name: String) -> void:
 	dummy_view.name = "Dummy"
 	add_child(dummy_view)
 	trial = Trials.new(trial_name, hero, dummy)
+	obstacles_view.setup(world, Street.GROUND_Y)  # (a trial may set things on the street: the bass_drop speakers)
 	trial_label = Label.new()
 	trial_label.position = Vector2(32, 130)
 	trial_label.add_theme_font_size_override("font_size", 30)
@@ -349,6 +350,8 @@ func _play_trial() -> void:
 	speeds["street"] = cam - layer_was.get("cam", cam)
 	layer_was["cam"] = cam
 	trial_label.text = trial.overlay(speeds)
+	flying_view.queue_redraw()
+	obstacles_view.refresh()
 	bars["hero"][1].size.x = 416.0 * hero.health / hero.max_health
 	bars["enemy"][1].size.x = 416.0 * dummy.health / dummy.max_health
 	if trial.tick >= trial.length:
@@ -514,13 +517,15 @@ func _show_friend() -> void:
 
 ## DJ Volt's records, spinning black discs at their height, and his bass wave: rings rolling out from his speakers.
 func _draw_flying() -> void:
-	if level == null:
-		return
-	for p in level.projectiles.flying:
+	var flying: Array = level.projectiles.flying if level != null else (trial.projectiles.flying if trial != null else [])
+	var clock: int = level.tick if level != null else (trial.tick if trial != null else 0)
+	for p in flying:
 		var at := Vector2(p["x"], Street.GROUND_Y + p["z"] - (p["y0"] + p["y1"]) * 0.5)
 		flying_view.draw_circle(at, 22.0, Color(0.06, 0.06, 0.08))
 		flying_view.draw_circle(at, 8.0, Color(0.9, 0.3, 0.5))
-		flying_view.draw_arc(at, 22.0, float(level.tick) * 0.6, float(level.tick) * 0.6 + 1.2, 8, Color(0.6, 0.6, 0.7), 2.0)
+		flying_view.draw_arc(at, 22.0, float(clock) * 0.6, float(clock) * 0.6 + 1.2, 8, Color(0.6, 0.6, 0.7), 2.0)
+	if level == null:
+		return
 	var since: int = level.tick - level.bass_at
 	if level.bass_at > 0 and since < 30:
 		for o in level.world.objects:
