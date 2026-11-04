@@ -123,11 +123,11 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] Level 1 findings fixed
 - [ ] The weapon bag: collect and switch
 - [ ] Story opening: choose your hero, the kidnapping
-- [ ] Level 2; levels 3–5 on two floors; the level 5 boss
+- [ ] Level 2; levels 3–5 on two floors; the level 5 boss (the engine for floors is built: level.gd; layouts from the team)
 - [ ] Each enemy type and boss: its own combos, counters to the hero's combos, its own way to be beaten (D-19; the team's table)
 
 ## Stage 5 · Levels 6–9 (by Sun 28 Feb)
-- [ ] Switches upstairs that open doors below
+- [x] Switches upstairs that open doors below (built 2026-11-03 in level.gd: floors, stairs through doorways at the back of the street, switches flipped by a blow, named doors; the team's layouts for levels 6-8 use it)
 - [ ] Levels 6–8 on up to three floors; the level 8 boss
 - [ ] Level 9
 - [ ] The darker, grittier palette

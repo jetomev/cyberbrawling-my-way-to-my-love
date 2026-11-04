@@ -3,7 +3,7 @@ extends Node2D
 ## Options after "--": --demo plays the scripted demo (scripts/sim/demo.gd) and quits when it ends (--lab shows the
 ## feel lab during it);
 ## --fight has a bot (hero_bot.gd) play the hero against the thugs for FIGHT_TICKS and quits (the build's fight clip);
-## --bot has the bot play level 1 through and quits when it ends (prints how it went);
+## --level <file> plays another layout (levels/*.json format); --bot has the bot play level 1 through and quits when it ends (prints how it went);
 ## --flat uses the flat line instead of the shallow street (D-13); --marks <file> (with --demo) writes, for every drawn
 ## frame, where the hips, hands and feet are on screen, for the reviewers' close-ups (scripts/build.sh, D-22).
 ## F1 opens the feel lab (feel_panel.gd).
@@ -54,6 +54,7 @@ var shown_world = null  # the street the obstacles view is drawing
 var level_views := {}  # enemy fighter id -> its view
 var ended_for := 0
 var items_seen := -1
+var flips_seen := -1
 
 
 func _ready() -> void:
@@ -73,7 +74,11 @@ func _ready() -> void:
 	var playing: bool = not demo and not "--fight" in args  # (--bot: the bot plays level 1, for the build's level clip)
 	if playing:
 		# (--bot plays seed 2, a run the bot wins, so the build's level clip shows the whole level, boss included)
-		level = Level.new(Level.load_data(LEVEL_FILE), tune, 2 if "--bot" in args else 1)
+		var file := LEVEL_FILE
+		var li := args.find("--level")  # --level <file>: play another layout (the team's, a test one)
+		if li >= 0 and li + 1 < args.size():
+			file = args[li + 1]
+		level = Level.new(Level.load_data(file), tune, 2 if "--bot" in args else 1)
 		world = level.world
 	else:
 		world = StreetWorld.grey_street()
@@ -86,7 +91,7 @@ func _ready() -> void:
 	hero_view = HeroView.new()
 	hero_view.name = "Hero"
 	add_child(hero_view)
-	$Street.setup(level.data["length"] if level != null else tune["street_right"], tune["street_depth"])
+	$Street.setup(level.floors[0]["length"] if level != null else tune["street_right"], tune["street_depth"])
 	$Camera.limit_left = int(tune["street_left"])
 	$Camera.limit_right = int(tune["street_right"])
 	$Hud/Title.text = "%s   ·   %s%s" % [Version.TITLE, Version.STAGE, "   ·   demo" if demo else ""]
@@ -181,8 +186,10 @@ func _play_level() -> void:
 		obstacles_view.setup(world, Street.GROUND_Y)
 		$Street.setup(level.bounds().y, tune["street_depth"])
 		items_seen = -1
-	if world.items.size() != items_seen or not level.events.is_empty():
+	if world.items.size() != items_seen or not level.events.is_empty() or level.flipped.size() != flips_seen:
 		items_seen = world.items.size()
+		flips_seen = level.flipped.size()
+		obstacles_view.set_marks(_marks())
 		obstacles_view.refresh()
 	# a view for every enemy on the street; gone ones go
 	var live := {}
@@ -210,7 +217,7 @@ func _play_level() -> void:
 	$Camera.zoom = Vector2.ONE * tune["camera_zoom"]
 	$Street.follow($Camera.get_screen_center_position().x)
 	if not (level.won or level.lost):
-		var where: String = "the boss" if level.where == "upstairs" else ("fight!" if level.active_wave >= 0 else "go →")
+		var where: String = "fight!" if level.active_wave >= 0 else ("the boss" if level.boss_spawned and level.standing().any(func(f): return f.max_health > Level.KINDS["thug"]["health"]) else "go →")
 		$Hud/Title.text = "Level 1   ·   %s   ·   lives %s" % [where, "♥ ".repeat(level.lives).strip_edges()]
 	bars["hero"][1].size.x = 416.0 * hero.health / hero.max_health
 	var foes: Array = level.standing()
@@ -218,6 +225,19 @@ func _play_level() -> void:
 	if not foes.is_empty():
 		foes.sort_custom(func(a, c): return absf(a.x - hero.x) < absf(c.x - hero.x))
 		bars["enemy"][1].size.x = 416.0 * foes[0].health / foes[0].max_health
+
+
+## The stairs' doorways and the switches on the floor he's on, for the obstacles view.
+func _marks() -> Array:
+	var out := []
+	for l in level.plan.get("links", []):
+		if int(l["from"]) == level.on and not l.get("auto", false):
+			out.append({"kind": "doorway", "x": l["x"], "on": false})
+	var sw: Array = level.plan.get("switches", [])
+	for i in sw.size():
+		if int(sw[i]["floor"]) == level.on:
+			out.append({"kind": "switch", "x": sw[i]["x"], "on": level.flipped.has(i)})
+	return out
 
 
 func _spawn_enemy(at_x: float) -> void:

@@ -1,0 +1,11 @@
+{
+  "name": "two floors (a test layout)",
+  "floors": [
+    {"name": "street", "length": 3600, "obstacles": [["barrier", 2000, 2040, 0, 160, 260, false, 0, "gate"]], "items": [],
+      "waves": [{"at": 900, "enemies": [{"kind": "thug", "dx": 400, "z": 80}]}]},
+    {"name": "upstairs", "length": 2400, "obstacles": [], "items": [], "waves": []}
+  ],
+  "links": [{"from": 0, "x": 1500, "to": 1, "to_x": 300}, {"from": 1, "x": 300, "to": 0, "to_x": 1500}],
+  "switches": [{"floor": 1, "x": 1800, "opens": "gate"}],
+  "boss": {"floor": 0, "x": 3200, "kind": "boss", "health": 40}
+}

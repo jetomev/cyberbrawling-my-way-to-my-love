@@ -11,11 +11,13 @@ func level(seed_value := 1):
 	return Level.new(Level.load_data("res://levels/level1.json"), {}, seed_value)
 
 
-## Puts every standing enemy down for good, as if beaten.
-func beat_them(l) -> void:
-	for f in l.standing():
-		f.health = 0.0
-		f._enter("ko")
+## Puts every standing enemy down for good, as if beaten (the boss too, unless spared).
+func beat_them(l, spare_the_boss := false) -> void:
+	for e in l.enemies:
+		if e["gone"] or e["f"].defeated() or (spare_the_boss and e["boss"]):
+			continue
+		e["f"].health = 0.0
+		e["f"]._enter("ko")
 
 
 func walk_to(l, x: float, ticks := 4000) -> void:
@@ -144,3 +146,91 @@ func test_food_and_first_aid_heal_the_hero() -> void:
 		l.step({"mx": 1.0})
 	check(l.hero.health > 5.0, "walking over the food, hurt, he eats it (%.0f)" % l.hero.health)
 	check(not l.world.items.any(func(i): return i["x"] == food[1]), "and it's gone")
+
+
+## A two-floor layout (tests/levels/two_floors.json): stairs up at x 1500 and back down; a gate on the street at
+## x 2000 that a switch upstairs at x 1800 opens; the boss beyond the gate.
+func two_floors():
+	return Level.new(Level.load_data("res://tests/levels/two_floors.json"), {}, 1)
+
+
+func to_doorway(l, x: float) -> void:
+	for i in 600:
+		if absf(l.hero.x - x) <= 20.0 and l.hero.z <= Level.DOORWAY_Z:
+			return
+		var inp := {}
+		if absf(l.hero.x - x) > 20.0:
+			inp["mx"] = 1.0 if x > l.hero.x else -1.0
+		if l.hero.z > Level.DOORWAY_Z:
+			inp["mz"] = -1.0
+		var floor_was: int = l.on
+		l.step(inp)
+		if l.on != floor_was:
+			return
+
+
+func test_the_stairs_take_him_up_through_the_doorway_at_the_back() -> void:
+	var l = two_floors()
+	walk_to(l, 900.0)
+	beat_them(l, true)
+	for i in 3:
+		l.step({})
+	walk_to(l, 1500.0)
+	for i in 30:
+		l.step({})
+	eq(l.on, 0, "walking past the stairs along the front of the street, he stays")
+	to_doorway(l, 1500.0)
+	eq(l.on, 1, "into the doorway at the back: up the stairs")
+	eq(l.where, "upstairs", "upstairs")
+	for i in 30:
+		l.step({})
+	eq(l.on, 1, "he isn't bounced straight back down")
+	for i in 40:
+		l.step({"mz": 1.0, "mx": 1.0})
+	to_doorway(l, 300.0)
+	eq(l.on, 0, "stepping away and back into that doorway takes him down again")
+
+
+func test_no_stairs_while_a_wave_is_on() -> void:
+	var l = two_floors()
+	walk_to(l, 900.0)
+	check(l.active_wave >= 0, "a wave is on")
+	for e in l.enemies:
+		e["brain"].wait = 100000
+	l.hero.x = 1500.0
+	l.hero.z = 0.0
+	for i in 5:
+		l.step({})
+	eq(l.on, 0, "the stairs wait until the wave is beaten")
+
+
+func test_a_switch_upstairs_opens_the_gate_below() -> void:
+	var l = two_floors()
+	walk_to(l, 900.0)
+	beat_them(l, true)
+	for i in 3:
+		l.step({})
+	walk_to(l, 2100.0, 400)
+	check(l.hero.x < 2000.0, "the gate stops him (%.0f)" % l.hero.x)
+	l.hero.x = 1600.0
+	to_doorway(l, 1500.0)
+	eq(l.on, 1, "up the stairs")
+	for i in 30:
+		l.step({"mz": 1.0})
+	walk_to(l, 1700.0)
+	l.step({"punch": true})
+	for i in 10:
+		l.step({})
+	check(l.flipped.has(0), "a blow on the switch flips it")
+	check(l.floors[0]["world"].objects.any(func(o): return o.get("name", "") == "gate" and o["broken"]), "and the gate below is open")
+	to_doorway(l, 300.0)
+	eq(l.on, 0, "back down")
+	check(not l.world.blocks(2020.0, 80.0, 0.0), "the gate no longer stops anyone (and the boss comes through it)")
+
+
+func test_the_boss_down_wins_a_multi_floor_level() -> void:
+	var l = two_floors()
+	eq(l.standing().filter(func(f): return f.max_health == 40.0).size(), 1, "the boss waits on the street, beyond the gate")
+	beat_them(l)
+	l.step({})
+	check(l.won, "the boss down for good wins it")

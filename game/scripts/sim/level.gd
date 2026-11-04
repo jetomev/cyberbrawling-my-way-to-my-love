@@ -1,13 +1,18 @@
 extends RefCounted
-## A level as a run of fights along the street (Stage 1: a grey level 1 with the boss upstairs). The layout is data
-## (levels/levelN.json: the street's length, its obstacles, where each wave of thugs waits, the stairs, the boss room),
-## so the team's layouts drop straight in. Plain logic like fighter.gd: it spawns the fighters, holds the hero at a
-## wave until it's beaten (the street "locks" there), takes him upstairs at the end, and the level is won when the boss
-## is down for good. Three lives per level; losing them all restarts the level from its start (D-15). Seeded, so a
-## run replays the same (the bot plays every level on several seeds: L-8).
+## A level as runs of fights on one or more floors (DESIGN, The levels: one floor in levels 1-2, two in 3-5, up to
+## three in 6-8 where switches upstairs open doors below; the boss at the end). The layout is data (levels/levelN.json),
+## so the team's layouts drop straight in. Plain logic like fighter.gd: it spawns the fighters, holds the hero at a wave
+## until it's beaten (the floor "locks" there), moves him between floors by the stairs (walk into the doorway at the back
+## of the street), lets a blow flip a switch that opens a door on another floor, and the level is won when the boss is
+## down for good. Three lives per level; losing them all restarts the level from its start (D-15). Seeded, so a run
+## replays the same (the bot plays every level on several seeds: L-8).
 ##
-## The data: {name, length, obstacles: [[kind, x0, x1, z0, z1, top, climbable, strength]...], items: [[kind, x, z]...],
-##   waves: [{at, enemies: [{kind, dx, z, weapon}]}...], stairs, boss: {kind, health, weapon}, upstairs_length}
+## The data, full form: {name, floors: [{name, length, obstacles, items, waves}...], links: [{from, x, to, to_x}...],
+##   switches: [{floor, x, opens}...], boss: {floor, x, kind, health, weapon}}
+## Obstacles: [kind, x0, x1, z0, z1, top, climbable, strength, name?] (a "door" with a name opens from a switch);
+## items: [kind, x, z]; waves: [{at, enemies: [{kind, dx, z, weapon}]}...].
+## The short form (level 1): one street ({length, obstacles, items, waves}), "stairs" at the end up to the boss's room
+## ("upstairs_length", "boss").
 
 const Fighter := preload("res://scripts/sim/fighter.gd")
 const Fight := preload("res://scripts/sim/fight.gd")
@@ -21,19 +26,23 @@ const KINDS := {
 	"boss": {"health": 40.0, "brain": "BOSS"},
 }
 const LIVES := 3
-const LOCK_MARGIN := 700.0  # the street "locks" this far either side of a wave until it's beaten
+const LOCK_MARGIN := 700.0  # a floor "locks" this far either side of a wave until it's beaten
 const ATTACKERS := 2  # at most this many enemies attack at once; the rest wait their turn (a fair fight in a crowd)
 const DOWN_TICKS := 150  # a fighter put down for good lies this long before he's gone (an enemy) or respawns (the hero)
+const DOORWAY := 50.0  # standing this close to a stairs' x at the back of the street (z under DOORWAY_Z) takes them
+const DOORWAY_Z := 12.0
+const SWITCH_REACH := 30.0  # a blow whose reach covers a switch's x (± this) flips it
 
 var data: Dictionary
+var plan: Dictionary  # the level in its full form (short layouts are unfolded into it)
 var tune: Dictionary
-var world
+var floors := []  # each {name, length, world, waves, wave, active_wave, enemies}
+var on := 0  # the floor he's on
 var hero
 var fight
-var enemies := []  # each {f, brain, gone}
-var wave := 0  # the next wave to start
-var active_wave := -1  # the wave being fought, or -1
-var where := "street"  # "street", then "upstairs" for the boss
+var flipped := {}  # switch index -> true once flipped
+var boss_spawned := false
+var arrived_x := -1.0e9  # where he came up or down the stairs: that doorway doesn't take him straight back
 var lives := LIVES
 var won := false
 var lost := false  # out of lives: the level restarts (restart())
@@ -43,9 +52,22 @@ var dice_seed := 1
 var events := []  # this tick's fight events (for sounds and the view)
 var hero_tune: Dictionary
 
+## The floor he's on, as the game and the tests read it
+var world:
+	get: return floors[on]["world"]
+var enemies: Array:
+	get: return floors[on]["enemies"]
+var wave: int:
+	get: return floors[on]["wave"]
+var active_wave: int:
+	get: return floors[on]["active_wave"]
+var where: String:
+	get: return floors[on]["name"]
+
 
 func _init(level_data: Dictionary, tuning: Dictionary = {}, seed_value := 1) -> void:
 	data = level_data
+	plan = unfold(level_data)
 	hero_tune = tuning if not tuning.is_empty() else Tuning.fresh()
 	dice_seed = seed_value
 	restart()
@@ -57,48 +79,72 @@ static func load_data(path: String) -> Dictionary:
 	return parsed if parsed is Dictionary else {}
 
 
+## The short form (one street, stairs at the end, the boss's room upstairs) as the full form.
+static func unfold(d: Dictionary) -> Dictionary:
+	if d.has("floors"):
+		return d
+	return {
+		"name": d.get("name", ""),
+		"floors": [
+			{"name": "street", "length": d["length"], "obstacles": d.get("obstacles", []), "items": d.get("items", []),
+				"waves": d.get("waves", [])},
+			{"name": "upstairs", "length": d.get("upstairs_length", 1920.0), "obstacles": [], "items": [], "waves": []},
+		],
+		"links": [{"from": 0, "x": d["stairs"], "to": 1, "to_x": 200.0, "auto": true}],
+		"switches": [],
+		"boss": d.get("boss", {}).merged({"floor": 1, "x": 1200.0}),
+	}
+
+
 ## The level from its start: what a save at the level's start restores (D-15).
 func restart() -> void:
 	tune = hero_tune  # the hero's own table, so the feel lab still reaches him
-	tune["street_right"] = data["length"]
-	world = StreetWorld.new()
-	for o in data.get("obstacles", []):
-		world.add(o[0], o[1], o[2], o[3], o[4], o[5], o[6], o[7])
-	for it in data.get("items", []):  # food, first aid, a weapon lying ready: [kind, x, z]
-		world.drop(it[0], it[1], it[2])
+	floors = []
+	for f in plan["floors"]:
+		var w = StreetWorld.new()
+		for o in f.get("obstacles", []):
+			var obj: Dictionary = w.add(o[0], o[1], o[2], o[3], o[4], o[5], o[6], o[7])
+			if o.size() > 8:
+				obj["name"] = o[8]
+		for it in f.get("items", []):  # food, first aid, a weapon lying ready
+			w.drop(it[0], it[1], it[2])
+		floors.append({"name": f["name"], "length": f["length"], "world": w, "waves": f.get("waves", []), "wave": 0,
+			"active_wave": -1, "enemies": []})
+	on = 0
 	hero = Fighter.new(tune, 200.0, 80.0, world)
 	fight = Fight.new()
-	enemies = []
-	wave = 0
-	active_wave = -1
-	where = "street"
+	flipped = {}
+	boss_spawned = false
+	arrived_x = -1.0e9
 	lives = LIVES
 	won = false
 	lost = false
 	tick = 0
 	hero_down_for = 0
 	events = []
+	_maybe_boss()
 
 
-## The fighters on the street now, the hero first.
+## The fighters on this floor now, the hero first.
 func everyone() -> Array:
 	return [hero] + enemies.filter(func(e): return not e["gone"]).map(func(e): return e["f"])
 
 
-## The enemies still on their feet (or down but not out).
+## The enemies on this floor still on their feet (or down but not out).
 func standing() -> Array:
 	return enemies.filter(func(e): return not e["gone"] and not e["f"].defeated()).map(func(e): return e["f"])
 
 
-## How far the hero may go along the street right now: a wave being fought locks him near it.
+## How far the hero may go along this floor right now: a wave being fought locks him near it.
 func bounds() -> Vector2:
+	var length: float = floors[on]["length"]
 	if active_wave >= 0:
-		var at: float = data["waves"][active_wave]["at"]
-		return Vector2(maxf(0.0, at - LOCK_MARGIN), minf(data["length"], at + LOCK_MARGIN))
-	return Vector2(0.0, data["length"] if where == "street" else data.get("upstairs_length", 1920.0))
+		var at: float = floors[on]["waves"][active_wave]["at"]
+		return Vector2(maxf(0.0, at - LOCK_MARGIN), minf(length, at + LOCK_MARGIN))
+	return Vector2(0.0, length)
 
 
-## One tick: the hero on this input, every enemy on its own mind, the blows settled, the waves and the floors moved on.
+## One tick: the hero on this input, every enemy on its own mind, the blows settled, the waves, switches and floors.
 func step(inp: Dictionary) -> void:
 	if won or lost:
 		return
@@ -115,7 +161,9 @@ func step(inp: Dictionary) -> void:
 	world.step_hits(all)
 	Fight.separate(all)
 	events = fight.step(all, world)
+	_switches()
 	_waves()
+	_links()
 	_downs()
 
 
@@ -127,10 +175,10 @@ func _take_turns() -> void:
 		up[i]["brain"].allowed = i < ATTACKERS
 
 
-func _spawn(kind: String, x: float, z: float, weapon := "") -> void:
+func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave_index := -1) -> void:
 	var t := Tuning.fresh()
-	t["health"] = KINDS[kind]["health"]
-	t["street_right"] = tune["street_right"] + 2000.0  # enemies walk in from beyond the lock
+	t["health"] = health if health > 0.0 else KINDS[kind]["health"]
+	t["street_right"] = floors[on]["length"] + 2000.0  # enemies walk in from beyond the lock
 	t["street_left"] = -2000.0
 	t["flat_line"] = tune.get("flat_line", false)
 	var f = Fighter.new(t, x, z, world)
@@ -139,46 +187,94 @@ func _spawn(kind: String, x: float, z: float, weapon := "") -> void:
 	if weapon != "":
 		f.take_weapon(weapon)
 	var how: Dictionary = Brain.TYPES[KINDS[kind]["brain"]]
-	enemies.append({"f": f, "brain": Brain.new(f, hero, dice_seed * 100 + enemies.size(), how), "gone": false, "down_for": 0})
+	enemies.append({"f": f, "brain": Brain.new(f, hero, dice_seed * 100 + tick + enemies.size(), how), "gone": false,
+		"down_for": 0, "boss": false, "wave": wave_index})
 
 
 func _waves() -> void:
-	if where == "street":
-		var waves: Array = data["waves"]
-		if active_wave < 0 and wave < waves.size() and hero.x >= waves[wave]["at"] - 300.0:
-			active_wave = wave
-			wave += 1
-			for e in waves[active_wave]["enemies"]:
-				_spawn(e["kind"], waves[active_wave]["at"] + e["dx"], e.get("z", 80.0), e.get("weapon", ""))
-		if active_wave >= 0 and standing().is_empty():
-			active_wave = -1  # beaten: the street opens on
-		# the stairs: once every wave is beaten and he reaches them, up to the boss
-		if active_wave < 0 and wave >= waves.size() and hero.x >= data["stairs"]:
-			_go_upstairs()
-	elif where == "upstairs" and standing().is_empty() and not enemies.is_empty():
+	var fl: Dictionary = floors[on]
+	var waves: Array = fl["waves"]
+	if fl["active_wave"] < 0 and fl["wave"] < waves.size() and hero.x >= waves[fl["wave"]]["at"] - 300.0:
+		fl["active_wave"] = fl["wave"]
+		fl["wave"] += 1
+		for e in waves[fl["active_wave"]]["enemies"]:
+			_spawn(e["kind"], waves[fl["active_wave"]]["at"] + e["dx"], e.get("z", 80.0), e.get("weapon", ""), -1.0, fl["active_wave"])
+	if fl["active_wave"] >= 0 and not enemies.any(func(e): return e["wave"] == fl["active_wave"] and not e["gone"] and not e["f"].defeated()):
+		fl["active_wave"] = -1  # its thugs beaten: the floor opens on (a boss waiting further on doesn't hold it)
+	var boss_down: bool = boss_spawned and enemies.any(func(e): return e["boss"] and e["f"].defeated())
+	if boss_down:
 		won = true
 
 
-func _go_upstairs() -> void:
-	where = "upstairs"
-	world = StreetWorld.new()  # the boss's room: a bare floor (the team's layout gives it things)
+## A floor's waves all beaten?
+func cleared(floor_index: int) -> bool:
+	var fl: Dictionary = floors[floor_index]
+	return fl["active_wave"] < 0 and fl["wave"] >= fl["waves"].size()
+
+
+## The stairs: walking into a doorway at the back of the street (or, for the last stairs of a short layout, just
+## reaching them) takes him to the floor it leads to, once this floor's waves are beaten.
+func _links() -> void:
+	if active_wave >= 0:
+		return
+	if arrived_x > -1.0e8:
+		if absf(hero.x - arrived_x) > DOORWAY or hero.z > DOORWAY_Z + 30.0:
+			arrived_x = -1.0e9  # he's stepped away from the doorway he came through
+		else:
+			return
+	for l in plan.get("links", []):
+		if int(l["from"]) != on:
+			continue
+		var auto: bool = l.get("auto", false)
+		var at_door: bool = absf(hero.x - l["x"]) <= DOORWAY and hero.z <= DOORWAY_Z
+		if (auto and hero.x >= l["x"] and cleared(on)) or (not auto and at_door and hero.on_ground()):
+			_go_to(int(l["to"]), l["to_x"])
+			return
+
+
+func _go_to(floor_index: int, x: float) -> void:
+	on = floor_index
 	hero.world = world
-	hero.x = 200.0
+	hero.x = x
 	hero.z = 80.0
 	hero._enter("idle")
-	enemies = []
-	var boss: Dictionary = data["boss"]
-	_spawn(boss.get("kind", "boss"), 1200.0, 80.0, boss.get("weapon", ""))
-	enemies[0]["f"].tune["health"] = boss.get("health", KINDS["boss"]["health"])
-	enemies[0]["f"].max_health = enemies[0]["f"].tune["health"]
-	enemies[0]["f"].health = enemies[0]["f"].max_health
+	arrived_x = x
+	_maybe_boss()
+
+
+## The boss waits on his floor: he steps out the first time the hero arrives there.
+func _maybe_boss() -> void:
+	var boss: Dictionary = plan.get("boss", {})
+	if boss_spawned or boss.is_empty() or int(boss.get("floor", 0)) != on:
+		return
+	boss_spawned = true
+	_spawn(boss.get("kind", "boss"), boss.get("x", 1200.0), 80.0, boss.get("weapon", ""), boss.get("health", -1.0))
+	enemies[-1]["boss"] = true
+
+
+## A blow that reaches a switch flips it, once: the door it names opens, on whatever floor it stands.
+func _switches() -> void:
+	var box: Dictionary = hero.hit_box()
+	if box.is_empty():
+		return
+	var switches: Array = plan.get("switches", [])
+	for i in switches.size():
+		var s: Dictionary = switches[i]
+		if flipped.has(i) or int(s["floor"]) != on:
+			continue
+		if box["x0"] - SWITCH_REACH <= s["x"] and s["x"] <= box["x1"] + SWITCH_REACH:
+			flipped[i] = true
+			for fl in floors:
+				for o in fl["world"].objects:
+					if o.get("name", "") == s["opens"]:
+						o["broken"] = true  # an open door no longer blocks
 
 
 func _downs() -> void:
 	for e in enemies:
-		if not e["gone"] and e["f"].defeated():
+		if not e["gone"] and e["f"].defeated() and not e["boss"]:
 			e["down_for"] += 1
-			if e["down_for"] >= DOWN_TICKS and where == "street":
+			if e["down_for"] >= DOWN_TICKS:
 				e["gone"] = true  # he's out of the fight; his weapon, if any, already lies on the street
 	if hero.defeated():
 		hero_down_for += 1

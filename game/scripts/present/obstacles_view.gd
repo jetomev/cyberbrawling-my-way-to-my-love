@@ -48,14 +48,44 @@ func refresh_items() -> void:
 	loose.queue_redraw()
 
 
+## Marks on the back of the street from the level: stairs' doorways and switches ({kind, x, on}).
+var marks: Array = []
+
+
+func set_marks(list: Array) -> void:
+	marks = list
+	refresh_items()
+
+
 func _draw_loose() -> void:
+	for m in marks:
+		var x: float = m["x"]
+		if m["kind"] == "doorway":  # a dark doorway in the back wall: the stairs
+			loose.draw_rect(Rect2(x - 46, ground_y - 160, 92, 160), Color(0.04, 0.04, 0.06))
+			loose.draw_rect(Rect2(x - 46, ground_y - 160, 92, 160), EDGE.lightened(0.3), false, 3.0)
+			loose.draw_colored_polygon(PackedVector2Array([Vector2(x - 14, ground_y - 120), Vector2(x + 14, ground_y - 120),
+				Vector2(x, ground_y - 140)]), Color(0.7, 0.7, 0.75))
+		elif m["kind"] == "switch":  # a panel on the back wall with a lever; green once flipped
+			loose.draw_rect(Rect2(x - 22, ground_y - 130, 44, 60), Color(0.3, 0.3, 0.34))
+			loose.draw_rect(Rect2(x - 22, ground_y - 130, 44, 60), EDGE, false, 3.0)
+			loose.draw_circle(Vector2(x, ground_y - 112), 8.0, Color(0.3, 0.9, 0.4) if m["on"] else Color(0.9, 0.3, 0.3))
 	for it in world.items:
 		var at := Vector2(it["x"], ground_y + it["z"])
 		if it["kind"] == "pipe":
 			loose.draw_line(at + Vector2(-46, -4), at + Vector2(46, -10), EDGE, 12.0)
 			loose.draw_line(at + Vector2(-44, -4), at + Vector2(44, -10), Color(0.62, 0.64, 0.68), 7.0)
-		else:
-			loose.draw_rect(Rect2(at + Vector2(-20, -16), Vector2(40, 14)), Color(0.6, 0.6, 0.6))
+		elif it["kind"] == "food":  # a takeaway box
+			loose.draw_rect(Rect2(at + Vector2(-18, -22), Vector2(36, 22)), Color(0.92, 0.9, 0.84))
+			loose.draw_rect(Rect2(at + Vector2(-18, -22), Vector2(36, 22)), EDGE, false, 2.0)
+			loose.draw_rect(Rect2(at + Vector2(-18, -14), Vector2(36, 5)), Color(0.85, 0.3, 0.25))
+		elif it["kind"] == "first_aid":  # a white kit with a red cross
+			loose.draw_rect(Rect2(at + Vector2(-20, -24), Vector2(40, 24)), Color(0.95, 0.95, 0.95))
+			loose.draw_rect(Rect2(at + Vector2(-20, -24), Vector2(40, 24)), EDGE, false, 2.0)
+			loose.draw_rect(Rect2(at + Vector2(-3, -21), Vector2(6, 18)), Color(0.85, 0.15, 0.15))
+			loose.draw_rect(Rect2(at + Vector2(-9, -15), Vector2(18, 6)), Color(0.85, 0.15, 0.15))
+		else:  # another weapon, by its look in the hand
+			loose.draw_line(at + Vector2(-34, -4), at + Vector2(34, -8), EDGE, 10.0)
+			loose.draw_line(at + Vector2(-32, -4), at + Vector2(32, -8), Color(0.7, 0.7, 0.72), 5.0)
 
 
 func _draw_object(n: Node2D, o: Dictionary) -> void:
@@ -63,6 +93,10 @@ func _draw_object(n: Node2D, o: Dictionary) -> void:
 	var near: float = ground_y + o["z1"]
 	var far: float = ground_y + o["z0"]
 	var w: float = o["x1"] - o["x0"]
+	if o["broken"] and o["kind"] != "crate":  # an opened gate or door: only its posts are left
+		n.draw_rect(Rect2(o["x0"] - 6, near - 240, 10, 240), base.darkened(0.3))
+		n.draw_rect(Rect2(o["x1"] - 4, far - 240, 10, 240), base.darkened(0.3))
+		return
 	if o["broken"]:
 		for i in 4:  # boards on the ground
 			var r := Rect2(o["x0"] + i * w * 0.22, near - 14.0 - (i % 2) * 8.0, w * 0.4, 9.0)
