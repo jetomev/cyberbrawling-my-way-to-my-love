@@ -7,6 +7,8 @@ extends RefCounted
 ##        at his heels; then level 2 starts and the cat is there with him, and follows him on
 ## twins  Twin Loans (level 3's boss) in the roster yard's back room, the bot fighting them: each swap ("Interest"),
 ##        each brother tumbling down the stairs, "Compound" at half their health, both down and the stick
+## coach  Coach Crusher (level 4's boss) in the gym, the bot fighting him: the medicine ball, the tackle (and the ropes
+##        when it misses), punches into his gloves, kicks landing, two dizzies and he gives up
 
 const LEVEL2 := "res://levels/level2.json"
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
@@ -23,6 +25,7 @@ var walk_from := 0.0
 var zoom := 1.0  # the camera closer in (the cat is small)
 var bot = null  # a scene the bot plays (twins)
 var said := {}
+var rolling := {}  # who's tumbling now (said once per tumble)
 
 
 func _init(scene: String) -> void:
@@ -31,7 +34,7 @@ func _init(scene: String) -> void:
 		"cat":
 			length = 520
 			zoom = 1.7
-		"twins":
+		"twins", "coach":
 			length = 4800
 
 
@@ -42,9 +45,9 @@ func setup(level) -> void:
 	if level.friend != null:
 		level.friend.x = -5000.0
 	match name:
-		"twins":
+		"twins", "coach":
 			if level.on == 0:
-				level._go_to(1, 200.0)  # straight into the back room: the brothers step out
+				level._go_to(1, 200.0 if name == "twins" else 300.0)  # straight into the boss's room: he steps out
 				bot = HeroBot.new(level.hero, 1)
 		"cat":
 			if in_level == 1:
@@ -58,33 +61,50 @@ func inputs(level) -> Dictionary:
 	tick += 1
 	var inp := {}
 	match name:
-		"twins":
+		"twins", "coach":
 			if tick == 2:
-				_say("Twin Loans: the short brother on the shop floor, the tall one at the top of the stairs")
+				_say("Twin Loans: the short brother on the shop floor, the tall one at the top of the stairs" if name == "twins" \
+					else "Coach Crusher: big gloves that block every punch, so kicks only")
+			for p in level.projectiles.flying:
+				if p["kind"] == "ball" and not p.has("said"):
+					p["said"] = true
+					_say("he throws the MEDICINE BALL")
 			for ev in level.events:
 				match ev.get("result", ""):
 					"swap": _say("INTEREST: halfway through a combo the brothers SWAP places")
 					"compound": _say("COMPOUND: at half their health together, both rush him at once")
+					"tackle": _say("the TACKLE: he charges along the street")
+					"ropes": _say("the tackle MISSES: he slams into the ROPES, dazed and open")
+					"gives_up": _say("dizzied TWICE: Coach Crusher GIVES UP")
+					"blocked":
+						if name == "coach" and ev.get("target") != level.hero and not said.has("gloves"):
+							said["gloves"] = true
+							_say("a punch into the GLOVES: blocked, no harm")
+					"hit":
+						if name == "coach" and ev.get("attacker") == level.hero and "kick" in ev.get("move", "") and not said.has("kick"):
+							said["kick"] = true
+							_say("a KICK lands: %s" % ev["move"])
 			for f in level.tumbling:
-				if not said.has(f):
-					said[f] = true
+				if not rolling.has(f):
+					rolling[f] = true
 					_say("%s goes TUMBLING down the stairs to the foot" % ("the hero" if f == level.hero else "a brother"))
-			for f in said.keys():
+			for f in rolling.keys():
 				if not level.tumbling.has(f):
-					said.erase(f)
+					rolling.erase(f)
 			if level.won and not said.has("won"):
 				said["won"] = true
-				_say("both brothers down: the level's won, and the tall one leaves the STICK")
+				_say("both brothers down: the level's won, and the tall one leaves the STICK" if name == "twins" \
+					else "Coach Crusher's beaten: the level's won")
 				length = tick + 120
 			bot.me = level.hero
 			bot.goal = level.next_door()
-			if tick < 600:
+			if tick < 600 and name == "twins":
 				inp = {"block": true}  # first he just holds his guard: the brothers take turns on him and swap
 				if tick == 3:
 					_say("he holds his guard: one brother attacks while the other guards and waits his turn")
 			else:
 				inp = bot.think(level.standing())
-				if tick == 600:
+				if tick == 600 and name == "twins":
 					_say("now he fights back (the bot plays him)")
 		"cat":
 			if in_level == 1:
@@ -121,6 +141,11 @@ func overlay(level) -> String:
 		note_left -= 1
 	var line := ""
 	match name:
+		"coach":
+			var c: Array = level.enemies.filter(func(e): return e["kind"] == "coach")
+			if not c.is_empty():
+				line = "Coach Crusher: %s, health %.0f of %.0f  ·  dizzied %d of 2" % [c[0]["f"].state, c[0]["f"].health,
+					c[0]["f"].max_health, c[0].get("dizzies", 0)]
 		"twins":
 			var tw: Array = level.enemies.filter(func(e): return e["kind"].begins_with("twin"))
 			line = "Twin Loans: %s  ·  together %.0f of %.0f health%s" % [

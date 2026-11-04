@@ -38,6 +38,10 @@ const KINDS := {
 	# prize, the stick
 	"twin_tall": {"health": 25.0, "brain": "TWIN", "drops": "stick", "twin": true},
 	"twin_short": {"health": 25.0, "brain": "TWIN", "twin": true},
+	# level 4's boss, Coach Crusher (the team's roster): gloves that block every punch, so kicks only; his prize waits on
+	# the team's call (the "Last Call" combo, or a first-aid kit and his whistle): a first-aid kit for now
+	"coach": {"health": 40.0, "brain": "COACH", "drops": "first_aid",
+		"gloves": ["punch", "cross", "power_punch", "hook", "uppercut", "elbow", "hammer_fist", "air_punch"]},
 	# the rest of the team's roster (enemy roster v2)
 	"wrench_mechanic": {"health": 14.0, "brain": "WRENCH_MECHANIC", "weapon": "wrench", "dodges": ["side_kick", "roundhouse"]},
 	"doorman": {"health": 18.0, "brain": "DOORMAN", "weapon": "shield"},
@@ -70,6 +74,12 @@ const TUMBLE_SPEED := 10.0  # px a tick down the flight
 const TUMBLE_DAMAGE := 1.5
 const TUMBLE_DOWN_EXTRA := 46  # on top of down_ticks and get_up_ticks: about 2 s on the street in all
 const ON_STAIRS_MAX := 2  # enemies on the slope at once; the rest wait at the top or the foot
+const BALL_SPEED := 10.0  # Coach Crusher's medicine ball, at the chest
+const BALL_DAMAGE := 2.0
+const TACKLE_DAMAGE := 3.0
+const TACKLE_REACH := 70.0  # he runs into the hero when this close along the street (and on his line of the street)
+const ROPES_DAZE := 70  # the tackle missed: he slams into the ropes and is open this long
+const TACKLE_WINDUP := 30  # first he backs off a few steps, head down, then charges: time to step aside (feel lab)
 const TWIN_CLIMB := 0.3  # how fast a Twin Loans brother goes up a flight, of his walk: knocked down it, about ten
 # seconds before he's back up (the team's roster, feel lab)
 const MAX_ON_SCREEN := 5  # never more than five enemies at once; the rest wait off screen (the team's fairness rules)
@@ -274,6 +284,7 @@ func step(inp: Dictionary) -> void:
 				e["volley_at"] = tick
 			if think.get("hurl", false) and e["f"].weapon != "":
 				_hurl(e["f"])
+			think = _coach(e, think)
 			_volley(e)
 			e["f"].step(think)
 	var all := everyone()
@@ -450,6 +461,67 @@ func _tumble(f, st: Dictionary) -> void:
 		hug = {}
 
 
+## Coach Crusher (the team's roster, level 4's boss): "ball" throws the medicine ball; "tackle" sends him running at
+## the hero along his line of the street until he hits him (a knockdown) or, the hero stepped aside, he slams into the
+## ropes at the room's edge and stands dazed, open for K K K; dizzied twice, he gives up.
+func _coach(e: Dictionary, think: Dictionary) -> Dictionary:
+	if e.get("kind", "") != "coach":
+		return think
+	var f = e["f"]
+	if f.defeated():
+		return think
+	if f.state == "dizzy" and not e.get("was_dizzy", false):
+		e["dizzies"] = e.get("dizzies", 0) + 1
+		if e["dizzies"] >= 2:  # he's had enough
+			f.health = 0.0
+			f._enter("ko")
+			early.append({"target": f, "result": "gives_up", "kind": "gives_up"})
+	e["was_dizzy"] = f.state == "dizzy"
+	if think.get("ball", false):
+		var dir := 1.0 if hero.x >= f.x else -1.0
+		projectiles.throw("ball", f.x + dir * 40.0, f.z, 110.0, 190.0, dir * BALL_SPEED, BALL_DAMAGE, f.team)
+		return {}
+	if think.get("tackle", false):
+		e["tackle_next"] = true  # (pressed as his last jab recovers: he goes once he's free)
+	if e.get("tackle_next", false) and f.state in Fighter.GROUND_STATES:
+		e.erase("tackle_next")
+		e["tackle"] = 1.0 if hero.x >= f.x else -1.0
+		e["tackle_t"] = 0
+		early.append({"target": f, "result": "tackle", "kind": "tackle"})
+	elif f.state in Fighter.HURT_STATES:
+		e.erase("tackle_next")
+	if not e.has("tackle"):
+		return think
+	f.charging = e.has("tackle")
+	if f.state in Fighter.HURT_STATES:
+		e.erase("tackle")
+		f.charging = false
+		return think
+	var dir: float = e["tackle"]
+	e["tackle_t"] += 1
+	if e["tackle_t"] <= TACKLE_WINDUP:
+		f.facing = int(dir)
+		if not f._blocked(f.x - dir * 2.4, f.z):
+			f.x = clampf(f.x - dir * 2.4, bounds().x + 40.0, bounds().y - 40.0)  # backing off for the run-up, facing him
+		return {}
+	if absf(hero.x - f.x) < TACKLE_REACH and absf(hero.z - f.z) <= f.tune["hit_depth"] and hero.hittable() and signf(hero.x - f.x) == dir:
+		hero.take_hit({"damage": TACKLE_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "tackle"}, f)
+		e.erase("tackle")
+		f.charging = false
+		e["brain"].wait = 60
+		early.append({"attacker": f, "target": hero, "result": "hit", "move": "tackle", "drop": "", "counter": false, "broke": "", "worn": ""})
+		return {}
+	var b := bounds()
+	if (dir > 0.0 and f.x >= b.y - 40.0) or (dir < 0.0 and f.x <= b.x + 40.0):
+		e.erase("tackle")
+		f.charging = false
+		f._enter("stagger")  # into the ropes: dazed, open
+		f.t = -ROPES_DAZE
+		early.append({"target": f, "result": "ropes", "kind": "ropes"})
+		return {}
+	return {"run": true, "mx": dir}
+
+
 ## Twin Loans (the team's roster, level 3's boss): while one brother attacks, the other holds his guard up and waits his
 ## turn; halfway through a combo they swap places ("Interest"), so an answer meant for the one swinging lands on the
 ## one guarding; at half their health together, both rush the hero at once ("Compound"). Knocked down a flight, a
@@ -596,6 +668,7 @@ func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave
 	f.weapon_snaps = KINDS[kind].get("snaps", false)
 	f.dodges = KINDS[kind].get("dodges", [])
 	f.parries = KINDS[kind].get("parries", [])
+	f.gloves = KINDS[kind].get("gloves", [])
 	f.too_quick = KINDS[kind].get("too_quick", false)
 	for k in ["walk_speed", "run_speed"]:
 		f.tune[k] = f.tune[k] * KINDS[kind].get("speed", 1.0)

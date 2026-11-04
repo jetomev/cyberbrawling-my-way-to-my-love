@@ -66,6 +66,8 @@ var soft := false  # a sparring friend: his blows don't hurt
 var shield := 0  # blows something he's holding will take for him (level 1's umbrella: one, then it breaks)
 ## The team's roster, each enemy's own trick: blows (by move) he ducks or hops out of, blows he parries with his
 ## weapon, slow weapons he's too quick for (the Neon Dancer)
+var charging := false  # winding up for or running a charge (Coach Crusher's tackle): what a watcher reads to step aside
+var gloves := []  # blows his guard takes every time from the front, without raising it (Coach Crusher's big gloves)
 var dodges := []
 var parries := []
 var too_quick := false
@@ -406,6 +408,9 @@ func take_hit(blow: Dictionary, attacker) -> String:
 		return "dodged"  # under it, or gone before it lands
 	if move in parries and facing == -dir and state in GROUND_STATES:
 		return "parried"  # caught on the flat of his blade
+	if move in gloves and facing == -dir and state in GROUND_STATES + ["block", "block_hit"]:
+		_enter("block_hit")
+		return "blocked"  # the big gloves take it: no harm done
 	if weapon == "shield" and facing == -dir:
 		return "shielded"  # everything from the front bounces off the Doorman's shield
 	if blow.get("effect", "") == "grab":
@@ -572,7 +577,7 @@ func _react() -> void:
 				else:
 					_recover()
 		"stagger":
-			_slide(tune["knockback"] * 0.8 * (1.0 - float(t) / tune["stagger_ticks"]))
+			_slide(tune["knockback"] * 0.8 * clampf(1.0 - float(t) / tune["stagger_ticks"], 0.0, 1.0))
 			if t >= tune["stagger_ticks"]:
 				_recover()
 		"push":

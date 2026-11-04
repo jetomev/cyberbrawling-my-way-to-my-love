@@ -47,12 +47,13 @@ const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 
 	"snick": Color(0.95, 1.3, 0.75), "bruiser_pipe": Color(1.1, 0.55, 0.5),  # Snick's glowing knife green-yellow
 	"big_mama": Color(1.5, 1.4, 1.25),  # Big Mama Noodle: an enormous white apron
 	"twin_tall": Color(1.3, 1.15, 0.75), "twin_short": Color(1.15, 1.0, 0.6),  # Twin Loans: matching checked suits
+	"coach": Color(0.7, 0.95, 1.35),  # Coach Crusher: an old blue tracksuit
 	# the rest of the roster, from the team's looks: the mechanic's blue overalls, the Doorman's black suit, the
 	# Dancer's bright tracksuit, the Enforcer's long dark coat, the lookout's neon raincoat, the Grabber's green glow
 	"wrench_mechanic": Color(0.7, 0.85, 1.25), "doorman": Color(0.45, 0.45, 0.5), "neon_dancer": Color(1.6, 1.2, 0.5),
 	"enforcer": Color(0.6, 0.5, 0.6), "lookout": Color(1.4, 1.5, 0.55), "grabber": Color(0.8, 1.35, 0.8)}
 ## Some are bigger or smaller than the hero (Twin Loans: one tall brother, one short)
-const KIND_SIZE := {"twin_tall": 1.1, "twin_short": 0.85}
+const KIND_SIZE := {"twin_tall": 1.1, "twin_short": 0.85, "coach": 1.15}
 const ENEMY_HEALTH := 12.0
 const RESPAWN_TICKS := 180
 
@@ -607,6 +608,11 @@ func _draw_flying() -> void:
 	var clock: int = level.tick if level != null else (trial.tick if trial != null else 0)
 	for p in flying:
 		var at := Vector2(p["x"], Street.GROUND_Y + p["z"] - (p["y0"] + p["y1"]) * 0.5)
+		if p["kind"] == "ball":  # Coach Crusher's medicine ball: big, brown, stitched
+			flying_view.draw_circle(at, 26.0, Color(0.45, 0.28, 0.16))
+			flying_view.draw_arc(at, 26.0, 0.0, TAU, 20, Color(0.08, 0.08, 0.1), 3.0)
+			flying_view.draw_line(at + Vector2(-20, -10), at + Vector2(20, 10), Color(0.85, 0.8, 0.7), 2.0)
+			continue
 		if p["kind"] == "soup":  # hot soup: an orange splash
 			flying_view.draw_circle(at, 18.0, Color(0.95, 0.55, 0.15, 0.9))
 			flying_view.draw_circle(at + Vector2(-14, 6), 9.0, Color(0.98, 0.7, 0.3, 0.8))

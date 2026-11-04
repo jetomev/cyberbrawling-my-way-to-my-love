@@ -112,10 +112,16 @@ const TWIN := {
 	"keep": 170.0, "strike": 115.0, "wait_min": 40, "wait_max": 90, "block_chance": 0.3, "block_ticks": 20,
 	"combos": [["punch", "punch", "punch"], ["punch", "kick", "punch"], ["kick", "punch", "punch"]],
 }
+## Coach Crusher, level 4's boss (the team's roster): medicine-ball throw, jab, jab, then a tackle (level.gd _coach
+## throws the ball and runs the tackle).
+const COACH := {
+	"keep": 200.0, "strike": 120.0, "wait_min": 100, "wait_max": 170, "block_chance": 0.0, "block_ticks": 0,
+	"combos": [["ball", "punch", "punch", "tackle"], ["punch", "punch"], ["ball", "punch", "punch"]],
+}
 ## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
 const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER, "DJ_VOLT": DJ_VOLT,
 	"SNICK": SNICK, "BIG_MAMA": BIG_MAMA, "WRENCH_MECHANIC": WRENCH_MECHANIC, "DOORMAN": DOORMAN,
-	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN}
+	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN, "COACH": COACH}
 
 var me
 var foe

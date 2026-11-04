@@ -1,0 +1,41 @@
+{
+  "name": "The gym (a showcase for the testers, not a level of the game)",
+  "about": "Javier & Claude, 2026-11-04. Level 4's boss from the team's roster, Coach Crusher, in a plain underground gym: medicine ball, jab, jab, tackle; his big gloves block every punch, so kicks only; step aside from the tackle and he slams into the ropes; dizzy him twice and he gives up. Not in levels.json: level 4 places him.",
+  "floors": [
+    {
+      "name": "the stairs down",
+      "length": 1200,
+      "obstacles": [],
+      "items": [],
+      "waves": []
+    },
+    {
+      "name": "the underground gym",
+      "length": 1920,
+      "obstacles": [],
+      "items": [
+        [
+          "first_aid",
+          300,
+          40
+        ]
+      ],
+      "waves": []
+    }
+  ],
+  "links": [
+    {
+      "from": 0,
+      "x": 1000,
+      "to": 1,
+      "to_x": 300,
+      "auto": true
+    }
+  ],
+  "switches": [],
+  "boss": {
+    "floor": 1,
+    "x": 1300,
+    "kind": "coach"
+  }
+}

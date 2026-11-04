@@ -36,6 +36,14 @@ func think(enemies: Array) -> Dictionary:
 		return inp
 	if Brain.to_the_stairs(me, foe, inp):
 		return inp
+	# a charge coming along his line of the street (Coach Crusher's tackle): step out of it
+	if foe.charging and absf(foe.x - me.x) < 600.0 and absf(foe.z - me.z) <= me.tune["hit_depth"] + 20.0 \
+			and me.state in ["idle", "walk", "block"]:
+		var away := 1.0 if me.z >= foe.z else -1.0  # away from his line, and stick to it
+		if (away > 0.0 and me.z > me.tune["street_depth"] - 40.0) or (away < 0.0 and me.z < 40.0):
+			away = -away  # no room that way: the other
+		inp["mz"] = away
+		return inp
 	var dx: float = foe.x - me.x
 	var toward := 1.0 if dx >= 0.0 else -1.0
 	if block_left > 0:
