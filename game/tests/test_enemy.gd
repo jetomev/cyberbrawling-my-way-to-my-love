@@ -186,7 +186,7 @@ func test_the_last_blow_puts_him_down_for_good_and_he_drops_his_weapon() -> void
 	var p = pair()
 	var w = StreetWorld.new()
 	p[1].health = 1.0
-	p[1].weapon = "pipe"
+	p[1].take_weapon("pipe")
 	var events := play(p[0], p[1], [{"punch": true}], 200, null, w)
 	eq(events[0]["drop"], "pipe", "knocked down, he drops the pipe")
 	eq(w.items.size(), 1, "it lies on the street")
@@ -292,13 +292,12 @@ func test_bodies_dont_walk_through_each_other() -> void:
 func test_a_perfect_block_disarms_him() -> void:
 	var p = pair()
 	var w = StreetWorld.new()
-	p[0].weapon = "pipe"  # the attacker carries the pipe this time
-	p[1].step({"block": true})
+	p[0].take_weapon("pipe")  # the attacker carries the pipe this time: a slower swing, so the guard goes up late
 	var f := Fight.new()
 	var events := []
 	p[0].step({"punch": true})
-	for i in 20:
-		p[1].step({"block": true})
+	for i in 30:
+		p[1].step({"block": i >= 4})
 		events.append_array(f.step([p[0], p[1]], w))
 		p[0].step({})
 	eq(events[0]["result"], "perfect", "a perfect block")
@@ -310,7 +309,7 @@ func test_a_perfect_block_disarms_him() -> void:
 func test_a_counter_disarms_him() -> void:
 	var p = pair()
 	var w = StreetWorld.new()
-	p[1].weapon = "pipe"
+	p[1].take_weapon("pipe")
 	p[1].health = 99.0
 	p[1].facing = -1
 	p[1].step({"kick": true})  # he starts a kick: slower to come out than the hero's jab

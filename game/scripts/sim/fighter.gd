@@ -14,6 +14,7 @@ extends RefCounted
 
 const Tuning := preload("res://scripts/sim/tuning.gd")
 const Moves := preload("res://scripts/sim/moves.gd")
+const Weapons := preload("res://scripts/sim/weapons.gd")
 
 const GROUND_STATES := ["idle", "walk", "stand", "stroll", "run"]
 const SWITCH_STATES := ["to_walk", "to_fight"]
@@ -51,7 +52,8 @@ var climb_to := Vector2.ZERO  # (x, y) where it ends, on top
 var team := 0  # 0 = the hero's side; blows only land on the other team
 var max_health := 20.0
 var health := 20.0
-var weapon := ""  # what this fighter carries ("pipe", …); an enemy drops it when knocked down
+var weapon := ""  # what this fighter carries ("pipe", …); an enemy drops it when knocked down (take_weapon())
+var weapon_hits_left := 0  # it wears out (D-14)
 var knock_dir := 1  # which way the last blow drove him (+1 right, -1 left)
 var finishers_taken := 0  # combo finishers landed on him in a row (D-19: two make him dizzy)
 var last_finisher := -1000  # the tick the last one landed
@@ -205,6 +207,12 @@ func _ground(mx: float, mz: float, run := false) -> void:
 			z = nz
 	if state == "climb":
 		return
+	# walking over a weapon with an empty hand picks it up (the bag for more than one comes with Stage 4)
+	if weapon == "" and world != null and not world.items.is_empty():
+		var it: Dictionary = Weapons.within_reach(world.items, x, z)
+		if not it.is_empty():
+			world.items.erase(it)
+			take_weapon(it["kind"])
 	if world != null and world.floor_at(x, z, y) < y - 0.5:
 		vy = 0.0  # walked off an edge: fall
 		_enter("jump")
@@ -282,10 +290,18 @@ func _start(action: String, mx: float) -> void:
 		chain = ""
 		chain_left = 0
 		_enter("sweep")
+	elif action == "punch" and weapon != "" and not broken("arm_f"):
+		# holding a weapon, the punch button swings it: swing, backswing, overhead smash (a broken arm can't)
+		vx = 0.0
+		attack_serial += 1
+		var link: Array = Weapons.next(chain if chain.begins_with("W") else "", "W")
+		chain = link[0]
+		chain_left = 0
+		_enter(link[1])
 	else:
 		vx = 0.0
 		attack_serial += 1
-		var link: Array = Moves.next(chain, "P" if action == "punch" else "K")
+		var link: Array = Moves.next(chain if not chain.begins_with("W") else "", "P" if action == "punch" else "K")
 		chain = link[0]
 		chain_left = 0
 		_enter(link[1])
@@ -373,6 +389,31 @@ func _hurt(part: String, amount: float) -> void:
 	pain[part] += amount
 	if pain_stage(part) == 3 and was < 3:
 		just_broke = part
+
+
+## Takes a weapon in hand, fresh, with all its hits to come.
+func take_weapon(kind: String) -> void:
+	weapon = kind
+	weapon_hits_left = Weapons.TABLE[kind]["hits"] if Weapons.is_weapon(kind) else 0
+	tune["weapon"] = kind
+
+
+## Lets go of it (knocked loose, knocked down, worn out); returns what it was.
+func drop_weapon() -> String:
+	var was := weapon
+	weapon = ""
+	weapon_hits_left = 0
+	tune.erase("weapon")
+	return was
+
+
+## A blow with the weapon landed (on a body or a guard): it wears; worn through, it breaks and is gone. Returns what
+## broke, or "".
+func wear(amount: int) -> String:
+	if weapon == "" or amount <= 0:
+		return ""
+	weapon_hits_left -= amount
+	return drop_weapon() if weapon_hits_left <= 0 else ""
 
 
 ## Between levels the body mends (the hero carries his damage into the boss fight; DESIGN).

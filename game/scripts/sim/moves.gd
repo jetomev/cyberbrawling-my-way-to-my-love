@@ -15,6 +15,9 @@ extends RefCounted
 ## The jab, the opening kick (now the low kick) and the flying kick take their timing and reach from the tuning table
 ## (the feel lab edits them).
 const TUNED := ["punch", "kick", "air_kick"]
+## The weapon blows (swing, backswing, smash) are moves too; their numbers come from the weapon in hand, which the
+## fighter keeps in its tuning as "weapon" (weapons.gd).
+const Weapons := preload("res://scripts/sim/weapons.gd")
 
 const TABLE := {
 	# opener P: the jab
@@ -72,7 +75,7 @@ const FINISHER_LENGTH := 3
 
 
 static func is_move(name: String) -> bool:
-	return TABLE.has(name)
+	return TABLE.has(name) or Weapons.is_swing(name)
 
 
 static func is_air(name: String) -> bool:
@@ -81,6 +84,9 @@ static func is_air(name: String) -> bool:
 
 ## The full data for a move, with the tuned moves' timing and reach read from the tuning table.
 static func data(name: String, tune: Dictionary) -> Dictionary:
+	if Weapons.is_swing(name):
+		var held: String = tune.get("weapon", "")
+		return Weapons.swing_data(name, held if Weapons.is_weapon(held) else "stick")
 	var d: Dictionary = TABLE[name].duplicate()
 	if name in TUNED:
 		for k in ["startup", "active", "recovery", "reach"]:
@@ -94,6 +100,8 @@ static func data(name: String, tune: Dictionary) -> Dictionary:
 ## True for the blow that ends a three-press chain (the power punch, the side kick, …): two of them landing in a row
 ## on one enemy make him dizzy (D-19).
 static func is_finisher(name: String) -> bool:
+	if name == "smash":
+		return true  # the weapon chain's third blow
 	for seq in COMBOS:
 		if (seq as String).length() >= FINISHER_LENGTH and COMBOS[seq] == name:
 			return true

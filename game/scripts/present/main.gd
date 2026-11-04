@@ -143,7 +143,7 @@ func _spawn_enemy(at_x: float) -> void:
 	var f = Fighter.new(t, clampf(at_x, tune["street_left"] + 100.0, tune["street_right"] - 100.0), 80.0, world)
 	f.team = 1
 	f.facing = -1 if f.x > hero.x else 1
-	f.weapon = "pipe"
+	f.take_weapon("pipe")
 	spawned += 1
 	var view = HeroView.new(ENEMY_TINT)
 	view.name = "Thug%d" % spawned

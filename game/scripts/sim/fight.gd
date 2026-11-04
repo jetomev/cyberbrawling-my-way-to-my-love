@@ -19,7 +19,7 @@ var _hit := {}  # attacker id -> [attack serial, ids already hit by that blow]
 
 ## Settles this tick's blows. Returns what happened, one entry per blow that landed:
 ## {attacker, target, result ("hit", "blocked", "perfect", "evaded"), move, drop (what fell, or ""), counter (caught
-## winding up), broke (the part the blow broke, or "")}.
+## winding up), broke (the part the blow broke, or ""), worn (the weapon that broke on it, or "")}.
 func step(fighters: Array, world = null) -> Array:
 	var events := []
 	for a in fighters:
@@ -58,15 +58,17 @@ func step(fighters: Array, world = null) -> Array:
 					drop = _disarm(a, world)
 			if result == "hit":
 				a.finishers_taken = 0  # landing a blow of his own breaks a run of combos on him
+			var worn := ""
+			if result in ["hit", "blocked"]:
+				worn = a.wear(blow.get("wear", 0))  # a weapon wears on every blow that meets something
 			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "drop": drop, "counter": winding_up and result == "hit",
-				"broke": d.just_broke})
+				"broke": d.just_broke, "worn": worn})
 		_hit[id] = seen
 	return events
 
 
 static func _disarm(f, world) -> String:
-	var what: String = f.weapon
-	f.weapon = ""
+	var what: String = f.drop_weapon()
 	if world != null:
 		world.drop(what, f.x, f.z)
 	return what

@@ -25,6 +25,12 @@ const LAND_BLEND_TICKS := 18
 ## Pain on the drawing (D-9, no blood): each part's tint by its stage, fresh / bruised (purple) / swollen (red, and a
 ## swollen head puffs up) / broken (dark); the grey-box stand-in for the real art's damage sheets.
 const PAIN_TINT := [Color.WHITE, Color(0.9, 0.78, 1.05), Color(1.12, 0.72, 0.74), Color(0.78, 0.55, 0.62)]
+## The weapon in the lead hand, drawn through the fist: its length and colour by kind (the team's art replaces it).
+const WEAPON_LOOK := {"knife": [56.0, 8.0, Color(0.85, 0.87, 0.9)], "stick": [130.0, 10.0, Color(0.55, 0.42, 0.28)],
+	"pipe": [120.0, 12.0, Color(0.62, 0.64, 0.68)], "wrench": [80.0, 14.0, Color(0.5, 0.52, 0.56)],
+	"bat": [130.0, 16.0, Color(0.72, 0.58, 0.38)], "sword": [160.0, 9.0, Color(0.88, 0.9, 0.95)]}
+var weapon_drawn := ""
+var weapon_node: Polygon2D
 const PAIN_BONES := {
 	"head": ["head", "neck"], "chest": ["chest", "belly"],
 	"arm_f": ["arm_f_upper", "arm_f_lower", "hand_f"], "arm_b": ["arm_b_upper", "arm_b_lower", "hand_b"],
@@ -211,8 +217,30 @@ func sync(f, ground_y: float) -> void:
 				part.modulate = PAIN_TINT[stage]
 			else:
 				part.modulate *= PAIN_TINT[stage]
+	_show_weapon(f.weapon)
 	var head_part: Node2D = bones["head"].get_node("Part")
 	head_part.scale = Vector2.ONE * (1.1 if f.pain_stage("head") >= 2 else 1.0)
+
+
+func _show_weapon(kind: String) -> void:
+	if kind == weapon_drawn:
+		return
+	weapon_drawn = kind
+	if weapon_node == null:
+		weapon_node = Polygon2D.new()
+		weapon_node.name = "Weapon"
+		weapon_node.rotation_degrees = -78.0  # held through the fist, pointing up and forward from the hand
+		weapon_node.z_index = 1
+		bones["hand_f"].add_child(weapon_node)
+	weapon_node.visible = WEAPON_LOOK.has(kind)
+	if not weapon_node.visible:
+		return
+	var look: Array = WEAPON_LOOK[kind]
+	var l: float = look[0]
+	var w: float = look[1] * 0.5
+	weapon_node.polygon = PackedVector2Array([Vector2(-18, -w), Vector2(l, -w * (0.4 if kind in ["knife", "sword"] else 1.0)),
+		Vector2(l, w * (0.4 if kind in ["knife", "sword"] else 1.0)), Vector2(-18, w)])
+	weapon_node.color = look[2]
 
 
 ## Where the hips, hands, feet and the top of the head are drawn right now, in this view's own space (its origin is the spot under the

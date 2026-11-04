@@ -90,8 +90,9 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Two hero combos in a row make an enemy dizzy: the window for a finishing combo (solo) (2026-11-03: within 4 s, no blow of his between; dazed 2.5 s)
 - [x] Pain system in grey boxes: damage stages per part, broken arm/leg effects; no blood (solo) (#3) (2026-11-03: head, body, arms, legs go bruised → swollen → broken by where blows land; a broken leg limps, a broken arm hits at half and hangs; heals between levels)
 - [ ] Hit sounds, voices and the crack wired to the fight's events, from the team's sound batch
-- [ ] Pick up a weapon; it stays in the hand (solo)
-- [ ] Weapon combos (W,W,W swing, backswing, overhead smash; W,P,K) and each weapon's feel: knife, sword, bat, pipe/wrench (solo)
+- [x] Pick up a weapon; it stays in the hand (solo) (2026-11-03: walk over it with an empty hand; drawn in the lead hand)
+- [x] Weapon combos (W,W,W swing, backswing, overhead smash) and each weapon's feel: knife, sword, bat, pipe/wrench, stick (solo) (2026-11-03: holding one, A swings it; each wears out after its hits)
+- [ ] Weapon mixes W,P,K (solo)
 - [ ] Throw the held weapon at a far enemy; it lands and can be picked up again (solo)
 - [ ] Layers: foreground props, play lane, skyline; in front / behind (solo)
 - [x] Keyboard + gamepad, dead zone, drifting-stick test (solo) (2026-11-01: brought forward for F-1, the G13 stuck stick; 51 tests)

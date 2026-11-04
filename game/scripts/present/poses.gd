@@ -442,6 +442,28 @@ const SHOTS := {
 	# thrown up by the uppercut: arched back, limbs loose, coming round onto his back
 	"launch": [["start", {"torso": -20.0, "head": -40.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 60.0, "arm_f_lower": -30.0, "arm_b_upper": 90.0, "arm_b_lower": -20.0, "leg_f_upper": -20.0, "leg_f_lower": 30.0, "leg_b_upper": 10.0, "leg_b_lower": 30.0, "tumble": -15.0}],
 		["fall_mid", {"torso": -10.0, "head": -20.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 90.0, "arm_f_lower": -20.0, "arm_b_upper": 110.0, "arm_b_lower": -20.0, "leg_f_upper": -50.0, "leg_f_lower": 40.0, "leg_b_upper": -20.0, "leg_b_lower": 40.0, "tumble": -60.0}]],
+	# the weapon blows (weapons.gd), the weapon in the lead hand: the swing comes from behind the shoulder, across and
+	# level, the hips leading; the backswing cocks high across the body and cuts back down the other way; the overhead
+	# smash lifts it high over the head and brings it straight down, the whole body over it
+	"swing": [["start", {}],
+		["windup", {"cover_f": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -70.0, "turn": -25.0, "hip_turn": -6.0, "hip_x": -6.0, "torso": 6.0}],
+		["active", {"cover_f": 0.0, "arm_f_upper": -92.0, "arm_f_lower": -6.0, "turn": 35.0, "hip_turn": 12.0, "hip_x": 12.0, "torso": 16.0, "step_f": 10.0}],
+		["active_end", {"cover_f": 0.0, "arm_f_upper": -92.0, "arm_f_lower": -6.0, "turn": 35.0, "hip_turn": 12.0, "hip_x": 12.0, "torso": 16.0, "step_f": 10.0}],
+		["follow", {"cover_f": 0.0, "arm_f_upper": -120.0, "arm_f_lower": -40.0, "turn": 45.0, "hip_turn": 14.0, "hip_x": 8.0, "torso": 14.0, "step_f": 6.0}],
+		["end", {}]],
+	"backswing": [["start", {}],
+		["windup", {"cover_f": 0.0, "arm_f_upper": -150.0, "arm_f_lower": -50.0, "turn": 40.0, "hip_turn": 10.0, "torso": 4.0}],
+		["active", {"cover_f": 0.0, "arm_f_upper": -78.0, "arm_f_lower": 0.0, "turn": -10.0, "hip_turn": -4.0, "hip_x": 10.0, "torso": 18.0, "step_f": 8.0}],
+		["active_end", {"cover_f": 0.0, "arm_f_upper": -78.0, "arm_f_lower": 0.0, "turn": -10.0, "hip_turn": -4.0, "hip_x": 10.0, "torso": 18.0, "step_f": 8.0}],
+		["follow", {"cover_f": 0.0, "arm_f_upper": -40.0, "arm_f_lower": -20.0, "turn": -20.0, "hip_x": 4.0, "torso": 14.0}],
+		["end", {}]],
+	"smash": [["start", {}],
+		["windup", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -178.0, "arm_f_lower": -40.0, "arm_b_upper": -160.0, "arm_b_lower": -50.0, "torso": -8.0, "head": 10.0, "hip_x": -10.0, "rise_b": 0.3}],
+		["load", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -178.0, "arm_f_lower": -40.0, "arm_b_upper": -160.0, "arm_b_lower": -50.0, "torso": -8.0, "head": 10.0, "hip_x": -10.0, "rise_b": 0.3}],
+		["active", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -70.0, "arm_f_lower": 0.0, "arm_b_upper": -60.0, "arm_b_lower": -20.0, "torso": 30.0, "head": -6.0, "hip_x": 16.0, "hip_y": 14.0, "step_f": 14.0}],
+		["active_end", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -70.0, "arm_f_lower": 0.0, "arm_b_upper": -60.0, "arm_b_lower": -20.0, "torso": 30.0, "head": -6.0, "hip_x": 16.0, "hip_y": 14.0, "step_f": 14.0}],
+		["follow", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -45.0, "arm_f_lower": 0.0, "arm_b_upper": -40.0, "arm_b_lower": -20.0, "torso": 34.0, "head": -10.0, "hip_x": 14.0, "hip_y": 16.0, "step_f": 14.0}],
+		["end", {}]],
 	# X switches stance (Javier, 2026-11-02 18:48): the guard eases down to standing easy, and back up again
 	"to_walk": [["start", {"feet": 1.0}], ["end", STAND]],
 	"to_fight": [["start", STAND], ["end", {"feet": 1.0}]]
