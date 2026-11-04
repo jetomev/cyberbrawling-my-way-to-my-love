@@ -772,6 +772,26 @@ func _draw_flying() -> void:
 					pts.append(Vector2(ex + side * give, Street.GROUND_Y + float(hit["z"]) - hgt))
 				pts.append(Vector2(ex, Street.GROUND_Y + depth - hgt))
 				flying_view.draw_polyline(pts, [Color(0.9, 0.2, 0.2), Color(0.95, 0.95, 0.95), Color(0.2, 0.35, 0.9)][k], 5.0)
+	var fl_plan: Dictionary = level.plan["floors"][level.on]
+	if fl_plan.has("railing_gap"):  # level 4's balcony: a low railing along its front edge, broken by the gap
+		var g: Array = fl_plan["railing_gap"]
+		var front: float = Street.GROUND_Y + tune["street_depth"] + 14.0
+		var rail := Color(0.55, 0.55, 0.6)
+		var x0 := 0.0
+		for seg in [[x0, float(g[0])], [float(g[1]), float(fl_plan["length"])]]:
+			for hgt in [110.0, 190.0]:  # the mid bar and the top rail
+				flying_view.draw_line(Vector2(seg[0], front - hgt), Vector2(seg[1], front - hgt), rail, 6.0)
+			var px: float = seg[0]
+			while px <= seg[1]:  # posts every 160 px, and at each side of the gap
+				flying_view.draw_line(Vector2(px, front), Vector2(px, front - 190.0), rail, 6.0)
+				px += 160.0
+			flying_view.draw_line(Vector2(seg[1], front), Vector2(seg[1], front - 190.0), rail, 6.0)
+		# the gap: only a low bar, knee-high, the goons tip over it (the hero's held by the balcony's edge)
+		var bx: float = float(g[0])
+		while bx < float(g[1]):
+			flying_view.draw_line(Vector2(bx, front - 70.0), Vector2(minf(bx + 30.0, float(g[1])), front - 70.0),
+				Color(0.95, 0.8, 0.1) if int((bx - float(g[0])) / 30.0) % 2 == 0 else Color(0.1, 0.1, 0.12), 7.0)
+			bx += 30.0
 	for strip in level.plan["floors"][level.on].get("live", []):  # a live floor strip: hazard stripes, crackling when on
 		var z0: float = strip[4] if strip.size() > 5 else 0.0
 		var z1: float = strip[5] if strip.size() > 5 else tune["street_depth"]

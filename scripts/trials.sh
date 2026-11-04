@@ -16,7 +16,8 @@ for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy
     scene:proof_lookout@tests/levels/open_street scene:proof_grabber@tests/levels/open_street \
     scene:proof_swap@level3 scene:proof_shove@tests/levels/stairs scene:proof_climb@tests/levels/twins \
     scene:proof_escape@tests/levels/twins scene:proof_coach@coach_gym scene:proof_chrome@chrome_casino \
-    scene:proof_crane@crane_docks scene:proof_static@static_plant scene:proof_rook@rook_penthouse scene:proof_ropes@coach_gym scene:proof_cab@crane_docks; do
+    scene:proof_crane@crane_docks scene:proof_static@static_plant scene:proof_rook@rook_penthouse scene:proof_ropes@coach_gym scene:proof_cab@crane_docks \
+    scene:proof_gap@level4; do
   ARGS=(--trial "$T")
   LIMIT=300
   if [[ "$T" == scene:* ]]; then

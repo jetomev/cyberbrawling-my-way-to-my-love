@@ -111,6 +111,13 @@ const SHOVE_TICKS := 50  # the Crane Operator flying out of his cab: this long
 const SHOVE_DISTANCE := 1150.0  # out through the cab's open door and off the screen
 const SHOVE_HEIGHT := 140.0  # up in an arc...
 const SHOVE_DROP := 260.0  # ...and down past the cab's floor as he goes over the side
+## Level 4's balcony gap (the team's page, Javier's yes 2026-11-04): a goon standing at the gap in the low railing, at the
+## balcony's front edge, push-kicked or knocked down, tips over the bar and drops to the ring hall below: out of the
+## fight, counted as beaten, nothing dropped. The hero never goes over (the street's edge holds him: for him it's a wall).
+const GAP_REACH := 45.0  # how near the front edge he must stand to be "at the gap"
+const GAP_TICKS := 40  # tipping over the bar and dropping out of sight
+const GAP_FORWARD := 60.0  # out past the railing...
+const GAP_DROP := 520.0  # ...and down to the floor below
 const RING_IN := 150.0  # a ring's ropes stand this far inside the room's walls (so the camera shows them give)
 const SWAP_LANE := 45.0  # crossing, the attacker passes this far in front of where they stood, his brother behind
 const SWAP_TICKS_MAX := 150  # a crossing that hasn't arrived by then (a prop in the way) ends where they stand
@@ -137,7 +144,6 @@ const CONTAINER_TOP := 100.0  # it swings this low: jump it (a jump peaks at 150
 const CONTAINER_DAMAGE := 3.0
 const CRATE_WARN := 40  # a crate's shadow shows this long before it lands
 const CRATE_DAMAGE := 2.0
-const CRANE_STOP := 600  # a switch stops the crane this long
 const HORN_REACH := 320.0
 const ROOK_BREAKS := 3  # perfect blocks on his last cut that break his sword
 const CHECKMATE_EVERY := 600  # his Enforcers come at most this often (one a door switch still standing)
@@ -186,7 +192,7 @@ var compound := false  # Twin Loans at half their health: both rush the hero tog
 var climbing_back := {}  # fighters tumbled down a flight, on their way back up (a Twin Loans brother: slowly)
 var live_until := -1  # Mr. Static's floor, live till this tick
 var shocked_beat := {}  # who a live strip has shocked this beat
-var crane := {}  # the docks' crane (the plan's "crane"): {next, container {x, dir, hit}, crates [{x, z, at}], stopped_until}
+var crane := {}  # the docks' crane (the plan's "crane"): {next, container {x, dir, hit}, crates [{x, z, at}]}
 var hint_text := ""  # a wave's small hint, the first time (shown till hint_until)
 var hint_until := -1
 var hints_shown := {}
@@ -360,6 +366,9 @@ func _moment_hints() -> void:
 				_show_hint(hs["parry"])
 	if hs.has("cane") and enemies.any(func(e): return not e["gone"] and e["kind"] == "chrome" and e["f"].attack_phase() == "startup"):
 		_show_hint(hs["cane"])
+	if hs.has("gap") and enemies.any(func(e): return not e["gone"] and not e["f"].defeated() \
+			and at_gap(e["f"]) and absf(e["f"].x - hero.x) < 400.0):
+		_show_hint(hs["gap"])  # a goon first stands at the balcony's railing gap, the hero near (level 4)
 	if hs.has("too_slow"):
 		for ev in events:
 			if ev.get("attacker") == hero and ev.get("result", "") == "dodged" and hero.weapon != "" \
@@ -413,7 +422,8 @@ func step(inp: Dictionary) -> void:
 	if friend != null and on == 0:
 		friend.step(tutor.think())
 	for e in enemies:
-		if not e["gone"] and not e.has("shoved"):  # (the Crane Operator flying out of his cab: _out_of_the_cab carries him)
+		if not e["gone"] and not e.has("shoved") and not e.has("over_rail"):  # (the Crane Operator flying out of his cab, a goon
+			# going over the balcony's railing: _out_of_the_cab and _over_the_rail carry them)
 			e["was"] = [e["f"].x, e["f"].y, e["f"].z]  # where he stood, should the stairs be full
 			var think: Dictionary = _crossing(e) if not crossing.is_empty() and (crossing["a"] == e or crossing["b"] == e) \
 					else e["brain"].think()
@@ -490,6 +500,8 @@ func step(inp: Dictionary) -> void:
 	_crane()
 	_shoved_out()
 	_out_of_the_cab()
+	_through_the_gap()
+	_over_the_rail()
 	_vending()
 	_stairs()
 	_switches()
@@ -976,15 +988,16 @@ func _rook_after() -> void:
 
 ## The docks' crane (the team's roster, level 6's boss): while it runs and the hero is on one of its floors, every
 ## CRANE_EVERY a container swings along the floor, low (jump it, or be on another floor), then two crates drop near the
-## hero (their shadows show first). A crane switch stops it CRANE_STOP; with every switch thrown the cab opens.
+## hero (their shadows show first). A crane switch, once thrown, stays thrown: the container stops swinging along its
+## floor for good (the team's roster v7); with every switch thrown the cab opens.
 func _crane() -> void:
 	var c: Dictionary = plan.get("crane", {})
 	if c.is_empty():
 		return
 	if crane.is_empty():
-		crane = {"next": tick + CRANE_EVERY, "container": {}, "crates": [], "stopped_until": -1}
+		crane = {"next": tick + CRANE_EVERY, "container": {}, "crates": []}
 	var on_its_floor: bool = c.get("floors", []).any(func(n): return int(n) == on)  # (numbers from a layout read as decimals)
-	var running: bool = on_its_floor and tick >= crane["stopped_until"] and not plan_boss_down()
+	var running: bool = on_its_floor and not crane_stopped_here() and not plan_boss_down()
 	var b := bounds()
 	var box: Dictionary = crane["container"]
 	if box.is_empty() and running and tick >= crane["next"] - CRANE_WARN and not crane.get("warned", false):
@@ -1021,6 +1034,13 @@ func _crane() -> void:
 			else:
 				events.append({"target": hero, "result": "crate_smash", "kind": "crate"})
 	hero.no_swing = plan["floors"][on].get("cab", false)
+
+
+## Whether this floor's crane switch is thrown (then the container never swings along it again).
+func crane_stopped_here() -> bool:
+	var switches: Array = plan.get("switches", [])
+	return range(switches.size()).any(func(i): return switches[i].get("crane", false) and int(switches[i]["floor"]) == on \
+			and flipped.has(i))
 
 
 func plan_boss_down() -> bool:
@@ -1106,6 +1126,60 @@ func _out_of_the_cab() -> void:
 			d._enter("ko")
 			e["gone"] = true  # out of the cab, down on the container below: out of the fight
 			events.append({"target": d, "result": "out_of_cab", "kind": "out_of_cab"})
+
+
+## The balcony's railing gap on this floor, [x0, x1] ([] if none).
+func railing_gap() -> Array:
+	return plan["floors"][on].get("railing_gap", [])
+
+
+## Whether a fighter stands at the railing gap: inside it along the balcony, at its front edge.
+func at_gap(f) -> bool:
+	var g: Array = railing_gap()
+	return not g.is_empty() and f.x >= float(g[0]) and f.x <= float(g[1]) and f.z >= tune["street_depth"] - GAP_REACH \
+			and f.y < 1.0
+
+
+## A goon at the gap push-kicked or knocked down by the hero: over the railing he goes.
+func _through_the_gap() -> void:
+	if railing_gap().is_empty():
+		return
+	for ev in events:
+		var d = ev.get("target")
+		if ev.get("attacker") != hero or ev.get("result", "") != "hit" or d == null:
+			continue
+		if not (ev.get("move", "") == "push_kick" or d.state in ["knockdown", "launch", "ko"]):  # (knocked out there: over too)
+			continue
+		for e in enemies:
+			if e["f"] == d and not e["gone"] and not e["boss"] and not e.has("over_rail") and at_gap(d) and not (d.state == "ko" and e["dropped"]):
+				e["over_rail"] = {"t": 0, "z0": d.z, "x0": d.x}
+				e["dropped"] = true  # (nothing left behind: it all goes over with him)
+				if ev.get("drop", "") != "":  # a weapon knocked loose by the same blow goes over too
+					for i in range(world.items.size() - 1, -1, -1):
+						if world.items[i]["kind"] == ev["drop"]:
+							world.items.remove_at(i)
+							break
+				d._enter("launch")
+				events.append({"target": d, "result": "over_the_rail", "kind": "over_the_rail"})
+
+
+## Over the bar and down to the ring hall below, out of sight: out of the fight, counted as beaten.
+func _over_the_rail() -> void:
+	for e in enemies:
+		if not e.has("over_rail") or e["gone"]:
+			continue
+		var s: Dictionary = e["over_rail"]
+		var d = e["f"]
+		s["t"] += 1
+		var p: float = float(s["t"]) / GAP_TICKS
+		d.x = s["x0"]
+		d.z = s["z0"] + GAP_FORWARD * minf(p * 2.0, 1.0)
+		d.y = 40.0 * sin(PI * minf(p * 2.0, 1.0)) - GAP_DROP * maxf(p - 0.4, 0.0) * maxf(p - 0.4, 0.0) / 0.36
+		if s["t"] >= GAP_TICKS:
+			d.health = 0.0
+			d._enter("ko")
+			e["gone"] = true
+			events.append({"target": d, "result": "down_below", "kind": "over_the_rail"})
 
 
 ## When the bot should jump the crane's container: it's coming at him and about to reach him.
@@ -1627,9 +1701,8 @@ func _switches() -> void:
 			continue
 		if box["x0"] - SWITCH_REACH <= s["x"] and s["x"] <= box["x1"] + SWITCH_REACH:
 			flipped[i] = true
-			if s.get("crane", false):  # a crane switch: it stops the crane a while; all of them open the cab
-				if not crane.is_empty():
-					crane["stopped_until"] = tick + CRANE_STOP
+			if s.get("crane", false):  # a crane switch: thrown for good, the container stops along this floor; all of them
+				# thrown open the cab
 				events.append({"target": hero, "result": "crane_stopped", "kind": "switch"})
 				var all_crane: Array = range(switches.size()).filter(func(k): return switches[k].get("crane", false))
 				if all_crane.all(func(k): return flipped.has(k)):

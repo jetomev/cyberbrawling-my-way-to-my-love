@@ -1,6 +1,6 @@
 extends "res://tests/test_case.gd"
 ## The Crane Operator, level 6's boss (the team's roster, the bosses): from his cab a container swings low along the
-## floor the hero is on (jump it), then crates drop (shadows first); a switch on each floor stops the crane a while;
+## floor the hero is on (jump it), then crates drop (shadows first); a switch on each floor, once thrown, stops the crane along that floor for good (roster v7);
 ## all three thrown open the cab; in the cab there's no room to swing a weapon; P P K shoves him out, and that's it.
 
 const Level := preload("res://scripts/sim/level.gd")
@@ -68,6 +68,15 @@ func test_a_switch_stops_the_crane() -> void:
 		l.step({})
 		swung = swung or not l.crane["container"].is_empty()
 	check(not swung, "the crane's stopped: no container")
+	for i in Level.CRANE_EVERY * 3 + 600:  # (it used to start again after 600 ticks)
+		l.step({})
+		swung = swung or not l.crane["container"].is_empty()
+	check(not swung, "and it stays stopped along this floor, for good (roster v7)")
+	l._go_to(1, 300.0)  # up on the next floor, its switch not thrown: the crane still swings there
+	for i in Level.CRANE_EVERY + 100:
+		l.step({"jump": l.crane_jump_cue()})
+		swung = swung or not l.crane["container"].is_empty()
+	check(swung, "the next floor's switch not thrown: the container still swings along it")
 
 
 func test_all_three_switches_open_the_cab_and_its_no_room_for_a_weapon() -> void:

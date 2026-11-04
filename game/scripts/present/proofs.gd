@@ -23,11 +23,13 @@ extends RefCounted
 ## proof_ropes     Coach Crusher's tackle stepped aside: he hits the ropes, they give, he bounces back off them, dazed
 ## proof_cab       in the crane's cab with a pipe: no room to swing (a punch comes out) while he fights back; P P K
 ##                 shoves him out of the cab, over the side
+## proof_gap       level 4's balcony: the hero walks into the railing gap and the edge holds him; then P P K on a Wrench
+##                 Mechanic standing in the gap: over the low bar he goes, down to the ring hall, out of the fight
 ## (The boss proofs start their boss part-worn where a whole fight would run to many pages: said so on screen.)
 
 const NAMES := ["proof_headbutt", "proof_doorman", "proof_dancer", "proof_enforcer", "proof_lookout", "proof_grabber",
 	"proof_swap", "proof_shove", "proof_climb", "proof_escape", "proof_coach", "proof_chrome", "proof_crane", "proof_static",
-	"proof_rook", "proof_ropes", "proof_cab"]
+	"proof_rook", "proof_ropes", "proof_cab", "proof_gap"]
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
@@ -157,6 +159,17 @@ func setup(level) -> void:
 			h.take_weapon("pipe")
 			zoom = 1.2
 			length = 2400
+		"proof_gap":
+			level._go_to(1, 2700.0, 0.0, 120.0)
+			level.floors[1]["wave"] = level.floors[1]["waves"].size()  # the balcony's goons set aside: just the one in the gap
+			level.step({})
+			h.drop_weapon()  # (empty-handed, so P P K ends in the push kick: the stick he walks in with would swing)
+			foe = _bring(level, "wrench_mechanic", 2900.0, level.tune["street_depth"])
+			var k: Dictionary = foe["brain"].kind.duplicate()
+			k["block_chance"] = 0.0  # (for this picture he doesn't block: said on screen)
+			foe["brain"].kind = k
+			zoom = 1.2
+			length = 900
 		"proof_crane":
 			level.flipped[0] = true  # the quay's and the stack's switches already thrown (said on screen)
 			level.flipped[1] = true
@@ -275,6 +288,30 @@ func inputs(level) -> Dictionary:
 					data["thrown"] = 0
 			if tick > 2300 and ended < 0:
 				_end("(he wasn't shoved out: the proof ran out of time)")
+		"proof_gap":
+			if tick == 9:
+				_start("the balcony's railing gap: the hero (empty-handed) walks into it")
+			if tick > 9 and tick <= 70:
+				inp["mz"] = 1.0  # straight at the front edge, in the gap
+				inp["mx"] = 0.01 if tick < 20 else 0.0
+				data["front"] = maxf(data.get("front", 0.0), h.z)
+			elif tick == 71:
+				_say("the edge HOLDS him: z %.0f of %.0f, still on the balcony (for him the gap's a wall)" % [data["front"], level.tune["street_depth"]])
+			elif tick > 100 and not foe.has("over_rail"):
+				if not data.has("ppk"):
+					data["ppk"] = true
+					data["thrown"] = 0
+					data["serial"] = h.attack_serial
+					_say("now P P K at the Mechanic standing in the gap (for this picture he doesn't block)")
+				_combo(level, inp, ["punch", "punch", "kick"], ["punch", "cross", "push_kick"])
+				if data.get("thrown", 0) >= 3 and h.state in Fighter.GROUND_STATES:
+					data["thrown"] = 0
+			for ev in evs:
+				match ev.get("result", ""):
+					"over_the_rail": _say("the push kick tips him OVER the low bar")
+					"down_below": _end("down to the ring hall below: out of the fight, counted as beaten, nothing dropped")
+			if tick > 850 and ended < 0:
+				_end("(he never went over: the proof ran out of time)")
 		"proof_coach":
 			if tick == 9:
 				_start("Coach Crusher's tackle: step out of his line, and he hits the ropes (he starts part-worn: 10 of 40)")

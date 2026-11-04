@@ -100,6 +100,11 @@ finishers do (stagger, knockdown, launch, push) shows on enemies once they exist
 - Fast foreground props, the play lane, a slow background (parallax: nearer things slide past faster).
 - Cars, posts and containers sit on **their own layers**: you pass in front of some and behind others.
 
+## Money on screen
+Any amount the game shows, now or later (a price, a tip, a debt, a prize), is written **$X,XXX.XX**: a dollar sign,
+commas between thousands, always two decimals (Javier, 2026-11-04, through the assistant team). One function writes it,
+`game/scripts/sim/money.gd`, and `game/tests/test_money.gd` holds the format.
+
 ## Sound and controls
 - Original music and sound effects.
 - Keyboard and gamepad. Linux.

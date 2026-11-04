@@ -117,7 +117,7 @@ func inputs(level) -> Dictionary:
 					"sword_breaks": _say("the third perfect block on his last cut: his sword BREAKS; only fists now, slow and old")
 					"crane_warn": _say("the crane's HORN: a container's coming along the floor (jump it)")
 					"container_under": _say("JUMPED: the container swings under him")
-					"crane_stopped": _say("a SWITCH thrown: the crane stops a while")
+					"crane_stopped": _say("a SWITCH thrown: the crane stops along this floor, for good")
 					"cab_open": _say("all three switches: the CAB door opens")
 					"horn": _say("in the cab: the HORN blast shoves him back")
 					"shoved_out": _say("P P K: SHOVED OUT of his cab, and that's it")
@@ -251,7 +251,7 @@ func overlay(level) -> String:
 		"crane":
 			var flipped: int = level.flipped.size()
 			line = "%s  ·  the crane: %s  ·  switches thrown %d of 3" % [level.where,
-				"STOPPED" if level.tick < level.crane.get("stopped_until", -1) else ("running" if flipped < 3 else "off"), flipped]
+				"STOPPED along this floor (its switch thrown)" if level.crane_stopped_here() else ("running" if flipped < 3 else "off"), flipped]
 		"rook":
 			var c: Array = level.enemies.filter(func(e): return e["kind"] == "rook")
 			if not c.is_empty():

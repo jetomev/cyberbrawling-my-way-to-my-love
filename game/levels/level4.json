@@ -1,12 +1,13 @@
 {
   "name": "Level 4 · The Pit",
-  "about": "SETTLED (art-in 2026-11-04-level4-agreed: Merry's second draft, Pippin's nod, Boromir's yes with one change) and Pippin's roster v5. Floors in walking order: the locker room, the weights room and the ring hall (floor 1, up the ladder at screen 3), the balcony with the juice bar (floor 2, down the rope at screen 5), round the ring (floor 1), the ring (Coach Crusher). The hero walks in with the stick from Twin Loans. 17 enemies: 4 Bruisers, 8 Mechanics, 3 Dancers, 2 Maulers. The Mauler's first grab is the lesson (a plain knockdown's damage), nobody hits a held hero, the locker opens by itself when the warm-up falls, the hints come word for word at their moment, the balcony's Mechanics throw one at a time (Boromir), screen 6's Dancers come one at a time (ruling three), the ring's ropes give and throw Coach back. NOT BUILT YET: the punching bag that swings, the balcony Mechanics throwing down at floor 1 (they wait a step back from the ladder's top instead), the balcony knock-off (waits on Balih's yes: a plain railing), the hero's safe moment on the ropes, Last Call (the prize is a first-aid kit and Coach's whistle).",
+  "about": "SETTLED (art-in 2026-11-04-level4-agreed, and 2026-11-04-level4-balcony-yes: the knock-off is in; Merry's second draft, Pippin's nod, Boromir's yes with one change) and Pippin's roster v5. Floors in walking order: the locker room, the weights room and the ring hall (floor 1, up the ladder at screen 3), the balcony with the juice bar (floor 2, down the rope at screen 5), round the ring (floor 1), the ring (Coach Crusher). The hero walks in with the stick from Twin Loans. 17 enemies: 4 Bruisers, 8 Mechanics, 3 Dancers, 2 Maulers. The Mauler's first grab is the lesson (a plain knockdown's damage), nobody hits a held hero, the locker opens by itself when the warm-up falls, the hints come word for word at their moment, the balcony's Mechanics throw one at a time (Boromir), screen 6's Dancers come one at a time (ruling three), the ring's ropes give and throw Coach back, and a goon push-kicked or knocked down at the balcony's railing gap (screen 4, front) goes over, out of the fight. NOT BUILT YET: the punching bag that swings, the balcony Mechanics throwing down at floor 1 (they wait a step back from the ladder's top instead), the hero's safe moment on the ropes, Last Call (the prize is a first-aid kit and Coach's whistle).",
   "start_weapon": "stick",
   "gentle_first_grab": true,
   "hints": {
     "glow": "Glowing gloves? Jab first, or step aside.",
     "caught": "Tap punch to wriggle free!",
-    "too_slow": "Too slow for her! Drop it and punch."
+    "too_slow": "Too slow for her! Drop it and punch.",
+    "gap": "Push kick them through the gap."
   },
   "floors": [
     {
@@ -235,7 +236,11 @@
           ]
         }
       ],
-      "one_throw": true
+      "one_throw": true,
+      "railing_gap": [
+        2760,
+        3000
+      ]
     },
     {
       "name": "The Pit: round the ring",
