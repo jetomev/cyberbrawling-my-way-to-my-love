@@ -12,6 +12,7 @@ const Fighter := preload("res://scripts/sim/fighter.gd")
 const Fight := preload("res://scripts/sim/fight.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
+const Weapons := preload("res://scripts/sim/weapons.gd")
 
 const ROSTER := ["wrench_mechanic", "doorman", "neon_dancer", "enforcer", "lookout", "grabber"]
 
@@ -157,9 +158,17 @@ func test_the_dancer_is_too_quick_for_slow_weapons_until_shes_off_her_skates() -
 	var slow := blow("swing", 3.0)
 	slow["weapon_speed"] = 1
 	eq(f.take_hit(slow, l.hero), "dodged", "a slow weapon's swing: she's gone")
-	var quick := blow("swing", 2.0)
-	quick["weapon_speed"] = 0
-	eq(f.take_hit(quick, l.hero), "hit", "a quick one (a knife) catches her")
+	for w in ["sword", "pipe"]:  # (roster v4: every weapon but the light ones misses her, the sword too)
+		var heavy := blow("swing", 1.0)
+		heavy["weapon_speed"] = Weapons.TABLE[w]["speed"]
+		eq(f.take_hit(heavy, l.hero), "dodged", "the %s misses her" % w)
+	for w in ["knife", "stick"]:  # the light ones catch her, like a punch
+		f._enter("idle")
+		var quick := blow("swing", 1.0)
+		quick["weapon_speed"] = Weapons.TABLE[w]["speed"]
+		eq(f.take_hit(quick, l.hero), "hit", "the %s catches her" % w)
+	f._enter("idle")
+	eq(f.take_hit(blow("punch", 1.0), l.hero), "hit", "and a punch, of course")
 	f._enter("launch")
 	l.step({})
 	check(not f.too_quick, "launched: off her skates (%s)" % f.state)
@@ -360,3 +369,49 @@ func test_dancers_skate_in_one_at_a_time() -> void:
 		any = any or busy > 0
 	check(any, "the Dancers really came at him")
 	eq(peak, 1, "never two Dancers skating in or striking at once")
+
+
+## The team's house rule (level 4, roster v4): nobody hits a held hero. While the Mauler holds him the others wait,
+## and a weapon thrown at him hits the Mauler instead.
+func test_nobody_hits_a_held_hero() -> void:
+	var l = grabbed()
+	var g = l.hug["by"]["f"]
+	var thug := bring(l, "bruiser", -110.0)
+	thug["brain"].wait = 0
+	var hits := 0
+	for i in 40:
+		l.hero.health = l.hero.max_health
+		l.step({})
+		for ev in l.events:
+			if ev.get("target") == l.hero and ev.get("attacker") != g and ev.get("result", "") in ["hit", "blocked"]:
+				hits += 1
+	eq(l.hero.state, "held", "(still held: the setup)")
+	eq(hits, 0, "nobody else lands a blow on him while he's held")
+	var before: float = g.health
+	var p: Dictionary = l.projectiles.throw("wrench", l.hero.x + 300.0, l.hero.z, 120.0, 210.0, -11.0, 2.0, 1)
+	for i in 40:
+		l.step({})
+		if not p["alive"]:
+			break
+	check(g.health < before, "a wrench thrown at him hits the Mauler instead (%.1f -> %.1f)" % [before, g.health])
+
+
+## The team's level 4: the Mauler's very first throw is the lesson, a plain knockdown's damage; the next ones full.
+func test_where_the_level_says_the_first_bear_hug_is_gentle() -> void:
+	var l = grabbed()
+	l.plan["gentle_first_grab"] = true
+	var hp: float = l.hero.health
+	for i in Level.HUG_TICKS + 5:
+		l.step({})
+	check(is_equal_approx(hp - l.hero.health, Level.GENTLE_THROW), "the first throw: %.1f (took %.1f)" % [Level.GENTLE_THROW, hp - l.hero.health])
+	check(Level.GENTLE_THROW < Level.HURL_DAMAGE, "less than a full throw")
+	check(l.hugs_thrown, "and the lesson's been given: the next one's full")
+
+
+## The team's level 4: Coach Crusher's gloves stop weapon swings too, so "kicks only" means kicks only.
+func test_coachs_gloves_stop_a_weapon_swing() -> void:
+	check(Level.KINDS["coach"]["gloves"].has("swing") and Level.KINDS["coach"]["gloves"].has("smash"), "the swings are on his gloves' list")
+	var l = street()
+	var c := bring(l, "coach", 120.0)
+	c["f"].facing = -1
+	eq(c["f"].take_hit(blow("swing", 2.0), l.hero), "blocked", "a stick swing from the front: his gloves take it")

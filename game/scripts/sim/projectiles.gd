@@ -34,9 +34,11 @@ func step(fighters: Array, left: float, right: float) -> Array:
 			p["alive"] = false  # a thrown weapon at the end of its flight: it drops (level.gd lays it on the street)
 			events.append({"target": null, "result": "landed", "kind": p["kind"], "projectile": p})
 			continue
-		for f in fighters:
-			if f.team == p["team"] or absf(f.x - p["x"]) > BODY_HALF_WIDTH or absf(f.z - p["z"]) > DEPTH:
+		for f0 in fighters:
+			if f0.team == p["team"] or absf(f0.x - p["x"]) > BODY_HALF_WIDTH or absf(f0.z - p["z"]) > DEPTH:
 				continue
+			# a held hero: it hits whoever holds him (the team's house rule: nobody hits a held hero)
+			var f = f0.held_by if f0.state == "held" and f0.held_by != null and not f0.held_by.defeated() else f0
 			if p["y1"] <= f.y or p["y0"] >= f.y + BODY_HEIGHT:
 				continue  # over him or under him (he jumped it)
 			# the blow comes from where it flies from: a fighter-like stand-in for take_hit's "attacker"

@@ -22,7 +22,8 @@ const DOUBLE_TAP_TICKS := 3
 const MAX_QUEUE := 2  # P then K pressed during one long blow play P then K
 const AIR_STATES := ["jump", "air_kick", "hammer_fist"]
 ## What food and first aid give back, as a share of a full health bar (D-14)
-const HEALS := {"food": 0.4, "takeaway": 0.4, "sandwich": 0.4, "soda": 0.25, "apple": 0.25, "bowl": 0.4, "first_aid": 1.0, "noodles": 1.0}  # noodles: level 2's hidden bar
+const HEALS := {"food": 0.4, "takeaway": 0.4, "sandwich": 0.4, "soda": 0.25, "apple": 0.25, "bowl": 0.4, "first_aid": 1.0, "noodles": 1.0,
+	"protein_bar": 0.4, "shake": 0.4, "water": 0.25}  # (level 4's gym: a protein bar, a shake, Coach's water bottle)  # noodles: level 2's hidden bar
 ## Being hit: no input counts until the reaction ends (fight.gd decides who hits whom; take_hit() reacts); "held":
 ## in the Grabber's bear hug, where only wriggling counts (3 quick punches, or a roll)
 const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko", "dizzy", "held",
@@ -85,7 +86,8 @@ var grip := false  # a perfect block doesn't knock his weapon loose (a boss's ow
 var gloves := []  # blows his guard takes every time from the front, without raising it (Coach Crusher's big gloves)
 var dodges := []
 var parries := []
-var too_quick := false
+var too_quick := false  # the Neon Dancer on skates: every weapon but the light ones (knife, stick) misses her (roster v4)
+var held_by = null  # who holds him in a bear hug: a thrown weapon hits him instead (the team's house rule)
 var escape_taps := 0  # held: punches tapped so far toward wriggling free
 var weapon_snaps := false  # his weapon breaks as it's knocked loose (level 2's pipe Bruiser: the pipe stays level 5's prize)
 var shrugs := []  # blows (by move) that hurt him but don't make him flinch (the Bruiser's "Iron Gut": a jab)
@@ -433,7 +435,7 @@ func take_hit(blow: Dictionary, attacker) -> String:
 	var dir := 1 if x >= attacker.x else -1  # driven away from whoever hit him
 	knock_dir = dir
 	var move: String = blow.get("move", "")
-	if move in dodges or (too_quick and blow.get("weapon_speed", 0) >= 1):
+	if move in dodges or (too_quick and blow.get("weapon_speed", -99) >= 0):
 		if move in dodges and state in GROUND_STATES:
 			_enter("duck")  # down under the high kick (the Wrench Mechanic): he comes up out of it
 		return "dodged"  # under it, or gone before it lands

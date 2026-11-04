@@ -58,7 +58,8 @@ const KINDS := {
 	"rook": {"health": 45.0, "brain": "ROOK", "weapon": "sword", "drops": "sword", "grip": true, "keeps_weapon": true,
 		"parries": ["power_punch", "side_kick", "smash"]},
 	"coach": {"health": 40.0, "brain": "COACH", "drops": "first_aid",
-		"gloves": ["punch", "cross", "power_punch", "hook", "uppercut", "elbow", "hammer_fist", "air_punch"]},
+		"gloves": ["punch", "cross", "power_punch", "hook", "uppercut", "elbow", "hammer_fist", "air_punch",
+			"swing", "backswing", "smash", "rising_swing", "handle_jab", "chop"]},  # (and weapon swings: the team's level 4)
 	# the rest of the team's roster (enemy roster v2)
 	"wrench_mechanic": {"health": 14.0, "brain": "WRENCH_MECHANIC", "weapon": "wrench", "dodges": ["side_kick", "roundhouse"],
 		"hit_scale": 0.6},  # (the team's balance ruling, 11-04: softer up close; his thrown wrench as it was)
@@ -87,6 +88,7 @@ const WHISTLE_EVERY := 360  # the lookout whistles in two more goons this often 
 const WHISTLE_RANGE := 1000.0
 const HUG_TICKS := 70  # the bear hug: this long without wriggling free, and he throws the hero down
 const HURL_DAMAGE := 3.0
+const GENTLE_THROW := 1.5  # the first bear hug's throw where a level says so: a plain knockdown's damage (feel lab)
 ## The stairs (the team's level 3 page): a push kick or any knockdown on the slope rolls him to the foot, bowling over
 ## anyone below him; a bit more damage than a plain knockdown and about two seconds before he's up (feel lab)
 const TUMBLE_SPEED := 10.0  # px a tick down the flight
@@ -175,6 +177,7 @@ var crane := {}  # the docks' crane (the plan's "crane"): {next, container {x, d
 var hint_text := ""  # a wave's small hint, the first time (shown till hint_until)
 var hint_until := -1
 var hints_shown := {}
+var hugs_thrown := false  # a bear hug has thrown him this level (the first is gentle where the level says)
 var twins_opened := false  # Twin Loans have opened with their swap (the team's third ruling)
 var early := []  # events from before this tick's blows are settled (the twins' swap): joined to events after
 var cat_fed := false  # level 1's stray cat, fed (it follows him, and turns up in level 2)
@@ -272,6 +275,7 @@ func restart() -> void:
 	visited = {0: true}
 	hint_until = -1
 	hints_shown = {}
+	hugs_thrown = false
 	live_until = -1
 	crane = {}
 	dice.seed = dice_seed * 7919 + 1
@@ -302,6 +306,31 @@ func everyone() -> Array:
 	if friend != null and on == 0:
 		out.append(friend)
 	return out
+
+
+## A small hint the first time (the team's level 3: "perfect-block his throw"): once a level.
+func _show_hint(h: String) -> void:
+	if h != "" and not hints_shown.has(h):
+		hints_shown[h] = true
+		hint_text = h
+		hint_until = tick + HINT_TICKS
+
+
+## Hints that come at the moment, not with a wave (the team's level 4, word for word): "glow" when a Mauler's gloves
+## first light up, "caught" the first time he has the hero, "too_slow" the first time a slow weapon misses a Dancer.
+func _moment_hints() -> void:
+	var hs: Dictionary = plan.get("hints", {})
+	if hs.is_empty():
+		return
+	if hs.has("glow") and enemies.any(func(e): return not e["gone"] and e["kind"] == "grabber" and e["f"].attack_phase() == "startup"):
+		_show_hint(hs["glow"])
+	if hs.has("caught") and hero.state == "held":
+		_show_hint(hs["caught"])
+	if hs.has("too_slow"):
+		for ev in events:
+			if ev.get("attacker") == hero and ev.get("result", "") == "dodged" and hero.weapon != "" \
+					and enemies.any(func(e): return e["f"] == ev.get("target") and e["kind"] == "neon_dancer"):
+				_show_hint(hs["too_slow"])
 
 
 ## The lesson's hint on screen, while the sparring friend is teaching ("" otherwise).
@@ -352,9 +381,14 @@ func step(inp: Dictionary) -> void:
 			var kind: String = e.get("kind", "")
 			var same_busy: bool = kind in ONE_AT_A_TIME and enemies.any(func(o): return o != e and not o["gone"] \
 					and o.get("kind", "") == kind and (o["f"].attack_phase() != "" or o.get("dashing", false)))
-			if e["f"].attack_phase() == "" and (swinging.size() >= SWINGING_MAX or same_busy):
+			var held: bool = hero.state == "held" and not hug.is_empty() and hug["by"] != e  # (someone else has him)
+			if held:
+				for k in ["hurl", "records", "throw"]:
+					think.erase(k)
+			if e["f"].attack_phase() == "" and (swinging.size() >= SWINGING_MAX or same_busy or held):
 				for k in ["punch", "kick", "sweep", "grab", "headbutt", "throw"]:
-					think.erase(k)  # (and Enforcers, and Dancers, one at a time: the team's second and third rulings)
+					think.erase(k)  # (and Enforcers, and Dancers, one at a time: the team's second and third rulings; and
+					# nobody hits a held hero: the team's house rule, level 4)
 			if same_busy and not e.get("dashing", false):
 				think.erase("run")  # (a Dancer waits for the other's skate-in before her own)
 			e["dashing"] = think.get("run", false) and kind == "neon_dancer"
@@ -384,6 +418,7 @@ func step(inp: Dictionary) -> void:
 	events.append_array(early)
 	early = []
 	events.append_array(projectiles.step(all, 0.0, floors[on]["length"]))
+	_moment_hints()
 	if tutor != null and on == 0:
 		tutor.saw(events)
 	_bass_drop()
@@ -512,6 +547,7 @@ func _roster_tricks() -> void:
 					else:
 						_arrive({"kind": e.get("calls", "glow_punk"), "from": side, "z": 80.0}, hero.x, e["wave"])
 			events.append({"target": f, "result": "whistle", "kind": "whistle"})
+	hero.held_by = hug["by"]["f"] if not hug.is_empty() and hero.state == "held" else null
 	if not hug.is_empty():
 		var g = hug["by"]["f"]
 		if hero.state != "held" or g.defeated():
@@ -521,7 +557,11 @@ func _roster_tricks() -> void:
 			hug = {}
 		elif tick - hug["at"] >= HUG_TICKS:
 			hero._enter("idle")
-			hero.take_hit({"damage": HURL_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "bear_hug_throw"}, g)
+			# his very first grab is the lesson, not the punishment (the team's level 4): a plain knockdown's damage
+			var gentle: bool = plan.get("gentle_first_grab", false) and not hugs_thrown
+			hugs_thrown = true
+			hero.take_hit({"damage": GENTLE_THROW if gentle else HURL_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0,
+				"move": "bear_hug_throw"}, g)
 			events.append({"attacker": g, "target": hero, "result": "hit", "move": "bear_hug_throw", "drop": "", "counter": false, "broke": "", "worn": ""})
 			hug["by"]["brain"].wait = 60
 			hug = {}
@@ -1161,7 +1201,8 @@ func _kitchen() -> void:
 
 
 ## Walking over a collectible (a matchbook, the torn photo) keeps it.
-const COLLECTIBLES := ["matchbook", "photo", "trophy"]  # (the trophy: for score, level 3's pawn shop)
+const COLLECTIBLES := ["matchbook", "photo", "trophy", "glove", "whistle"]  # (for score: level 3's trophy, level 4's
+# signed boxing glove and Coach's whistle)
 
 
 func _collect() -> void:
@@ -1251,10 +1292,7 @@ func _waves() -> void:
 		fl["wave"] += 1
 		fl["waiting"] = (waves[fl["active_wave"]]["enemies"] as Array).duplicate()
 		var h: String = waves[fl["active_wave"]].get("hint", "")
-		if h != "" and not hints_shown.has(h):  # a small hint the first time (the team's level 3: "perfect-block his throw")
-			hints_shown[h] = true
-			hint_text = h
-			hint_until = tick + HINT_TICKS
+		_show_hint(h)
 	# a wave's enemies come in as they may: those with "after_down" once that many of the wave are down, and never more
 	# than MAX_ON_SCREEN standing at once (the rest wait off screen)
 	if fl["active_wave"] >= 0 and not fl["waiting"].is_empty():
@@ -1273,7 +1311,17 @@ func _waves() -> void:
 			var drop: String = e.get("drops", KINDS.get(e["kind"], {}).get("drops", ""))  # (a layout can say: level 10's kit)
 			if drop != "":
 				world.drop(drop, e["f"].x, e["f"].z)
+			if e.get("also_drops", "") != "":
+				world.drop(e["also_drops"], e["f"].x + 50.0, e["f"].z)  # (a boss's second prize: Coach's whistle)
 	if fl["active_wave"] >= 0 and fl["waiting"].is_empty() and not enemies.any(func(e): return e["wave"] == fl["active_wave"] and not e["gone"] and not e["f"].defeated()):
+		# a locker that swings open by itself when its wave falls (the team's level 4: food before the Mauler)
+		for op in plan["floors"][on].get("opens", []):
+			if int(op[0]) == fl["active_wave"]:
+				for o in world.objects:
+					if o.get("name", "") == op[1] and not o["broken"]:
+						o["broken"] = true
+						if o.has("holds"):
+							world.drop(o["holds"], (o["x0"] + o["x1"]) * 0.5, clampf(o["z1"] + 20.0, 0.0, tune["street_depth"]))
 		fl["active_wave"] = -1  # its thugs beaten: the floor opens on (a boss waiting further on doesn't hold it)
 	var bosses: Array = enemies.filter(func(e): return e["boss"])
 	var boss_down: bool = boss_spawned and not bosses.is_empty() and bosses.all(func(e): return e["f"].defeated())
@@ -1396,6 +1444,9 @@ func _maybe_boss() -> void:
 	for b in [boss] + boss.get("with", []):
 		_spawn(b.get("kind", "boss"), b.get("x", 1200.0), b.get("z", 80.0), b.get("weapon", ""), b.get("health", -1.0))
 		enemies[-1]["boss"] = true
+		for k in ["drops", "also_drops"]:  # (a layout's prize for him: Coach's first-aid kit and his whistle)
+			if b.has(k):
+				enemies[-1][k] = b[k]
 
 
 ## A blow that reaches a switch flips it, once: the door it names opens, on whatever floor it stands.

@@ -29,7 +29,7 @@ func step(fighters: Array, world = null) -> Array:
 		var blow: Dictionary = a.move()
 		blow["finisher"] = Moves.is_finisher(a.state)
 		blow["move"] = a.state
-		blow["weapon_speed"] = Moves.Weapons.TABLE[a.weapon]["speed"] if a.weapon != "" and Moves.Weapons.is_swing(a.state) else 0
+		blow["weapon_speed"] = Moves.Weapons.TABLE[a.weapon]["speed"] if a.weapon != "" and Moves.Weapons.is_swing(a.state) else -99  # (fists: never a "slow weapon")
 		blow["damage"] = blow.get("damage", 0) * a.hit_scale
 		if a.soft:
 			blow["damage"] = 0.0  # practice: it lands, it doesn't hurt

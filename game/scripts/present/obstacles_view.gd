@@ -124,6 +124,23 @@ func _draw_loose() -> void:
 		elif it["kind"] == "photo":  # a torn photo (to collect)
 			loose.draw_rect(Rect2(at + Vector2(-12, -6), Vector2(24, 6)), Color(0.95, 0.93, 0.85))
 			loose.draw_rect(Rect2(at + Vector2(-12, -6), Vector2(24, 6)), EDGE, false, 2.0)
+		elif it["kind"] == "protein_bar":  # a wrapped bar
+			loose.draw_rect(Rect2(at + Vector2(-16, -8), Vector2(32, 8)), Color(0.45, 0.3, 0.2))
+			loose.draw_rect(Rect2(at + Vector2(-16, -8), Vector2(32, 8)), EDGE, false, 2.0)
+			loose.draw_rect(Rect2(at + Vector2(-6, -8), Vector2(12, 8)), Color(0.95, 0.75, 0.2))
+		elif it["kind"] in ["shake", "water"]:  # a tall cup with a straw, a water bottle
+			var c := Color(0.95, 0.6, 0.75) if it["kind"] == "shake" else Color(0.55, 0.8, 0.95)
+			loose.draw_rect(Rect2(at + Vector2(-8, -30), Vector2(16, 30)), c)
+			loose.draw_rect(Rect2(at + Vector2(-8, -30), Vector2(16, 30)), EDGE, false, 2.0)
+			loose.draw_line(at + Vector2(3, -30), at + Vector2(7, -42), EDGE, 3.0)
+		elif it["kind"] == "glove":  # a signed red boxing glove (for score)
+			loose.draw_circle(at + Vector2(0, -14), 14.0, Color(0.85, 0.15, 0.15))
+			loose.draw_arc(at + Vector2(0, -14), 14.0, 0.0, TAU, 16, EDGE, 2.0)
+			loose.draw_line(at + Vector2(-6, -16), at + Vector2(6, -10), Color(1, 1, 1), 2.0)
+		elif it["kind"] == "whistle":  # Coach's whistle on its cord (a joke trophy)
+			loose.draw_circle(at + Vector2(0, -8), 8.0, Color(0.8, 0.82, 0.86))
+			loose.draw_arc(at + Vector2(0, -8), 8.0, 0.0, TAU, 12, EDGE, 2.0)
+			loose.draw_arc(at + Vector2(0, -14), 16.0, PI, TAU, 12, Color(0.9, 0.3, 0.3), 2.0)
 		elif it["kind"] in ["apple", "bowl"]:  # an apple, a bowl of noodles
 			loose.draw_circle(at + Vector2(0, -10), 10.0, Color(0.85, 0.15, 0.2) if it["kind"] == "apple" else Color(0.95, 0.9, 0.7))
 			loose.draw_arc(at + Vector2(0, -10), 10.0, 0.0, TAU, 16, EDGE, 2.0)

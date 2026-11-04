@@ -32,6 +32,7 @@ const BOSS := {
 		["punch", "punch", "kick"]],
 }
 const TOOLBOX_RANGE := 1400.0  # how far the Wrench Mechanic goes for his toolbox
+const SCREEN_W := 1920.0  # (and only on his own screen)
 const HANG_BACK := 130.0  # how much further off an enemy waits while it isn't his turn to attack
 
 ## The team's enemy table (art-in 2026-11-03). The Glow Punk, the warm-up: "Slap Happy", slap, slap, a two-handed
@@ -251,7 +252,8 @@ func think() -> Dictionary:
 		return inp
 	if kind.get("toolbox", false) and me.weapon == "" and me.world != null:  # the mechanic: off to his toolbox for a spare
 		for o in me.world.objects:  # (one on this screen: he won't trek back down the street for it)
-			if o["kind"] == "toolbox" and not o["broken"] and absf((o["x0"] + o["x1"]) * 0.5 - me.x) < TOOLBOX_RANGE:
+			if o["kind"] == "toolbox" and not o["broken"] and absf((o["x0"] + o["x1"]) * 0.5 - me.x) < TOOLBOX_RANGE \
+					and int((o["x0"] + o["x1"]) * 0.5 / SCREEN_W) == int(me.x / SCREEN_W):  # (on his screen: roster, "where his toolbox is on screen")
 				var tx: float = (o["x0"] + o["x1"]) * 0.5
 				if absf(me.x - tx) < 60.0:
 					me.take_weapon("wrench")
