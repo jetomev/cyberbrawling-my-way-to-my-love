@@ -18,14 +18,16 @@ for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy
     scene:proof_escape@tests/levels/twins scene:proof_coach@coach_gym scene:proof_chrome@chrome_casino \
     scene:proof_crane@crane_docks scene:proof_static@static_plant scene:proof_rook@rook_penthouse scene:proof_ropes@coach_gym scene:proof_cab@crane_docks; do
   ARGS=(--trial "$T")
+  LIMIT=300
   if [[ "$T" == scene:* ]]; then
     L="${T#*@}"; T="${T#scene:}"; T="${T%@*}"
     [[ "$L" == */* ]] || L="levels/$L"  # (a showcase level, or a test layout by its path)
     ARGS=(--level "res://$L.json" --scene "$T")
+    [[ "$T" == proof_* ]] || LIMIT=600  # the boss scenes run 4800 frames: 3.5 min recorded on a quiet machine, past 5 on a busy one (6c908a7)
   fi
   TMP="$ROOT/scratch/trial-$T.$$"
   mkdir -p "$TMP"
-  timeout 300 "$ROOT/scripts/capped.sh" godot --path "$ROOT/game" --write-movie "$TMP/f.png" --fixed-fps 60 \
+  timeout "$LIMIT" "$ROOT/scripts/capped.sh" godot --path "$ROOT/game" --write-movie "$TMP/f.png" --fixed-fps 60 \
     --resolution 1280x720 -- "${ARGS[@]}" 2>&1 | grep -v '^Godot Engine' > "$OUT/$T.txt"
   grep -q "^TRIAL DONE $T" "$OUT/$T.txt" || { cat "$OUT/$T.txt"; echo "FAILED trial $T never finished"; exit 1; }
   if grep -q 'SCRIPT ERROR' "$OUT/$T.txt"; then echo "FAILED trial $T has a script error"; exit 1; fi
