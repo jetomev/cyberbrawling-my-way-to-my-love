@@ -1036,7 +1036,8 @@ static func _cover(out: Dictionary, pose: Dictionary) -> void:
 ## joint (forward, up) and where the weapon points (degrees, 0 = straight at the enemy, -90 = straight up), whether both
 ## hands hold it, and its block. Heights from the hip: belt about 0, navel -20, chest -60, chin -95, head -115.
 const WEAPON_READY := {
-	"knife": {"at": Vector2(34, -10), "wpn": 0.0},  # belt height, close, blade forward and level
+	"knife": {"at": Vector2(38, -42), "wpn": -30.0},  # above the belt, in front of the stomach, close, the point tipped up at
+	## the enemy's chest (Javier, 2026-11-04: level at the belt it stuck out of his crotch; the team's page said belt height)
 	"stick": {"at": Vector2(46, -112), "wpn": -100.0},  # head height in front of the face, tip up and a little back
 	"pipe": {"at": Vector2(56, -74), "wpn": -45.0},  # chin height in front, tip up and forward, elbow bent
 	"wrench": {"at": Vector2(44, -62), "wpn": -35.0},  # chest height, jaw forward, tighter
