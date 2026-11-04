@@ -239,6 +239,7 @@ func test_the_kicks_by_the_weapons_weight() -> void:
 	eq(chain_of(["kick", "kick", "kick"], "bat"), ["kick", "low_swing", "rising_swing"], "bat: low swing at the knees, uppercut swing")
 	eq(chain_of(["punch", "kick", "punch"], "sword"), ["swing", "handle_jab", "rising_swing"], "sword: the knee's a pommel strike")
 	eq(chain_of(["punch", "punch", "kick"], "sword"), ["swing", "backswing", "push_kick"], "sword: the push kick stays")
+	eq(chain_of(["kick", "kick", "kick"], "baguette"), ["kick", "low_swing", "rising_swing"], "baguette: held like the bat, its kicks swap like the bat's (approved 11-04)")
 	var j = armed("bat")
 	j.step({"jump": true})
 	for i in 10:

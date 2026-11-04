@@ -1056,7 +1056,28 @@ const WEAPON_REACH := {"knife": 38.0, "stick": 112.0, "pipe": 102.0, "wrench": 6
 const HANG_HEIGHT := 92.0
 const WEAPON_SWING_REL := -78.0  # in a swing (till each weapon's own swings are drawn): through the fist, as before
 const FENCE := Vector2(50, -70)  # the free hand with a one-handed weapon: up before the chest, open (a fence)
-const BLOCK_AT := Vector2(46, -55)  # blocking: the weapon held across the body before the chest
+const BLOCK_AT := Vector2(46, -95)  # blocking: the weapon held across the body at chin height (the team's playtester)
+## Each weapon's own blows (the pose sheet, art-in 2026-11-04-weapon-poses): where the weapon points at the wind-up,
+## at contact and at the follow-through (degrees as above: 0 at the enemy, -90 up, 90 down); from its Ready before
+## and back to it after. By the weapon, else its kind. The arms keep the swings' shared shapes for now; the weapon's
+## own track is what reads.
+const SWING_TRACK := {
+	"knife": {"swing": [10.0, 0.0, 0.0], "backswing": [40.0, -10.0, -30.0], "smash": [0.0, 0.0, 0.0],
+		"rising_swing": [30.0, -25.0, -35.0], "handle_jab": [120.0, 120.0, 120.0], "chop": [-40.0, 70.0, 80.0]},
+	"stick": {"swing": [-125.0, -15.0, 35.0], "backswing": [-70.0, -5.0, 20.0], "smash": [0.0, 0.0, 0.0],
+		"rising_swing": [100.0, -40.0, -70.0], "handle_jab": [-100.0, -100.0, -100.0], "chop": [-110.0, 40.0, 60.0]},
+	"heavy": {"swing": [-115.0, 35.0, 65.0], "backswing": [70.0, -10.0, -45.0], "smash": [-105.0, 80.0, 85.0],
+		"rising_swing": [100.0, -40.0, -70.0], "handle_jab": [-95.0, -95.0, -95.0], "chop": [-110.0, 50.0, 70.0]},
+	"two": {"swing": [140.0, 0.0, 30.0], "backswing": [40.0, 0.0, -20.0], "smash": [150.0, 0.0, 160.0],
+		"rising_swing": [95.0, -50.0, -80.0], "handle_jab": [170.0, 170.0, 170.0], "chop": [-100.0, 70.0, 80.0],
+		"low_swing": [130.0, 30.0, 0.0]},
+	"blade": {"swing": [-100.0, 15.0, 40.0], "backswing": [60.0, -35.0, -60.0], "smash": [120.0, 0.0, -10.0],
+		"rising_swing": [70.0, -45.0, -70.0], "handle_jab": [120.0, 120.0, 120.0], "chop": [-60.0, 10.0, 20.0],
+		"low_swing": [0.0, 0.0, 0.0]},
+}
+const TRACK_KIND := {"knife": "knife", "stick": "stick", "bat": "two", "baguette": "two", "mic_stand": "two",
+	"sword": "blade", "lovelight": "blade", "cane": "blade"}  # (any other: heavy)
+const SPIN_FINISHERS := ["knife", "stick"]  # their finisher is a whole turn of the body (the spinning slash, the full spin)
 const READY_STATES := ["idle", "walk", "to_fight"]
 ## The weapon's own blows (it moves with the arm through the fist) and lying on the street (it goes where the arm goes);
 ## anything else armed, a kick among them, keeps the weapon in its Ready ("kicks with the weapon held in its Ready
@@ -1069,13 +1090,13 @@ const REST_STATES := ["stand", "stroll", "run", "to_walk"]
 
 ## The weapon in hand on top of a pose: hold keys for bake (_hold) and the weapon's own angle. Every pose with a
 ## weapon carries all the keys (0 when unused), so a blend from one pose to the next moves them smoothly.
-static func armed(pose: Dictionary, state: String, weapon: String) -> Dictionary:
+static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune := {}) -> Dictionary:
 	if weapon == "":
 		return pose
 	var out := pose.duplicate()
 	var g: Dictionary = WEAPON_READY.get(weapon, WEAPON_READY["pipe"])
 	var two: bool = g.get("two", false)
-	for k in ["hold_f", "hold_b", "wpn_hold"]:
+	for k in ["hold_f", "hold_b", "wpn_hold", "grip_b"]:
 		out[k] = 0.0
 	out["hold_fx"] = g["at"].x
 	out["hold_fy"] = g["at"].y
@@ -1088,6 +1109,24 @@ static func armed(pose: Dictionary, state: String, weapon: String) -> Dictionary
 		var reach: float = WEAPON_REACH.get(weapon, 100.0)
 		out["wpn"] = minf(WEAPON_REST, rad_to_deg(asin(minf(1.0, HANG_HEIGHT / reach))))  # hanging low, tip down
 		out["wpn_hold"] = 1.0
+	elif state in WEAPON_MOVES and t >= 0 and not tune.is_empty():
+		var track: Dictionary = SWING_TRACK[TRACK_KIND.get(weapon, "heavy")]
+		if track.has(state):
+			var keys: Array = [0, moment(state, "windup", tune), moment(state, "active", tune), moment(state, "follow", tune),
+				moment(state, "end", tune)]
+			var vals: Array = [g["wpn"]] + track[state] + [g["wpn"]]
+			out["wpn"] = _along(keys, vals, t)
+			out["wpn_hold"] = 1.0
+			if state == "smash" and weapon in SPIN_FINISHERS:  # a whole turn of the body, from the wind-up to the follow,
+				out["spin"] = 360.0 * clampf(float(t - keys[1]) / maxf(1.0, keys[3] - keys[1]), 0.0, 1.0)
+				out["hold_f"] = 1.0  # the arm out level at chest height through it ("the slash at chest height", the sheet)
+				out["hold_fx"] = 74.0
+				out["hold_fy"] = -62.0
+				out["cover_f"] = 0.0
+				out["hip_y"] = minf(pose.get("hip_y", 0.0), 6.0)  # (not the overhead smash's crouch)
+			if two:
+				out["grip_b"] = 1.0  # the other hand stays on the handle through the swing
+				out["cover_b"] = 0.0
 	elif not state in WEAPON_MOVES and not state in LYING_STATES:
 		var at: Vector2 = g["at"]
 		var dir_deg: float = g["wpn"]
@@ -1099,7 +1138,7 @@ static func armed(pose: Dictionary, state: String, weapon: String) -> Dictionary
 			else:
 				at = BLOCK_AT
 				dir_deg = 0.0
-				out["wpn_len"] = 0.45  # across the body: seen end-on from the side, it draws short
+				out["wpn_len"] = 0.3  # across the body: seen end-on from the side, a short stub across the fists
 		out["hold_fx"] = at.x
 		out["hold_fy"] = at.y
 		out["hold_f"] = 1.0
@@ -1107,11 +1146,14 @@ static func armed(pose: Dictionary, state: String, weapon: String) -> Dictionary
 		out["wpn"] = dir_deg
 		out["wpn_hold"] = 1.0
 		if two:  # the other hand on the handle, a fist further down it
-			var down := at - Vector2.from_angle(deg_to_rad(dir_deg)) * 17.0
-			out["hold_bx"] = down.x
-			out["hold_by"] = down.y
+			out["grip_b"] = 1.0
+			out["cover_b"] = 0.0
+		elif state in BLOCK_STATES and weapon != "knife":
+			out["hold_bx"] = at.x + 6.0  # blocking one-handed: the free hand flat against the weapon's far end (end-on: by the fist)
+			out["hold_by"] = at.y + 4.0
 			out["hold_b"] = 1.0
 			out["cover_b"] = 0.0
+			out["open_b"] = 1.0
 		elif not (weapon == "knife" and state in BLOCK_STATES):
 			out["hold_b"] = 1.0  # the free hand up, open, a fence
 			out["cover_b"] = 0.0
@@ -1128,26 +1170,45 @@ static func _hold(out: Dictionary, pose: Dictionary) -> void:
 		var c: float = pose.get("hold_" + side, 0.0)
 		if c <= 0.0:
 			continue
-		var upper: String = "arm_%s_upper" % side
-		var lower: String = "arm_%s_lower" % side
-		var target: Vector2 = hip + Vector2(pose.get("hold_%sx" % side, 0.0), pose.get("hold_%sy" % side, 0.0))
-		var root: Array = _end("shoulder_" + side, out)
-		var l1: float = BONES[upper][3]
-		var l2: float = BONES[lower][3]
-		var to: Vector2 = target - root[0]
-		var d := clampf(to.length(), absf(l1 - l2) + 0.5, l1 + l2 - 0.5)
-		var cos_a := clampf((l1 * l1 + d * d - l2 * l2) / (2.0 * l1 * d), -1.0, 1.0)
-		var arm := to.angle() + acos(cos_a)  # the elbow below the line: down
-		var elbow: Vector2 = root[0] + Vector2(l1, 0).rotated(arm)
-		var fore := (target - elbow).angle()
-		out[upper] = lerpf(out[upper], rad_to_deg(arm - root[1]) - BONES[upper][2], c)
-		out[lower] = lerpf(out[lower], rad_to_deg(fore - arm) - BONES[lower][2], c)
-		out["hand_" + side] = lerpf(out["hand_" + side], 0.0, c)
+		_reach_arm(out, side, hip + Vector2(pose.get("hold_%sx" % side, 0.0), pose.get("hold_%sy" % side, 0.0)), c)
+	if pose.get("grip_b", 0.0) > 0.0:  # a two-handed weapon: the other hand a fist further down the handle
+		var wrist: Vector2 = _end("arm_f_lower", out)[0]
+		var down: Vector2 = wrist - Vector2.from_angle(deg_to_rad(pose.get("wpn", 0.0))) * 17.0
+		_reach_arm(out, "b", down, pose.get("grip_b", 0.0))
 	if pose.has("wpn"):
 		var hand: Array = _end("hand_f", out)
 		var rel: float = wrapf(pose["wpn"] - rad_to_deg(hand[1]), -180.0, 180.0)
 		out["wpn_rel"] = rad_to_deg(lerp_angle(deg_to_rad(WEAPON_SWING_REL), deg_to_rad(rel), clampf(pose.get("wpn_hold", 0.0), 0.0, 1.0)))
 		out["wpn_len"] = pose.get("wpn_len", 1.0)
+
+
+## An arm's two-bone solve to put its wrist on a spot (the elbow down), blended in by c.
+static func _reach_arm(out: Dictionary, side: String, target: Vector2, c: float) -> void:
+	var upper: String = "arm_%s_upper" % side
+	var lower: String = "arm_%s_lower" % side
+	var root: Array = _end("shoulder_" + side, out)
+	var l1: float = BONES[upper][3]
+	var l2: float = BONES[lower][3]
+	var to: Vector2 = target - root[0]
+	var d := clampf(to.length(), absf(l1 - l2) + 0.5, l1 + l2 - 0.5)
+	var cos_a := clampf((l1 * l1 + d * d - l2 * l2) / (2.0 * l1 * d), -1.0, 1.0)
+	var arm := to.angle() + acos(cos_a)  # the elbow below the line: down
+	var elbow: Vector2 = root[0] + Vector2(l1, 0).rotated(arm)
+	var fore := (target - elbow).angle()
+	out[upper] = lerpf(out[upper], rad_to_deg(arm - root[1]) - BONES[upper][2], c)
+	out[lower] = lerpf(out[lower], rad_to_deg(fore - arm) - BONES[lower][2], c)
+	out["hand_" + side] = lerpf(out["hand_" + side], 0.0, c)
+
+
+## A value along keyframes: keys (ticks, rising) and vals, straight lines between, held past the ends.
+static func _along(keys: Array, vals: Array, t: int) -> float:
+	if t <= keys[0]:
+		return vals[0]
+	for i in range(1, keys.size()):
+		if t <= keys[i]:
+			var k: float = float(t - keys[i - 1]) / maxf(1.0, keys[i] - keys[i - 1])
+			return rad_to_deg(lerp_angle(deg_to_rad(vals[i - 1]), deg_to_rad(vals[i]), k))
+	return vals[-1]
 
 
 static func _planted(out: Dictionary, side: String) -> bool:

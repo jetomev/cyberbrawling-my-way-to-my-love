@@ -42,7 +42,7 @@ const ARMED := {"punch": "swing", "cross": "backswing", "power_punch": "smash", 
 ## knee: a knob jab, a pommel strike, the stick's butt jab; the body kick: a low swing at the knees or a thrust; the
 ## flying kick: a jumping club, chop or thrust).
 const GRIPS := {"knife": "light", "stick": "light", "pipe": "heavy", "wrench": "heavy", "bat": "two", "sword": "two",
-	"lovelight": "two", "mic_stand": "two"}  # (any other: heavy, one hand)
+	"lovelight": "two", "mic_stand": "two", "baguette": "two"}  # (any other: heavy, one hand; the baguette like the bat: Pippin, 11-04)
 const KICK_SWAPS := {
 	"light": {},
 	"heavy": {"side_kick": "smash", "roundhouse": "smash", "air_kick": "chop"},

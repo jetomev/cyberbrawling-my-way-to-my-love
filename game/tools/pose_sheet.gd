@@ -44,7 +44,7 @@ func _initialize() -> void:
 		stage.add_child(v)
 		var weapon: String = bits[3] if bits.size() > 3 else ""  # (a fourth part: the weapon in hand, e.g. idle:0:ground:pipe)
 		v._show_weapon(weapon)
-		v.apply(Poses.armed(Poses.angles(state, tick, t), state, weapon), not air)
+		v.apply(Poses.armed(Poses.angles(state, tick, t), state, weapon, tick, t), not air)
 		var label := Label.new()
 		label.text = items[i]
 		label.position = Vector2(step * i + 12, 860)

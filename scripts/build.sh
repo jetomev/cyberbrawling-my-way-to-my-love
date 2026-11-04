@@ -64,6 +64,8 @@ fail() { echo "FAILED $*"; exit 1; }
   "$ROOT/scripts/balance.sh" "$OUT/balance.md" > "$OUT/balance.txt" 2>&1 || { cat "$OUT/balance.txt"; fail "could not run the balance numbers"; }
   # the testers' controlled trials: one thing on purpose each, its numbers on screen (2026-11-03)
   "$ROOT/scripts/trials.sh" "$OUT" > "$OUT/trials.txt" 2>&1 || { cat "$OUT/trials.txt"; fail "could not record the trials"; }
+  # every armed blow, weapon by weapon, frame by frame, and each weapon's grip and block up close (the testers, 67ca654)
+  "$ROOT/scripts/armed_blows.sh" "$OUT" > "$OUT/armed.txt" 2>&1 || { cat "$OUT/armed.txt"; fail "could not record the armed blows"; }
   # the hero beside the recordings he was measured from (D-30); the recordings live outside the repo, so a machine
   # without them builds without these pictures and the note says so
   SBS="no"
@@ -146,6 +148,10 @@ PY
     echo "- \`trials/<name>-moments.png\` (the testers, 2026-11-04): a row for each key moment of a trial, the frame before"
     echo "  it, the moment and the 4 frames after it; in weapons, each weapon's breaking hit (it snaps in two at the hand)."
     echo "- \`frames/<level>-ending.png\`: each level clip's last 8 seconds as pictures (the last blows, the boss down, cleared)."
+    echo "- \`armed/\` (the testers, 2026-11-04, on the weapon holds): \`grips.png\` (each weapon's grip and block, up close),"
+    echo "  \`armed/<weapon>/NN-<blow>-N.png\` (every blow that weapon's hands make, EVERY frame from Ready through wind-up,"
+    echo "  contact, follow-through and back to Ready, labelled with the presses that make it: the knee and the uppercut"
+    echo "  apart) and \`armed/<weapon>.mp4\` / \`-half.mp4\` (the weapon's whole run at full and half speed)"
     echo "- \`trials/proof_<name>-sequence-<n>.png\` (the testers, 2026-11-04): one trick each, EVERY frame from the one"
     echo "  before its START to 4 after its END, in order, 60 to a page, numbers on screen: the six yard fighters (headbutt,"
     echo "  doorman, dancer, enforcer, lookout, grabber), Twin Loans' whole-combo swap, the stair shove, a brother climbing"
@@ -200,7 +206,7 @@ PY
   # Javier, 2026-11-02 20:14 (through the assistant team): "It is only one report a day, not so many." Builds live in
   # their own folder outside the repo, where the assistant team reads them; the shelf gets one plain report a day.
   BUILDS="${CYBERBRAWLING_BUILDS:-$HOME/Documents/Cyberbrawling/builds}"
-  mkdir -p "$BUILDS/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/frames "$OUT"/trials "$OUT"/build.md "$OUT"/balance.md "$BUILDS/$NAME/" \
+  mkdir -p "$BUILDS/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/frames "$OUT"/trials "$OUT"/armed "$OUT"/build.md "$OUT"/balance.md "$BUILDS/$NAME/" \
     && { [ "$SBS" != yes ] || cp -r "$OUT"/reference "$BUILDS/$NAME/"; } \
     || fail "could not copy to the builds folder"
   echo "in the builds folder: $BUILDS/$NAME"

@@ -31,7 +31,8 @@ const WEAPON_LOOK := {"knife": [56.0, 8.0, Color(0.85, 0.87, 0.9)], "stick": [13
 	"pipe": [120.0, 12.0, Color(0.62, 0.64, 0.68)], "wrench": [80.0, 14.0, Color(0.5, 0.52, 0.56)],
 	"bat": [130.0, 16.0, Color(0.72, 0.58, 0.38)], "sword": [160.0, 9.0, Color(0.88, 0.9, 0.95)],
 	"mic_stand": [170.0, 7.0, Color(0.15, 0.15, 0.18)], "cane": [140.0, 6.0, Color(0.85, 0.88, 0.95)],
-	"baton": [110.0, 10.0, Color(0.4, 0.75, 1.0)], "lovelight": [170.0, 10.0, Color(1.0, 0.55, 0.85)]}
+	"baton": [110.0, 10.0, Color(0.4, 0.75, 1.0)], "lovelight": [170.0, 10.0, Color(1.0, 0.55, 0.85)],
+	"baguette": [130.0, 15.0, Color(0.85, 0.66, 0.36)]}  # (level 2's frozen baguette, held like the bat)
 var weapon_drawn := ""
 var weapon_node: Polygon2D
 const PAIN_BONES := {
@@ -173,7 +174,7 @@ func sync(f, ground_y: float) -> void:
 	shadow.position.y = -floor_y / scale.y  # under his feet on whatever he stands on (a crate, a step, a landing)
 	shadow.scale = Vector2.ONE * (1.0 - clampf((f.y - floor_y) / 200.0, 0.0, 1.0) * 0.45)  # smaller the higher above it
 	var pose := Poses.landing(Poses.angles(f.state, f.t, f.tune), since_touch if grounded else -1, f.y - floor_y, f.vy < 0.0)
-	pose = Poses.armed(pose, f.state, f.weapon)  # a weapon held as it's really used (the team's grips and pose sheets)
+	pose = Poses.armed(pose, f.state, f.weapon, f.t, f.tune)  # a weapon held as it's really used (the team's grips and pose sheets)
 	pose["tumble_dir"] = float(f.roll_dir)
 	# a broken arm hangs, bent wrong at the elbow, unless he's throwing a blow with it
 	var striking := ""
@@ -296,7 +297,11 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		bone.rotation_degrees = Poses.BONES[name][2] + baked[name]
 	if weapon_node != null:  # the weapon's own angle in the hand (Poses._hold), and how long it draws (end-on: short)
 		weapon_node.rotation_degrees = baked.get("wpn_rel", Poses.WEAPON_SWING_REL)
-		weapon_node.scale.x = baked.get("wpn_len", 1.0)
+		var k: float = baked.get("wpn_len", 1.0)
+		weapon_node.scale.x = k
+		# end-on (held across the body, seen from the side): a short stub centred on the fist, not poking forward
+		var reach: float = WEAPON_LOOK.get(weapon_drawn, [100.0])[0]
+		weapon_node.position = Vector2.from_angle(weapon_node.rotation) * (-reach * k * 0.5 if k < 1.0 else 0.0)
 	bones["hip"].position = Poses.BONES["hip"][1] + Vector2(baked["hip_x"], baked["hip_y"])
 	# a spin turns the whole body around the up axis. It never squashes him thin (the assistant team's third review:
 	# a turn that flattens him to a line reads wrong): the arms and legs keep their thickness, only the chest narrows
