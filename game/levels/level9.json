@@ -1,6 +1,6 @@
 {
   "name": "Level 9 · The Tower",
-  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Three floors, two screens each, stairs between, then the Lovelight room: no boss, smash the glass case and take the Lovelight. Floor 1 rehearses armour (Doormen), floor 2 speed (Dancers, Snicks), floor 3 rage (Enforcers, Maulers). NOT BUILT YET: everyone's 'hard version' (the roster's level 9 tricks: a Bruiser's shock ring, Snick throwing her knife, two wrenches, the shield bouncing you back, the Dancer's feint, the Enforcer lunging twice, the Whistler calling three, the Mauler grabbing faster). Balance ruling batch two (2026-11-04, under the pass mark): F0 s1 a warm-up (one Bruiser, one Doorman, some food), and a first-aid kit at the end of each floor. Second ruling: F0 s2's whole wave comes in from the right, ahead of the hero; still under, so one Doorman fewer there (the ruling's fallback). Third ruling: the warm-up's Bruiser and Doorman (the ordinary ones) come one at a time, the Bruiser first.",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Three floors, two screens each, stairs between, then the Lovelight room: no boss, smash the glass case and take the Lovelight. Floor 1 rehearses armour (Doormen), floor 2 speed (Dancers, Snicks), floor 3 rage (Enforcers, Maulers). NOT BUILT YET: everyone's 'hard version' (the roster's level 9 tricks: a Bruiser's shock ring, Snick throwing her knife, two wrenches, the shield bouncing you back, the Dancer's feint, the Enforcer lunging twice, the Whistler calling three, the Mauler grabbing faster). Balance ruling batch two (2026-11-04, under the pass mark): F0 s1 a warm-up (one Bruiser, one Doorman, some food), and a first-aid kit at the end of each floor. Second ruling: F0 s2's whole wave comes in from the right, ahead of the hero; still under, so one Doorman fewer there (the ruling's fallback). Third ruling: the warm-up's Bruiser and Doorman (the ordinary ones) come one at a time, the Bruiser first. Still under after the third ruling, so its fallback: no Doorman in the warm-up, one Dancer fewer on floor two's first screen.",
   "draft": true,
   "floors": [
     {
@@ -60,12 +60,6 @@
               "kind": "bruiser",
               "from": "right",
               "z": 80
-            },
-            {
-              "kind": "doorman",
-              "from": "left",
-              "z": 80,
-              "after_down": 1
             }
           ]
         },
@@ -161,11 +155,6 @@
               "kind": "neon_dancer",
               "from": "right",
               "z": 60
-            },
-            {
-              "kind": "neon_dancer",
-              "from": "right",
-              "z": 110
             },
             {
               "kind": "snick",
