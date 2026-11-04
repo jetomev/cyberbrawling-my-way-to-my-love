@@ -89,7 +89,8 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] That enemy's own combos; the right hit or a perfect block interrupts them and can disarm him; a block takes less pain (solo) (2026-11-03: a counter, caught winding up, or a perfect block knocks his weapon loose)
 - [x] Two hero combos in a row make an enemy dizzy: the window for a finishing combo (solo) (2026-11-03: within 4 s, no blow of his between; dazed 2.5 s)
 - [x] Pain system in grey boxes: damage stages per part, broken arm/leg effects; no blood (solo) (#3) (2026-11-03: head, body, arms, legs go bruised → swollen → broken by where blows land; a broken leg limps, a broken arm hits at half and hangs; heals between levels)
-- [ ] Hit sounds, voices and the crack wired to the fight's events, from the team's sound batch
+- [x] Hit sounds, voices and the crack wired to the fight's events (2026-11-03: present/sound.gd plays assets/audio/sfx/<name>-<n>.ogg, silent until the team's sound batch lands)
+- [ ] The team's sounds in: copy their batch into assets/audio/sfx/ under the names in sound.gd
 - [x] The testers' send-back (2026-11-03): the combo window now ends exactly on its setting (24 frames, was 22 in practice); controlled trials in every build (combo edge, injuries, weapon wear, disarm, dizzy, scenery speeds)
 - [x] Finding: Godot aborted (SIGABRT) as it quit, every run since 2026-11-01 (126 core dumps), after its work was written: a lambda hooked on Input's pad signal and never unhooked; now a method, unhooked on exit; every recording and the export fail on a crash from now on
 - [x] Pick up a weapon; it stays in the hand (solo) (2026-11-03: walk over it with an empty hand; drawn in the lead hand)
@@ -124,7 +125,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 ## Stage 4 · Levels 2–5 (by Sun 31 Jan)
 - [ ] Level 1 findings fixed
 - [ ] The weapon bag: collect and switch
-- [ ] Story opening: choose your hero, the kidnapping
+- [ ] Story opening: choose your hero, the kidnapping (2026-11-03: the title, choosing the man or the woman, a stand-in story card, the levels in order, a save at each level's start (D-15), the end; left: the team's story text and art)
 - [ ] Level 2; levels 3–5 on two floors; the level 5 boss (the engine for floors is built: level.gd; layouts from the team)
 - [ ] Each enemy type and boss: its own combos, counters to the hero's combos, its own way to be beaten (D-19; the team's table)
 

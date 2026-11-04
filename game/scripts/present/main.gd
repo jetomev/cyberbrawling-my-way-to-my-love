@@ -26,6 +26,12 @@ const Brain := preload("res://scripts/sim/brain.gd")
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const Level := preload("res://scripts/sim/level.gd")
 const Trials := preload("res://scripts/present/trials.gd")
+const Progress := preload("res://scripts/sim/progress.gd")
+const Sound := preload("res://scripts/present/sound.gd")
+const HERO_TINT := {"man": Color.WHITE, "woman": Color(1.08, 0.93, 1.03)}  # grey boxes: told apart by a warmer tint
+## The story's opening, until the team's text lands (docs/ART-BRIEF.md: the story text is theirs)
+const STORY := "The mob has taken the one you love.\nThey're holding them at the top of their tower.\n\nStreet by street, you're going to get them back."
+const STORY_TICKS := 420
 const LEVEL_FILE := "res://levels/level1.json"
 const END_TICKS := 240  # how long "cleared" or "out of lives" shows before the level starts again
 const FIGHT_TICKS := 1500  # --fight: how long the recorded bot fight runs (25 s)
@@ -61,6 +67,14 @@ var dummy
 var dummy_view
 var trial_label: Label
 var layer_was := {}
+var progress = null  # played from the title: the game's order and its save (sim/progress.gd)
+var title_label: Label
+var title_options := []
+var title_choice := 0
+var title_mx := 0.0
+var screen := ""  # "title", "story", "the_end" or "" (playing)
+var screen_ticks := 0
+var sound
 
 
 func _ready() -> void:
@@ -86,6 +100,10 @@ func _ready() -> void:
 		var li := args.find("--level")  # --level <file>: play another layout (the team's, a test one)
 		if li >= 0 and li + 1 < args.size():
 			file = args[li + 1]
+		if not "--bot" in args and li < 0:
+			progress = Progress.new()  # the full game: the title, a hero, the levels in order, the save
+			if progress.has_save():
+				file = progress.level_file()
 		level = Level.new(Level.load_data(file), tune, 2 if "--bot" in args else 1)
 		world = level.world
 	elif trial_name != "":
@@ -107,6 +125,11 @@ func _ready() -> void:
 	$Hud/Title.text = "%s   ·   %s%s" % [Version.TITLE, Version.STAGE, "   ·   demo" if demo else ""]
 	hero_view.sync(hero, Street.GROUND_Y)
 	_make_bars()
+	sound = Sound.new()
+	sound.name = "Sound"
+	add_child(sound)
+	if progress != null:
+		_show_title()
 	if trial_name != "":
 		_start_trial(trial_name)
 	if "--fight" in args or "--bot" in args:
@@ -121,6 +144,9 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	if screen != "":
+		_play_screen()
+		return
 	if trial != null:
 		_play_trial()
 		return
@@ -138,7 +164,9 @@ func _physics_process(_delta: float) -> void:
 	if world.objects.map(func(o): return o["strength"]) != crate_was:
 		obstacles_view.refresh()
 	Fight.separate(everyone)
-	for ev in fight.step(everyone, world):
+	var fight_events: Array = fight.step(everyone, world)
+	sound.fight_tick(everyone, fight_events)
+	for ev in fight_events:
 		if ev["drop"] != "":
 			obstacles_view.refresh_items()
 	_after_the_fight()
@@ -188,11 +216,18 @@ func _play_level() -> void:
 				print("LEVEL %s at tick %d, lives %d" % ["WON" if level.won else "LOST", level.tick, level.lives])
 				get_tree().quit()
 				return
+			if level.won and progress != null:
+				if progress.level_won():
+					_show_screen("the_end")  # the last level won: the game is done
+				else:
+					_start_level(progress.level_file(), progress.hero)  # on to the next, fresh-bodied, saved at its start
+				return
 			level.restart()
 	else:
 		if bot != null:
 			bot.me = level.hero
 		level.step(bot.think(level.standing()) if bot != null else Controls.read())
+		sound.fight_tick(level.everyone(), level.events)
 	tick += 1
 	hero = level.hero
 	world = level.world
@@ -267,6 +302,7 @@ func _play_trial() -> void:
 	Fight.separate([hero, dummy])
 	var events: Array = fight.step([hero, dummy], world)
 	trial.saw(events)
+	sound.fight_tick([hero, dummy], events)
 	if not events.is_empty():
 		obstacles_view.refresh()
 	hero_view.sync(hero, Street.GROUND_Y)
@@ -294,6 +330,103 @@ func _play_trial() -> void:
 			print(line)
 		print("TRIAL DONE %s" % trial.name)
 		get_tree().quit()
+
+
+## The title (choose a hero, or continue a save), the story's opening, the end: arrows choose, A (punch) goes on.
+func _show_title() -> void:
+	title_options = []
+	if progress.has_save():
+		title_options.append("continue")
+	title_options.append_array(["man", "woman"])
+	title_choice = 0
+	_show_screen("title")
+
+
+func _show_screen(which: String) -> void:
+	screen = which
+	screen_ticks = 0
+	if title_label == null:
+		title_label = Label.new()
+		title_label.position = Vector2(0, 300)
+		title_label.size = Vector2(1920, 500)
+		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title_label.add_theme_font_size_override("font_size", 44)
+		title_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.8))
+		title_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+		$Hud.add_child(title_label)
+	title_label.visible = true
+	_draw_screen()
+
+
+func _draw_screen() -> void:
+	match screen:
+		"title":
+			var names := {"continue": "CONTINUE (level %d)" % (progress.level + 1), "man": "THE MAN", "woman": "THE WOMAN"}
+			var row := []
+			for i in title_options.size():
+				var n: String = names[title_options[i]]
+				row.append("▶ %s ◀" % n if i == title_choice else n.to_lower())
+			title_label.text = "CYBERBRAWLING MY WAY TO MY LOVE!\n\nChoose your hero\n\n%s\n\n←  →  to choose   ·   A  to start" % "     ".join(row)
+		"story":
+			title_label.text = STORY + "\n\n(A to go on)"
+		"the_end":
+			title_label.text = "YOU GOT THEM BACK.\n\nThe end, for now: the game grows a level at a time.\n\n(A for the title)"
+
+
+func _play_screen() -> void:
+	screen_ticks += 1
+	$Street.follow($Camera.get_screen_center_position().x)
+	for b in bars.values():
+		b[0].visible = false  # no health bars over the title, the story or the end
+	var inp: Dictionary = Controls.read()
+	var mx: float = signf(inp.get("mx", 0.0))
+	var go: bool = inp.get("punch", false) and screen_ticks > 20  # a short breath, so one press doesn't skip two screens
+	match screen:
+		"title":
+			if mx != 0.0 and mx != title_mx:
+				title_choice = wrapi(title_choice + int(mx), 0, title_options.size())
+				_draw_screen()
+			if go:
+				var pick: String = title_options[title_choice]
+				if pick == "continue":
+					screen = ""
+					title_label.visible = false
+					_start_level(progress.level_file(), progress.hero)
+				else:
+					progress.new_game(pick)
+					_show_screen("story")
+		"story":
+			if go or screen_ticks >= STORY_TICKS:
+				screen = ""
+				title_label.visible = false
+				_start_level(progress.level_file(), progress.hero)
+		"the_end":
+			if go:
+				progress.forget()
+				_show_title()
+	title_mx = mx
+
+
+## A level from its file, fresh: the hero as chosen, at full health with no pain (it heals between levels).
+func _start_level(file: String, who: String) -> void:
+	level = Level.new(Level.load_data(file), tune, 1)
+	world = level.world
+	hero = level.hero
+	shown_world = world
+	obstacles_view.setup(world, Street.GROUND_Y)
+	$Street.setup(level.floors[0]["length"], tune["street_depth"])
+	for v in level_views.values():
+		v.queue_free()
+	level_views = {}
+	hero_view.queue_free()
+	hero_view = HeroView.new(HERO_TINT.get(who, Color.WHITE))
+	hero_view.name = "Hero"
+	add_child(hero_view)
+	hero_view.sync(hero, Street.GROUND_Y)
+	items_seen = -1
+	flips_seen = -1
+	ended_for = 0
+	bars["hero"][0].visible = true
 
 
 ## The stairs' doorways and the switches on the floor he's on, for the obstacles view.
