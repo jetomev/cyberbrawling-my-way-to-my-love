@@ -106,10 +106,16 @@ const GRABBER := {
 	"keep": 170.0, "strike": 120.0, "wait_min": 60, "wait_max": 110, "block_chance": 0.0, "block_ticks": 0,
 	"combos": [["grab"]],
 }
+## Twin Loans, level 3's boss (the team's roster, the bosses): two brothers, one combo between them ("Interest": one
+## starts, they swap places halfway; level.gd _twins swaps them and holds the other's guard up).
+const TWIN := {
+	"keep": 170.0, "strike": 115.0, "wait_min": 40, "wait_max": 90, "block_chance": 0.3, "block_ticks": 20,
+	"combos": [["punch", "punch", "punch"], ["punch", "kick", "punch"], ["kick", "punch", "punch"]],
+}
 ## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
 const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER, "DJ_VOLT": DJ_VOLT,
 	"SNICK": SNICK, "BIG_MAMA": BIG_MAMA, "WRENCH_MECHANIC": WRENCH_MECHANIC, "DOORMAN": DOORMAN,
-	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER}
+	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN}
 
 var me
 var foe
@@ -117,6 +123,7 @@ var kind: Dictionary
 var dice := RandomNumberGenerator.new()
 var wait := 0  # ticks until he may start his next attack
 var plan: Array = []  # the presses left in the combo he is throwing
+var close_guard := false  # waiting his turn close by, guard up, not hanging back (Twin Loans: a pair)
 var pressed_on := -1  # the blow (attack serial) during which he pressed the next one: one press per blow
 var block_left := 0
 var read_serial := -1  # the foe's blow he already decided about
@@ -229,7 +236,7 @@ func think() -> Dictionary:
 	var dz: float = foe.z - me.z
 	if absf(dz) > 6.0:
 		inp["mz"] = clampf(dz / 16.0, -1.0, 1.0)
-	var want: float = kind["strike"] if wait == 0 and allowed else kind["keep"] + (0.0 if allowed else HANG_BACK)
+	var want: float = kind["strike"] if wait == 0 and allowed else kind["keep"] + (0.0 if allowed or close_guard else HANG_BACK)
 	if dist > want + 6.0:
 		inp["mx"] = toward
 	elif me.facing != int(toward):

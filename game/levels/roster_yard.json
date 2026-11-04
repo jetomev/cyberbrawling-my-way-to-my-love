@@ -1,6 +1,6 @@
 {
   "name": "The roster yard (a showcase for the testers, not a level of the game)",
-  "about": "Javier & Claude, 2026-11-04. The rest of the team's roster (enemy roster v2), one at a time down a plain street so each trick shows on its own: the Wrench Mechanic (his toolbox by the wall), the Doorman, the Neon Dancer, the Enforcer, the lookout (who whistles in two more), the Grabber; then the stairs (the team's level 3 page): a Snick waiting on the top step and a Mechanic below, fought up the flight to the back room. Recorded by the bot with every build. Not in levels.json: the real levels place them (levels 4 to 9, the team's level list).",
+  "about": "Javier & Claude, 2026-11-04. The rest of the team's roster (enemy roster v2), one at a time down a plain street so each trick shows on its own: the Wrench Mechanic (his toolbox by the wall), the Doorman, the Neon Dancer, the Enforcer, the lookout (who whistles in two more), the Grabber; then the stairs (the team's level 3 page): a Snick waiting on the top step and a Mechanic below, fought up the flight to the back room, where Twin Loans wait (level 3's boss, the team's roster): the short brother on the floor, the tall one at the top of the room's own stairs. Recorded by the bot with every build. Not in levels.json: the real levels place them (levels 4 to 9, the team's level list).",
   "floors": [
     {
       "name": "the yard",
@@ -119,9 +119,20 @@
       ]
     },
     {
-      "name": "the yard's back room",
+      "name": "the yard's back room (Twin Loans)",
       "length": 1920,
-      "obstacles": [],
+      "obstacles": [
+        [
+          "stairs",
+          600,
+          1520,
+          0,
+          30,
+          400,
+          false,
+          0
+        ]
+      ],
       "items": [],
       "waves": []
     }
@@ -138,8 +149,15 @@
   "switches": [],
   "boss": {
     "floor": 1,
-    "x": 1200,
-    "kind": "thug",
-    "health": 8
+    "x": 1000,
+    "z": 80,
+    "kind": "twin_short",
+    "with": [
+      {
+        "kind": "twin_tall",
+        "x": 1460,
+        "z": 15
+      }
+    ]
   }
 }

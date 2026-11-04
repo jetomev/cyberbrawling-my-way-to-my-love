@@ -159,10 +159,8 @@ func _ellipse(centre: Vector2, rx: float, ry: float) -> PackedVector2Array:
 func sync(f, ground_y: float) -> void:
 	position = Vector2(f.x, ground_y + f.z)
 	z_index = int(f.z)
-	body_y = -f.y
+	body_y = -f.y / scale.y  # (a view drawn bigger or smaller still stands on the step it is on)
 	facing = f.facing
-	var height := clampf(f.y / 200.0, 0.0, 1.0)
-	shadow.scale = Vector2.ONE * (1.0 - height * 0.45)
 	var grounded: bool = f.on_ground()
 	if grounded and not was_grounded:
 		since_touch = 0
@@ -170,6 +168,8 @@ func sync(f, ground_y: float) -> void:
 		since_touch += 1
 	was_grounded = grounded
 	var floor_y: float = f.world.floor_at(f.x, f.z, f.y) if f.world != null else 0.0
+	shadow.position.y = -floor_y / scale.y  # under his feet on whatever he stands on (a crate, a step, a landing)
+	shadow.scale = Vector2.ONE * (1.0 - clampf((f.y - floor_y) / 200.0, 0.0, 1.0) * 0.45)  # smaller the higher above it
 	var pose := Poses.landing(Poses.angles(f.state, f.t, f.tune), since_touch if grounded else -1, f.y - floor_y, f.vy < 0.0)
 	pose["tumble_dir"] = float(f.roll_dir)
 	# a broken arm hangs, bent wrong at the elbow, unless he's throwing a blow with it

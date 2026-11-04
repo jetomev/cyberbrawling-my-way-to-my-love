@@ -34,6 +34,10 @@ const KINDS := {
 	"snick": {"health": 10.0, "brain": "SNICK", "weapon": "knife"},  # her knife falls when she's put down
 	"bruiser_pipe": {"health": 20.0, "brain": "BRUISER", "weapon": "pipe", "shrugs": ["punch"], "snaps": true},
 	"big_mama": {"health": 50.0, "brain": "BIG_MAMA", "weapon": "wok", "drops": "wrench"},
+	# level 3's boss, Twin Loans (the team's roster): two brothers, slow to climb back up a flight; the tall one has the
+	# prize, the stick
+	"twin_tall": {"health": 25.0, "brain": "TWIN", "drops": "stick", "twin": true},
+	"twin_short": {"health": 25.0, "brain": "TWIN", "twin": true},
 	# the rest of the team's roster (enemy roster v2)
 	"wrench_mechanic": {"health": 14.0, "brain": "WRENCH_MECHANIC", "weapon": "wrench", "dodges": ["side_kick", "roundhouse"]},
 	"doorman": {"health": 18.0, "brain": "DOORMAN", "weapon": "shield"},
@@ -66,6 +70,8 @@ const TUMBLE_SPEED := 10.0  # px a tick down the flight
 const TUMBLE_DAMAGE := 1.5
 const TUMBLE_DOWN_EXTRA := 46  # on top of down_ticks and get_up_ticks: about 2 s on the street in all
 const ON_STAIRS_MAX := 2  # enemies on the slope at once; the rest wait at the top or the foot
+const TWIN_CLIMB := 0.3  # how fast a Twin Loans brother goes up a flight, of his walk: knocked down it, about ten
+# seconds before he's back up (the team's roster, feel lab)
 const MAX_ON_SCREEN := 5  # never more than five enemies at once; the rest wait off screen (the team's fairness rules)
 const OFF_SCREEN := 1150.0  # "from the left/right": they walk in from this far beyond the wave's spot
 const AMBUSH := 260.0  # a hidden enemy jumps out when the hero comes this close
@@ -103,6 +109,9 @@ var mopped := false  # she's mopped it once (at half health)
 var blocks_in_row := 0  # the hero's blocks in a row against her (her hot soup)
 var hug := {}  # the bear hug under way: {by (the grabber's entry), at (tick)}
 var tumbling := {}  # fighter -> the flight he's rolling down
+var compound := false  # Twin Loans at half their health: both rush the hero together
+var climbing_back := {}  # fighters tumbled down a flight, on their way back up (a Twin Loans brother: slowly)
+var early := []  # events from before this tick's blows are settled (the twins' swap): joined to events after
 var cat_fed := false  # level 1's stray cat, fed (it follows him, and turns up in level 2)
 var cat := Vector2(-1.0e9, 0.0)  # where the cat is (x, z): by its bins, or at his heels once fed
 var cat_with := 0  # how long he's stood by it
@@ -190,6 +199,11 @@ func restart() -> void:
 	wet = true
 	mopped = false
 	blocks_in_row = 0
+	hug = {}
+	tumbling = {}
+	compound = false
+	climbing_back = {}
+	early = []
 	friend = null
 	tutor = null
 	cat_with = 0
@@ -248,6 +262,7 @@ func step(inp: Dictionary) -> void:
 	tune["street_right"] = b.y
 	hero.step(inp)
 	_take_turns()
+	_twins()
 	if friend != null and on == 0:
 		friend.step(tutor.think())
 	for e in enemies:
@@ -269,6 +284,8 @@ func step(inp: Dictionary) -> void:
 	_collect()
 	Fight.separate(all.filter(func(f): return f != friend))  # he never blocks the street
 	events = fight.step(all, world)
+	events.append_array(early)
+	early = []
 	events.append_array(projectiles.step(all, 0.0, floors[on]["length"]))
 	if tutor != null and on == 0:
 		tutor.saw(events)
@@ -407,6 +424,7 @@ func _stairs() -> void:
 		f._enter("ko" if f.health <= 0.0 else "down")
 		f.t = -TUMBLE_DOWN_EXTRA
 		tumbling.erase(f)
+		climbing_back[f] = st
 	var on_slope := []
 	for e in enemies:
 		var f = e["f"]
@@ -430,6 +448,64 @@ func _tumble(f, st: Dictionary) -> void:
 	tumbling[f] = st
 	if f == hero and not hug.is_empty():
 		hug = {}
+
+
+## Twin Loans (the team's roster, level 3's boss): while one brother attacks, the other holds his guard up and waits his
+## turn; halfway through a combo they swap places ("Interest"), so an answer meant for the one swinging lands on the
+## one guarding; at half their health together, both rush the hero at once ("Compound"). Knocked down a flight, a
+## brother climbs back slowly.
+func _twins() -> void:
+	var twins: Array = enemies.filter(func(e): return not e["gone"] and KINDS.get(e["kind"], {}).get("twin", false))
+	if twins.is_empty():
+		return
+	for e in twins:  # slow back up a flight he was knocked down; a pair: the one waiting his turn stays close, guard up
+		var f = e["f"]
+		e["brain"].close_guard = true
+		if not e.has("walk"):
+			e["walk"] = f.tune["walk_speed"]
+		if climbing_back.has(f):
+			var st: Dictionary = climbing_back[f]
+			if f.y >= st["top"] - 1.0 or (f.flight().is_empty() and hero.flight().is_empty() and f.state in Fighter.GROUND_STATES):
+				climbing_back.erase(f)  # back up top (or the fight's come down to the floor)
+		f.tune["walk_speed"] = e["walk"] * (TWIN_CLIMB if climbing_back.has(f) and not f.flight().is_empty() else 1.0)
+	var up: Array = twins.filter(func(e): return not e["f"].defeated())
+	if up.size() < 2:
+		return
+	var hp: float = up.reduce(func(s, e): return s + e["f"].health, 0.0)
+	var most: float = up.reduce(func(s, e): return s + e["f"].max_health, 0.0)
+	if not compound and hp <= most * 0.5:
+		compound = true
+		early.append({"target": up[0]["f"], "result": "compound", "kind": "compound"})
+	if compound:
+		for e in up:
+			e["brain"].allowed = true  # both at once
+		return
+	for i in 2:
+		var me: Dictionary = up[i]
+		var other: Dictionary = up[1 - i]
+		var busy: bool = other["f"].attack_phase() != "" or not other["brain"].plan.is_empty()
+		if busy:
+			me["brain"].allowed = false  # his brother's turn
+			if me["f"].state in Fighter.GROUND_STATES or me["f"].state == "block":
+				me["brain"].block_left = maxi(me["brain"].block_left, 2)  # and his guard up meanwhile
+		# Interest: the second press of his combo, and they've swapped places
+		var b = other["brain"]
+		if b.plan.is_empty() and other["f"].attack_phase() == "":
+			other["swapped"] = false  # his combo's over: the next one may swap again
+		if b.plan.size() == 1 and not other.get("swapped", false) \
+				and me["f"].state in Fighter.GROUND_STATES + ["block"] and me["f"].flight() == other["f"].flight() \
+				and absf(me["f"].x - other["f"].x) < 500.0:  # (both on the shop floor, or both on the same stairs)
+			other["swapped"] = true  # once a combo
+			var at := Vector3(me["f"].x, me["f"].y, me["f"].z)
+			me["f"].x = other["f"].x
+			me["f"].y = other["f"].y
+			me["f"].z = other["f"].z
+			other["f"].x = at.x
+			other["f"].y = at.y
+			other["f"].z = at.z
+			me["f"].facing = 1 if hero.x >= me["f"].x else -1
+			other["f"].facing = 1 if hero.x >= other["f"].x else -1
+			early.append({"target": other["f"], "result": "swap", "kind": "swap"})
 
 
 ## The stray cat (level 1, screen 7): stand by it a moment and it's fed; then it trots at his heels.
@@ -576,7 +652,8 @@ func _waves() -> void:
 				world.drop(drop, e["f"].x, e["f"].z)
 	if fl["active_wave"] >= 0 and fl["waiting"].is_empty() and not enemies.any(func(e): return e["wave"] == fl["active_wave"] and not e["gone"] and not e["f"].defeated()):
 		fl["active_wave"] = -1  # its thugs beaten: the floor opens on (a boss waiting further on doesn't hold it)
-	var boss_down: bool = boss_spawned and enemies.any(func(e): return e["boss"] and e["f"].defeated())
+	var bosses: Array = enemies.filter(func(e): return e["boss"])
+	var boss_down: bool = boss_spawned and not bosses.is_empty() and bosses.all(func(e): return e["f"].defeated())
 	if boss_down:
 		won = true
 
@@ -651,8 +728,10 @@ func _maybe_boss() -> void:
 	if boss_spawned or boss.is_empty() or int(boss.get("floor", 0)) != on:
 		return
 	boss_spawned = true
-	_spawn(boss.get("kind", "boss"), boss.get("x", 1200.0), 80.0, boss.get("weapon", ""), boss.get("health", -1.0))
-	enemies[-1]["boss"] = true
+	# the boss, and any who fight with him (Twin Loans: two brothers, each where the layout puts him, up a flight or not)
+	for b in [boss] + boss.get("with", []):
+		_spawn(b.get("kind", "boss"), b.get("x", 1200.0), b.get("z", 80.0), b.get("weapon", ""), b.get("health", -1.0))
+		enemies[-1]["boss"] = true
 
 
 ## A blow that reaches a switch flips it, once: the door it names opens, on whatever floor it stands.

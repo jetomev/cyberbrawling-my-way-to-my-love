@@ -46,10 +46,13 @@ const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 
 	"dj_volt": Color(0.75, 1.1, 1.6),  # DJ Volt: his LED jacket's cold blue
 	"snick": Color(0.95, 1.3, 0.75), "bruiser_pipe": Color(1.1, 0.55, 0.5),  # Snick's glowing knife green-yellow
 	"big_mama": Color(1.5, 1.4, 1.25),  # Big Mama Noodle: an enormous white apron
+	"twin_tall": Color(1.3, 1.15, 0.75), "twin_short": Color(1.15, 1.0, 0.6),  # Twin Loans: matching checked suits
 	# the rest of the roster, from the team's looks: the mechanic's blue overalls, the Doorman's black suit, the
 	# Dancer's bright tracksuit, the Enforcer's long dark coat, the lookout's neon raincoat, the Grabber's green glow
 	"wrench_mechanic": Color(0.7, 0.85, 1.25), "doorman": Color(0.45, 0.45, 0.5), "neon_dancer": Color(1.6, 1.2, 0.5),
 	"enforcer": Color(0.6, 0.5, 0.6), "lookout": Color(1.4, 1.5, 0.55), "grabber": Color(0.8, 1.35, 0.8)}
+## Some are bigger or smaller than the hero (Twin Loans: one tall brother, one short)
+const KIND_SIZE := {"twin_tall": 1.1, "twin_short": 0.85}
 const ENEMY_HEALTH := 12.0
 const RESPAWN_TICKS := 180
 
@@ -304,6 +307,7 @@ func _play_level() -> void:
 		live[id] = true
 		if not level_views.has(id):
 			var v = HeroView.new(KIND_TINT.get(e["kind"], ENEMY_TINT))
+			v.scale = Vector2.ONE * KIND_SIZE.get(e["kind"], 1.0)  # (drawn from the feet: they stay on the street)
 			add_child(v)
 			level_views[id] = v
 		level_views[id].sync(e["f"], Street.GROUND_Y)

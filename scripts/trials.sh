@@ -7,9 +7,11 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$1/trials"
 mkdir -p "$OUT"
 # the trials on a bare street, then the scenes on a real level (scene:<name>, present/scenes.gd: the cat)
-for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy records bass_drop scenery umbrella first_aid scene:cat; do
+# (scene:<name>@<level>: the scene on that level)
+for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy records bass_drop scenery umbrella first_aid \
+    scene:cat@level1 scene:twins@roster_yard; do
   ARGS=(--trial "$T")
-  if [[ "$T" == scene:* ]]; then T="${T#scene:}"; ARGS=(--level res://levels/level1.json --scene "$T"); fi
+  if [[ "$T" == scene:* ]]; then L="${T#*@}"; T="${T#scene:}"; T="${T%@*}"; ARGS=(--level "res://levels/$L.json" --scene "$T"); fi
   TMP="$ROOT/scratch/trial-$T.$$"
   mkdir -p "$TMP"
   timeout 300 "$ROOT/scripts/capped.sh" godot --path "$ROOT/game" --write-movie "$TMP/f.png" --fixed-fps 60 \
