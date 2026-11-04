@@ -18,6 +18,14 @@ extends RefCounted
 ## bass_drop    the guard held two seconds while his speakers stand: the wave pushes the hero back; both speakers
 ##              smashed, the same guard: nothing
 ## scenery      the camera pans at 6 px a frame: each layer's speed on screen
+## umbrella     level 1's umbrella: the hero takes it up, it takes the dummy's blow for him (no damage) and breaks;
+##              the next blow lands
+## first_aid    the first-aid kit up close (the team's props sheet: a GREEN cross on white), then the hurt hero walks
+##              over it: his health before and after
+##
+## Every trial logs its moments ("frame N: ..."); the ones that matter most are its key moments, and trials.sh lays
+## each key moment out with the 4 frames after it, a row apiece (the testers, 2026-11-04). The weapons trials keep
+## every swing in the log but only each weapon's breaking hit is key.
 
 const Fighter := preload("res://scripts/sim/fighter.gd")
 const Weapons := preload("res://scripts/sim/weapons.gd")
@@ -26,7 +34,7 @@ const Projectiles := preload("res://scripts/sim/projectiles.gd")
 const Level := preload("res://scripts/sim/level.gd")
 
 const NAMES := ["combo_edge", "injuries", "broken_arm", "weapon_wear", "weapons", "disarm", "counter", "dizzy", "records",
-	"bass_drop", "scenery"]
+	"bass_drop", "scenery", "umbrella", "first_aid"]
 const WEAPON_ROUND := ["knife", "pipe", "wrench", "bat", "sword"]
 const SWING_EVERY := 32  # frames between swings in the weapon trials (each a fresh swing, not a chain)
 
@@ -42,6 +50,9 @@ var history := []  # every note with its frame, printed at the end
 var data := {}  # numbers a trial keeps
 var projectiles = Projectiles.new()  # what's flying (the records trial)
 var held := 0  # how long the hero's guard has been up (the bass_drop trial)
+var close_up := Vector2.ZERO  # a spot the camera looks at up close (x, depth), until close_until
+var close_until := 0
+var zoom := 1.0  # the camera closer in on the two of them (the testers read small pictures)
 
 
 func _init(trial: String, h, d) -> void:
@@ -71,12 +82,14 @@ func _init(trial: String, h, d) -> void:
 			steps.append([20, "hero", {"punch": true}, ""])  # a jab with the broken arm
 			steps.append([130, "hero", {"punch": true}, ""])  # with the pipe in hand (given at 100): still a jab
 		"weapon_wear":
+			zoom = 1.8
 			hero.take_weapon("stick")
 			_tough_dummy()
 			length = 8 * 45 + 60
 			for i in 9:
 				steps.append([10 + i * 45, "hero", {"punch": true}, ""])
 		"weapons":
+			zoom = 1.8
 			_tough_dummy()
 			var at := 10
 			for kind in WEAPON_ROUND:
@@ -115,6 +128,20 @@ func _init(trial: String, h, d) -> void:
 			length = 420
 		"scenery":
 			length = 240
+		"umbrella":
+			zoom = 1.6
+			_tough_dummy()
+			hero.world.drop("umbrella", hero.x + 40.0, hero.z)
+			length = 220
+			steps.append([90, "dummy", {"punch": true}, ""])  # his first blow: the umbrella takes it
+			steps.append([160, "dummy", {"punch": true}, ""])  # his second: nothing left to take it
+		"first_aid":
+			dummy.x = hero.x + 900.0  # out of the way
+			hero.health = hero.max_health * 0.4
+			hero.world.drop("first_aid", hero.x + 160.0, hero.z)
+			close_up = Vector2(hero.x + 160.0, hero.z)
+			close_until = 90
+			length = 200
 
 
 func _tough_dummy() -> void:
@@ -140,7 +167,7 @@ func inputs() -> Array:
 		"weapons", "weapon_wear":
 			if data.has(tick) and data[tick] is String:
 				hero.take_weapon(data[tick])
-				_say("the hero takes the %s: %d hits in it" % [data[tick], Weapons.TABLE[data[tick]]["hits"]])
+				_say("the hero takes the %s: %d hits in it" % [data[tick], Weapons.TABLE[data[tick]]["hits"]], false)
 				data["swings"] = 0
 			if h.has("punch"):
 				hero.chain = ""  # each a fresh swing, so every press is the same blow and wears it by one
@@ -193,6 +220,22 @@ func inputs() -> Array:
 				_say("BASS DROP: the guard held %d frames with a speaker standing; the wave pushes him back" % Level.BASS_HOLD)
 			if tick == 379:
 				_say("the guard held %d frames with both speakers gone: no wave (%d wave in all)" % [150, data.get("waves", 0)])
+		"umbrella":
+			if tick >= 10 and tick < 30:
+				h["mx"] = 1.0  # walks onto it: he takes it up
+			if tick == 30 and hero.shield > 0:
+				_say("the hero takes up the umbrella: it will take ONE blow for him")
+			if tick < 85:
+				dummy.x = hero.x + 110.0  # the dummy stands in reach, facing him
+				dummy.facing = -1
+		"first_aid":
+			if tick == 2:
+				_say("the first-aid kit, up close: a GREEN cross on white (the team's props sheet)")
+			if tick >= 110 and tick < 150 and not data.has("healed"):
+				h["mx"] = 1.0  # the hurt hero walks over it
+				if hero.world.items.is_empty():
+					data["healed"] = true
+					_say("he walks over the kit: health %.1f → %.1f of %.0f" % [hero.max_health * 0.4, hero.health, hero.max_health])
 		"injuries":
 			if tick > 330:
 				d["mx"] = 1.0  # the dummy walks away from the hero on his broken leg
@@ -225,6 +268,9 @@ func saw(events: Array) -> void:
 				_say("the record flies past: %s" % ("over him, he jumped it" if hero.y > 0.0 else ("he rolled under it" if hero.state == "roll" else "he stepped out of its line")))
 	for e in events:
 		var t := ""
+		if e["result"] == "umbrella":
+			_say("the umbrella TAKES his blow: no damage to the hero (health %.1f), and it BREAKS" % hero.health)
+			continue
 		if e["result"] == "perfect":
 			t = "PERFECT BLOCK"
 		elif e["counter"]:
@@ -242,7 +288,8 @@ func saw(events: Array) -> void:
 		if name == "dizzy" and e["result"] == "hit" and e["move"] == "power_punch" and data.get("dizzy_seen", false):
 			t += "  ·  the third combo, landed while he's DAZED: the finishing chain"
 		if t != "":
-			_say(t)
+			# the weapons trials: every swing is logged, only a weapon's breaking hit is a key moment
+			_say(t, not name in ["weapons", "weapon_wear"] or e["worn"] != "")
 	if name == "combo_edge" and data.has("pressed_at") and hero.attack_phase() == "startup" and hero.t == 0:
 		var m: String = hero.state
 		_say("pressed %d frames after the jab ended: %s" % [data["pressed_at"], "the CROSS (the chain goes on)" if m == "cross" else "a JAB (a new chain)"])
@@ -251,10 +298,10 @@ func saw(events: Array) -> void:
 		_say("A with the pipe in hand: %s" % ("a JAB, not a swing (a broken arm can't swing it)" if hero.state == "punch" else hero.state.to_upper()))
 
 
-func _say(t: String) -> void:
+func _say(t: String, key := true) -> void:
 	note = t
 	note_left = 90
-	history.append("frame %d: %s" % [tick, t])
+	history.append(("frame %d: %s" if key else "frame %d · %s") % [tick, t])
 
 
 ## The numbers on screen this frame.
@@ -297,6 +344,13 @@ func overlay(street_speeds: Dictionary = {}) -> String:
 		"dizzy":
 			line = "combo finishers landed in a row: %d  ·  dizzy: %s  ·  frames left: %d of %d" % [dummy.finishers_taken,
 				"YES" if dummy.state == "dizzy" else "no", dummy.dizzy_left, dummy.tune["dizzy_ticks"]]
+		"umbrella":
+			line = "umbrella: %s  ·  hero's health: %.1f of %.0f" % [
+				"in his hand, takes 1 more blow" if hero.shield > 0 else ("BROKEN" if tick > 30 else "leaning on the wall"),
+				hero.health, hero.max_health]
+		"first_aid":
+			line = "first-aid kit: %s  ·  hero's health: %.1f of %.0f" % ["used" if data.has("healed") else "on the street",
+				hero.health, hero.max_health]
 		"scenery":
 			var parts := []
 			for k in street_speeds:

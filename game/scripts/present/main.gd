@@ -26,6 +26,8 @@ const Brain := preload("res://scripts/sim/brain.gd")
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const Level := preload("res://scripts/sim/level.gd")
 const Trials := preload("res://scripts/present/trials.gd")
+const Scenes := preload("res://scripts/present/scenes.gd")
+const EDGE_INK := Color(0.08, 0.08, 0.10)  # the neon-ink outline
 const Progress := preload("res://scripts/sim/progress.gd")
 const Sound := preload("res://scripts/present/sound.gd")
 const HERO_TINT := {"man": Color.WHITE, "woman": Color(1.08, 0.93, 1.03)}  # grey boxes: told apart by a warmer tint
@@ -75,6 +77,10 @@ var items_seen := -1
 var flips_seen := -1
 var shown_wet := true
 var trial = null  # --trial <name>: one of the testers' controlled trials (present/trials.gd)
+var scene = null  # --scene <name> with --level: a scripted run on a real level for the testers (present/scenes.gd)
+var shield_was := 0  # the umbrella last frame (to see it break)
+var breaks := []  # weapons worn out this moment: the two halves falling ({x, y, kind, t, dir})
+var umbrella_broke := Vector3(0, 0, 99)  # where it broke (x, height) and frames since
 var dummy
 var dummy_view
 var trial_label: Label
@@ -126,6 +132,11 @@ func _ready() -> void:
 		var run_seed: int = int(args[si + 1]) if si >= 0 and si + 1 < args.size() else (2 if "--bot" in args else 1)
 		level = Level.new(Level.load_data(file), tune, run_seed)
 		world = level.world
+		var sc := args.find("--scene")
+		if sc >= 0 and sc + 1 < args.size():
+			scene = Scenes.new(args[sc + 1])
+			scene.setup(level)
+			$Camera.position.x = level.hero.x  # the camera starts on him, not panning in
 	elif trial_name != "":
 		world = StreetWorld.new()  # a bare street: only the trial's two fighters
 	else:
@@ -191,6 +202,7 @@ func _physics_process(_delta: float) -> void:
 		obstacles_view.refresh()
 	Fight.separate(everyone)
 	var fight_events: Array = fight.step(everyone, world)
+	_note_breaks(fight_events)
 	sound.fight_tick(everyone, fight_events)
 	for ev in fight_events:
 		if ev["drop"] != "":
@@ -262,8 +274,11 @@ func _play_level() -> void:
 		if bot != null:
 			bot.me = level.hero
 			bot.goal = level.next_door()
-		level.step(bot.think(level.standing()) if bot != null else Controls.read())
+		level.step(scene.inputs(level) if scene != null else (bot.think(level.standing()) if bot != null else Controls.read()))
 		sound.fight_tick(level.everyone(), level.events)
+		_note_breaks(level.events)
+		if scene != null:
+			_play_scene()
 	tick += 1
 	hero = level.hero
 	world = level.world
@@ -304,6 +319,10 @@ func _play_level() -> void:
 	$Camera.limit_right = int(maxf(b.y, b.x + 1920.0))
 	$Camera.position.x = lerpf($Camera.position.x, hero.x + hero.facing * 160.0, 0.08)
 	$Camera.zoom = Vector2.ONE * tune["camera_zoom"]
+	if scene != null and scene.zoom != 1.0:  # a scripted scene in close (the cat is small)
+		$Camera.zoom = Vector2.ONE * scene.zoom
+		$Camera.position.x = lerpf($Camera.position.x, hero.x - hero.facing * 60.0, 0.2)
+		$Camera.position.y = Street.GROUND_Y + hero.z - 1080.0 / scene.zoom * 0.5 + 60.0
 	$Street.follow($Camera.get_screen_center_position().x)
 	if not (level.won or level.lost):
 		var where: String = "fight!" if level.active_wave >= 0 else ("the boss" if level.enemies.any(func(e): return e["boss"] and not e["f"].defeated()) else "go →")
@@ -333,6 +352,40 @@ func _start_trial(trial_name: String) -> void:
 	$Camera.position.x = 960.0
 
 
+## Notes every weapon that wore out this tick, so it's drawn snapping in two at the hand.
+func _note_breaks(events: Array) -> void:
+	for e in events:
+		if e.get("worn", "") != "" and e.get("attacker") != null:
+			var a = e["attacker"]
+			breaks.append({"x": a.x + a.facing * 70.0, "y": Street.GROUND_Y + a.z - a.y - 190.0, "kind": e["worn"], "t": 0,
+				"dir": a.facing})
+
+
+## A scripted run on a real level (--scene): its notes on screen; a next level when it asks (the cat carried along, as
+## a won level carries it); it quits at the end, printing what happened and when.
+func _play_scene() -> void:
+	if scene.next_level != "":
+		var file: String = scene.next_level
+		scene.next_level = ""
+		_start_level(file, "man")
+		level.cat_fed = true
+		level.cat = Vector2(level.hero.x - 90.0, 80.0)  # as a won level brings it (progress.cat)
+		scene.setup(level)
+		$Camera.position.x = level.hero.x
+	if trial_label == null:
+		trial_label = Label.new()
+		trial_label.position = Vector2(32, 130)
+		trial_label.add_theme_font_size_override("font_size", 30)
+		trial_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.6))
+		$Hud.add_child(trial_label)
+	trial_label.text = scene.overlay(level)
+	if scene.tick >= scene.length:
+		for line in scene.history:
+			print(line)
+		print("TRIAL DONE %s" % scene.name)
+		get_tree().quit()
+
+
 ## One of the testers' trials: the script's presses, the blows settled, the numbers on screen; it quits at the end,
 ## printing what happened and when.
 func _play_trial() -> void:
@@ -341,6 +394,7 @@ func _play_trial() -> void:
 	dummy.step(inp[1])
 	Fight.separate([hero, dummy])
 	var events: Array = fight.step([hero, dummy], world)
+	_note_breaks(events)
 	trial.saw(events)
 	sound.fight_tick([hero, dummy], events)
 	if not events.is_empty():
@@ -350,8 +404,18 @@ func _play_trial() -> void:
 	if trial.name == "scenery":
 		$Camera.position.x += 6.0  # a steady pan, so each layer's speed can be read
 		$Camera.position_smoothing_enabled = false
+	elif trial.close_up != Vector2.ZERO and trial.tick < trial.close_until:
+		$Camera.zoom = Vector2.ONE * 4.0  # a close-up of one thing (the first-aid kit's green cross)
+		$Camera.position_smoothing_enabled = false
+		$Camera.position = Vector2(trial.close_up.x, Street.GROUND_Y + trial.close_up.y - 12.0)
+	elif trial.close_up != Vector2.ZERO:
+		$Camera.zoom = Vector2.ONE
+		$Camera.position = Vector2(lerpf($Camera.position.x, (hero.x + dummy.x) * 0.5, 0.1), 540.0)
 	else:
 		$Camera.position.x = lerpf($Camera.position.x, (hero.x + dummy.x) * 0.5, 0.1)
+		if trial.zoom != 1.0:  # in close on the two of them, the street at the bottom of the picture
+			$Camera.zoom = Vector2.ONE * trial.zoom
+			$Camera.position.y = Street.GROUND_Y + hero.z - 1080.0 / trial.zoom * 0.5 + 60.0
 	var cam: float = $Camera.get_screen_center_position().x
 	$Street.follow(cam)
 	var speeds := {}
@@ -528,7 +592,7 @@ func _show_friend() -> void:
 		hint_label.add_theme_color_override("font_color", Color(0.7, 1.0, 0.75))
 		hint_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
 		$Hud.add_child(hint_label)
-	hint_label.text = level.hint()
+	hint_label.text = "" if scene != null else level.hint()  # (a scripted scene shows its own notes)
 
 
 ## DJ Volt's records, spinning black discs at their height, and his bass wave: rings rolling out from his speakers.
@@ -544,6 +608,42 @@ func _draw_flying() -> void:
 		flying_view.draw_circle(at, 22.0, Color(0.06, 0.06, 0.08))
 		flying_view.draw_circle(at, 8.0, Color(0.9, 0.3, 0.5))
 		flying_view.draw_arc(at, 22.0, float(clock) * 0.6, float(clock) * 0.6 + 1.2, 8, Color(0.6, 0.6, 0.7), 2.0)
+	# the umbrella, open over his head (level 1's, and the umbrella trial's); when it takes its blow it breaks: a
+	# crumpled umbrella falls away for a moment
+	if hero.shield > 0:
+		var h := Vector2(hero.x, Street.GROUND_Y + hero.z - hero.y - 330.0)
+		flying_view.draw_arc(h, 60.0, PI, TAU, 16, Color(0.2, 0.2, 0.25), 8.0)
+		flying_view.draw_colored_polygon(PackedVector2Array([h + Vector2(-60, 0), h + Vector2(-42, -42), h + Vector2(0, -60),
+			h + Vector2(42, -42), h + Vector2(60, 0)]), Color(0.85, 0.25, 0.45, 0.9))
+		flying_view.draw_line(h, h + Vector2(0, 90), Color(0.2, 0.2, 0.25), 4.0)
+	if shield_was > 0 and hero.shield == 0:
+		umbrella_broke = Vector3(hero.x, hero.z - hero.y, 0.0)
+	shield_was = hero.shield
+	if umbrella_broke.z < 40.0:
+		umbrella_broke.z += 1.0
+		var k: float = umbrella_broke.z
+		var b := Vector2(umbrella_broke.x + k * 3.0, Street.GROUND_Y + umbrella_broke.y - 330.0 + k * k * 0.18)
+		flying_view.draw_colored_polygon(PackedVector2Array([b + Vector2(-40, 10), b + Vector2(-18, -30), b + Vector2(4, -6),
+			b + Vector2(30, -34), b + Vector2(44, 12)]), Color(0.85, 0.25, 0.45, 0.9))  # torn, inside out
+		flying_view.draw_line(b + Vector2(0, -6), b + Vector2(-20, 70), Color(0.2, 0.2, 0.25), 4.0)  # the bent stick
+	# a weapon worn out: it snaps in two at the hand and the halves fall away (the testers, 2026-11-04: the breaking
+	# moment wasn't in the pictures, only the empty hand after it)
+	for b in breaks:
+		b["t"] += 1
+		var t: float = b["t"]
+		var look: Array = HeroView.WEAPON_LOOK.get(b["kind"], [80.0, 8.0, Color(0.7, 0.7, 0.72)])
+		var half: float = look[0] * 0.5
+		var at := Vector2(b["x"], b["y"])
+		if t < 7.0:
+			for k in 6:  # the snap: a white burst
+				var a := TAU * k / 6.0
+				flying_view.draw_line(at + Vector2.from_angle(a) * 8.0, at + Vector2.from_angle(a) * (16.0 + t * 4.0), Color(1, 1, 0.9), 3.0)
+		for piece in [[1.0, 2.2, 0.22, 0.26], [-1.0, 1.6, 0.30, -0.32]]:
+			var c := at + Vector2(piece[0] * b["dir"] * t * piece[1], minf(t * t * piece[2], Street.GROUND_Y + 60.0 - b["y"]))
+			var d := Vector2.from_angle(t * piece[3] - PI * 0.4) * half * 0.5
+			flying_view.draw_line(c - d, c + d, EDGE_INK, look[1] + 4.0)
+			flying_view.draw_line(c - d, c + d, look[2], look[1])
+	breaks = breaks.filter(func(b): return b["t"] < 45)
 	if level == null:
 		return
 	if level.cat.x > -1.0e8:  # the stray cat: a small grey cat, by its bins or at his heels
@@ -556,12 +656,6 @@ func _draw_flying() -> void:
 		flying_view.draw_line(c + Vector2(-22, -12), c + Vector2(-38, -34), Color(0.55, 0.55, 0.6), 4.0)
 		if not level.cat_fed and level.cat_with > 0:
 			flying_view.draw_arc(c + Vector2(0, -50), 14.0, -PI / 2, -PI / 2 + TAU * level.cat_with / level.CAT_FEED_TICKS, 16, Color(1, 0.8, 0.4), 4.0)
-	if level.hero.shield > 0:  # the umbrella, open over his head
-		var h := Vector2(level.hero.x, Street.GROUND_Y + level.hero.z - level.hero.y - 330.0)
-		flying_view.draw_arc(h, 60.0, PI, TAU, 16, Color(0.2, 0.2, 0.25), 8.0)
-		flying_view.draw_colored_polygon(PackedVector2Array([h + Vector2(-60, 0), h + Vector2(-42, -42), h + Vector2(0, -60),
-			h + Vector2(42, -42), h + Vector2(60, 0)]), Color(0.85, 0.25, 0.45, 0.9))
-		flying_view.draw_line(h, h + Vector2(0, 90), Color(0.2, 0.2, 0.25), 4.0)
 	var since: int = level.tick - level.bass_at
 	if level.bass_at > 0 and since < 30:
 		for o in level.world.objects:

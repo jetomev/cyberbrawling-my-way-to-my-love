@@ -20,5 +20,11 @@ RESULT="$(grep '^LEVEL ' "$TMP/godot.txt" | tail -1)"
 ffmpeg -loglevel error -y -i "$TMP/level.avi" -c:v libx264 -crf 28 -pix_fmt yuv420p "$OUT/clips/$NAME.mp4"
 ffmpeg -loglevel error -y -i "$TMP/level.avi" -vf "select='not(mod(n\,300))',scale=384:-1,tile=6x6:padding=3:color=black" \
   -frames:v 1 "$OUT/frames/$NAME.png"
+# the ending as pictures (the testers, 2026-11-04: level 2's ending was only in the clip): the last 8 seconds, a frame
+# every 20 (the last blows, the boss going down, "cleared" on screen)
+N=$(ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of csv=p=0 "$TMP/level.avi")
+FROM=$((N > 480 ? N - 480 : 0))
+ffmpeg -loglevel error -y -i "$TMP/level.avi" -vf "select='gte(n\,$FROM)*not(mod(n-$FROM\,20))',scale=480:-1,tile=4x6:padding=3:color=black" \
+  -frames:v 1 "$OUT/frames/$NAME-ending.png"
 rm -rf "$TMP"
-echo "OK $NAME by the bot (seed $SEED): $RESULT; clips/$NAME.mp4, frames/$NAME.png"
+echo "OK $NAME by the bot (seed $SEED): $RESULT; clips/$NAME.mp4, frames/$NAME.png, frames/$NAME-ending.png"

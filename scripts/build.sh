@@ -128,7 +128,7 @@ PY
     else
       echo "- Side by side: not drawn (no reference recordings on this machine)"
     fi
-    echo "- \`trials/<name>.png\` (12 frames, the numbers on screen), \`trials/<name>.mp4\` / \`-half.mp4\` and \`trials/<name>.txt\` (what happened on which frame): the controlled"
+    echo "- \`trials/<name>.png\` (24 frames, the logged moments first, the numbers on screen), \`trials/<name>.mp4\` / \`-half.mp4\` and \`trials/<name>.txt\` (what happened on which frame): the controlled"
     echo "  trials, one thing on purpose each with its numbers on screen. combo_edge: the next press 23, 24, 25 frames after a"
     echo "  jab ends (the window is $(grep -o '"combo_window_ticks": [0-9]*' "$ROOT/game/scripts/sim/tuning.gd" | grep -o '[0-9]*$') frames, the last frame that still chains); injuries: low kicks to"
     echo "  bruised, swollen, broken, then the limp's speed; weapon_wear: a stick swung until it breaks; disarm: a perfect"
@@ -136,7 +136,12 @@ PY
     echo "  dazed enemy; broken_arm: a jab at half, and with a pipe A still jabs; weapons: knife, pipe, wrench, bat, sword,"
     echo "  each to breaking; counter: a jab into his kick's wind-up; records: DJ Volt's records, one stepped aside, one"
     echo "  jumped, one perfect-blocked back at him; bass_drop: his wave while the speakers stand, none once they're"
-    echo "  smashed; scenery: a steady 6 px a frame pan with each layer's speed on screen"
+    echo "  smashed; scenery: a steady 6 px a frame pan with each layer's speed on screen; umbrella: it takes a blow for him"
+    echo "  (no damage) and breaks, the next blow lands; first_aid: the kit up close (its GREEN cross), then it heals him;"
+    echo "  cat (on the real levels): fed by its bins, following him, then in level 2 at his heels."
+    echo "- \`trials/<name>-moments.png\` (the testers, 2026-11-04): a row for each key moment of a trial, the frame before"
+    echo "  it, the moment and the 4 frames after it; in weapons, each weapon's breaking hit (it snaps in two at the hand)."
+    echo "- \`frames/<level>-ending.png\`: each level clip's last 8 seconds as pictures (the last blows, the boss down, cleared)."
     echo "- \`clips/level1.mp4\` and \`frames/level1.png\` (a frame every 5 s): level 1 played through by the bot, the team's"
     echo "  layout (levels/level1.json): seven screens, the groups (from the sides, a door, the lamppost), the street locked at"
     echo "  each until they're beaten, crates and the car with things inside, the stairs, the boss upstairs; three lives."

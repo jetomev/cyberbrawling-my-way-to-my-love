@@ -129,3 +129,25 @@ func test_trial_records() -> void:
 func test_trial_bass_drop() -> void:
 	var tr = run("bass_drop")
 	eq(tr.data.get("waves", 0), 1, "one wave: while the speakers stood; none once they were smashed")
+
+
+func test_trial_umbrella() -> void:
+	var tr = run("umbrella")
+	var h: Array = tr.history
+	check(h.any(func(l): return "takes up the umbrella" in l), "he takes it up: %s" % [h])
+	check(h.any(func(l): return "umbrella TAKES his blow" in l and "health 30.0" in l), "it takes the first blow, no damage")
+	check(h.any(func(l): return l.begins_with("frame 16") and "HIT" in l), "the second blow lands")
+	eq(tr.hero.shield, 0, "and the umbrella is gone")
+
+
+func test_trial_first_aid() -> void:
+	var tr = run("first_aid")
+	check(tr.close_up != Vector2.ZERO and tr.close_until > 0, "the kit is shown up close first")
+	check(tr.history.any(func(l): return "12.0 → 30.0" in l), "then it heals the hurt hero: %s" % [tr.history])
+
+
+func test_a_weapon_trial_keys_only_its_breaks() -> void:
+	var tr = run("weapons")
+	var keys: Array = tr.history.filter(func(l): return l.split(" ")[1].ends_with(":"))  # "frame N: ..." (not "frame N · ...")
+	eq(keys.size(), 5, "a key moment for each of the five weapons breaking: %s" % [keys])
+	check(keys.all(func(l): return "BREAKS" in l), "and only the breaks")
