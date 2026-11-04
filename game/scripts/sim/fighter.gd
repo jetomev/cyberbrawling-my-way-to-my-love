@@ -56,6 +56,7 @@ var max_health := 20.0
 var health := 20.0
 var weapon := ""  # what this fighter carries ("pipe", …); an enemy drops it when knocked down (take_weapon())
 var weapon_hits_left := 0  # it wears out (D-14)
+var soft := false  # a sparring friend: his blows don't hurt
 var shrugs := []  # blows (by move) that hurt him but don't make him flinch (the Bruiser's "Iron Gut": a jab)
 var no_pickup_until := -1  # knocked out of his hand, a weapon can't be grabbed straight back (until this tick)
 var knock_dir := 1  # which way the last blow drove him (+1 right, -1 left)

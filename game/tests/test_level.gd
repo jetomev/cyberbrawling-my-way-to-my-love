@@ -423,3 +423,47 @@ func test_he_drops_the_bat() -> void:
 	l.step({})
 	check(l.won, "DJ Volt down: level 1 won")
 	check(l.world.items.any(func(i): return i["kind"] == "bat"), "and his prize, the bat, on the floor")
+
+
+## The sparring friend on level 1's first screen (sim/tutor.gd)
+func test_the_sparring_friend_teaches_one_thing_at_a_time() -> void:
+	var l = real_level()
+	check(l.friend != null, "he's there on screen 1")
+	eq(l.tutor.lesson, "block", "first: block his slow punch")
+	check(l.hint().contains("Hold D"), "with a hint on screen: %s" % l.hint())
+	for i in 300:  # up to him, stopping in front (he doesn't block the street, so you could walk through)
+		if l.hero.x >= l.friend.x - 120.0:
+			break
+		l.step({"mx": 1.0})
+	# hold the guard while he punches: the block lesson passes; then a perfect block
+	for i in 300:
+		l.step({"block": true})
+		if l.tutor.lesson != "block":
+			break
+	eq(l.tutor.lesson, "perfect", "blocked: now the perfect block")
+	eq(l.hero.health, l.hero.max_health, "his blows never hurt")
+	var passed := false
+	for i in 600:
+		# raise the guard just before his punch lands: the moment he starts it
+		var up: bool = l.friend.attack_phase() == "startup"
+		l.step({"block": up or l.hero.state == "block" and l.hero.t < 6})
+		if l.tutor.lesson != "perfect":
+			passed = true
+			break
+	check(passed, "a perfect block passes it")
+	eq(l.tutor.lesson, "dizzy", "then: two combos in a row")
+	l.friend.dizzy_left = 120
+	l.friend._enter("dizzy")
+	l.step({})
+	eq(l.tutor.lesson, "finish", "dazed: now the third combo")
+	l.tutor.saw([{"attacker": l.hero, "target": l.friend, "result": "hit", "move": "power_punch"}])
+	eq(l.tutor.lesson, "done", "a finisher on him: done, he waves you on")
+	check(l.friend.health > 0.0 and not l.friend.defeated(), "and he was never put down")
+
+
+func test_you_can_walk_straight_past_him() -> void:
+	var l = real_level()
+	var home: float = l.friend.x
+	walk_to(l, home + 500.0, 600)
+	check(l.hero.x > home + 400.0, "he never blocks the street (%.0f, his spot %.0f)" % [l.hero.x, home])
+	eq(l.tutor.lesson, "done", "walked past: no lesson forced")

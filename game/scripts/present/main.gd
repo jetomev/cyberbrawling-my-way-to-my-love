@@ -84,6 +84,8 @@ var then := ""  # after the pages: "level" (play the current level) or "title"
 var screen_ticks := 0
 var sound
 var flying_view: Node2D  # thrown things (DJ Volt's records) and his bass wave, redrawn every frame
+var friend_view = null  # the sparring friend on level 1's first screen
+var hint_label: Label  # his lesson's hint
 
 
 func _ready() -> void:
@@ -283,6 +285,7 @@ func _play_level() -> void:
 	hero_view.sync(hero, Street.GROUND_Y)
 	hero_view.z_index = world.draw_order(hero)
 	flying_view.queue_redraw()
+	_show_friend()
 	var b: Vector2 = level.bounds()
 	$Camera.limit_left = int(b.x)
 	$Camera.limit_right = int(maxf(b.y, b.x + 1920.0))
@@ -472,6 +475,9 @@ func _start_level(file: String, who: String) -> void:
 	for v in level_views.values():
 		v.queue_free()
 	level_views = {}
+	if friend_view != null:
+		friend_view.queue_free()
+		friend_view = null
 	hero_view.queue_free()
 	hero_view = HeroView.new(HERO_TINT.get(who, Color.WHITE))
 	hero_view.name = "Hero"
@@ -481,6 +487,29 @@ func _start_level(file: String, who: String) -> void:
 	flips_seen = -1
 	ended_for = 0
 	bars["hero"][0].visible = true
+
+
+## The sparring friend, drawn friendly green, and his lesson's hint near the top of the screen.
+func _show_friend() -> void:
+	if level.friend != null and friend_view == null:
+		friend_view = HeroView.new(Color(0.75, 1.35, 0.85))
+		friend_view.name = "Friend"
+		add_child(friend_view)
+	if friend_view != null:
+		friend_view.visible = level.friend != null and level.on == 0
+		if friend_view.visible:
+			friend_view.sync(level.friend, Street.GROUND_Y)
+			friend_view.z_index = world.draw_order(level.friend)
+	if hint_label == null:
+		hint_label = Label.new()
+		hint_label.position = Vector2(260, 150)
+		hint_label.size = Vector2(1400, 60)
+		hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hint_label.add_theme_font_size_override("font_size", 32)
+		hint_label.add_theme_color_override("font_color", Color(0.7, 1.0, 0.75))
+		hint_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+		$Hud.add_child(hint_label)
+	hint_label.text = level.hint()
 
 
 ## DJ Volt's records, spinning black discs at their height, and his bass wave: rings rolling out from his speakers.

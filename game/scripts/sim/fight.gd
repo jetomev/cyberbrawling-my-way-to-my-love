@@ -29,6 +29,8 @@ func step(fighters: Array, world = null) -> Array:
 		var blow: Dictionary = a.move()
 		blow["finisher"] = Moves.is_finisher(a.state)
 		blow["move"] = a.state
+		if a.soft:
+			blow["damage"] = 0.0  # practice: it lands, it doesn't hurt
 		var id: int = a.get_instance_id()
 		var seen: Array = _hit.get(id, [-1, []])
 		if seen[0] != a.attack_serial:

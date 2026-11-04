@@ -20,6 +20,7 @@ const Brain := preload("res://scripts/sim/brain.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
 const Projectiles := preload("res://scripts/sim/projectiles.gd")
+const Tutor := preload("res://scripts/sim/tutor.gd")
 
 ## Enemy types by name: health, how they fight (brain.gd tables), what they drop when put down for good, and blows
 ## that don't make them flinch. From the team's enemy table (art-in 2026-11-03): the Glow Punk, the warm-up (slap,
@@ -71,6 +72,8 @@ var collected := []  # what the hero has found (a matchbook, the torn photo)
 var projectiles  # what's flying (records)
 var held_guard := 0  # how long the hero has held his guard, for DJ Volt's Bass Drop
 var bass_at := -1  # the tick the last bass wave went out (for the view and the sound)
+var friend = null  # the sparring friend (level 1's first screen), a fighter on his own side
+var tutor = null  # his lessons (sim/tutor.gd)
 var hero_tune: Dictionary
 
 ## The floor he's on, as the game and the tests read it
@@ -149,12 +152,33 @@ func restart() -> void:
 	projectiles = Projectiles.new()
 	held_guard = 0
 	bass_at = -1
+	friend = null
+	tutor = null
+	var spar: Dictionary = plan["floors"][0].get("friend", {})
+	if not spar.is_empty():
+		var t := Tuning.fresh()
+		t["health"] = 999.0
+		friend = Fighter.new(t, spar["x"], 80.0, floors[0]["world"])
+		friend.team = 2  # his own side: blows land between him and the hero, never the thugs'
+		friend.soft = true
+		friend.facing = -1
+		tutor = Tutor.new(friend, hero)
 	_maybe_boss()
 
 
-## The fighters on this floor now, the hero first.
+## The fighters on this floor now, the hero first (and the sparring friend, on his floor).
 func everyone() -> Array:
-	return [hero] + enemies.filter(func(e): return not e["gone"]).map(func(e): return e["f"])
+	var out := [hero] + enemies.filter(func(e): return not e["gone"]).map(func(e): return e["f"])
+	if friend != null and on == 0:
+		out.append(friend)
+	return out
+
+
+## The lesson's hint on screen, while the sparring friend is teaching ("" otherwise).
+func hint() -> String:
+	if tutor == null or on != 0 or (tutor.lesson == "done" and tutor.lesson_ticks > 150):
+		return ""
+	return tutor.hint()
 
 
 ## The enemies on this floor still on their feet (or down but not out).
@@ -181,6 +205,8 @@ func step(inp: Dictionary) -> void:
 	tune["street_right"] = b.y
 	hero.step(inp)
 	_take_turns()
+	if friend != null and on == 0:
+		friend.step(tutor.think())
 	for e in enemies:
 		if not e["gone"]:
 			var think: Dictionary = e["brain"].think()
@@ -195,9 +221,11 @@ func step(inp: Dictionary) -> void:
 		if o.has("holds"):
 			world.drop(o["holds"], (o["x0"] + o["x1"]) * 0.5, clampf((o["z0"] + o["z1"]) * 0.5, 0.0, tune["street_depth"]))
 	_collect()
-	Fight.separate(all)
+	Fight.separate(all.filter(func(f): return f != friend))  # he never blocks the street
 	events = fight.step(all, world)
 	events.append_array(projectiles.step(all, 0.0, floors[on]["length"]))
+	if tutor != null and on == 0:
+		tutor.saw(events)
 	_bass_drop()
 	_switches()
 	_waves()
