@@ -6,10 +6,10 @@ set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$1/trials"
 mkdir -p "$OUT"
-for T in combo_edge injuries weapon_wear disarm dizzy scenery; do
+for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy scenery; do
   TMP="$ROOT/scratch/trial-$T.$$"
   mkdir -p "$TMP"
-  timeout 120 "$ROOT/scripts/capped.sh" godot --path "$ROOT/game" --write-movie "$TMP/f.png" --fixed-fps 60 \
+  timeout 300 "$ROOT/scripts/capped.sh" godot --path "$ROOT/game" --write-movie "$TMP/f.png" --fixed-fps 60 \
     --resolution 1280x720 -- --trial "$T" 2>&1 | grep -v '^Godot Engine' > "$OUT/$T.txt"
   if grep -q 'SCRIPT ERROR' "$OUT/$T.txt"; then echo "FAILED trial $T has a script error"; exit 1; fi
   if grep -q 'dumped core' "$OUT/$T.txt"; then echo "FAILED Godot crashed as it quit (see the core dump: coredumpctl list godot)"; exit 1; fi

@@ -497,3 +497,30 @@ func test_the_fight_reports_a_break() -> void:
 	p[1].pain["leg_f"] = 8.5
 	var events := play(p[0], p[1], [{"kick": true}], 20)
 	eq(events[0]["broke"], "leg_f", "the low kick breaks the bruised leg, and the fight says so (for the crack)")
+
+
+func test_disarmed_he_cant_grab_it_straight_back() -> void:
+	var p = pair()
+	var w = StreetWorld.new()
+	p[0].world = w
+	p[1].world = w
+	p[1].take_weapon("pipe")
+	p[1].health = 99.0
+	var f := Fight.new()
+	p[1].step({"kick": true})
+	p[0].step({"punch": true})  # a counter: the jab lands while his kick winds up
+	var dropped := false
+	for i in 8:
+		p[0].step({})
+		p[1].step({})
+		for e in f.step([p[0], p[1]], w):
+			dropped = dropped or e["drop"] == "pipe"
+	check(dropped, "the counter knocks it loose")
+	check(w.items.size() == 1 and absf(w.items[0]["x"] - p[1].x) > 40.0, "it lands a step away from him, not under his feet (%s, he's at %.0f)" % [w.items, p[1].x])
+	p[1].x = w.items[0]["x"]  # even standing right on it
+	for i in 30:
+		p[1].step({})
+	eq(p[1].weapon, "", "he can't grab it straight back")
+	for i in 90:
+		p[1].step({})
+	eq(p[1].weapon, "pipe", "a moment later he can")

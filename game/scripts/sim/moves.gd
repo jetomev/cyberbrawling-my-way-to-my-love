@@ -79,7 +79,7 @@ static func is_move(name: String) -> bool:
 
 
 static func is_air(name: String) -> bool:
-	return name in AIR.values()
+	return name in AIR.values() or name == "chop"
 
 
 ## The full data for a move, with the tuned moves' timing and reach read from the tuning table.
@@ -100,8 +100,8 @@ static func data(name: String, tune: Dictionary) -> Dictionary:
 ## True for the blow that ends a three-press chain (the power punch, the side kick, …): two of them landing in a row
 ## on one enemy make him dizzy (D-19).
 static func is_finisher(name: String) -> bool:
-	if name == "smash":
-		return true  # the weapon chain's third blow
+	if name in ["smash", "rising_swing"]:
+		return true  # the armed finishers (in the power punch's and the uppercut's places)
 	for seq in COMBOS:
 		if (seq as String).length() >= FINISHER_LENGTH and COMBOS[seq] == name:
 			return true

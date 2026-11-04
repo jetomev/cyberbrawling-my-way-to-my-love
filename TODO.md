@@ -95,7 +95,8 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Finding: Godot aborted (SIGABRT) as it quit, every run since 2026-11-01 (126 core dumps), after its work was written: a lambda hooked on Input's pad signal and never unhooked; now a method, unhooked on exit; every recording and the export fail on a crash from now on
 - [x] Pick up a weapon; it stays in the hand (solo) (2026-11-03: walk over it with an empty hand; drawn in the lead hand)
 - [x] Weapon combos (W,W,W swing, backswing, overhead smash) and each weapon's feel: knife, sword, bat, pipe/wrench, stick (solo) (2026-11-03: holding one, A swings it; each wears out after its hits)
-- [ ] Weapon mixes W,P,K (solo)
+- [x] Weapon mixes W,P,K (solo) (2026-11-03, the team's weapon combos: the same presses armed, the weapon in the fist's place; wear only on a hit, kicks never wear it)
+- [x] The testers' trials send-back (22:30): the disarm frame by frame (leaves the hand, lies on the street, picked up), the counter, a broken arm, every weapon to breaking, the third combo on a dazed enemy; found and fixed on the way: a disarmed enemy grabbed his weapon straight back
 - [ ] Throw the held weapon at a far enemy; it lands and can be picked up again (solo)
 - [x] Layers: foreground props, play lane, skyline; in front / behind (solo) (2026-11-03: sky, far skyline, the block across, the shopfronts, the street, lampposts in front; each slides at its own speed; the team's level art replaces each)
 - [x] Keyboard + gamepad, dead zone, drifting-stick test (solo) (2026-11-01: brought forward for F-1, the G13 stuck stick; 51 tests)

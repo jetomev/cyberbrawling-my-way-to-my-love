@@ -56,6 +56,7 @@ var max_health := 20.0
 var health := 20.0
 var weapon := ""  # what this fighter carries ("pipe", …); an enemy drops it when knocked down (take_weapon())
 var weapon_hits_left := 0  # it wears out (D-14)
+var no_pickup_until := -1  # knocked out of his hand, a weapon can't be grabbed straight back (until this tick)
 var knock_dir := 1  # which way the last blow drove him (+1 right, -1 left)
 var finishers_taken := 0  # combo finishers landed on him in a row (D-19: two make him dizzy)
 var last_finisher := -1000  # the tick the last one landed
@@ -120,7 +121,7 @@ func step(inp: Dictionary) -> void:
 			_roll()
 		"jump", "air_kick", "hammer_fist":
 			if state == "jump" and not queue.is_empty() and queue[0] in ["punch", "kick"] and not air_kicked:
-				var move: String = Moves.AIR["P" if _take_buffer() == "punch" else "K"]
+				var move: String = _armed(Moves.AIR["P" if _take_buffer() == "punch" else "K"])
 				air_kicked = true
 				attack_serial += 1
 				_enter(move)
@@ -218,7 +219,7 @@ func _ground(mx: float, mz: float, run := false) -> void:
 				world.items.erase(it)
 				break
 	# walking over a weapon with an empty hand picks it up (the bag for more than one comes with Stage 4)
-	if weapon == "" and world != null and not world.items.is_empty():
+	if weapon == "" and world != null and not world.items.is_empty() and clock >= no_pickup_until:
 		var it: Dictionary = Weapons.within_reach(world.items, x, z)
 		if not it.is_empty():
 			world.items.erase(it)
@@ -300,21 +301,13 @@ func _start(action: String, mx: float) -> void:
 		chain = ""
 		chain_until = -1
 		_enter("sweep")
-	elif action == "punch" and weapon != "" and not broken("arm_f"):
-		# holding a weapon, the punch button swings it: swing, backswing, overhead smash (a broken arm can't)
-		vx = 0.0
-		attack_serial += 1
-		var link: Array = Weapons.next(chain if chain.begins_with("W") else "", "W")
-		chain = link[0]
-		chain_until = -1
-		_enter(link[1])
 	else:
 		vx = 0.0
 		attack_serial += 1
-		var link: Array = Moves.next(chain if not chain.begins_with("W") else "", "P" if action == "punch" else "K")
+		var link: Array = Moves.next(chain, "P" if action == "punch" else "K")
 		chain = link[0]
 		chain_until = -1
-		_enter(link[1])
+		_enter(_armed(link[1]))
 
 
 ## Takes a blow from attacker (fight.gd calls it once per blow). Returns "hit", "blocked", "perfect", "evaded", or ""
@@ -401,6 +394,14 @@ func _hurt(part: String, amount: float) -> void:
 		just_broke = part
 
 
+## The move a combo's press becomes with the weapon in hand (the team's weapon combos: the same presses, the weapon in
+## the fist's place); bare-handed, or with the lead arm broken, the fist move itself.
+func _armed(move: String) -> String:
+	if weapon == "" or broken("arm_f"):
+		return move
+	return Weapons.ARMED.get(move, move)
+
+
 ## Takes a weapon in hand, fresh, with all its hits to come.
 func take_weapon(kind: String) -> void:
 	weapon = kind
@@ -414,6 +415,7 @@ func drop_weapon() -> String:
 	weapon = ""
 	weapon_hits_left = 0
 	tune.erase("weapon")
+	no_pickup_until = clock + int(tune.get("regrab_ticks", 90))
 	return was
 
 

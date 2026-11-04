@@ -50,27 +50,33 @@ func step(fighters: Array, world = null) -> Array:
 			# D-19: the right hit (a counter, caught winding up) or a perfect block interrupts him and can disarm him;
 			# knocked down he drops it too
 			if result == "hit" and (winding_up or d.state in ["knockdown", "launch"]) and d.weapon != "":
-				drop = _disarm(d, world)
+				drop = _disarm(d, world, a.x)
 			if result == "perfect":
 				a.chain = ""  # a perfect block stops his combo: the presses he'd lined up are gone
 				a.queue.clear()
 				if a.weapon != "":
-					drop = _disarm(a, world)
+					drop = _disarm(a, world, d.x)
 			if result == "hit":
 				a.finishers_taken = 0  # landing a blow of his own breaks a run of combos on him
 			var worn := ""
-			if result in ["hit", "blocked"]:
-				worn = a.wear(blow.get("wear", 0))  # a weapon wears on every blow that meets something
+			if result == "hit":
+				worn = a.wear(blow.get("wear", 0))  # a weapon wears only on a hit; kicks never wear it (the team's combos)
 			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "drop": drop, "counter": winding_up and result == "hit",
 				"broke": d.just_broke, "worn": worn})
 		_hit[id] = seen
 	return events
 
 
-static func _disarm(f, world) -> String:
+## Knocks his weapon out of his hand: it flies a step away from whoever knocked it loose (from_x) and lands on the
+## street, out from under his feet (the disarm trial, 2026-11-03: dropped at his feet, he picked it straight back up).
+const FLY := 80.0
+
+
+static func _disarm(f, world, from_x: float) -> String:
 	var what: String = f.drop_weapon()
 	if world != null:
-		world.drop(what, f.x, f.z)
+		var away := 1.0 if f.x >= from_x else -1.0
+		world.drop(what, clampf(f.x + away * FLY, f.tune["street_left"], f.tune["street_right"]), f.z)
 	return what
 
 

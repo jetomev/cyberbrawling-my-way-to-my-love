@@ -70,8 +70,27 @@ func test_trial_weapon_wear() -> void:
 
 func test_trial_disarm() -> void:
 	var tr = run("disarm")
-	check(tr.history.any(func(l): return l.contains("PERFECT BLOCK") and l.contains("pipe knocked loose")), "the perfect block knocks the pipe loose: %s" % [tr.history])
-	check(tr.history.any(func(l): return l.contains("COUNTER") and l.contains("pipe knocked loose")), "the counter knocks the second one loose: %s" % [tr.history])
+	var h: Array = tr.history
+	check(h.any(func(l): return l.contains("PERFECT BLOCK") and l.contains("pipe leaves his hand")), "the perfect block knocks the pipe loose: %s" % [h])
+	check(h.any(func(l): return l.contains("in HIS hand now")), "and the hero walks over it and picks it up: %s" % [h])
+	eq(tr.hero.weapon, "pipe", "the hero ends holding it")
+
+
+func test_trial_counter() -> void:
+	var tr = run("counter")
+	check(tr.history.any(func(l): return l.contains("COUNTER") and l.contains("pipe leaves his hand")), "the jab into his kick's wind-up knocks the pipe loose: %s" % [tr.history])
+
+
+func test_trial_broken_arm() -> void:
+	var tr = run("broken_arm")
+	check(tr.history.any(func(l): return l.contains("HIT: punch, damage 0.5") and l.contains("whole: 1")), "the jab lands at half: %s" % [tr.history])
+	check(tr.history.any(func(l): return l.contains("a JAB, not a swing")), "with the pipe, A still throws a jab: %s" % [tr.history])
+
+
+func test_trial_weapons() -> void:
+	var tr = run("weapons")
+	for kind in tr.WEAPON_ROUND:
+		check(tr.history.any(func(l): return l.contains("the %s BREAKS" % kind)), "the %s wears out and breaks" % kind)
 
 
 func test_trial_dizzy() -> void:
@@ -93,3 +112,4 @@ func test_trial_dizzy() -> void:
 		fight.step([hero, dummy], w)
 		dazed = dazed or dummy.state == "dizzy"
 	check(dazed, "two combos in a row leave him dazed")
+	check(tr.history.any(func(l): return l.contains("finishing chain")), "the third combo lands while he's dazed: %s" % [tr.history.slice(-4)])

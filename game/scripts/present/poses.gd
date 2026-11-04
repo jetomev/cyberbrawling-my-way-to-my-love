@@ -358,6 +358,11 @@ const SHOTS := {
 			"leg_b_upper": -20.0, "leg_b_lower": 105.0, "hip_y": 0.0}],
 		["startup", {"cover_f": 0.0, "arm_f_upper": -55.0, "arm_f_lower": -10.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -60.0,
 			"leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0, "hip_y": 0.0}]],
+	# jump + P armed: the jumping chop, the hammer fist's shape with the weapon in the fist
+	"chop": [["start", {"cover_f": 0.0, "open_f": 0.0, "arm_f_upper": -170.0, "arm_f_lower": -20.0, "leg_f_upper": -60.0, "leg_f_lower": 95.0,
+			"leg_b_upper": -20.0, "leg_b_lower": 105.0, "hip_y": 0.0}],
+		["startup", {"cover_f": 0.0, "arm_f_upper": -55.0, "arm_f_lower": -10.0, "torso": 24.0, "head": -10.0, "leg_f_upper": -60.0,
+			"leg_f_lower": 95.0, "leg_b_upper": -20.0, "leg_b_lower": 105.0, "hip_y": 0.0}]],
 	"block": [["start", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -38.0, "arm_f_lower": -140.0, "arm_b_upper": -30.0, "arm_b_lower": -145.0,
 		"torso": 4.0, "head": 12.0,
 		"hip_y": 6.0}]],
@@ -463,6 +468,20 @@ const SHOTS := {
 		["active", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -70.0, "arm_f_lower": 0.0, "arm_b_upper": -60.0, "arm_b_lower": -20.0, "torso": 30.0, "head": -6.0, "hip_x": 16.0, "hip_y": 14.0, "step_f": 14.0}],
 		["active_end", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -70.0, "arm_f_lower": 0.0, "arm_b_upper": -60.0, "arm_b_lower": -20.0, "torso": 30.0, "head": -6.0, "hip_x": 16.0, "hip_y": 14.0, "step_f": 14.0}],
 		["follow", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -45.0, "arm_f_lower": 0.0, "arm_b_upper": -40.0, "arm_b_lower": -20.0, "torso": 34.0, "head": -10.0, "hip_x": 14.0, "hip_y": 16.0, "step_f": 14.0}],
+		["end", {}]],
+	# P K P armed: the weapon low behind the hip, then up through him in an arc, the body rising onto the front foot
+	"rising_swing": [["start", {}],
+		["windup", {"cover_f": 0.0, "arm_f_upper": 50.0, "arm_f_lower": -10.0, "hip_y": 18.0, "torso": 22.0, "turn": -15.0}],
+		["active", {"cover_f": 0.0, "arm_f_upper": -150.0, "arm_f_lower": -10.0, "hip_y": -8.0, "torso": -6.0, "head": -10.0, "turn": 30.0, "rise_b": 0.4, "step_f": 10.0}],
+		["active_end", {"cover_f": 0.0, "arm_f_upper": -150.0, "arm_f_lower": -10.0, "hip_y": -8.0, "torso": -6.0, "head": -10.0, "turn": 30.0, "rise_b": 0.4, "step_f": 10.0}],
+		["follow", {"cover_f": 0.0, "arm_f_upper": -165.0, "arm_f_lower": -30.0, "torso": -4.0, "turn": 25.0}],
+		["end", {}]],
+	# K P K armed: the butt of the weapon driven short and straight, in the elbow's place
+	"handle_jab": [["start", {}],
+		["windup", {"cover_f": 0.0, "arm_f_upper": -20.0, "arm_f_lower": -120.0, "hip_x": -4.0}],
+		["active", {"cover_f": 0.0, "arm_f_upper": -80.0, "arm_f_lower": -40.0, "hip_x": 8.0, "hip_turn": 6.0, "torso": 14.0}],
+		["active_end", {"cover_f": 0.0, "arm_f_upper": -80.0, "arm_f_lower": -40.0, "hip_x": 8.0, "hip_turn": 6.0, "torso": 14.0}],
+		["follow", {}],
 		["end", {}]],
 	# X switches stance (Javier, 2026-11-02 18:48): the guard eases down to standing easy, and back up again
 	"to_walk": [["start", {"feet": 1.0}], ["end", STAND]],

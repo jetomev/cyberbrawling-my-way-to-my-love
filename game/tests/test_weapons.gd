@@ -129,3 +129,94 @@ func test_an_enemy_swings_his_pipe() -> void:
 	f.team = 1
 	f.step({"punch": true})
 	eq(f.state, "swing", "a thug with a pipe swings it")
+
+
+## The team's weapon combos (art-in 2026-11-03): the same presses armed, the weapon in the fist's place.
+func chain_of(presses: Array, kind := "pipe") -> Array:
+	var f = armed(kind)
+	var seen := []
+	for i in 160:
+		var inp := {}
+		if i < presses.size() * 16 and i % 16 == 0:
+			inp[presses[i / 16]] = true
+		f.step(inp)
+		if f.attack_phase() == "startup" and f.t == 0:
+			seen.append(f.state)
+	return seen
+
+
+func test_armed_the_same_presses_make_the_weapon_combos() -> void:
+	eq(chain_of(["punch", "punch", "punch"]), ["swing", "backswing", "smash"], "P P P: swing, backswing, overhead smash")
+	eq(chain_of(["punch", "punch", "kick"]), ["swing", "backswing", "push_kick"], "P P K: swing, backswing, push kick")
+	eq(chain_of(["punch", "kick", "punch"]), ["swing", "knee", "rising_swing"], "P K P: swing, knee, rising swing")
+	eq(chain_of(["kick", "punch", "kick"]), ["kick", "handle_jab", "roundhouse"], "K P K: low kick, handle jab, roundhouse")
+	eq(chain_of(["kick", "kick", "kick"]), ["kick", "body_kick", "side_kick"], "K K K: as without a weapon")
+	eq(Weapons.swing_data("rising_swing", "pipe")["effect"], "launch", "the rising swing launches him")
+	check(Weapons.swing_data("handle_jab", "sword")["reach"] < 100.0, "the handle jab is short, whatever the weapon")
+
+
+func test_jump_and_punch_armed_is_the_chop() -> void:
+	var f = armed("bat")
+	f.step({"jump": true})
+	for i in 10:
+		f.step({})
+	f.step({"punch": true})
+	f.step({})
+	eq(f.state, "chop", "a jumping chop, in the hammer fist's place")
+
+
+func test_a_weapon_wears_only_on_a_hit_and_kicks_never_wear_it() -> void:
+	var f = armed("pipe")
+	var foe = Fighter.new(Tuning.fresh(), 520.0, 80.0)
+	foe.team = 1
+	foe.facing = -1
+	foe.health = 999.0
+	var fight := Fight.new()
+	var whole: int = f.weapon_hits_left
+	for i in 40:  # a swing at nothing (he's out of reach)
+		foe.x = 900.0
+		f.step({"punch": i == 0})
+		fight.step([f, foe])
+	eq(f.weapon_hits_left, whole, "a swing that misses costs nothing")
+	foe.x = 520.0
+	for i in 60:  # K K K on him: no wear
+		f.step({"kick": i % 16 == 0 and i < 48})
+		foe.step({})
+		foe.x = 520.0
+		fight.step([f, foe])
+	eq(f.weapon_hits_left, whole, "kicks never wear the weapon")
+	for i in 40:
+		f.step({"punch": i == 0})
+		foe.step({})
+		fight.step([f, foe])
+	eq(f.weapon_hits_left, whole - 1, "a swing that lands wears it by one")
+
+
+func test_with_a_broken_arm_the_fist_combos() -> void:
+	var f = armed("pipe")
+	f.pain["arm_f"] = 99.0
+	var seen := []
+	for i in 60:
+		f.step({"punch": i % 16 == 0 and i < 48})
+		if f.attack_phase() == "startup" and f.t == 0:
+			seen.append(f.state)
+	eq(seen, ["punch", "cross", "power_punch"], "the pipe stays in hand but the presses are the fist combo")
+
+
+func test_a_swing_on_a_guard_doesnt_wear_it() -> void:
+	var f = armed("pipe")
+	var foe = Fighter.new(Tuning.fresh(), 520.0, 80.0)
+	foe.team = 1
+	foe.facing = -1
+	for i in 20:
+		foe.step({"block": true})  # held long: a plain block
+	var fight := Fight.new()
+	var whole: int = f.weapon_hits_left
+	var results := []
+	for i in 40:
+		f.step({"punch": i == 0})
+		foe.step({"block": true})
+		for e in fight.step([f, foe]):
+			results.append(e["result"])
+	eq(results, ["blocked"], "the swing meets his guard")
+	eq(f.weapon_hits_left, whole, "a blocked swing doesn't wear the weapon (only a hit does)")
