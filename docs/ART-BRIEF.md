@@ -41,7 +41,8 @@ decides who makes what, keeps the order below, and is the one point of contact f
 5. **Sound.** Voices for each fighter (grunts on a blow, a shout on a finisher, pain on a hit, a scream on a break;
    no words), hit sounds per weapon, a bone crack, the crowd and the city at night. Music: level 1's cue (a free draft
    is on the Dailies page to build on or replace), then one per level, darker as the levels go, a boss cue, a title.
-6. **Then levels 2 to 10**, the same way: the layers, the new enemies and the boss for each (`docs/DESIGN.md`).
+6. **The game's icon**, 256 × 256 PNG, for the menu (a stand-in neon "CB" is in `packaging/icon-placeholder.svg`).
+7. **Then levels 2 to 10**, the same way: the layers, the new enemies and the boss for each (`docs/DESIGN.md`).
 
 ## What Claude does with it
 Cuts and cleans every piece, rigs the parts on the fighters' bones, lays in the layers, wires the sounds to the

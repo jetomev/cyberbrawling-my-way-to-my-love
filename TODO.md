@@ -118,7 +118,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] First music cue (level 1, a minute, loops) and 8 sound effects × 3 takes, free drafts on the Dailies page (solo)
 - [ ] Javier listens: music and effects approved or sent back
 - [ ] Level 1 boss upstairs (solo)
-- [ ] Linux build he can install; test matrix in testing/ (solo) (2026-11-03: scripts/export.sh exports it and the exported program plays level 1 through by itself; left: the installer and launcher entry, the test matrix)
+- [ ] Linux build he can install; test matrix in testing/ (solo) (2026-11-03: scripts/export.sh exports it and the exported program plays level 1 through by itself; scripts/install.sh / uninstall.sh, user-only, a menu entry, passed on a bench home folder; left: the test matrix, the team's real icon)
 - [ ] Javier plays level 1 with the matrix
 
 ## Stage 4 · Levels 2–5 (by Sun 31 Jan)

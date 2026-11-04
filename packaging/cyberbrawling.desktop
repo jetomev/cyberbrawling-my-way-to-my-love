@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Cyberbrawling my way to my love!
+GenericName=Street brawler
+Comment=A side-scrolling street brawler for Linux, part of KognogOS
+Exec=cyberbrawling
+Icon=cyberbrawling
+Terminal=false
+Categories=Game;ActionGame;
+Keywords=brawler;fighting;beat 'em up;kognogos;
+StartupWMClass=Cyberbrawling my way to my love!
