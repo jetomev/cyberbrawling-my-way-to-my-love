@@ -51,6 +51,7 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 - `docs/STYLE.md` — the look and the sound: the layers, the cut-out fighters, the colour of each level from neon to
   grit, how music and effects are made.
 - `docs/PROMPTS.md` — the words we give ChatGPT for each batch of pictures, with the count and the cost written first.
+- `docs/ART-BRIEF.md` — what the assistant team designs and makes (fighters, props, levels, sound), how each piece comes, and where it lands.
 - `scripts/build_dailies.py` — makes the free drafts (style frames, music, sound effects; `scripts/art/`,
   `scripts/audio/`, all from our own code, no samples, $0) and the Dailies page where Javier picks.
 - `game/` — the Godot 4 project. `scripts/test.sh` runs its tests headless, inside a memory and CPU fence with a
