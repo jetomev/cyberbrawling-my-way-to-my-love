@@ -29,9 +29,10 @@ const Trials := preload("res://scripts/present/trials.gd")
 const Progress := preload("res://scripts/sim/progress.gd")
 const Sound := preload("res://scripts/present/sound.gd")
 const HERO_TINT := {"man": Color.WHITE, "woman": Color(1.08, 0.93, 1.03)}  # grey boxes: told apart by a warmer tint
-## The story's opening, until the team's text lands (docs/ART-BRIEF.md: the story text is theirs)
-const STORY := "The mob has taken the one you love.\nThey're holding them at the top of their tower.\n\nStreet by street, you're going to get them back."
-const STORY_TICKS := 420
+## The story's words (the assistant team's, story/story.json): a line at a time, A goes on, or on its own after a while
+const STORY_FILE := "res://story/story.json"
+const PAGE_TICKS := 420
+const LAST_LEVEL := 10
 const LEVEL_FILE := "res://levels/level1.json"
 const END_TICKS := 240  # how long "cleared" or "out of lives" shows before the level starts again
 const FIGHT_TICKS := 1500  # --fight: how long the recorded bot fight runs (25 s)
@@ -72,7 +73,10 @@ var title_label: Label
 var title_options := []
 var title_choice := 0
 var title_mx := 0.0
-var screen := ""  # "title", "story", "the_end" or "" (playing)
+var screen := ""  # "title", "pages" (the story) or "" (playing)
+var story := {}
+var pages: Array = []  # the story lines still to show
+var then := ""  # after the pages: "level" (play the current level) or "title"
 var screen_ticks := 0
 var sound
 
@@ -209,7 +213,10 @@ func _mark() -> void:
 func _play_level() -> void:
 	if level.won or level.lost:
 		ended_for += 1
-		$Hud/Title.text = "LEVEL 1 CLEARED!" if level.won else "Out of lives: level 1 starts again"
+		if ended_for == 1:
+			var lines: Array = story.get("out_of_lives", ["Out of lives: the level starts again."])
+			var level_no: int = (progress.level + 1) if progress != null else 1
+			$Hud/Title.text = ("LEVEL %d CLEARED!" % level_no) if level.won else lines[randi() % lines.size()]
 		if ended_for >= END_TICKS:
 			ended_for = 0
 			if bot != null:
@@ -217,10 +224,15 @@ func _play_level() -> void:
 				get_tree().quit()
 				return
 			if level.won and progress != null:
-				if progress.level_won():
-					_show_screen("the_end")  # the last level won: the game is done
-				else:
-					_start_level(progress.level_file(), progress.hero)  # on to the next, fresh-bodied, saved at its start
+				var won_no: int = progress.level + 1
+				var after: Array = story.get("after", {}).get(str(won_no), [])
+				if progress.level_won():  # the last level there is
+					if won_no >= LAST_LEVEL:
+						_show_pages(after + story.get("ending", []), "title")
+					else:
+						_show_pages(after + ["The rest of the route is still being built. Come back soon."], "title")
+				else:  # on to the next, fresh-bodied, saved at its start
+					_show_pages(after + story.get("before", {}).get(str(won_no + 1), []), "level")
 				return
 			level.restart()
 	else:
@@ -334,6 +346,9 @@ func _play_trial() -> void:
 
 ## The title (choose a hero, or continue a save), the story's opening, the end: arrows choose, A (punch) goes on.
 func _show_title() -> void:
+	if story.is_empty():
+		var parsed = JSON.parse_string(FileAccess.get_file_as_string(STORY_FILE))
+		story = parsed if parsed is Dictionary else {}
 	title_options = []
 	if progress.has_save():
 		title_options.append("continue")
@@ -347,9 +362,18 @@ func _show_screen(which: String) -> void:
 	screen_ticks = 0
 	if title_label == null:
 		title_label = Label.new()
-		title_label.position = Vector2(0, 300)
-		title_label.size = Vector2(1920, 500)
+		title_label.position = Vector2(260, 260)
+		title_label.size = Vector2(1400, 560)
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var panel := ColorRect.new()  # a dark panel behind the words, so they read over the street
+		panel.name = "Panel"
+		panel.color = Color(0.03, 0.02, 0.06, 0.72)
+		panel.size = title_label.size + Vector2(80, 40)
+		panel.position = Vector2(-40, -20)
+		panel.show_behind_parent = true
+		title_label.add_child(panel)
 		title_label.add_theme_font_size_override("font_size", 44)
 		title_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.8))
 		title_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
@@ -361,16 +385,17 @@ func _show_screen(which: String) -> void:
 func _draw_screen() -> void:
 	match screen:
 		"title":
-			var names := {"continue": "CONTINUE (level %d)" % (progress.level + 1), "man": "THE MAN", "woman": "THE WOMAN"}
+			var choose: Dictionary = story.get("choose", {})
+			var names := {"continue": "CONTINUE (level %d)" % (progress.level + 1), "man": choose.get("him", "Him").to_upper(),
+				"woman": choose.get("her", "Her").to_upper()}
 			var row := []
 			for i in title_options.size():
 				var n: String = names[title_options[i]]
 				row.append("▶ %s ◀" % n if i == title_choice else n.to_lower())
-			title_label.text = "CYBERBRAWLING MY WAY TO MY LOVE!\n\nChoose your hero\n\n%s\n\n←  →  to choose   ·   A  to start" % "     ".join(row)
-		"story":
-			title_label.text = STORY + "\n\n(A to go on)"
-		"the_end":
-			title_label.text = "YOU GOT THEM BACK.\n\nThe end, for now: the game grows a level at a time.\n\n(A for the title)"
+			title_label.text = "CYBERBRAWLING MY WAY TO MY LOVE!\n\n%s\n\n%s\n\n←  →  to choose   ·   A  to start" % [
+				"\n".join(choose.get("lines", ["Choose your hero"])), "     ".join(row)]
+		"pages":
+			title_label.text = (pages[0] if not pages.is_empty() else "") + "\n\n\n(A to go on)"
 
 
 func _play_screen() -> void:
@@ -389,22 +414,40 @@ func _play_screen() -> void:
 			if go:
 				var pick: String = title_options[title_choice]
 				if pick == "continue":
-					screen = ""
-					title_label.visible = false
-					_start_level(progress.level_file(), progress.hero)
+					_show_pages(story.get("before", {}).get(str(progress.level + 1), []), "level")
 				else:
 					progress.new_game(pick)
-					_show_screen("story")
-		"story":
-			if go or screen_ticks >= STORY_TICKS:
-				screen = ""
-				title_label.visible = false
-				_start_level(progress.level_file(), progress.hero)
-		"the_end":
-			if go:
-				progress.forget()
-				_show_title()
+					_show_pages([story.get("choose", {}).get("chosen", "")] + story.get("opening", []) +
+						story.get("before", {}).get("1", []), "level")
+		"pages":
+			if go or screen_ticks >= PAGE_TICKS:
+				pages.pop_front()
+				screen_ticks = 0
+				if pages.is_empty():
+					_after_pages()
+				else:
+					_draw_screen()
 	title_mx = mx
+
+
+## The story, a line at a time; then a level or the title.
+func _show_pages(lines: Array, next: String) -> void:
+	pages = lines.filter(func(l): return l != "")
+	then = next
+	if pages.is_empty():
+		_after_pages()
+	else:
+		_show_screen("pages")
+
+
+func _after_pages() -> void:
+	if then == "level":
+		screen = ""
+		title_label.visible = false
+		_start_level(progress.level_file(), progress.hero)
+	else:
+		progress.forget()
+		_show_title()
 
 
 ## A level from its file, fresh: the hero as chosen, at full health with no pain (it heals between levels).

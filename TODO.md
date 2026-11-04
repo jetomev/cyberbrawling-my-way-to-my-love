@@ -125,7 +125,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 ## Stage 4 · Levels 2–5 (by Sun 31 Jan)
 - [ ] Level 1 findings fixed
 - [ ] The weapon bag: collect and switch
-- [ ] Story opening: choose your hero, the kidnapping (2026-11-03: the title, choosing the man or the woman, a stand-in story card, the levels in order, a save at each level's start (D-15), the end; left: the team's story text and art)
+- [x] Story opening: choose your hero, the kidnapping (2026-11-03: the title, Him or Her, the team's opening and a moment before and after each level, the endings, the out-of-lives lines (story/story.json), the levels in order, a save at each level's start (D-15); the story's pictures come with the team's art)
 - [ ] Level 2; levels 3–5 on two floors; the level 5 boss (the engine for floors is built: level.gd; layouts from the team)
 - [ ] Each enemy type and boss: its own combos, counters to the hero's combos, its own way to be beaten (D-19; the team's table)
 
