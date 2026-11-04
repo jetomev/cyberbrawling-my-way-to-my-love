@@ -1,6 +1,6 @@
 {
   "name": "Level 3 \u00b7 Pawn Row",
-  "about": "Javier & Claude, 2026-11-04, from the team's AGREED level 3 page (art-in 2026-11-04-level3-layout-agreed, Merry, Boromir and Pippin) and Pippin's roster v3. Floors in walking order: 0 the street and the pawn shop (screens 1-3, up its stairs), 1 the flat above and the fire escape (screens 4-5, the gap, the Whistler), 2 the street again below the ladder (screen 6, the big fight), 3 Twin Loans' shop. 19 enemies (21 if the Whistler gets his second whistle in); no Glow Punks; he walks in with Big Mama's wrench. Obstacles: [kind, x0, x1, z0, z1, top, climbable, strength, name, holds].",
+  "about": "Javier & Claude, 2026-11-04, from the team's AGREED level 3 page (art-in 2026-11-04-level3-layout-agreed, Merry, Boromir and Pippin) and Pippin's roster v3. Floors in walking order: 0 the street and the pawn shop (screens 1-3, up its stairs), 1 the flat above and the fire escape (screens 4-5, the gap, the Whistler), 2 the street again below the ladder (screen 6, the big fight), 3 Twin Loans' shop. 19 enemies (21 if the Whistler gets his second whistle in); no Glow Punks; he walks in with Big Mama's wrench. Obstacles: [kind, x0, x1, z0, z1, top, climbable, strength, name, holds]. Balance ruling 2026-11-04 (batch one): food on F1 s1; the last street's first-aid kit lies out, not in the safe.",
   "start_weapon": "wrench",
   "floors": [
     {
@@ -205,6 +205,11 @@
           "matchbook",
           4000,
           30
+        ],
+        [
+          "food",
+          1500,
+          30
         ]
       ],
       "waves": [
@@ -255,9 +260,7 @@
           160,
           70,
           false,
-          3,
-          "",
-          "first_aid"
+          3
         ]
       ],
       "items": [
@@ -270,6 +273,11 @@
           "photo",
           3500,
           20
+        ],
+        [
+          "first_aid",
+          2200,
+          140
         ]
       ],
       "waves": [

@@ -44,7 +44,7 @@ const KINDS := {
 	# the team's call (the "Last Call" combo, or a first-aid kit and his whistle): a first-aid kit for now
 	# level 5's boss, Madame Chrome (the team's roster): her chrome cane snaps after three kicks into its wind-up, and
 	# then she's done; the pipe is her prize (and the casino key, with level 5)
-	"chrome": {"health": 40.0, "brain": "CHROME", "weapon": "cane", "drops": "pipe", "reads": true},
+	"chrome": {"health": 40.0, "brain": "CHROME", "weapon": "cane", "drops": "pipe", "reads": true, "keeps_weapon": true, "grip": true},
 	# level 7's boss, Mr. Static (the team's roster): a perfect block on his baton shocks the HERO; rubber gloves his prize
 	"static": {"health": 40.0, "brain": "STATIC", "weapon": "baton", "drops": "rubber_gloves", "grip": true},
 	# level 8's boss, Velvet Rook (the team's roster): the sword from his cane, held through perfect blocks till the
@@ -55,12 +55,13 @@ const KINDS := {
 	# level 10's boss, the Godfather of Glow (the team's roster): three rounds (armour, speed, rage); he catches any
 	# weapon thrown at him; his prize is the ending
 	"godfather": {"health": 30.0, "brain": "GODFATHER_1", "catches": true},
-	"rook": {"health": 45.0, "brain": "ROOK", "weapon": "sword", "drops": "sword", "grip": true,
+	"rook": {"health": 45.0, "brain": "ROOK", "weapon": "sword", "drops": "sword", "grip": true, "keeps_weapon": true,
 		"parries": ["power_punch", "side_kick", "smash"]},
 	"coach": {"health": 40.0, "brain": "COACH", "drops": "first_aid",
 		"gloves": ["punch", "cross", "power_punch", "hook", "uppercut", "elbow", "hammer_fist", "air_punch"]},
 	# the rest of the team's roster (enemy roster v2)
-	"wrench_mechanic": {"health": 14.0, "brain": "WRENCH_MECHANIC", "weapon": "wrench", "dodges": ["side_kick", "roundhouse"]},
+	"wrench_mechanic": {"health": 14.0, "brain": "WRENCH_MECHANIC", "weapon": "wrench", "dodges": ["side_kick", "roundhouse"],
+		"hit_scale": 0.6},  # (the team's balance ruling, 11-04: softer up close; his thrown wrench as it was)
 	"doorman": {"health": 18.0, "brain": "DOORMAN", "weapon": "shield"},
 	"neon_dancer": {"health": 12.0, "brain": "NEON_DANCER", "too_quick": true, "speed": 1.8, "drops": "stick"},
 	"enforcer": {"health": 20.0, "brain": "ENFORCER", "weapon": "sword", "parries": ["punch"]},
@@ -91,6 +92,7 @@ const HURL_DAMAGE := 3.0
 const TUMBLE_SPEED := 10.0  # px a tick down the flight
 const TUMBLE_DAMAGE := 1.5
 const TUMBLE_DOWN_EXTRA := 46  # on top of down_ticks and get_up_ticks: about 2 s on the street in all
+const SWINGING_MAX := 2  # enemies throwing a blow at once (the team's balance ruling, 2026-11-04)
 const ON_STAIRS_MAX := 2  # enemies on the slope at once; the rest wait at the top or the foot
 const BALL_SPEED := 10.0  # Coach Crusher's medicine ball, at the chest
 const BALL_DAMAGE := 2.0
@@ -342,6 +344,10 @@ func step(inp: Dictionary) -> void:
 			var think: Dictionary = e["brain"].think()
 			if e.get("arguing", false) and e["brain"].dormant_until_within > 0.0:
 				think = _argue(e)
+			# never more than two swinging at once, on every level, a boss's helpers included (the balance ruling)
+			if e["f"].attack_phase() == "" and enemies.filter(func(o): return not o["gone"] and o["f"].attack_phase() != "").size() >= SWINGING_MAX:
+				for k in ["punch", "kick", "sweep", "grab", "headbutt", "throw"]:
+					think.erase(k)
 			if think.get("records", false):
 				e["volley"] = RECORDS.duplicate()  # his records go one after another
 				e["volley_at"] = tick
@@ -465,6 +471,7 @@ func _roster_tricks() -> void:
 					e["brain"].wait = 0  # he ducked it (or caught it on his blade): straight back at you
 					if e.get("kind", "") == "wrench_mechanic" and ev["result"] == "dodged":
 						e["brain"].plan = ["headbutt"]  # the Mechanic pops up out of the duck with a headbutt
+						e["brain"].wait = e["brain"].kind["wait_min"]  # one hit, never leading into more (the balance ruling)
 		if ev.get("result", "") == "grabbed":
 			for e in enemies:
 				if e["f"] == ev.get("attacker"):
@@ -951,7 +958,8 @@ func _crane_cab(e: Dictionary, think: Dictionary) -> Dictionary:
 
 
 ## Live floor strips (the team's level 7: "sparking two seconds on, one off"): a floor's "live": [[x0, x1, on, off]]
-## shocks whoever stands on it while it's on, once a beat, goons too; the Neon Dancers skate straight over.
+## shocks whoever stands on it while it's on, once a beat, goons too, a Neon Dancer on her skates included (the balance
+## ruling, 11-04: a Dancer on a live strip gets zapped).
 func _live_strips() -> void:
 	for strip in plan["floors"][on].get("live", []):
 		var beat: int = int(strip[2]) + int(strip[3])
@@ -963,7 +971,7 @@ func _live_strips() -> void:
 		for f in everyone():
 			var who: Array = enemies.filter(func(e): return e["f"] == f)
 			var kind: String = "hero" if f == hero else (who[0]["kind"] if not who.is_empty() else "")
-			if kind == "neon_dancer" or shocked_beat.has(f) or f.y >= 1.0 or not f.hittable() or f.x < strip[0] or f.x > strip[1]:
+			if shocked_beat.has(f) or f.y >= 1.0 or not f.hittable() or f.x < strip[0] or f.x > strip[1]:  # (a Dancer too: zapped)
 				continue
 			shocked_beat[f] = true
 			f.take_hit({"damage": SHOCK_DAMAGE, "effect": "push", "low": 0.0, "high": 300.0, "move": "live_floor"}, {"x": f.x - f.facing * 10.0, "y": 0.0})
@@ -1148,6 +1156,8 @@ func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave
 	f.parries = KINDS[kind].get("parries", [])
 	f.gloves = KINDS[kind].get("gloves", [])
 	f.grip = KINDS[kind].get("grip", false)
+	f.hit_scale = KINDS[kind].get("hit_scale", 1.0)
+	f.keeps_weapon = KINDS[kind].get("keeps_weapon", false)
 	f.catches = KINDS[kind].get("catches", false)
 	f.armour = kind == "godfather"  # (round one)
 	f.reads_combos = KINDS[kind].get("reads", false)

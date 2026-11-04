@@ -30,6 +30,7 @@ func step(fighters: Array, world = null) -> Array:
 		blow["finisher"] = Moves.is_finisher(a.state)
 		blow["move"] = a.state
 		blow["weapon_speed"] = Moves.Weapons.TABLE[a.weapon]["speed"] if a.weapon != "" and Moves.Weapons.is_swing(a.state) else 0
+		blow["damage"] = blow.get("damage", 0) * a.hit_scale
 		if a.soft:
 			blow["damage"] = 0.0  # practice: it lands, it doesn't hurt
 		var id: int = a.get_instance_id()
@@ -62,7 +63,7 @@ func step(fighters: Array, world = null) -> Array:
 			var drop := ""
 			# D-19: the right hit (a counter, caught winding up) or a perfect block interrupts him and can disarm him;
 			# knocked down he drops it too
-			if result == "hit" and (winding_up or d.state in ["knockdown", "launch"]) and d.weapon != "":
+			if result == "hit" and (winding_up or d.state in ["knockdown", "launch"]) and d.weapon != "" and not d.keeps_weapon:
 				drop = _disarm(d, world, a.x)
 			if result == "perfect":
 				a.chain = ""  # a perfect block stops his combo: the presses he'd lined up are gone
@@ -73,7 +74,7 @@ func step(fighters: Array, world = null) -> Array:
 				a.finishers_taken = 0  # landing a blow of his own breaks a run of combos on him
 			var worn := ""
 			if result == "hit":
-				worn = a.wear(blow.get("wear", 0))  # a weapon wears only on a hit; kicks never wear it (the team's combos)
+				worn = a.wear(blow.get("wear", 0)) if not a.keeps_weapon else ""  # a weapon wears only on a hit; kicks never wear it (the team's combos)
 			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "drop": drop, "counter": winding_up and result == "hit",
 				"broke": d.just_broke, "worn": worn})
 		_hit[id] = seen

@@ -110,3 +110,32 @@ func test_the_bot_beats_velvet_rook() -> void:
 		results.append("won" if l.won else ("lost" if l.lost else "stuck"))
 	check(not results.has("stuck"), "never stuck: %s" % [results])
 	check(results.count("won") >= 2, "and wins on most seeds: %s" % [results])
+
+
+func test_his_sword_doesnt_wear_out() -> void:
+	var w = preload("res://scripts/sim/street_world.gd").new()
+	var Fighter := preload("res://scripts/sim/fighter.gd")
+	var Fight := preload("res://scripts/sim/fight.gd")
+	var landed := 0
+	for keeps in [true, false]:
+		var hero = Fighter.new(preload("res://scripts/sim/tuning.gd").fresh(), 400.0, 80.0, w)
+		var r = Fighter.new(preload("res://scripts/sim/tuning.gd").fresh(), 500.0, 80.0, w)
+		r.team = 1
+		r.facing = -1
+		r.take_weapon("sword")
+		r.keeps_weapon = keeps
+		var fight := Fight.new()
+		landed = 0
+		for k in 30:  # 30 cuts at the hero: a sword lasts 20 hits
+			r._enter("idle")
+			hero._enter("idle")
+			hero.health = hero.max_health
+			r.step({"punch": true})
+			for i in 20:
+				r.step({})
+				for ev in fight.step([hero, r], w):
+					landed += 1 if ev["result"] == "hit" else 0
+		if keeps:
+			eq(r.weapon, "sword", "Velvet Rook's sword: %d cuts landed and it holds" % landed)
+		else:
+			eq(r.weapon, "", "(an ordinary sword wears out after its 20 hits: %d landed)" % landed)

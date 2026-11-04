@@ -105,6 +105,16 @@ func think(enemies: Array) -> Dictionary:
 		if me.facing != int(toward):
 			inp["mx"] = toward
 		return inp
+	# the Doorman's lesson: block his shield, and low-kick as his bash winds up (it knocks the shield aside)
+	var between: Dictionary = me.world.ahead(me.x, me.z, me.y, int(toward), 30.0) if me.world != null else {}
+	if foe.weapon == "shield" and foe.facing == -int(toward) and absf(dx) < 160.0 and between.is_empty():
+		if foe.attack_phase() == "startup" and me.state in ["idle", "walk", "block"]:
+			inp["kick"] = true
+		elif me.state in ["idle", "walk", "block"]:
+			inp["block"] = true
+			if me.facing != int(toward):
+				inp["mx"] = toward * 0.01
+		return inp
 	if foe.attack_phase() == "startup" and absf(dx) < 200.0 and foe.attack_serial != read_serial:
 		read_serial = foe.attack_serial
 		if dice.randf() < (0.9 if foe.reads_combos else 0.55):
@@ -125,6 +135,8 @@ func think(enemies: Array) -> Dictionary:
 		pass  # he's down: wait for him to get up
 	elif combo.is_empty() and me.state in ["idle", "walk"] and absf(dz) <= me.tune["hit_depth"]:
 		combo = (COMBOS[dice.randi_range(0, COMBOS.size() - 1)] as Array).duplicate()
+		while "punch" in foe.shrugs and combo[0] == "punch":  # (he shrugs off punches, the Bruiser: kicks)
+			combo = (COMBOS[dice.randi_range(0, COMBOS.size() - 1)] as Array).duplicate()
 		while foe.reads_combos and combo == last_combo:  # he'd read it: mix it up
 			combo = (COMBOS[dice.randi_range(0, COMBOS.size() - 1)] as Array).duplicate()
 		last_combo = combo.duplicate()
@@ -181,4 +193,11 @@ func _go_eat(inp: Dictionary) -> bool:
 		return true
 	inp["mx"] = signf(tx - me.x) if absf(tx - me.x) > 6.0 else 0.0
 	inp["mz"] = clampf((tz - me.z) / 16.0, -1.0, 1.0) if absf(tz - me.z) > 6.0 else 0.0
+	if inp["mx"] != 0.0:  # something in the way of the food: jump it (a gap, a low prop) or step round it
+		var o: Dictionary = me.world.ahead(me.x, me.z, me.y, int(inp["mx"]), 30.0)
+		if not o.is_empty() and (o["kind"] == "gap" or o["top"] - me.y <= me.tune["jump_height"] - 5.0):
+			if tick % 30 == 0:
+				inp["jump"] = true
+		elif not o.is_empty():
+			Brain.around(me, inp["mx"], inp)
 	return true

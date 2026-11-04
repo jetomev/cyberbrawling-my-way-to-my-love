@@ -1,6 +1,6 @@
 {
   "name": "Level 9 \u00b7 The Tower",
-  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Three floors, two screens each, stairs between, then the Lovelight room: no boss, smash the glass case and take the Lovelight. Floor 1 rehearses armour (Doormen), floor 2 speed (Dancers, Snicks), floor 3 rage (Enforcers, Maulers). NOT BUILT YET: everyone's 'hard version' (the roster's level 9 tricks: a Bruiser's shock ring, Snick throwing her knife, two wrenches, the shield bouncing you back, the Dancer's feint, the Enforcer lunging twice, the Whistler calling three, the Mauler grabbing faster).",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Three floors, two screens each, stairs between, then the Lovelight room: no boss, smash the glass case and take the Lovelight. Floor 1 rehearses armour (Doormen), floor 2 speed (Dancers, Snicks), floor 3 rage (Enforcers, Maulers). NOT BUILT YET: everyone's 'hard version' (the roster's level 9 tricks: a Bruiser's shock ring, Snick throwing her knife, two wrenches, the shield bouncing you back, the Dancer's feint, the Enforcer lunging twice, the Whistler calling three, the Mauler grabbing faster). Balance ruling batch two (2026-11-04, under the pass mark): F0 s1 a warm-up (one Bruiser, one Doorman, some food), and a first-aid kit at the end of each floor.",
   "draft": true,
   "floors": [
     {
@@ -40,28 +40,29 @@
           0
         ]
       ],
-      "items": [],
+      "items": [
+        [
+          "food",
+          600,
+          30
+        ],
+        [
+          "first_aid",
+          3340,
+          30
+        ]
+      ],
       "waves": [
         {
           "at": 900,
           "enemies": [
-            {
-              "kind": "doorman",
-              "from": "right",
-              "z": 60
-            },
-            {
-              "kind": "doorman",
-              "from": "right",
-              "z": 110
-            },
             {
               "kind": "bruiser",
               "from": "right",
               "z": 80
             },
             {
-              "kind": "bruiser",
+              "kind": "doorman",
               "from": "left",
               "z": 80
             }
@@ -149,6 +150,11 @@
           "matchbook",
           2300,
           40
+        ],
+        [
+          "first_aid",
+          3340,
+          30
         ]
       ],
       "waves": [
@@ -242,6 +248,11 @@
           "sandwich",
           3500,
           150
+        ],
+        [
+          "first_aid",
+          3340,
+          30
         ]
       ],
       "waves": [

@@ -72,11 +72,14 @@ var slam_in := -1  # frames till his floor slam lands (Mr. Static's), -1 when no
 var charging := false  # winding up for or running a charge (Coach Crusher's tackle): what a watcher reads to step aside
 var no_swing := false  # no room to swing a weapon here (the crane's cab): fists and feet only, the weapon kept
 var reads_combos := false  # parries a combo used twice in a row (Madame Chrome; the Godfather's rage round): mix it up
+var hit_scale := 1.0  # his blows' damage, scaled (the team's balance ruling, 11-04: the Mechanic hits softer up close)
 var stays_up := false  # knockdown and launch blows only stagger him
 var min_health := 0.0  # blows can't take him lower than this (the Godfather's rage round: only the dizzy finisher ends it)
 var armour := false  # a coat only the Lovelight cuts: every other blow bounces off (the Godfather's first round)
 var only_counters := false  # too fast for anything but a blow into his wind-up (the Godfather's second round)
 var catches := false  # a thrown weapon coming at his front is caught, not taken (the Godfather's)
+var keeps_weapon := false  # a boss's signature weapon: not worn out, not knocked loose by a counter or a knockdown;
+# only its own rule ends it (Madame Chrome's cane: three kicks into its wind-up; Velvet Rook's sword: three perfect blocks)
 var grip := false  # a perfect block doesn't knock his weapon loose (a boss's own: Velvet Rook's sword, Mr. Static's baton)
 var gloves := []  # blows his guard takes every time from the front, without raising it (Coach Crusher's big gloves)
 var dodges := []

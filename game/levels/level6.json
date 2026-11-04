@@ -1,6 +1,6 @@
 {
   "name": "Level 6 \u00b7 The Docks",
-  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the quay and the container corridor (floor 1; the locked container opened by the switch one ladder up, on the ledge), the stacks (floor 2, the Whistler, gaps), the gate yard (floor 1, the gate opened by the switch on floor 3), the gate yard's top (floor 3), then the crane yard (three floors and the cab). NOT BUILT YET: the boss's white cat sitting on the first switch, the Whistler up a lamp two floors up, falling through a stack gap to floor 1, the gate's second switch (floor 2: one switch opens it here), the dockworker's shed as its own room.",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the quay and the container corridor (floor 1; the locked container opened by the switch one ladder up, on the ledge), the stacks (floor 2, the Whistler, gaps), the gate yard (floor 1, the gate opened by the switch on floor 3), the gate yard's top (floor 3), then the crane yard (three floors and the cab). NOT BUILT YET: the boss's white cat sitting on the first switch, the Whistler up a lamp two floors up, falling through a stack gap to floor 1, the gate's second switch (floor 2: one switch opens it here), the dockworker's shed as its own room. Balance ruling batch two (2026-11-04, under the pass mark): one Mechanic fewer on F0 s2, and on F0 s3 (the Whistler calls three, not four).",
   "draft": true,
   "floors": [
     {
@@ -68,11 +68,6 @@
               "kind": "doorman",
               "from": "right",
               "z": 50
-            },
-            {
-              "kind": "wrench_mechanic",
-              "from": "right",
-              "z": 110
             }
           ]
         },
@@ -89,7 +84,7 @@
               "dx": 700,
               "z": 30,
               "calls": "wrench_mechanic",
-              "whistles": 4,
+              "whistles": 3,
               "calls_x": 5250
             }
           ]

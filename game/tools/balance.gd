@@ -35,8 +35,11 @@ func _level(n: String) -> Array:
 	var out := ["## %s%s" % [d.get("name", n), "  (DRAFT)" if d.get("draft", false) else "  (settled)"], ""]
 	var taken := {}  # enemy kind (or hazard) -> health taken, all runs
 	var deaths := {}  # where lives were lost -> count
-	out.append("| Seed | Result | Health and lives leaving each screen | Lives lost at |")
-	out.append("|---|---|---|---|")
+	var per_screen := {}  # screen -> {kind -> health taken}, all runs
+	var reached_last := 0
+	var last_floor: int = d["floors"].size() - 1
+	out.append("| Seed | Result | Health and lives leaving each screen | Lives lost at | Blows he landed |")
+	out.append("|---|---|---|---|---|")
 	for s in SEEDS:
 		var l = Level.new(d, {}, s)
 		var bot = HeroBot.new(l.hero, s)
@@ -45,6 +48,8 @@ func _level(n: String) -> Array:
 		var lost_at := []
 		var lives: int = l.lives
 		var hp: float = l.hero.health
+		var landed := 0
+		var got_there := false
 		for i in MAX_TICKS:
 			if l.won or l.lost:
 				break
@@ -54,6 +59,10 @@ func _level(n: String) -> Array:
 			bot.jump_cue = l.crane_jump_cue()
 			l.step(bot.think(l.standing()))
 			var here := "F%d s%d" % [l.on, int(l.hero.x / SCREEN) + 1]
+			got_there = got_there or l.on == last_floor
+			for ev in l.events:
+				if ev.get("attacker") == l.hero and ev.get("result", "") == "hit":
+					landed += 1
 			if here != screen:
 				if screen != "":
 					marks.append("%s %.0f/%d" % [screen, l.hero.health, l.lives])
@@ -74,15 +83,32 @@ func _level(n: String) -> Array:
 					who.append("other")
 				for k in who:
 					taken[k] = taken.get(k, 0.0) + drop / who.size()
+					if not per_screen.has(here):
+						per_screen[here] = {}
+					per_screen[here][k] = per_screen[here].get(k, 0.0) + drop / who.size()
 			hp = l.hero.health
 		var result: String = "won" if l.won else ("lost on %s" % screen if l.lost else "not finished at %s" % screen)
-		out.append("| %d | %s | %s | %s |" % [s, result, ", ".join(marks + ["%s %.0f/%d" % [screen, l.hero.health, l.lives]]), ", ".join(lost_at) if not lost_at.is_empty() else "-"])
+		if got_there:
+			reached_last += 1
+		out.append("| %d | %s | %s | %s | %d |" % [s, result, ", ".join(marks + ["%s %.0f/%d" % [screen, l.hero.health, l.lives]]), ", ".join(lost_at) if not lost_at.is_empty() else "-", landed])
 	out.append("")
 	var kinds: Array = taken.keys()
 	kinds.sort_custom(func(a, b): return taken[a] > taken[b])
 	var total: float = taken.values().reduce(func(a, b): return a + b, 0.0)
 	out.append("Health taken, all %d runs (%.0f in all): %s" % [SEEDS.size(), total,
 		", ".join(kinds.map(func(k): return "%s %.0f (%d%%)" % [k, taken[k], int(round(100.0 * taken[k] / maxf(total, 1.0)))]))])
+	out.append("")
+	out.append("**Pass mark** (the team's: the bot reaches the level's last screen, F%d, at least once in %d runs): %s (%d of %d)" % [
+		last_floor, SEEDS.size(), "PASS" if reached_last > 0 else "UNDER", reached_last, SEEDS.size()])
+	out.append("")
+	out.append("Health taken by screen, all runs:")
+	var screens: Array = per_screen.keys()
+	screens.sort()
+	for sc in screens:
+		var ks: Array = per_screen[sc].keys()
+		ks.sort_custom(func(a, b): return per_screen[sc][a] > per_screen[sc][b])
+		out.append("- %s: %.0f (%s)" % [sc, per_screen[sc].values().reduce(func(a, b): return a + b, 0.0),
+			", ".join(ks.map(func(k): return "%s %.0f" % [k, per_screen[sc][k]]))])
 	if not deaths.is_empty():
 		var where: Array = deaths.keys()
 		where.sort_custom(func(a, b): return deaths[a] > deaths[b])

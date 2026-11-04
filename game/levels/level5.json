@@ -1,6 +1,6 @@
 {
   "name": "Level 5 \u00b7 Casino Glitter",
-  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the casino floor (past the Doorman, the slots, up the broken escalator), the high-roller balcony, the glass lift down, the main floor, Madame Chrome's salon. NOT BUILT YET: the vending machine's apology note and fall, coins from the slots (score), the pipe cracking floor tiles, the chandelier, Madame Chrome riding the lift between floors, the casino key.",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the casino floor (past the Doorman, the slots, up the broken escalator), the high-roller balcony, the glass lift down, the main floor, Madame Chrome's salon. NOT BUILT YET: the vending machine's apology note and fall, coins from the slots (score), the pipe cracking floor tiles, the chandelier, Madame Chrome riding the lift between floors, the casino key. Balance ruling 2026-11-04: a soda before the main floor's fight (F3 s1).",
   "draft": true,
   "floors": [
     {
@@ -260,6 +260,11 @@
         [
           "photo",
           1300,
+          20
+        ],
+        [
+          "soda",
+          200,
           20
         ]
       ],
