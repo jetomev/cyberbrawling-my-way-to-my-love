@@ -123,7 +123,7 @@ PY
     else
       echo "- Side by side: not drawn (no reference recordings on this machine)"
     fi
-    echo "- \`trials/<name>.mp4\` / \`-half.mp4\` and \`trials/<name>.txt\` (what happened on which frame): the controlled"
+    echo "- \`trials/<name>.png\` (12 frames, the numbers on screen), \`trials/<name>.mp4\` / \`-half.mp4\` and \`trials/<name>.txt\` (what happened on which frame): the controlled"
     echo "  trials, one thing on purpose each with its numbers on screen. combo_edge: the next press 23, 24, 25 frames after a"
     echo "  jab ends (the window is $(grep -o '"combo_window_ticks": [0-9]*' "$ROOT/game/scripts/sim/tuning.gd" | grep -o '[0-9]*$') frames, the last frame that still chains); injuries: low kicks to"
     echo "  bruised, swollen, broken, then the limp's speed; weapon_wear: a stick swung until it breaks; disarm: a perfect"
@@ -159,7 +159,7 @@ PY
   # Javier, 2026-11-02 20:14 (through the assistant team): "It is only one report a day, not so many." Builds live in
   # their own folder outside the repo, where the assistant team reads them; the shelf gets one plain report a day.
   BUILDS="${CYBERBRAWLING_BUILDS:-$HOME/Documents/Cyberbrawling/builds}"
-  mkdir -p "$BUILDS/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/frames "$OUT"/build.md "$BUILDS/$NAME/" \
+  mkdir -p "$BUILDS/$NAME" && cp -r "$OUT"/demo.mp4 "$OUT"/moves.png "$OUT"/sheet.png "$OUT"/closeups.png "$OUT"/closeups "$OUT"/strips "$OUT"/clips "$OUT"/frames "$OUT"/trials "$OUT"/build.md "$BUILDS/$NAME/" \
     && { [ "$SBS" != yes ] || cp -r "$OUT"/reference "$BUILDS/$NAME/"; } \
     || fail "could not copy to the builds folder"
   echo "in the builds folder: $BUILDS/$NAME"

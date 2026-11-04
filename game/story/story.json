@@ -1,0 +1,92 @@
+{
+ "about": "The story's words, written by the assistant team (2026-11-03), fitted to the game's plan. Noa, the one who's taken, is written without he or she, so it works whichever hero is chosen; the hero has no name. Shown between fights, a line at a time (main.gd).",
+ "choose": {
+  "lines": [
+   "Every night, at the last stop, someone waits for you with two cups of tea.",
+   "Who's driving tonight?"
+  ],
+  "him": "Him",
+  "her": "Her",
+  "chosen": "Last bus of the night. Let's get you home."
+ },
+ "opening": [
+  "The night bus rolls through the harbor city. Neon on wet streets. The radio plays a scratchy old song.",
+  "Six years ago, in the pouring rain, someone ran for this bus and missed it by three steps. You did something you never do. You stopped, and you waited.",
+  "That was Noa. Noa fixed your broken radio to say thanks, and this song was the first thing it played.",
+  "Ever since, Noa's met you at the last stop every night. Two cups of tea. Same bench.",
+  "Tonight you pull in. The bench is empty.",
+  "Two cups of tea, going cold. Noa's scarf on the ground. A black car's tail lights, turning the corner.",
+  "A man steps out of the shadows and throws a card on the bench: \"Noa has something of ours. Stay out of it.\"",
+  "You turn off the engine. You take the keys.",
+  "You're not staying out of it."
+ ],
+ "before": {
+  "1": [
+   "The black car went down Harbor Street. So do you."
+  ],
+  "10": [
+   "The boss stands behind the glass face of the clock, Noa tied to a chair beside the gears.",
+   "\"Hand it over,\" the boss says, \"and you both walk away.\"",
+   "You don't have it. But you've worked out where it is.",
+   "And you're not making deals tonight."
+  ]
+ },
+ "after": {
+  "1": [
+   "In the boss's coat pocket: a shopping list, in Noa's hand.",
+   "Bread. Lemons. A new spring for the clock. You, home by seven.",
+   "You fold it and keep it."
+  ],
+  "2": [
+   "Remember the night the laundromat was locked? You danced between the washing machines to Noa's little radio, until the owner banged on the window and you both laughed so hard you had to sit down.",
+   "Noa laughs like that. You'll hear it again."
+  ],
+  "3": [
+   "A phone rings on the card table. You pick it up.",
+   "\"I'm alright. Listen...\" Four seconds of Noa's voice, and behind it, a slow, heavy ticking. Then nothing.",
+   "You know that ticking. The old clock tower by the harbor."
+  ],
+  "4": [
+   "They weren't after Noa. They were after a pocket watch a quiet man brought in to be fixed. Something was hidden inside it. Noa found it, and hid it again, somewhere only Noa knows.",
+   "That's why Noa's still alive. That's why you have to hurry."
+  ],
+  "5": [
+   "On the windowsill sits Noa's own watch. Stopped at 11:52, the minute of that first rainy bus ride.",
+   "Noa left it here on purpose. It means: I was here. Keep coming."
+  ],
+  "6": [
+   "The neon's gone now. Just rust, and smoke, and one light buzzing over a door.",
+   "You think about the tea going cold on the bench. You keep walking."
+  ],
+  "7": [
+   "Every radio in the building crackles at once, and out comes your song, scratchy and a bit off key.",
+   "Noa got hold of a radio. Noa's still fighting.",
+   "So are you."
+  ],
+  "8": [
+   "The boss drops a ring of keys. One has a little brass tag: TOWER.",
+   "Up ahead, the clock face glows red over the harbor."
+  ],
+  "9": [
+   "Near the top, behind the gears, you find it: the clock's great iron winding key, as long as your arm and heavy as a promise.",
+   "Above you, the clock starts to strike midnight."
+  ]
+ },
+ "ending": [
+  "The last stroke of midnight rings out. The boss is down among the gears.",
+  "You untie Noa. Noa's first words: \"You're late.\" Then Noa holds on and doesn't let go.",
+  "\"Where did you hide it?\" you ask. Noa smiles. \"The one place you carried every night and never looked. Your radio.\"",
+  "You leave it on the boss's desk with a note for the harbor police, and slip out together through the workings of the clock.",
+  "The night bus again. Empty. Rain on the windows. Noa up front, the radio playing your song.",
+  "The sign over the door says LAST STOP. Noa reaches up and switches it off.",
+  "\"Not tonight. Let's just keep driving.\"",
+  "THE END",
+  "Cyberbrawling my way to my love!"
+ ],
+ "out_of_lives": [
+  "The tea's going cold, but Noa's still waiting. Try again.",
+  "Noa waited six years for you. You can wait one more try.",
+  "Get up, driver. The route's not finished."
+ ],
+ "paused": "The bus will be here when you come back."
+}
