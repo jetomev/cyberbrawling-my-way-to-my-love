@@ -741,6 +741,26 @@ func _draw_flying() -> void:
 				var a := TAU * k / 8.0 + float(level.tick) * 0.4
 				flying_view.draw_line(h + Vector2.from_angle(a) * r * 0.4, h + Vector2.from_angle(a + 0.3) * r, Color(0.6, 0.9, 1.0), 3.0)
 			flying_view.draw_circle(h, 8.0, Color(0.85, 0.95, 1.0))
+	for strip in level.plan["floors"][level.on].get("live", []):  # a live floor strip: hazard stripes, crackling when on
+		var z0: float = strip[4] if strip.size() > 5 else 0.0
+		var z1: float = strip[5] if strip.size() > 5 else tune["street_depth"]
+		var top: float = Street.GROUND_Y + z0
+		var beat: int = int(strip[2]) + int(strip[3])
+		var on_now: bool = level.tick % beat < int(strip[2])
+		var x: float = strip[0]
+		while x < strip[1]:  # yellow and black, the warning
+			flying_view.draw_colored_polygon(PackedVector2Array([Vector2(x, top), Vector2(x + 20.0, top), Vector2(x + 50.0, Street.GROUND_Y + z1),
+				Vector2(x + 30.0, Street.GROUND_Y + z1)]), Color(0.95, 0.8, 0.1, 0.35))
+			x += 60.0
+		if on_now:
+			for k in 3:
+				var pts := PackedVector2Array()
+				var y0: float = top + (z1 - z0) * (k + 0.5) / 3.0
+				var px: float = strip[0]
+				while px <= strip[1]:
+					pts.append(Vector2(px, y0 + (8.0 if (int(px / 30.0) + k + level.tick / 3) % 2 == 0 else -8.0)))
+					px += 30.0
+				flying_view.draw_polyline(pts, Color(0.55, 0.85, 1.0, 0.9), 3.0)
 	if level.tick < level.live_until:  # Mr. Static's slam: the floor live, crackling (jump it)
 		var b: Vector2 = level.bounds()
 		for k in 4:

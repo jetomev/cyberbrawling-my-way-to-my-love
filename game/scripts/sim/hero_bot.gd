@@ -12,6 +12,9 @@ var tick := 0
 var combo: Array = []  # the presses of the combo under way
 var block_left := 0
 var read_serial := -1
+var eat_x := -1.0e9  # where the food errand is heading
+var stall_x := 0.0  # where it last made headway along the street (unsticking: hero_bot think)
+var stall_at := 0
 var last_combo: Array = []  # the combo it threw last (against someone who reads combos, never the same twice running)
 var goal := -1.0  # a doorway or ladder to take when the street is clear (the level tells it: level.next_door())
 var goal_hit := false  # the goal is a switch to hit, not a way through (level.goal_is_switch)
@@ -51,6 +54,15 @@ func think(enemies: Array) -> Dictionary:
 			return inp
 		inp["mx"] = 1.0 if goal < 0.0 or goal > me.x else -1.0  # nobody to fight: walk on (to the next wave, the way up)
 		_get_past(inp)
+		# no headway for a second and a half (hung on a prop's corner): out toward the front of the street, then on
+		if absf(me.x - stall_x) > 3.0:
+			stall_x = me.x
+			stall_at = tick
+		elif tick - stall_at > 90:
+			inp["mz"] = 1.0 if me.z < me.tune["street_depth"] - 20.0 else -1.0
+			inp.erase("jump")
+			if tick - stall_at > 150:
+				stall_at = tick
 		return inp
 	if Brain.to_the_stairs(me, foe, inp):
 		return inp
@@ -167,7 +179,12 @@ func _get_past(inp: Dictionary) -> void:
 ## Hurt, with the street clear: food or a first-aid kit lying near, or a prop holding some (the team's level 3: "the
 ## props carry the food"), to walk over or smash. Fills inp and returns true while he's on his way.
 func _go_eat(inp: Dictionary) -> bool:
-	if me.world == null or not me.state in ["idle", "walk"]:
+	if me.world == null:
+		return false
+	if not me.state in ["idle", "walk"]:
+		if me.state in ["jump_squat", "jump", "land", "kick"] and eat_x > -1.0e8:
+			inp["mx"] = signf(eat_x - me.x) if absf(eat_x - me.x) > 6.0 else 0.0  # (mid-way there: keep heading for it)
+			return true
 		return false
 	var best := {}
 	var best_d := 1400.0
@@ -178,11 +195,19 @@ func _go_eat(inp: Dictionary) -> bool:
 	for o in me.world.objects:
 		var cx: float = (o["x0"] + o["x1"]) * 0.5
 		if o["breakable"] and not o["broken"] and Fighter.HEALS.has(o.get("holds", "")) and absf(cx - me.x) < best_d:
-			best = {"x": cx, "z": (o["z0"] + o["z1"]) * 0.5, "smash": true, "side": o["x0"] - 50.0 if me.x < cx else o["x1"] + 50.0}
+			var zc: float = (o["z0"] + o["z1"]) * 0.5
+			var near_side: float = o["x0"] - 50.0 if me.x < cx else o["x1"] + 50.0
+			var far_side: float = o["x1"] + 50.0 if me.x < cx else o["x0"] - 50.0
+			var side: float = near_side if not me.world.blocks(near_side, zc, 0.0) else far_side  # (a free spot beside it)
+			if me.world.blocks(side, zc, 0.0):
+				continue  # boxed in on both sides: not for the bot
+			best = {"x": cx, "z": zc, "smash": true, "side": side}
 			best_d = absf(cx - me.x)
 	if best.is_empty():
+		eat_x = -1.0e9
 		return false
 	var tx: float = best["side"] if best["smash"] else best["x"]
+	eat_x = tx
 	var tz: float = clampf(best["z"], 0.0, me.tune["street_depth"])
 	if best["smash"] and absf(me.x - tx) < 12.0 and absf(me.z - tz) <= 8.0:
 		var face := 1 if best["x"] > me.x else -1
@@ -195,9 +220,9 @@ func _go_eat(inp: Dictionary) -> bool:
 	inp["mz"] = clampf((tz - me.z) / 16.0, -1.0, 1.0) if absf(tz - me.z) > 6.0 else 0.0
 	if inp["mx"] != 0.0:  # something in the way of the food: jump it (a gap, a low prop) or step round it
 		var o: Dictionary = me.world.ahead(me.x, me.z, me.y, int(inp["mx"]), 30.0)
-		if not o.is_empty() and (o["kind"] == "gap" or o["top"] - me.y <= me.tune["jump_height"] - 5.0):
+		if not o.is_empty() and o["kind"] == "gap":
 			if tick % 30 == 0:
 				inp["jump"] = true
 		elif not o.is_empty():
-			Brain.around(me, inp["mx"], inp)
+			Brain.around(me, inp["mx"], inp)  # round a prop (not over it: a jump lands him the other side of his aim)
 	return true

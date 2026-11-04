@@ -319,3 +319,26 @@ func test_no_wrench_and_no_toolbox_he_fights_on_swing_swing_headbutt() -> void:
 			moves.append(m["f"].state)
 	check(moves.has("headbutt"), "fists: swing, swing, then the headbutt (%s)" % [moves.slice(0, 6)])
 	check(not moves.has("hurl"), "nothing to hurl")
+
+
+## The team's balance rulings (2026-11-04): at most two enemies throw a blow at once, and of the Enforcers only one at a
+## time (another kind can be the second). Three Enforcers in front and a thug behind crowd a hero who only stands and guards.
+func test_at_most_two_swing_at_once_and_one_enforcer() -> void:
+	var l = street()
+	for dx in [110.0, 150.0, 190.0]:
+		bring(l, "enforcer", dx)
+	bring(l, "thug", -110.0)
+	var peak := 0
+	var peak_enforcers := 0
+	var both_kinds := false
+	for i in 900:
+		l.hero.health = l.hero.max_health  # (he stays up: the rule is what's being watched)
+		l.step({"block": true})
+		var swinging: Array = l.enemies.filter(func(e): return not e["gone"] and e["f"].attack_phase() != "")
+		peak = maxi(peak, swinging.size())
+		var enf: int = swinging.filter(func(e): return e["kind"] == "enforcer").size()
+		peak_enforcers = maxi(peak_enforcers, enf)
+		both_kinds = both_kinds or (enf == 1 and swinging.size() == 2)
+	check(peak <= Level.SWINGING_MAX, "never more than two swinging at once (peak %d)" % peak)
+	eq(peak_enforcers, 1, "one Enforcer at a time, never two")
+	check(both_kinds, "an Enforcer and the thug can still swing together")

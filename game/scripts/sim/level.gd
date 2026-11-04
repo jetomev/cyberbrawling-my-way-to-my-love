@@ -345,9 +345,11 @@ func step(inp: Dictionary) -> void:
 			if e.get("arguing", false) and e["brain"].dormant_until_within > 0.0:
 				think = _argue(e)
 			# never more than two swinging at once, on every level, a boss's helpers included (the balance ruling)
-			if e["f"].attack_phase() == "" and enemies.filter(func(o): return not o["gone"] and o["f"].attack_phase() != "").size() >= SWINGING_MAX:
+			var swinging: Array = enemies.filter(func(o): return not o["gone"] and o["f"].attack_phase() != "")
+			if e["f"].attack_phase() == "" and (swinging.size() >= SWINGING_MAX \
+					or (e.get("kind", "") == "enforcer" and swinging.any(func(o): return o.get("kind", "") == "enforcer"))):
 				for k in ["punch", "kick", "sweep", "grab", "headbutt", "throw"]:
-					think.erase(k)
+					think.erase(k)  # (and Enforcers one at a time: the team's second ruling)
 			if think.get("records", false):
 				e["volley"] = RECORDS.duplicate()  # his records go one after another
 				e["volley_at"] = tick
@@ -360,6 +362,8 @@ func step(inp: Dictionary) -> void:
 			think = _crane_cab(e, think)
 			_volley(e)
 			e["f"].step(think)
+			if active_wave >= 0 and e["wave"] == active_wave and e["f"].x < b.x:
+				e["f"].x = b.x  # nobody walks back onto a screen the hero has cleared (the team's second ruling)
 			_release(e["f"])
 	var all := everyone()
 	for id in world.step_hits(all):  # something smashed: whatever was inside falls out
@@ -971,7 +975,8 @@ func _live_strips() -> void:
 		for f in everyone():
 			var who: Array = enemies.filter(func(e): return e["f"] == f)
 			var kind: String = "hero" if f == hero else (who[0]["kind"] if not who.is_empty() else "")
-			if shocked_beat.has(f) or f.y >= 1.0 or not f.hittable() or f.x < strip[0] or f.x > strip[1]:  # (a Dancer too: zapped)
+			var dry: bool = strip.size() > 5 and (f.z < strip[4] or f.z > strip[5])  # (a dry path along it: the team's second ruling)
+			if shocked_beat.has(f) or f.y >= 1.0 or not f.hittable() or f.x < strip[0] or f.x > strip[1] or dry:  # (a Dancer too)
 				continue
 			shocked_beat[f] = true
 			f.take_hit({"damage": SHOCK_DAMAGE, "effect": "push", "low": 0.0, "high": 300.0, "move": "live_floor"}, {"x": f.x - f.facing * 10.0, "y": 0.0})
@@ -1177,7 +1182,7 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 	var z: float = e.get("z", 80.0)
 	match from:
 		"left":
-			x = at - OFF_SCREEN
+			x = at - LOCK_MARGIN + 40.0  # from behind, at the fight's own screen edge: never back across a cleared one
 		"right":
 			x = at + OFF_SCREEN
 		"door":

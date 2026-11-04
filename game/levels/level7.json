@@ -1,6 +1,6 @@
 {
   "name": "Level 7 \u00b7 The Power Plant",
-  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the turbine hall (floor 1, a live strip, up the ladder), the catwalk (floor 2, the Enforcer alone), the top catwalks over the water tanks (floor 3, a push kick by a tank and a goon's out), the control room, back down to the plant floor (floor 1, a live strip in the middle), Mr. Static's tank room (dry edges). NOT BUILT YET: passing behind the wall pipes, the warning stripes drawn before a strip goes live, the Enforcer's parry of the whole P P P (he parries the jab), Mr. Static down after two tank shorts (here: dizzy, and hurt). Balance ruling 2026-11-04: Dancers and the live floor never share a screen (F0's strip moved to screen 3; the plant floor's two Dancers became Mechanics), a Dancer on a strip gets zapped, food at the end of F0 s1.",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the turbine hall (floor 1, a live strip, up the ladder), the catwalk (floor 2, the Enforcer alone), the top catwalks over the water tanks (floor 3, a push kick by a tank and a goon's out), the control room, back down to the plant floor (floor 1, a live strip in the middle), Mr. Static's tank room (dry edges). NOT BUILT YET: passing behind the wall pipes, the warning stripes drawn before a strip goes live, the Enforcer's parry of the whole P P P (he parries the jab), Mr. Static down after two tank shorts (here: dizzy, and hurt). Balance ruling 2026-11-04: Dancers and the live floor never share a screen (F0's strip moved to screen 3; the plant floor's two Dancers became Mechanics), a Dancer on a strip gets zapped, food at the end of F0 s1. Second ruling: one Dancer fewer on F0 s2, food at the foot of the catwalk ladder, a dry path along the live strip (the back of the street).",
   "draft": true,
   "floors": [
     {
@@ -22,6 +22,11 @@
         [
           "food",
           1800,
+          30
+        ],
+        [
+          "food",
+          5400,
           30
         ]
       ],
@@ -52,11 +57,6 @@
             {
               "kind": "neon_dancer",
               "from": "right",
-              "z": 60
-            },
-            {
-              "kind": "neon_dancer",
-              "from": "right",
               "z": 110
             },
             {
@@ -73,7 +73,9 @@
           4200,
           4800,
           120,
-          60
+          60,
+          40,
+          160
         ]
       ]
     },

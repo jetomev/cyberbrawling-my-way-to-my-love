@@ -294,7 +294,7 @@ func test_enemies_come_from_the_sides_a_door_or_hiding() -> void:
 	var later: Array = l.enemies.filter(func(e): return e["wave"] == 1 and not e["f"].defeated())
 	eq(later.size(), 3, "one down: the other three come in")
 	check(later.any(func(e): return e["f"].z <= 10.0), "one out of a door at the back of the street")
-	check(later.filter(func(e): return e["f"].x < l.floors[0]["waves"][1]["at"] - Level.OFF_SCREEN + 60.0).size() == 2, "two from the left, behind him")
+	check(later.filter(func(e): return e["f"].x < l.hero.x - 100.0).size() == 2, "two from the left, behind him (at the fight's own screen edge: the team's second ruling)")
 
 
 func test_never_more_than_five_at_once() -> void:

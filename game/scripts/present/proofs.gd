@@ -79,6 +79,8 @@ func setup(level) -> void:
 			foe["f"].z = level.hero.z
 			foe["brain"].wait = 30
 			zoom = 1.3
+			length = 2400
+			bot = HeroBot.new(h, 2)  # the hero fights back (the testers: show it in a real fight, not against a guard)
 		"proof_shove":
 			_on_flight(level, h, 1600.0)
 			h.facing = -1
@@ -102,9 +104,19 @@ func setup(level) -> void:
 			zoom = 0.8
 			length = 1100
 		"proof_escape":
-			_on_flight(level, h, 1500.0)
+			# Twin Loans' shop: the hero halfway up its stairs, both brothers on the landing above, rushing down at him
+			level._go_to(1, 300.0)
+			level.step({})
+			foe = level.enemies.filter(func(e): return e["kind"] == "twin_tall")[0]
+			other = level.enemies.filter(func(e): return e["kind"] == "twin_short")[0]
+			_on_flight(level, h, 1150.0)
 			h.facing = -1
-			foe = _bring(level, "thug", 1880.0, 15.0)  # one up on the landing above him
+			for e in [foe, other]:
+				e["f"].x = 1440.0 if e == foe else 1490.0
+				e["f"].z = 15.0
+				e["f"].y = 400.0
+				e["brain"].wait = 0
+			level.compound = true  # both at him at once (Compound), rushing down the flight
 			zoom = 1.0
 		"proof_coach", "proof_chrome", "proof_static", "proof_rook":
 			var floor_of := {"proof_coach": 1, "proof_chrome": 2, "proof_static": 1, "proof_rook": 1}
@@ -410,18 +422,36 @@ func inputs(level) -> Dictionary:
 			if tick > 300 and ended < 0:
 				_end("(the proof ran out of time)")
 		"proof_swap":
-			inp["block"] = true
-			var b = foe["brain"]
-			if started < 0 and not b.plan.is_empty():
-				_start("the short brother starts his combo; the tall one guards")
+			# a real fight (the bot plays the hero); the sequence is the first combo that swaps, from its first frame to its
+			# end (its START is logged when the swap shows which combo it was)
+			bot.me = h
+			inp = bot.think(level.standing())
+			if [foe, other].any(func(e): return not e["brain"].plan.is_empty() or e["f"].attack_phase() != "") \
+					or (started < 0 and tick < 400):
+				inp = {"block": true}  # they open on him and he guards; once a combo's been thrown, he hits back between them
+			for e in [foe, other]:
+				var key: String = "plan_" + e["kind"]
+				if not e["brain"].plan.is_empty() and not data.get(key, false):
+					data["from_" + e["kind"]] = tick  # this brother's combo starts
+				data[key] = not e["brain"].plan.is_empty() or e["f"].attack_phase() != ""
 			for ev in evs:
-				if ev.get("result", "") == "swap":
-					_say("halfway through: they SWAP places")
-			if started >= 0 and ended < 0 and tick > started + 4 and b.plan.is_empty() and f.attack_phase() == "" \
-					and other["brain"].plan.is_empty() and other["f"].attack_phase() == "":
-				_end("the combo's over")
-			if tick > 400 and ended < 0:
-				_end("(the proof ran out of time)")
+				if ev.get("result", "") == "swap" and started < 0:
+					var who: Dictionary = foe if ev.get("target") == foe["f"] else other
+					started = data.get("from_" + who["kind"], tick)
+					data["swapper"] = who
+					history.append("frame %d: START: the %s brother starts a combo, his brother guarding, in a real fight" % [started,
+						"short" if who["kind"] == "twin_short" else "tall"])
+					_say("halfway through it (as his second blow starts): they SWAP places")
+			if started >= 0 and ended < 0 and data.has("swapper"):
+				var w: Dictionary = data["swapper"]
+				if w["brain"].plan.is_empty() and w["f"].attack_phase() == "" and not data.has("over"):
+					data["over"] = tick
+					_say("his combo's over: the hero hits back")
+				if data.has("over") and (evs.any(func(ev): return ev.get("attacker") == h and ev.get("result", "") == "hit") \
+						or tick > data["over"] + 120):
+					_end("the hero's blow lands on a brother: the fight goes on")
+			if tick > 2300 and ended < 0:
+				_end("(no swap came: the proof ran out of time)")
 		"proof_shove":
 			if tick == 9:
 				_start("P P K at the enemy below him on the stairs")
@@ -454,7 +484,7 @@ func inputs(level) -> Dictionary:
 				_end("(the proof ran out of time)")
 		"proof_escape":
 			if tick == 9:
-				_start("the hero, halfway up the flight, an enemy on the landing above: down he goes")
+				_start("the hero, halfway up Twin Loans' stairs, both brothers rushing down at him: down and off he goes")
 			if tick >= 10 and ended < 0:
 				inp["mx"] = -1.0
 				if h.y < 1.0 and h.x < _flight(level)["x0"] - 40.0:
