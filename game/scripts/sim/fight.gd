@@ -29,6 +29,7 @@ func step(fighters: Array, world = null) -> Array:
 		var blow: Dictionary = a.move()
 		blow["finisher"] = Moves.is_finisher(a.state)
 		blow["move"] = a.state
+		blow["weapon_speed"] = Moves.Weapons.TABLE[a.weapon]["speed"] if a.weapon != "" and Moves.Weapons.is_swing(a.state) else 0
 		if a.soft:
 			blow["damage"] = 0.0  # practice: it lands, it doesn't hurt
 		var id: int = a.get_instance_id()
@@ -45,6 +46,10 @@ func step(fighters: Array, world = null) -> Array:
 			if a.y + blow["low"] >= d.y + BODY_HEIGHT or a.y + blow["high"] <= d.y:
 				continue
 			var winding_up: bool = d.attack_phase() == "startup"  # caught as he starts a blow: a counter
+			# a low kick into the Doorman's bash knocks his shield aside, and he spins round, open (the team's roster)
+			if winding_up and d.weapon == "shield" and blow["move"] == "kick":
+				_disarm(d, world, a.x)
+				d.facing = -d.facing
 			var result: String = d.take_hit(blow, a)
 			if result == "":
 				continue

@@ -72,9 +72,43 @@ const BIG_MAMA := {
 	"combos": [["punch", "punch", "punch"]],
 	"dash_from": 300.0, "dash_to": 1900.0,  # her charge
 }
+## The rest of the team's roster (art-in 2026-11-03, enemy roster v2); their tricks live in fighter.gd (dodges,
+## parries, too_quick, the shield, the grab) and level.gd (the hurled wrench, the whistle, the bear hug's throw).
+## Wrench Mechanic: "Tune-Up", swing, swing, then he hurls the wrench; ducks the high kicks; fetches a spare from his
+## toolbox.
+const WRENCH_MECHANIC := {
+	"keep": 170.0, "strike": 120.0, "wait_min": 50, "wait_max": 100, "block_chance": 0.15, "block_ticks": 20,
+	"combos": [["punch", "punch", "hurl"], ["punch", "punch"]], "toolbox": true,
+}
+## Doorman: "Velvet Rope", shield bash, bash, shove; everything from the front bounces off the shield.
+const DOORMAN := {
+	"keep": 160.0, "strike": 110.0, "wait_min": 60, "wait_max": 110, "block_chance": 0.0, "block_ticks": 0,
+	"combos": [["punch", "punch", "punch"]],
+}
+## Neon Dancer: "Drive-By" on skates, kicks in passing; too quick for slow weapons.
+const NEON_DANCER := {
+	"keep": 200.0, "strike": 120.0, "wait_min": 30, "wait_max": 70, "block_chance": 0.0, "block_ticks": 0,
+	"combos": [["kick", "punch", "kick"], ["kick", "kick"]], "dash_from": 250.0, "dash_to": 700.0,
+}
+## Enforcer: "Three Cuts", cut, cut, a long lunging cut; parries the jab.
+const ENFORCER := {
+	"keep": 180.0, "strike": 140.0, "wait_min": 45, "wait_max": 90, "block_chance": 0.3, "block_ticks": 22,
+	"combos": [["punch", "punch", "punch"], ["punch", "punch"]],
+}
+## Whistler, the lookout: never fights; keeps his distance (level.gd blows his whistle).
+const LOOKOUT := {
+	"keep": 600.0, "strike": 0.0, "wait_min": 9999, "wait_max": 9999, "block_chance": 0.0, "block_ticks": 0,
+	"combos": [], "never_fights": true,
+}
+## Mauler, the grabber: "Bear Hug", arms wide, then a grab right through the guard.
+const GRABBER := {
+	"keep": 170.0, "strike": 120.0, "wait_min": 60, "wait_max": 110, "block_chance": 0.0, "block_ticks": 0,
+	"combos": [["grab"]],
+}
 ## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
 const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER, "DJ_VOLT": DJ_VOLT,
-	"SNICK": SNICK, "BIG_MAMA": BIG_MAMA}
+	"SNICK": SNICK, "BIG_MAMA": BIG_MAMA, "WRENCH_MECHANIC": WRENCH_MECHANIC, "DOORMAN": DOORMAN,
+	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER}
 
 var me
 var foe
@@ -112,6 +146,21 @@ func think() -> Dictionary:
 	var dx: float = foe.x - me.x
 	var toward := 1.0 if dx >= 0.0 else -1.0
 	var dist := absf(dx)
+	if kind.get("never_fights", false):  # the lookout: keeps his distance, runs from the hero
+		if dist < kind["keep"]:
+			inp["mx"] = -toward
+		elif me.facing != int(toward):
+			inp["mx"] = toward * 0.01
+		return inp
+	if kind.get("toolbox", false) and me.weapon == "" and me.world != null:  # the mechanic: off to his toolbox for a spare
+		for o in me.world.objects:
+			if o["kind"] == "toolbox" and not o["broken"]:
+				var tx: float = (o["x0"] + o["x1"]) * 0.5
+				if absf(me.x - tx) < 60.0:
+					me.take_weapon("wrench")
+				else:
+					inp["mx"] = signf(tx - me.x)
+				return inp
 	# the guard: held a moment once raised; decided once per blow he sees winding up near him
 	if block_left > 0:
 		block_left -= 1

@@ -1,0 +1,10 @@
+{
+  "name": "an open street (a test layout): nothing on it, no waves, so a test can bring in just the enemy it needs",
+  "floors": [
+    {"name": "street", "length": 4000, "obstacles": [], "items": [], "waves": []},
+    {"name": "upstairs", "length": 2400, "obstacles": [], "items": [], "waves": []}
+  ],
+  "links": [],
+  "switches": [],
+  "boss": {"floor": 1, "x": 2000, "kind": "boss", "health": 40}
+}

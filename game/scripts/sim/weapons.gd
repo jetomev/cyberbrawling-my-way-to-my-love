@@ -19,6 +19,7 @@ const TABLE := {
 	"sword": {"damage": 3.0, "reach": 200.0, "speed": 0, "hits": 20, "smash": "knockdown"},
 	"mic_stand": {"damage": 1.0, "reach": 170.0, "speed": 1, "hits": 40, "smash": "push"},  # DJ Volt's (level 1's boss)
 	"baguette": {"damage": 3.0, "reach": 150.0, "speed": 1, "hits": 8, "smash": "knockdown"},  # level 2's joke: hits hard, crumbles (about 8 hits)
+	"shield": {"damage": 1.0, "reach": 125.0, "speed": 1, "hits": 999, "smash": "push"},  # the Doorman's riot shield: bash, bash, shove
 	"wok": {"damage": 2.0, "reach": 160.0, "speed": 2, "hits": 99, "smash": "knockdown", "guard_break": true},  # Big Mama Noodle's
 }
 

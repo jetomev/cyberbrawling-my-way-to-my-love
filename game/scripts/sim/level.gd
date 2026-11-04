@@ -34,6 +34,13 @@ const KINDS := {
 	"snick": {"health": 10.0, "brain": "SNICK", "weapon": "knife"},  # her knife falls when she's put down
 	"bruiser_pipe": {"health": 20.0, "brain": "BRUISER", "weapon": "pipe", "shrugs": ["punch"], "snaps": true},
 	"big_mama": {"health": 50.0, "brain": "BIG_MAMA", "weapon": "wok", "drops": "wrench"},
+	# the rest of the team's roster (enemy roster v2)
+	"wrench_mechanic": {"health": 14.0, "brain": "WRENCH_MECHANIC", "weapon": "wrench", "dodges": ["side_kick", "roundhouse"]},
+	"doorman": {"health": 18.0, "brain": "DOORMAN", "weapon": "shield"},
+	"neon_dancer": {"health": 12.0, "brain": "NEON_DANCER", "too_quick": true, "speed": 1.8, "drops": "stick"},
+	"enforcer": {"health": 20.0, "brain": "ENFORCER", "weapon": "sword", "parries": ["punch"]},
+	"lookout": {"health": 1.0, "brain": "LOOKOUT", "drops": "takeaway"},
+	"grabber": {"health": 22.0, "brain": "GRABBER", "drops": "takeaway"},
 }
 ## DJ Volt's records (the team: "three records thrown like frisbees, low, middle, high"): their height bands above the
 ## street, how fast they fly, how far apart in time, what they do
@@ -48,6 +55,10 @@ const BASS_HOLD := 120
 const SOUP_AFTER_BLOCKS := 3
 const SOUP_DAMAGE := 2.0
 const SLIP_DAZE := 150
+const WHISTLE_EVERY := 480  # the lookout whistles in two more goons this often while he's up and the hero's near
+const WHISTLE_RANGE := 1000.0
+const HUG_TICKS := 70  # the bear hug: this long without wriggling free, and he throws the hero down
+const HURL_DAMAGE := 3.0
 const MAX_ON_SCREEN := 5  # never more than five enemies at once; the rest wait off screen (the team's fairness rules)
 const OFF_SCREEN := 1150.0  # "from the left/right": they walk in from this far beyond the wave's spot
 const AMBUSH := 260.0  # a hidden enemy jumps out when the hero comes this close
@@ -83,6 +94,7 @@ var bass_at := -1  # the tick the last bass wave went out (for the view and the 
 var wet := true  # Big Mama's kitchen floor by the sink
 var mopped := false  # she's mopped it once (at half health)
 var blocks_in_row := 0  # the hero's blocks in a row against her (her hot soup)
+var hug := {}  # the bear hug under way: {by (the grabber's entry), at (tick)}
 var cat_fed := false  # level 1's stray cat, fed (it follows him, and turns up in level 2)
 var cat := Vector2(-1.0e9, 0.0)  # where the cat is (x, z): by its bins, or at his heels once fed
 var cat_with := 0  # how long he's stood by it
@@ -236,6 +248,8 @@ func step(inp: Dictionary) -> void:
 			if think.get("throw", false):
 				e["volley"] = RECORDS.duplicate()  # his records go one after another
 				e["volley_at"] = tick
+			if think.get("hurl", false) and e["f"].weapon != "":
+				_hurl(e["f"])
 			_volley(e)
 			e["f"].step(think)
 	var all := everyone()
@@ -252,6 +266,7 @@ func step(inp: Dictionary) -> void:
 	_bass_drop()
 	_kitchen()
 	_cat()
+	_roster_tricks()
 	_switches()
 	_waves()
 	_links()
@@ -292,6 +307,61 @@ func _bass_drop() -> void:
 		hero._enter("idle")  # the wave tears his guard down
 		hero.take_hit({"damage": 1.0, "effect": "push", "low": 0.0, "high": 300.0, "move": "bass"}, dj[0]["f"])
 		events.append({"target": hero, "result": "bass", "kind": "bass"})
+
+
+## The Wrench Mechanic hurls his weapon (the team's roster): it flies at the hero; a perfect block catches it (his
+## now); landing on someone or flying past, it falls to the street.
+func _hurl(f) -> void:
+	var what: String = f.drop_weapon()
+	var dir := 1.0 if hero.x >= f.x else -1.0
+	var p: Dictionary = projectiles.throw(what, f.x + dir * 40.0, f.z, 120.0, 210.0, dir * 11.0, HURL_DAMAGE, f.team)
+	p["catchable"] = true
+
+
+## The roster's tricks that live in the level: a thrown weapon falls a step past where it landed (not under the
+## hero's feet, where he'd pick it straight up); an enemy who ducked or parried strikes straight back; the Dancer
+## knocked off her feet loses her skates and is on foot after; the lookout's whistle; the
+## bear hug's squeeze and throw.
+func _roster_tricks() -> void:
+	for ev in events:
+		var p = ev.get("projectile")
+		if p != null and p.get("catchable", false) and ev["result"] in ["hit", "blocked", "evaded"]:
+			world.drop(p["kind"], clampf(p["x"] + signf(p["vx"]) * Fight.FLY, 0.0, floors[on]["length"]), p["z"])
+		if ev.get("result", "") in ["dodged", "parried"]:
+			for e in enemies:
+				if e["f"] == ev.get("target"):
+					e["brain"].wait = 0  # he ducked it (or caught it on his blade): straight back at you
+		if ev.get("result", "") == "grabbed":
+			for e in enemies:
+				if e["f"] == ev.get("attacker"):
+					hug = {"by": e, "at": tick}
+					e["brain"].wait = 9999
+	for e in enemies:
+		var f = e["f"]
+		if e["gone"] or f.defeated():
+			continue
+		if e.get("kind", "") == "neon_dancer" and f.state in ["launch", "knockdown", "down"] and f.too_quick:
+			f.too_quick = false  # off her skates for good: on foot, slow
+			f.tune["walk_speed"] = Tuning.DEFAULTS["walk_speed"] * 0.8
+			f.tune["run_speed"] = Tuning.DEFAULTS["run_speed"] * 0.8
+		if e.get("kind", "") == "lookout" and absf(hero.x - f.x) < WHISTLE_RANGE and tick >= e.get("next_whistle", 0):
+			e["next_whistle"] = tick + WHISTLE_EVERY
+			for side in ["left", "right"]:
+				if standing().size() < MAX_ON_SCREEN:
+					_arrive({"kind": "glow_punk", "from": side, "z": 80.0}, hero.x, e["wave"])
+			events.append({"target": f, "result": "whistle", "kind": "whistle"})
+	if not hug.is_empty():
+		var g = hug["by"]["f"]
+		if hero.state != "held" or g.defeated():
+			if hero.state != "held" and not g.defeated():
+				g._enter("stagger")  # wriggled free: he's off balance
+			hug["by"]["brain"].wait = 40
+			hug = {}
+		elif tick - hug["at"] >= HUG_TICKS:
+			hero._enter("idle")
+			hero.take_hit({"damage": HURL_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "throw"}, g)
+			hug["by"]["brain"].wait = 60
+			hug = {}
 
 
 ## The stray cat (level 1, screen 7): stand by it a moment and it's fed; then it trots at his heels.
@@ -377,6 +447,11 @@ func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave
 	if weapon == "" and KINDS[kind].has("weapon"):
 		f.take_weapon(KINDS[kind]["weapon"])  # an enemy type's own weapon (Snick's knife)
 	f.weapon_snaps = KINDS[kind].get("snaps", false)
+	f.dodges = KINDS[kind].get("dodges", [])
+	f.parries = KINDS[kind].get("parries", [])
+	f.too_quick = KINDS[kind].get("too_quick", false)
+	for k in ["walk_speed", "run_speed"]:
+		f.tune[k] = f.tune[k] * KINDS[kind].get("speed", 1.0)
 	var how: Dictionary = Brain.TYPES[KINDS[kind]["brain"]]
 	enemies.append({"f": f, "brain": Brain.new(f, hero, dice_seed * 100 + tick + enemies.size(), how), "gone": false,
 		"down_for": 0, "boss": false, "wave": wave_index, "kind": kind, "dropped": false})

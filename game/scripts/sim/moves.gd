@@ -63,6 +63,10 @@ const TABLE := {
 	"air_kick": {"low": 30.0, "high": 170.0, "damage": 3, "effect": "", "limb": "foot_f"},
 	"hammer_fist": {"startup": 4, "active": 8, "recovery": 0, "reach": 70.0, "low": 20.0, "high": 160.0, "damage": 2,
 		"effect": "", "limb": "hand_f"},
+	# the Grabber's bear hug (the team's roster): arms spread wide (the glint), then a lunge that grabs right through a
+	# guard; a punch into the reach, or a step up or down the street, beats it
+	"grab": {"startup": 16, "active": 4, "recovery": 24, "reach": 140.0, "low": 100.0, "high": 260.0, "damage": 0,
+		"effect": "grab", "limb": "hand_f"},
 }
 
 ## What each sequence of presses becomes. A sequence not listed starts a new chain with its last press.

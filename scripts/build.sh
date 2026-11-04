@@ -55,6 +55,9 @@ fail() { echo "FAILED $*"; exit 1; }
   LEVEL_RESULT="$(tail -1 "$OUT/level.txt")"
   "$ROOT/scripts/level_clip.sh" "$OUT" level2 1 > "$OUT/level2.txt" 2>&1 || { cat "$OUT/level2.txt"; fail "could not record level 2"; }
   LEVEL2_RESULT="$(tail -1 "$OUT/level2.txt")"
+  # the rest of the team's roster, one at a time down a plain street (the roster yard, a showcase, not a level)
+  "$ROOT/scripts/level_clip.sh" "$OUT" roster_yard 1 > "$OUT/roster.txt" 2>&1 || { cat "$OUT/roster.txt"; fail "could not record the roster yard"; }
+  ROSTER_RESULT="$(tail -1 "$OUT/roster.txt")"
   # the testers' controlled trials: one thing on purpose each, its numbers on screen (2026-11-03)
   "$ROOT/scripts/trials.sh" "$OUT" > "$OUT/trials.txt" 2>&1 || { cat "$OUT/trials.txt"; fail "could not record the trials"; }
   # the hero beside the recordings he was measured from (D-30); the recordings live outside the repo, so a machine
@@ -141,6 +144,10 @@ PY
     echo "- \`clips/level2.mp4\` and \`frames/level2.png\`: level 2, the Night Market (the team's settled layout), by the bot:"
     echo "  Snick, the stall counters, the awning's ladder, the cracked tile, the fountain fight, the pipe Bruiser, the long"
     echo "  ladder, Big Mama Noodle's kitchen (her soup, the wet patch, the tap). How it went: $LEVEL2_RESULT"
+    echo "- \`clips/roster_yard.mp4\` and \`frames/roster_yard.png\`: the rest of the team's roster, one at a time, by the bot:"
+    echo "  the Wrench Mechanic (ducks high kicks, hurls his wrench, his toolbox by the wall), the Doorman (shield in front),"
+    echo "  the Neon Dancer (skates), the Enforcer (parries the jab), the lookout (whistles in two), the Grabber (bear hug)."
+    echo "  A showcase, not a level of the game. How it went: $ROSTER_RESULT"
     echo "- \`clips/fight.mp4\` / \`fight-half.mp4\` and \`frames/fight.png\` (a frame every half second): a 25 s fight, a bot"
     echo "  playing the hero against thugs who fight back (red): they walk up, throw combos with a breath between, sometimes"
     echo "  block (a white flash is a perfect block); blows make them flinch, reel, get shoved, knocked down, thrown up;"

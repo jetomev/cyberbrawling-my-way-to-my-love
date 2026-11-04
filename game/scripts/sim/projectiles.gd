@@ -41,7 +41,11 @@ func step(fighters: Array, left: float, right: float) -> Array:
 			var result: String = f.take_hit(blow, from)
 			if result == "":
 				continue  # lying down: it flies over
-			if result == "perfect":
+			if result == "perfect" and p.get("catchable", false) and f.weapon == "":
+				f.take_weapon(p["kind"])  # a thrown weapon caught: it's his now (the Wrench Mechanic's wrench)
+				p["alive"] = false
+				result = "caught"
+			elif result == "perfect":
 				p["vx"] = -p["vx"] * 1.2  # back the way it came, harder
 				p["team"] = f.team
 			elif result != "evaded":

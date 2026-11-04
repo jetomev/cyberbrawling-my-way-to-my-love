@@ -23,8 +23,10 @@ const MAX_QUEUE := 2  # P then K pressed during one long blow play P then K
 const AIR_STATES := ["jump", "air_kick", "hammer_fist"]
 ## What food and first aid give back, as a share of a full health bar (D-14)
 const HEALS := {"food": 0.4, "takeaway": 0.4, "soda": 0.25, "apple": 0.25, "bowl": 0.4, "first_aid": 1.0, "noodles": 1.0}  # noodles: level 2's hidden bar
-## Being hit: no input counts until the reaction ends (fight.gd decides who hits whom; take_hit() reacts)
-const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko", "dizzy"]
+## Being hit: no input counts until the reaction ends (fight.gd decides who hits whom; take_hit() reacts); "held":
+## in the Grabber's bear hug, where only wriggling counts (3 quick punches, or a roll)
+const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko", "dizzy", "held"]
+const ESCAPE_TAPS := 3
 
 var tune: Dictionary
 var world = null
@@ -61,6 +63,12 @@ var weapon := ""  # what this fighter carries ("pipe", …); an enemy drops it w
 var weapon_hits_left := 0  # it wears out (D-14)
 var soft := false  # a sparring friend: his blows don't hurt
 var shield := 0  # blows something he's holding will take for him (level 1's umbrella: one, then it breaks)
+## The team's roster, each enemy's own trick: blows (by move) he ducks or hops out of, blows he parries with his
+## weapon, slow weapons he's too quick for (the Neon Dancer)
+var dodges := []
+var parries := []
+var too_quick := false
+var escape_taps := 0  # held: punches tapped so far toward wriggling free
 var weapon_snaps := false  # his weapon breaks as it's knocked loose (level 2's pipe Bruiser: the pipe stays level 5's prize)
 var shrugs := []  # blows (by move) that hurt him but don't make him flinch (the Bruiser's "Iron Gut": a jab)
 var no_pickup_until := -1  # knocked out of his hand, a weapon can't be grabbed straight back (until this tick)
@@ -88,10 +96,24 @@ func step(inp: Dictionary) -> void:
 	var mx: float = clampf(inp.get("mx", 0.0), -1.0, 1.0)
 	var mz: float = clampf(inp.get("mz", 0.0), -1.0, 1.0)
 	clock += 1
+	if state == "held":  # the bear hug: tap punch fast, or roll, to wriggle free
+		t += 1
+		queue.clear()
+		if inp.get("punch", false):
+			escape_taps += 1
+		if escape_taps >= ESCAPE_TAPS or inp.get("roll", false):
+			escape_taps = 0
+			_enter("idle")
+		return
 	if state in HURT_STATES:
 		t += 1
 		queue.clear()
 		_react()
+		return
+	if inp.get("grab", false) and state in GROUND_STATES:  # (the Grabber's own move: no button reaches it)
+		vx = 0.0
+		attack_serial += 1
+		_enter("grab")
 		return
 	for b in ["jump", "punch", "kick", "sweep"]:
 		if inp.get(b, false):
@@ -357,6 +379,18 @@ func take_hit(blow: Dictionary, attacker) -> String:
 		return ""
 	var dir := 1 if x >= attacker.x else -1  # driven away from whoever hit him
 	knock_dir = dir
+	var move: String = blow.get("move", "")
+	if move in dodges or (too_quick and blow.get("weapon_speed", 0) >= 1):
+		return "dodged"  # under it, or gone before it lands
+	if move in parries and facing == -dir and state in GROUND_STATES:
+		return "parried"  # caught on the flat of his blade
+	if weapon == "shield" and facing == -dir:
+		return "shielded"  # everything from the front bounces off the Doorman's shield
+	if blow.get("effect", "") == "grab":
+		queue.clear()
+		escape_taps = 0
+		_enter("held")  # right through the guard
+		return "grabbed"
 	var guard := blocking()
 	just_broke = ""
 	if guard != "" and facing == -dir:  # only a guard facing the blow stops it

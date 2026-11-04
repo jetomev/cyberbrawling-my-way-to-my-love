@@ -483,6 +483,16 @@ const SHOTS := {
 		["active_end", {"cover_f": 0.0, "arm_f_upper": -80.0, "arm_f_lower": -40.0, "hip_x": 8.0, "hip_turn": 6.0, "torso": 14.0}],
 		["follow", {}],
 		["end", {}]],
+	# the Grabber's bear hug (the team's roster): arms spread wide and back (the glint), then a lunge, both arms
+	# reaching round, then the squeeze
+	"grab": [["start", {}],
+		["windup", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "arm_f_upper": 30.0, "arm_f_lower": -20.0, "arm_b_upper": 50.0, "arm_b_lower": -20.0, "torso": -4.0, "hip_x": -8.0}],
+		["active", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "arm_f_upper": -96.0, "arm_f_lower": 0.0, "arm_b_upper": -88.0, "arm_b_lower": -5.0, "torso": 24.0, "hip_x": 22.0, "step_f": 26.0}],
+		["active_end", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "arm_f_upper": -96.0, "arm_f_lower": 0.0, "arm_b_upper": -88.0, "arm_b_lower": -5.0, "torso": 24.0, "hip_x": 22.0, "step_f": 26.0}],
+		["follow", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -96.0, "arm_f_lower": -40.0, "arm_b_upper": -88.0, "arm_b_lower": -40.0, "torso": 26.0, "hip_x": 26.0, "step_f": 28.0}],
+		["end", {}]],
+	# held in the bear hug: arms pinned to his sides, struggling
+	"held": [["start", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 4.0, "arm_f_lower": -30.0, "arm_b_upper": 8.0, "arm_b_lower": -30.0, "torso": -10.0, "head": -16.0, "hip_y": -6.0}]],
 	# X switches stance (Javier, 2026-11-02 18:48): the guard eases down to standing easy, and back up again
 	"to_walk": [["start", {"feet": 1.0}], ["end", STAND]],
 	"to_fight": [["start", STAND], ["end", {"feet": 1.0}]]
