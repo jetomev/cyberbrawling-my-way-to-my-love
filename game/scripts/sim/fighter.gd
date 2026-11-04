@@ -111,11 +111,12 @@ func step(inp: Dictionary) -> void:
 		queue.clear()
 		_react()
 		return
-	if inp.get("grab", false) and state in GROUND_STATES:  # (the Grabber's own move: no button reaches it)
-		vx = 0.0
-		attack_serial += 1
-		_enter("grab")
-		return
+	for own in ["grab", "headbutt"]:  # enemies' own moves (the Grabber's, the Mechanic's): no button reaches them
+		if inp.get(own, false) and state in GROUND_STATES:
+			vx = 0.0
+			attack_serial += 1
+			_enter(own)
+			return
 	for b in ["jump", "punch", "kick", "sweep"]:
 		if inp.get(b, false):
 			# during a blow, a press is kept until the blow ends, so a rhythm of presses chains a combo; a press

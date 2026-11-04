@@ -492,6 +492,13 @@ const SHOTS := {
 		["active_end", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "arm_f_upper": -96.0, "arm_f_lower": 0.0, "arm_b_upper": -88.0, "arm_b_lower": -5.0, "torso": 24.0, "hip_x": 22.0, "step_f": 26.0}],
 		["follow", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -96.0, "arm_f_lower": -40.0, "arm_b_upper": -88.0, "arm_b_lower": -40.0, "torso": 26.0, "hip_x": 26.0, "step_f": 28.0}],
 		["end", {}]],
+	# up out of a duck, the head driving into the face: the hips and chest lunge, the head leads (the Mechanic's)
+	"headbutt": [["start", {}],
+		["windup", {"torso": -16.0, "head": -12.0, "hip_x": -10.0, "hip_y": -14.0}],
+		["active", {"torso": 30.0, "head": 18.0, "hip_x": 24.0, "step_f": 22.0}],
+		["active_end", {"torso": 30.0, "head": 18.0, "hip_x": 24.0, "step_f": 22.0}],
+		["follow", {"torso": 20.0, "head": 8.0, "hip_x": 16.0, "step_f": 18.0}],
+		["end", {}]],
 	# held in the bear hug: arms pinned to his sides, struggling
 	"held": [["start", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 4.0, "arm_f_lower": -30.0, "arm_b_upper": 8.0, "arm_b_lower": -30.0, "torso": -10.0, "head": -16.0, "hip_y": -6.0}]],
 	# X switches stance (Javier, 2026-11-02 18:48): the guard eases down to standing easy, and back up again

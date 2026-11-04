@@ -67,6 +67,9 @@ const TABLE := {
 	# guard; a punch into the reach, or a step up or down the street, beats it
 	"grab": {"startup": 16, "active": 4, "recovery": 24, "reach": 140.0, "low": 100.0, "high": 260.0, "damage": 0,
 		"effect": "grab", "limb": "hand_f"},
+	# the Wrench Mechanic pops up out of a duck with a headbutt (the team's level 3 page): quick, short, to the face
+	"headbutt": {"startup": 6, "active": 3, "recovery": 16, "reach": 96.0, "low": 170.0, "high": 280.0, "damage": 2, "effect": "",
+		"limb": "head"},
 }
 
 ## What each sequence of presses becomes. A sequence not listed starts a new chain with its last press.

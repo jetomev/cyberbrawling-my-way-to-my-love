@@ -204,7 +204,8 @@ func think() -> Dictionary:
 			return inp
 	# a combo under way: the next press as the last blow recovers, so it chains
 	if not plan.is_empty():
-		if me.attack_phase() == "recovery" and me.attack_serial != pressed_on:
+		# (or straight away from his feet: a plan set from outside, the Mechanic's headbutt out of a duck)
+		if (me.attack_phase() == "recovery" and me.attack_serial != pressed_on) or me.state in Fighter.GROUND_STATES:
 			pressed_on = me.attack_serial
 			inp[plan.pop_front()] = true
 		return inp

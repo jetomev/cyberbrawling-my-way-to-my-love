@@ -273,3 +273,35 @@ func test_the_bot_gets_through_the_roster_yard() -> void:
 		results.append("won" if l.won else "%s at %.0f, wave %d" % ["lost" if l.lost else "stuck", l.hero.x, l.wave])
 	check(not results.any(func(r): return r.begins_with("stuck")), "never stuck against any of the six: %s" % [results])
 	check(results.count("won") >= 2, "and through on most seeds: %s" % [results])
+
+
+func test_the_mechanic_pops_up_out_of_a_duck_with_a_headbutt() -> void:
+	var l = street()
+	var m = bring(l, "wrench_mechanic", 90.0)
+	var f = m["f"]
+	f.facing = -1
+	m["brain"].wait = 9999
+	l.events = [{"attacker": l.hero, "target": f, "result": "dodged", "move": "side_kick"}]
+	l._roster_tricks()
+	var butted := false
+	for i in 40:
+		l.step({})
+		butted = butted or l.events.any(func(ev): return ev.get("attacker") == f and ev.get("move", "") == "headbutt" and ev["result"] == "hit")
+	check(butted, "he ducks the high kick and comes up with a headbutt that lands")
+	# failing direction: a plain hit on him is no cue for it
+	var l2 = street()
+	var m2 = bring(l2, "wrench_mechanic", 90.0)
+	m2["brain"].wait = 9999
+	l2.events = [{"attacker": l2.hero, "target": m2["f"], "result": "hit", "move": "kick"}]
+	l2._roster_tricks()
+	eq(m2["brain"].plan, [], "a plain kick that lands: no headbutt lined up")
+
+
+func test_a_layout_can_say_who_the_lookout_calls_and_how_often() -> void:
+	var l = street()
+	l._arrive({"kind": "lookout", "dx": 500.0, "z": 40.0, "calls": "wrench_mechanic", "whistles": 2}, l.hero.x, 0)
+	for i in Level.WHISTLE_EVERY * 3 + 10:
+		l.step({"block": true})
+	var called: Array = l.enemies.filter(func(e): return e["kind"] != "lookout").map(func(e): return e["kind"])
+	eq(called.size(), 4, "two whistles, two each, and that's his lot: %s" % [called])
+	check(called.all(func(k): return k == "wrench_mechanic"), "Mechanics, as the layout says")

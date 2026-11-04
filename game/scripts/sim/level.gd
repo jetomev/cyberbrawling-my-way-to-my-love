@@ -55,7 +55,8 @@ const BASS_HOLD := 120
 const SOUP_AFTER_BLOCKS := 3
 const SOUP_DAMAGE := 2.0
 const SLIP_DAZE := 150
-const WHISTLE_EVERY := 480  # the lookout whistles in two more goons this often while he's up and the hero's near
+const WHISTLE_EVERY := 360  # the lookout whistles in two more goons this often while he's up and the hero's near
+# (about six seconds: the team's level 3 page, feel lab)
 const WHISTLE_RANGE := 1000.0
 const HUG_TICKS := 70  # the bear hug: this long without wriggling free, and he throws the hero down
 const HURL_DAMAGE := 3.0
@@ -340,6 +341,8 @@ func _roster_tricks() -> void:
 			for e in enemies:
 				if e["f"] == ev.get("target"):
 					e["brain"].wait = 0  # he ducked it (or caught it on his blade): straight back at you
+					if e.get("kind", "") == "wrench_mechanic" and ev["result"] == "dodged":
+						e["brain"].plan = ["headbutt"]  # the Mechanic pops up out of the duck with a headbutt
 		if ev.get("result", "") == "grabbed":
 			for e in enemies:
 				if e["f"] == ev.get("attacker"):
@@ -353,11 +356,13 @@ func _roster_tricks() -> void:
 			f.too_quick = false  # off her skates for good: on foot, slow
 			f.tune["walk_speed"] = Tuning.DEFAULTS["walk_speed"] * 0.8
 			f.tune["run_speed"] = Tuning.DEFAULTS["run_speed"] * 0.8
-		if e.get("kind", "") == "lookout" and absf(hero.x - f.x) < WHISTLE_RANGE and tick >= e.get("next_whistle", 0):
+		if e.get("kind", "") == "lookout" and absf(hero.x - f.x) < WHISTLE_RANGE and tick >= e.get("next_whistle", 0) \
+				and e.get("whistles", 99) > 0:
 			e["next_whistle"] = tick + WHISTLE_EVERY
+			e["whistles"] = e.get("whistles", 99) - 1  # (a layout can give him only so many: level 3's has two)
 			for side in ["left", "right"]:
 				if standing().size() < MAX_ON_SCREEN:
-					_arrive({"kind": "glow_punk", "from": side, "z": 80.0}, hero.x, e["wave"])
+					_arrive({"kind": e.get("calls", "glow_punk"), "from": side, "z": 80.0}, hero.x, e["wave"])
 			events.append({"target": f, "result": "whistle", "kind": "whistle"})
 	if not hug.is_empty():
 		var g = hug["by"]["f"]
@@ -537,6 +542,9 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 		"door":
 			z = 0.0
 	_spawn(e["kind"], x, z, e.get("weapon", ""), -1.0, wave_index)
+	for k in ["calls", "whistles"]:  # the lookout's: who he whistles in, and how many times
+		if e.has(k):
+			enemies[-1][k] = e[k]
 	if e.get("hidden", false):
 		enemies[-1]["brain"].dormant_until_within = AMBUSH
 

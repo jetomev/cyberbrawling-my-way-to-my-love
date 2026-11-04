@@ -249,8 +249,10 @@ func _play_level() -> void:
 		ended_for += 1
 		if ended_for == 1:
 			var lines: Array = story.get("out_of_lives", ["Out of lives: the level starts again."])
-			var level_no: int = (progress.level + 1) if progress != null else 1
-			$Hud/Title.text = ("LEVEL %d CLEARED!" % level_no) if level.won else lines[randi() % lines.size()]
+			# its number in the game's order, or (a level played on its own: the bot's clips) its own name's first part
+			var which: String = ("LEVEL %d" % (progress.level + 1)) if progress != null \
+				else str(level.plan.get("name", "Level")).split(" · ")[0].split(" (")[0].to_upper()
+			$Hud/Title.text = ("%s CLEARED!" % which) if level.won else lines[randi() % lines.size()]
 		if ended_for >= END_TICKS:
 			ended_for = 0
 			if bot != null:
