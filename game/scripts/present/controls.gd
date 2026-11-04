@@ -6,9 +6,10 @@ extends RefCounted
 ## running, X for stance, z for sweep, c for evation role (direction of the keys), space jump"; the arrows move
 ## (MOVE_KEYS is the one place to change that). Those are the only keys: Javier, 2026-11-03 19:46, "The last list of
 ## keys I gave is the one we keep, any other old assigment needs to be cleared", so the old spares (J punch, K kick,
-## L and Shift block) are gone and test_only_javiers_keys fails if any other key is bound. The sweep (Z) and the roll (C) are drawn from the posture sheet and common technique (no recorded
-## sweep exists in our libraries; a recorded roll, CMU 128_09, waits on Javier's yes to download). No gamepad button
-## for them yet.
+## L and Shift block) are gone and test_only_javiers_keys fails if any other key is bound. F1-F9 (the feel lab,
+## feel_panel.gd) are a tuning tool, not game keys, and stay: Javier, 2026-11-03, "Keep them".
+## The sweep (Z) and the roll (C) are drawn from the posture sheet and common technique (no recorded sweep exists
+## in our libraries; a recorded roll, CMU 128_09, waits on Javier's yes to download). No gamepad button for them yet.
 ## Gamepad: left stick or d-pad moves, X/Square punch, B/Circle kick, A/Cross jump, Y/Triangle or RB block (hold),
 ## LB run (hold), the left stick's click switches stance.
 
