@@ -61,6 +61,9 @@ const DEFAULTS := {
 	"down_ticks": 50,  # lying on the street; he can't be hit there
 	"get_up_ticks": 24,
 	"launch_height": 110.0,  # the uppercut throws him up
+	# D-19: two hero combos in a row make an enemy dizzy, the window for a finishing combo
+	"dizzy_window_ticks": 240,  # the second finisher must land within this of the first, with no blow of his between
+	"dizzy_ticks": 150,  # how long he stands dazed, open
 	# the view
 	"camera_zoom": 1.0,
 }

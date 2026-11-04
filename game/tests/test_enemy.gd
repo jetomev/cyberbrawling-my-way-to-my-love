@@ -9,6 +9,7 @@ const Fight := preload("res://scripts/sim/fight.gd")
 const Brain := preload("res://scripts/sim/brain.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
+const Moves := preload("res://scripts/sim/moves.gd")
 
 
 func pair(gap := 100.0):
@@ -286,3 +287,125 @@ func test_bodies_dont_walk_through_each_other() -> void:
 		p[0].step({"mx": 1.0})
 		Fight.separate([p[0], p[1]])
 	check(p[0].x > p[1].x, "but he can step over a man lying down")
+
+
+func test_a_perfect_block_disarms_him() -> void:
+	var p = pair()
+	var w = StreetWorld.new()
+	p[0].weapon = "pipe"  # the attacker carries the pipe this time
+	p[1].step({"block": true})
+	var f := Fight.new()
+	var events := []
+	p[0].step({"punch": true})
+	for i in 20:
+		p[1].step({"block": true})
+		events.append_array(f.step([p[0], p[1]], w))
+		p[0].step({})
+	eq(events[0]["result"], "perfect", "a perfect block")
+	eq(events[0]["drop"], "pipe", "knocks the pipe out of his hand")
+	eq(p[0].weapon, "", "he no longer has it")
+	eq(w.items.size(), 1, "it lies on the street")
+
+
+func test_a_counter_disarms_him() -> void:
+	var p = pair()
+	var w = StreetWorld.new()
+	p[1].weapon = "pipe"
+	p[1].health = 99.0
+	p[1].facing = -1
+	p[1].step({"kick": true})  # he starts a kick: slower to come out than the hero's jab
+	eq(p[1].attack_phase(), "startup", "he's winding up")
+	var ev: Array = Fight.new().step([p[0], p[1]], w)
+	eq(ev.size(), 0, "nothing lands yet")
+	p[0].step({"punch": true})
+	var events := []
+	var f := Fight.new()
+	for i in 6:
+		p[0].step({})
+		events.append_array(f.step([p[0], p[1]], w))
+		p[1].step({})
+	var first: Dictionary = events.filter(func(e): return e["attacker"] == p[0])[0]
+	check(first["counter"], "the jab catches him winding up: a counter")
+	eq(first["drop"], "pipe", "and knocks the pipe loose")
+	eq(p[1].weapon, "", "disarmed")
+
+
+func test_two_combos_in_a_row_make_him_dizzy() -> void:
+	var p = pair()
+	p[1].health = 99.0
+	var finisher := {"damage": 3, "effect": "stagger", "finisher": true}
+	p[1].take_hit(finisher, p[0])
+	for i in 40:
+		p[1].step({})
+	eq(p[1].state, "idle", "one combo: he reels and recovers")
+	p[1].take_hit(finisher, p[0])
+	var dazed := 0
+	for i in 400:
+		p[1].step({})
+		if p[1].state == "dizzy":
+			dazed += 1
+	check(dazed >= int(p[1].tune["dizzy_ticks"]) - 1, "two in a row: dazed for his whole dizzy time (%d ticks)" % dazed)
+	eq(p[1].state, "idle", "then he comes round")
+
+
+func test_a_blow_of_his_between_breaks_the_run() -> void:
+	var p = pair()
+	p[1].health = 99.0
+	var finisher := {"damage": 3, "effect": "stagger", "finisher": true}
+	p[1].take_hit(finisher, p[0])
+	for i in 40:
+		p[1].step({})
+	p[1].finishers_taken = 0  # what fight.gd does when he lands a blow of his own (checked below)
+	p[1].take_hit(finisher, p[0])
+	var dazed := false
+	for i in 300:
+		p[1].step({})
+		dazed = dazed or p[1].state == "dizzy"
+	check(not dazed, "with a blow of his in between, no dizziness")
+	# fight.gd resets the count of whoever lands a blow
+	var q = pair()
+	q[1].finishers_taken = 1
+	var f := Fight.new()
+	q[1].step({"punch": true})
+	q[1].facing = -1
+	for i in 12:
+		q[1].step({})
+		q[0].step({})
+		f.step([q[0], q[1]])
+	eq(q[1].finishers_taken, 0, "landing his jab breaks the run of combos on him")
+
+
+func test_too_slow_a_second_combo_doesnt_count() -> void:
+	var p = pair()
+	p[1].health = 99.0
+	var finisher := {"damage": 3, "effect": "stagger", "finisher": true}
+	p[1].take_hit(finisher, p[0])
+	for i in int(p[1].tune["dizzy_window_ticks"]) + 10:
+		p[1].step({})
+	p[1].take_hit(finisher, p[0])
+	var dazed := false
+	for i in 300:
+		p[1].step({})
+		dazed = dazed or p[1].state == "dizzy"
+	check(not dazed, "a second combo after the window: no dizziness")
+
+
+func test_hit_while_dizzy_he_stays_dizzy_until_knocked_down() -> void:
+	var p = pair()
+	p[1].health = 99.0
+	p[1].dizzy_left = 100
+	p[1].take_hit({"damage": 1, "effect": ""}, p[0])
+	for i in 20:
+		p[1].step({})
+	eq(p[1].state, "dizzy", "a jab while dazed: a flinch, still dazed")
+	p[1].take_hit({"damage": 3, "effect": "knockdown"}, p[0])
+	for i in 200:
+		p[1].step({})
+	eq(p[1].state, "idle", "knocked down, he comes up clear-headed")
+
+
+func test_the_finishers_are_the_chain_ends() -> void:
+	for m in ["power_punch", "push_kick", "uppercut", "side_kick", "roundhouse"]:
+		check(Moves.is_finisher(m), "%s ends a chain" % m)
+	for m in ["punch", "cross", "kick", "body_kick", "sweep", "air_kick"]:
+		check(not Moves.is_finisher(m), "%s doesn't" % m)

@@ -7,6 +7,8 @@ extends RefCounted
 ## D-19: a plain block takes less pain; a perfect block takes none and stops the attacker's combo. A fighter knocked
 ## down drops what he carries, onto the street (street_world.gd's items).
 
+const Moves := preload("res://scripts/sim/moves.gd")
+
 const BODY_HALF_WIDTH := 24.0  # as street_world.gd
 const BODY_HEIGHT := 300.0  # feet to the top of the head, standing
 
@@ -24,6 +26,7 @@ func step(fighters: Array, world = null) -> Array:
 		if box.is_empty():
 			continue
 		var blow: Dictionary = a.move()
+		blow["finisher"] = Moves.is_finisher(a.state)
 		var id: int = a.get_instance_id()
 		var seen: Array = _hit.get(id, [-1, []])
 		if seen[0] != a.attack_serial:
@@ -37,22 +40,34 @@ func step(fighters: Array, world = null) -> Array:
 				continue
 			if a.y + blow["low"] >= d.y + BODY_HEIGHT or a.y + blow["high"] <= d.y:
 				continue
+			var winding_up: bool = d.attack_phase() == "startup"  # caught as he starts a blow: a counter
 			var result: String = d.take_hit(blow, a)
 			if result == "":
 				continue
 			seen[1].append(d.get_instance_id())
 			var drop := ""
-			if result == "hit" and d.state in ["knockdown", "launch"] and d.weapon != "":
-				drop = d.weapon
-				d.weapon = ""
-				if world != null:
-					world.drop(drop, d.x, d.z)
+			# D-19: the right hit (a counter, caught winding up) or a perfect block interrupts him and can disarm him;
+			# knocked down he drops it too
+			if result == "hit" and (winding_up or d.state in ["knockdown", "launch"]) and d.weapon != "":
+				drop = _disarm(d, world)
 			if result == "perfect":
 				a.chain = ""  # a perfect block stops his combo: the presses he'd lined up are gone
 				a.queue.clear()
-			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "drop": drop})
+				if a.weapon != "":
+					drop = _disarm(a, world)
+			if result == "hit":
+				a.finishers_taken = 0  # landing a blow of his own breaks a run of combos on him
+			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "drop": drop, "counter": winding_up and result == "hit"})
 		_hit[id] = seen
 	return events
+
+
+static func _disarm(f, world) -> String:
+	var what: String = f.weapon
+	f.weapon = ""
+	if world != null:
+		world.drop(what, f.x, f.z)
+	return what
 
 
 ## Bodies don't pass through each other: two fighters on their feet at about the same depth are pushed apart along

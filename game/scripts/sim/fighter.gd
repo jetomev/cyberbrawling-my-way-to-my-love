@@ -21,7 +21,7 @@ const DOUBLE_TAP_TICKS := 3
 const MAX_QUEUE := 2  # P then K pressed during one long blow play P then K
 const AIR_STATES := ["jump", "air_kick", "hammer_fist"]
 ## Being hit: no input counts until the reaction ends (fight.gd decides who hits whom; take_hit() reacts)
-const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko"]
+const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko", "dizzy"]
 
 var tune: Dictionary
 var world = null
@@ -53,6 +53,9 @@ var max_health := 20.0
 var health := 20.0
 var weapon := ""  # what this fighter carries ("pipe", …); an enemy drops it when knocked down
 var knock_dir := 1  # which way the last blow drove him (+1 right, -1 left)
+var finishers_taken := 0  # combo finishers landed on him in a row (D-19: two make him dizzy)
+var last_finisher := -1000  # the tick the last one landed
+var dizzy_left := 0  # ticks of dizziness still to come once the blow's reaction ends
 
 
 func _init(tuning: Dictionary = {}, start_x := 200.0, start_z := 80.0, street = null) -> void:
@@ -310,6 +313,16 @@ func take_hit(blow: Dictionary, attacker) -> String:
 		effect = "knockdown"  # the last blow puts him down, for good
 	if effect in ["knockdown", "launch"]:
 		roll_dir = facing  # the drawing falls him backward, the way he faces
+		dizzy_left = 0  # put down, he comes up clear-headed
+		finishers_taken = 0
+	elif blow.get("finisher", false):
+		# D-19: two hero combos in a row make him dizzy; any blow of his in between starts the count again (fight.gd)
+		if finishers_taken >= 1 and clock - last_finisher <= tune["dizzy_window_ticks"]:
+			dizzy_left = tune["dizzy_ticks"]
+			finishers_taken = 0
+		else:
+			finishers_taken = 1
+		last_finisher = clock
 	match effect:
 		"stagger", "push", "knockdown":
 			_enter(effect)
@@ -319,6 +332,11 @@ func take_hit(blow: Dictionary, attacker) -> String:
 		_:
 			_enter("hurt")
 	return "hit"
+
+
+## Out of a blow's reaction: dazed if two combos in a row got him (a hit while dazed doesn't clear it), else the guard.
+func _recover() -> void:
+	_enter("dizzy" if dizzy_left > 0 else "idle")
 
 
 ## Can a blow land on him now? Not while falling, lying or getting up (no hitting a man when he's down).
@@ -347,14 +365,19 @@ func _react() -> void:
 					state = "block"  # back in the guard, past its perfect window (no chain of perfect blocks)
 					t = tune["perfect_block_ticks"]
 				else:
-					_enter("idle")
+					_recover()
 		"stagger":
 			_slide(tune["knockback"] * 0.8 * (1.0 - float(t) / tune["stagger_ticks"]))
 			if t >= tune["stagger_ticks"]:
-				_enter("idle")
+				_recover()
 		"push":
 			_slide(tune["push_speed"] * (1.0 - float(t) / tune["push_ticks"]))
 			if t >= tune["push_ticks"]:
+				_recover()
+		"dizzy":
+			dizzy_left -= 1
+			if dizzy_left <= 0:
+				dizzy_left = 0
 				_enter("idle")
 		"knockdown":
 			if t < tune["knockdown_ticks"] / 2:

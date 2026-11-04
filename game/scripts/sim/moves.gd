@@ -91,6 +91,15 @@ static func data(name: String, tune: Dictionary) -> Dictionary:
 	return d
 
 
+## True for the blow that ends a three-press chain (the power punch, the side kick, …): two of them landing in a row
+## on one enemy make him dizzy (D-19).
+static func is_finisher(name: String) -> bool:
+	for seq in COMBOS:
+		if (seq as String).length() >= FINISHER_LENGTH and COMBOS[seq] == name:
+			return true
+	return false
+
+
 static func length(name: String, tune: Dictionary) -> int:
 	var d := data(name, tune)
 	return d["startup"] + d["active"] + d["recovery"]

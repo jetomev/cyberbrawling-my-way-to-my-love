@@ -180,6 +180,10 @@ const LOOPS := {
 		[5, {"feet": 1.0, "hip_y": -2.0, "hip_turn": 0.0, "torso": 11.0}],
 		[10, {"feet": 1.0, "hip_y": 2.0, "hip_turn": 3.0, "torso": 12.0}],
 		[15, {"feet": 1.0, "hip_y": -2.0, "hip_turn": 0.0, "torso": 11.0}]],
+	# dazed (D-19: two hero combos in a row): the guard gone, arms hanging, knees soft, the body swaying slowly round
+	# and the head lolling, open for the finishing combo
+	"dizzy": [56, [0, {"relaxed": 1.0, "feet": 1.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 4.0, "arm_f_lower": -10.0, "arm_b_upper": 14.0, "arm_b_lower": -8.0, "torso": 14.0, "neck": 10.0, "head": 22.0, "hip_x": -10.0, "hip_y": 10.0}],
+		[28, {"relaxed": 1.0, "feet": 1.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -6.0, "arm_f_lower": -20.0, "arm_b_upper": 6.0, "arm_b_lower": -16.0, "torso": -6.0, "neck": -4.0, "head": -18.0, "hip_x": 10.0, "hip_y": 6.0}]],
 }
 
 ## One-shot states, keyed by named moments the tuning decides (see moment()). A strike runs wind-up, hit, hold,
