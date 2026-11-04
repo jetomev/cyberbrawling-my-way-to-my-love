@@ -31,6 +31,9 @@ const KINDS := {
 	"bruiser": {"health": 20.0, "brain": "BRUISER", "drops": "bat", "shrugs": ["punch"]},
 	"boss": {"health": 40.0, "brain": "BOSS"},
 	"dj_volt": {"health": 40.0, "brain": "DJ_VOLT", "drops": "bat"},
+	"snick": {"health": 10.0, "brain": "SNICK", "weapon": "knife"},  # her knife falls when she's put down
+	"bruiser_pipe": {"health": 20.0, "brain": "BRUISER", "weapon": "pipe", "shrugs": ["punch"], "snaps": true},
+	"big_mama": {"health": 50.0, "brain": "BIG_MAMA", "weapon": "wok", "drops": "wrench"},
 }
 ## DJ Volt's records (the team: "three records thrown like frisbees, low, middle, high"): their height bands above the
 ## street, how fast they fly, how far apart in time, what they do
@@ -40,6 +43,11 @@ const RECORD_GAP := 14
 const RECORD_DAMAGE := 1.5
 ## "Bass Drop": a guard held this long while his speakers stand, and the music's wave pushes the hero back
 const BASS_HOLD := 120
+## Big Mama Noodle's kitchen (the team's level 2): her hot soup comes on the hero's third block in a row; running onto
+## the wet patch by the sink she slips and is dazed at once; at half health she mops it dry; a blow on the tap floods it.
+const SOUP_AFTER_BLOCKS := 3
+const SOUP_DAMAGE := 2.0
+const SLIP_DAZE := 150
 const MAX_ON_SCREEN := 5  # never more than five enemies at once; the rest wait off screen (the team's fairness rules)
 const OFF_SCREEN := 1150.0  # "from the left/right": they walk in from this far beyond the wave's spot
 const AMBUSH := 260.0  # a hidden enemy jumps out when the hero comes this close
@@ -72,6 +80,9 @@ var collected := []  # what the hero has found (a matchbook, the torn photo)
 var projectiles  # what's flying (records)
 var held_guard := 0  # how long the hero has held his guard, for DJ Volt's Bass Drop
 var bass_at := -1  # the tick the last bass wave went out (for the view and the sound)
+var wet := true  # Big Mama's kitchen floor by the sink
+var mopped := false  # she's mopped it once (at half health)
+var blocks_in_row := 0  # the hero's blocks in a row against her (her hot soup)
 var friend = null  # the sparring friend (level 1's first screen), a fighter on his own side
 var tutor = null  # his lessons (sim/tutor.gd)
 var hero_tune: Dictionary
@@ -132,8 +143,8 @@ func restart() -> void:
 				obj["name"] = o[8]
 			if o.size() > 9:
 				obj["holds"] = o[9]  # a crate or a car with something inside: it falls out when it's smashed
-		for it in f.get("items", []):  # food, first aid, a weapon lying ready
-			w.drop(it[0], it[1], it[2])
+		for it in f.get("items", []):  # food, first aid, a weapon lying ready; a 4th number: lying up high (a roof)
+			w.drop(it[0], it[1], it[2], it[3] if it.size() > 3 else 0.0)
 		floors.append({"name": f["name"], "length": f["length"], "world": w, "waves": f.get("waves", []), "wave": 0,
 			"active_wave": -1, "enemies": [], "waiting": []})
 	on = 0
@@ -152,6 +163,9 @@ func restart() -> void:
 	projectiles = Projectiles.new()
 	held_guard = 0
 	bass_at = -1
+	wet = true
+	mopped = false
+	blocks_in_row = 0
 	friend = null
 	tutor = null
 	var spar: Dictionary = plan["floors"][0].get("friend", {})
@@ -227,6 +241,7 @@ func step(inp: Dictionary) -> void:
 	if tutor != null and on == 0:
 		tutor.saw(events)
 	_bass_drop()
+	_kitchen()
 	_switches()
 	_waves()
 	_links()
@@ -269,13 +284,51 @@ func _bass_drop() -> void:
 		events.append({"target": hero, "result": "bass", "kind": "bass"})
 
 
+## Big Mama Noodle's kitchen: the soup, the wet patch, the mop, the tap (the floor's "kitchen": {wet: [x0, x1], tap: x}).
+func _kitchen() -> void:
+	var room: Dictionary = plan["floors"][on].get("kitchen", {})
+	if room.is_empty():
+		return
+	var mama: Array = enemies.filter(func(e): return e.get("kind", "") == "big_mama" and not e["f"].defeated())
+	if mama.is_empty():
+		return
+	var m = mama[0]["f"]
+	# her soup: the hero's third block in a row (a blow of his landing on her breaks the run)
+	for e in events:
+		if e.get("attacker") == m and e.get("target") == hero:
+			blocks_in_row = blocks_in_row + 1 if e["result"] in ["blocked", "perfect"] else 0
+		elif e.get("attacker") == hero and e.get("result") == "hit":
+			blocks_in_row = 0
+	if blocks_in_row >= SOUP_AFTER_BLOCKS:
+		blocks_in_row = 0
+		var dir := 1.0 if hero.x >= m.x else -1.0
+		projectiles.throw("soup", m.x + dir * 40.0, m.z, 110.0, 200.0, dir * 10.0, SOUP_DAMAGE, m.team)
+		events.append({"target": hero, "result": "soup", "kind": "soup"})
+	# the wet patch: running onto it she slips and is dazed at once
+	var patch: Array = room.get("wet", [])
+	if wet and patch.size() == 2 and m.state == "run" and m.x >= patch[0] and m.x <= patch[1]:
+		m.dizzy_left = SLIP_DAZE
+		m._enter("dizzy")
+		events.append({"target": m, "result": "slip", "kind": "slip"})
+	# at half health she mops it dry; a blow on the tap floods it again
+	if not mopped and m.health <= m.max_health * 0.5:
+		mopped = true
+		wet = false
+		events.append({"target": m, "result": "mopped", "kind": "mopped"})
+	var box: Dictionary = hero.hit_box()
+	if not wet and not box.is_empty() and room.has("tap") and box["x0"] - 30.0 <= room["tap"] and room["tap"] <= box["x1"] + 30.0:
+		wet = true
+		events.append({"target": hero, "result": "flooded", "kind": "tap"})
+
+
 ## Walking over a collectible (a matchbook, the torn photo) keeps it.
 const COLLECTIBLES := ["matchbook", "photo"]
 
 
 func _collect() -> void:
 	for it in world.items.duplicate():
-		if it["kind"] in COLLECTIBLES and absf(it["x"] - hero.x) <= 40.0 and absf(it["z"] - hero.z) <= 40.0:
+		if it["kind"] in COLLECTIBLES and absf(it["x"] - hero.x) <= 40.0 and absf(it["z"] - hero.z) <= 40.0 \
+				and absf(it.get("y", 0.0) - hero.y) < 20.0:
 			world.items.erase(it)
 			collected.append(it["kind"])
 
@@ -288,10 +341,14 @@ func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave
 	t["flat_line"] = tune.get("flat_line", false)
 	var f = Fighter.new(t, x, z, world)
 	f.team = 1
+	f.can_climb = false  # enemies don't climb ladders (level 2)
 	f.facing = -1 if x > hero.x else 1
 	if weapon != "":
 		f.take_weapon(weapon)
 	f.shrugs = KINDS[kind].get("shrugs", [])
+	if weapon == "" and KINDS[kind].has("weapon"):
+		f.take_weapon(KINDS[kind]["weapon"])  # an enemy type's own weapon (Snick's knife)
+	f.weapon_snaps = KINDS[kind].get("snaps", false)
 	var how: Dictionary = Brain.TYPES[KINDS[kind]["brain"]]
 	enemies.append({"f": f, "brain": Brain.new(f, hero, dice_seed * 100 + tick + enemies.size(), how), "gone": false,
 		"down_for": 0, "boss": false, "wave": wave_index, "kind": kind, "dropped": false})
@@ -345,6 +402,16 @@ func _waves() -> void:
 	var boss_down: bool = boss_spawned and enemies.any(func(e): return e["boss"] and e["f"].defeated())
 	if boss_down:
 		won = true
+
+
+## Where the way on is, for a bot: the x of a doorway or ladder on this floor once its waves are beaten, or -1.
+func next_door() -> float:
+	if not cleared(on):
+		return -1.0
+	for l in plan.get("links", []):
+		if int(l["from"]) == on and not l.get("auto", false) and int(l["to"]) > on:
+			return float(l["x"])
+	return -1.0
 
 
 ## A floor's waves all beaten?

@@ -9,7 +9,8 @@ const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
 	var s := int(args[0]) if not args.is_empty() else 1
-	var l = Level.new(Level.load_data("res://levels/level1.json"), {}, s)
+	var file: String = args[1] if args.size() > 1 else "res://levels/level1.json"
+	var l = Level.new(Level.load_data(file), {}, s)
 	var bot = HeroBot.new(l.hero, s)
 	var dealt := 0.0
 	var taken := 0.0
@@ -18,9 +19,10 @@ func _initialize() -> void:
 		if l.won or l.lost:
 			break
 		bot.me = l.hero
+		bot.goal = l.next_door()
 		l.step(bot.think(l.standing()))
 		for e in l.events:
-			if e["result"] in ["hit", "blocked"]:
+			if e["result"] in ["hit", "blocked"] and e.get("attacker") != null:  # (a record, the soup: no attacker)
 				var d: float = e["attacker"].move().get("damage", 0.0) if e["attacker"].move().size() else 0.0
 				if e["attacker"] == l.hero:
 					dealt += d

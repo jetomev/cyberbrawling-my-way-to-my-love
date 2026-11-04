@@ -9,6 +9,7 @@ var tick := 0
 var combo: Array = []  # the presses of the combo under way
 var block_left := 0
 var read_serial := -1
+var goal := -1.0  # a doorway or ladder to take when the street is clear (the level tells it: level.next_door())
 const COMBOS := [["punch", "punch", "punch"], ["kick", "kick", "kick"], ["punch", "kick", "punch"], ["punch", "punch", "kick"], ["sweep"]]
 
 
@@ -25,7 +26,10 @@ func think(enemies: Array) -> Dictionary:
 		if not e.defeated() and (foe == null or absf(e.x - me.x) < absf(foe.x - me.x)):
 			foe = e
 	if foe == null:
-		inp["mx"] = 1.0  # nobody to fight: walk on along the street (a level's next wave, the stairs)
+		if goal >= 0.0 and absf(me.x - goal) < 30.0:
+			inp["mz"] = -1.0  # at the doorway or ladder: into it, up
+			return inp
+		inp["mx"] = 1.0 if goal < 0.0 or goal > me.x else -1.0  # nobody to fight: walk on (to the next wave, the way up)
 		_get_past(inp)
 		return inp
 	var dx: float = foe.x - me.x

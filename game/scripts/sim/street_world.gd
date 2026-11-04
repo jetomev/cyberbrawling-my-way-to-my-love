@@ -16,13 +16,13 @@ var items: Array[Dictionary] = []
 
 func add(kind: String, x0: float, x1: float, z0: float, z1: float, top: float, climbable := true, strength := 0) -> Dictionary:
 	var o := {"id": objects.size(), "kind": kind, "x0": x0, "x1": x1, "z0": z0, "z1": z1, "top": top,
-		"climbable": climbable, "breakable": strength > 0, "strength": strength, "broken": false}
+		"climbable": climbable, "breakable": strength > 0, "strength": strength, "broken": false, "solid": kind != "ladder"}
 	objects.append(o)
 	return o
 
 
-func drop(kind: String, x: float, z: float) -> Dictionary:
-	var it := {"kind": kind, "x": x, "z": z}
+func drop(kind: String, x: float, z: float, y := 0.0) -> Dictionary:
+	var it := {"kind": kind, "x": x, "z": z, "y": y}  # y: lying up on something (an awning roof), not the street
 	items.append(it)
 	return it
 
@@ -45,7 +45,7 @@ func _covers(o: Dictionary, x: float, z: float) -> bool:
 ## True when a body at (x, z) with its feet at height y would be inside something.
 func blocks(x: float, z: float, y: float) -> bool:
 	for o in objects:
-		if not o["broken"] and y < o["top"] - 0.5 and _covers(o, x, z):
+		if o["solid"] and not o["broken"] and y < o["top"] - 0.5 and _covers(o, x, z):
 			return true
 	return false
 
@@ -54,7 +54,7 @@ func blocks(x: float, z: float, y: float) -> bool:
 func floor_at(x: float, z: float, y: float) -> float:
 	var best := 0.0
 	for o in objects:
-		if not o["broken"] and o["top"] <= y + 0.5 and o["top"] > best and _covers(o, x, z):
+		if o["solid"] and not o["broken"] and o["top"] <= y + 0.5 and o["top"] > best and _covers(o, x, z):
 			best = o["top"]
 	return best
 
@@ -62,8 +62,21 @@ func floor_at(x: float, z: float, y: float) -> float:
 ## The object a body at (x, z, y) would walk into one step ahead, or {}.
 func ahead(x: float, z: float, y: float, dir: int, step := 6.0) -> Dictionary:
 	for o in objects:
-		if not o["broken"] and y < o["top"] - 0.5 and _covers(o, x + dir * step, z):
+		if o["solid"] and not o["broken"] and y < o["top"] - 0.5 and _covers(o, x + dir * step, z):
 			return o
+	return {}
+
+
+## A ladder (leaning on something tall at the back of the street: a stall's awning) the body at (x, z, y) stands at:
+## {ladder, at: "foot" or "top"}, or {}. A ladder doesn't block anyone; it's climbed (fighter.gd).
+func ladder_near(x: float, z: float, y: float) -> Dictionary:
+	for o in objects:
+		if o["kind"] != "ladder" or absf(x - (o["x0"] + o["x1"]) * 0.5) > 40.0:
+			continue
+		if y < 1.0 and z <= o["z1"] + 50.0:
+			return {"ladder": o, "at": "foot"}
+		if absf(y - o["top"]) < 2.0:
+			return {"ladder": o, "at": "top"}
 	return {}
 
 

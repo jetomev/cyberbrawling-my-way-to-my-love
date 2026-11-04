@@ -200,3 +200,45 @@ func test_the_grey_street_has_one_of_each() -> void:
 	for o in w.objects:
 		gaps = gaps and (o["z0"] > 0.0 or o["z1"] < Tuning.DEFAULTS["street_depth"])
 	check(gaps, "nothing blocks the whole width of the street")
+
+
+## Ladders (the team's level 2): a ladder leans on something tall at the back; up at its foot climbs it, down at the
+## top climbs off; it doesn't block anyone, and enemies don't climb.
+const Fighter2 := preload("res://scripts/sim/fighter.gd")
+
+
+func awning_and_ladder():
+	var w = preload("res://scripts/sim/street_world.gd").new()
+	w.add("awning", 400.0, 700.0, 0.0, 60.0, 380.0, false, 0)
+	w.add("ladder", 500.0, 540.0, 60.0, 80.0, 380.0, false, 0)
+	return w
+
+
+func test_up_the_ladder_onto_the_awning_and_down_again() -> void:
+	var w = awning_and_ladder()
+	var f = Fighter2.new(preload("res://scripts/sim/tuning.gd").fresh(), 520.0, 100.0, w)
+	f.step({"mz": -1.0})
+	eq(f.state, "climb", "up at its foot: he climbs")
+	for i in 80:
+		f.step({})
+	check(absf(f.y - 380.0) < 0.5, "on the awning roof (y %.0f)" % f.y)
+	for i in 30:
+		f.step({})
+	check(absf(f.y - 380.0) < 0.5, "and he stays up there, standing on it")
+	f.step({"mz": 1.0})
+	eq(f.state, "climb", "down at the top: he climbs down")
+	for i in 80:
+		f.step({})
+	eq(f.y, 0.0, "back on the street")
+
+
+func test_a_ladder_doesnt_block_and_enemies_dont_climb() -> void:
+	var w = awning_and_ladder()
+	var f = Fighter2.new(preload("res://scripts/sim/tuning.gd").fresh(), 450.0, 100.0, w)
+	for i in 30:
+		f.step({"mx": 1.0})
+	check(f.x > 560.0, "he walks past the ladder's foot (%.0f)" % f.x)
+	var e = Fighter2.new(preload("res://scripts/sim/tuning.gd").fresh(), 520.0, 100.0, w)
+	e.can_climb = false
+	e.step({"mz": -1.0})
+	check(e.state != "climb", "an enemy doesn't climb")

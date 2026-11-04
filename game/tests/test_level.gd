@@ -4,6 +4,8 @@ extends "res://tests/test_case.gd"
 ## a bot plays it through on several seeds (L-8).
 
 const Level := preload("res://scripts/sim/level.gd")
+const Weapons := preload("res://scripts/sim/weapons.gd")
+const Fight := preload("res://scripts/sim/fight.gd")
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 
 
@@ -467,3 +469,118 @@ func test_you_can_walk_straight_past_him() -> void:
 	walk_to(l, home + 500.0, 600)
 	check(l.hero.x > home + 400.0, "he never blocks the street (%.0f, his spot %.0f)" % [l.hero.x, home])
 	eq(l.tutor.lesson, "done", "walked past: no lesson forced")
+
+
+## Level 2, the Night Market (the team's settled layout) and Big Mama Noodle
+func level_two(seed_value := 1):
+	return Level.new(Level.load_data("res://levels/level2.json"), {}, seed_value)
+
+
+func test_level_two_is_the_teams_settled_layout() -> void:
+	var l = level_two()
+	var count := 0
+	for w in l.floors[0]["waves"]:
+		count += w["enemies"].size()
+	eq(count, 19, "19 enemies on the street")
+	check(l.floors[0]["world"].objects.any(func(o): return o["kind"] == "ladder"), "the short ladder to the awning")
+	check(l.plan["links"][0].get("kind", "") == "ladder", "the long ladder up to the kitchen")
+	eq(l.plan["boss"]["kind"], "big_mama", "Big Mama Noodle upstairs")
+
+
+func in_the_kitchen():
+	var l = level_two()
+	for o in l.floors[0]["world"].objects:
+		if o["breakable"]:
+			o["broken"] = true
+	for i in l.floors[0]["waves"].size():
+		l.floors[0]["wave"] = l.floors[0]["waves"].size()
+	l._go_to(1, 300.0)
+	for e in l.enemies:
+		e["brain"].dormant_until_within = 1.0  # still, unless a test moves her
+	return l
+
+
+func test_big_mamas_soup_comes_on_the_third_block() -> void:
+	var l = in_the_kitchen()
+	var m = l.enemies[0]["f"]
+	m.x = l.hero.x + 110.0
+	m.facing = -1
+	var soups := 0
+	for i in 3:
+		l.events = [{"attacker": m, "target": l.hero, "result": "blocked"}]
+		l._kitchen()
+		soups += l.projectiles.flying.filter(func(p): return p["kind"] == "soup").size()
+	eq(soups, 1, "the third block in a row brings the hot soup")
+
+
+func test_she_slips_on_the_wet_patch() -> void:
+	var l = in_the_kitchen()
+	var m = l.enemies[0]["f"]
+	var patch: Array = l.plan["floors"][1]["kitchen"]["wet"]
+	m.x = (patch[0] + patch[1]) * 0.5
+	m._enter("run")
+	l.events = []
+	l._kitchen()
+	eq(m.state, "dizzy", "running onto the wet patch she slips, dazed at once")
+	m._enter("idle")
+	m.health = m.max_health * 0.5
+	l._kitchen()
+	check(not l.wet, "at half health she mops it dry")
+	m._enter("run")
+	l._kitchen()
+	check(m.state != "dizzy", "dry, no slip")
+	l.hero.x = l.plan["floors"][1]["kitchen"]["tap"] - 100.0
+	l.hero.facing = 1
+	l.hero.step({"punch": true})
+	for i in 6:
+		l.hero.step({})
+		l._kitchen()
+	check(l.wet, "a punch on the tap floods it again")
+
+
+func test_her_wok_smash_knocks_a_guard_open() -> void:
+	var l = in_the_kitchen()
+	var m = l.enemies[0]["f"]
+	var smash: Dictionary = Weapons.swing_data("smash", "wok")
+	check(smash.get("guard_break", false), "the wok's smash breaks guards")
+	for i in 20:
+		l.hero.step({"block": true})  # a plain guard, held
+	m.x = l.hero.x + 100.0
+	eq(l.hero.take_hit(smash, m), "guard_broken", "it knocks the guard open")
+	eq(l.hero.state, "stagger", "he reels")
+
+
+func test_the_pipe_bruisers_pipe_snaps() -> void:
+	var l = level_two()
+	var w = l.floors[0]["world"]
+	l._spawn("bruiser_pipe", 600.0, 80.0)
+	var b = l.enemies[-1]["f"]
+	eq(b.weapon, "pipe", "he carries his pipe")
+	var before: int = w.items.size()
+	b.health = 0.1
+	var fight := Fight.new()
+	l.hero.x = 480.0
+	l.hero.facing = 1
+	l.hero.step({"punch": true})
+	for i in 10:
+		l.hero.step({})
+		b.step({})
+		fight.step([l.hero, b], w)
+	eq(b.weapon, "", "knocked down, he loses it")
+	eq(w.items.filter(func(i): return i["kind"] == "pipe").size(), 0, "but it snapped: nothing to pick up (the pipe is level 5's prize)")
+
+
+func test_the_bot_plays_level_two_through() -> void:
+	var results := []
+	for s in [1, 2, 3]:
+		var l = level_two(s)
+		var bot = HeroBot.new(l.hero, s)
+		for i in 30000:
+			if l.won or l.lost:
+				break
+			bot.me = l.hero
+			bot.goal = l.next_door()
+			l.step(bot.think(l.standing()))
+		results.append("won" if l.won else "%s at %.0f, wave %d, %s" % ["lost" if l.lost else "stuck", l.hero.x, l.wave, l.where])
+	check(not results.any(func(r): return r.begins_with("stuck")), "the bot is never stuck: %s" % [results])
+	check(results.count("won") >= 2, "and wins on most seeds: %s" % [results])

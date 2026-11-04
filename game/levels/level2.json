@@ -1,0 +1,388 @@
+{
+ "name": "Level 2 \u00b7 the Night Market",
+ "about": "Javier & Claude, 2026-11-04, from the assistant team's settled level 2 (art-in 2026-11-04-level2-layout-v2): seven screens of market stalls, 19 enemies (12 light, 4 Snick, 3 heavy), climbing (stall counters, the short ladder to an awning roof, the long ladder up), the hidden noodle bar behind a cracked tile, Big Mama Noodle's kitchen upstairs. Items: [kind, x, z, y?] (y: up on a roof).",
+ "floors": [
+  {
+   "name": "the Night Market",
+   "length": 13440,
+   "obstacles": [
+    [
+     "crate",
+     900,
+     980,
+     10,
+     70,
+     96,
+     true,
+     4,
+     "",
+     "apple"
+    ],
+    [
+     "crate",
+     990,
+     1070,
+     10,
+     70,
+     96,
+     true,
+     4
+    ],
+    [
+     "stall",
+     2720,
+     3020,
+     0,
+     60,
+     130,
+     true,
+     0
+    ],
+    [
+     "crate",
+     2660,
+     2720,
+     60,
+     110,
+     70,
+     true,
+     4
+    ],
+    [
+     "stall",
+     4140,
+     4440,
+     0,
+     60,
+     130,
+     true,
+     0
+    ],
+    [
+     "stall",
+     4640,
+     4940,
+     0,
+     60,
+     130,
+     true,
+     0
+    ],
+    [
+     "crate",
+     5340,
+     5440,
+     0,
+     50,
+     110,
+     true,
+     4,
+     "",
+     "baguette"
+    ],
+    [
+     "crate",
+     6660,
+     6740,
+     110,
+     160,
+     96,
+     true,
+     4
+    ],
+    [
+     "crate",
+     6760,
+     6840,
+     110,
+     160,
+     96,
+     true,
+     4
+    ],
+    [
+     "awning",
+     7880,
+     8280,
+     0,
+     60,
+     380,
+     false,
+     0
+    ],
+    [
+     "ladder",
+     8060,
+     8100,
+     60,
+     80,
+     380,
+     false,
+     0
+    ],
+    [
+     "cart",
+     8580,
+     8720,
+     0,
+     160,
+     120,
+     false,
+     5
+    ],
+    [
+     "tile",
+     9180,
+     9260,
+     0,
+     10,
+     200,
+     false,
+     2,
+     "",
+     "noodles"
+    ],
+    [
+     "fountain",
+     10400,
+     10700,
+     50,
+     130,
+     70,
+     true,
+     0
+    ],
+    [
+     "crate",
+     11100,
+     11160,
+     0,
+     40,
+     60,
+     true,
+     3,
+     "",
+     "first_aid"
+    ],
+    [
+     "crate",
+     11680,
+     11760,
+     0,
+     50,
+     96,
+     true,
+     4,
+     "",
+     "soda"
+    ]
+   ],
+   "items": [
+    [
+     "takeaway",
+     7980,
+     30,
+     380
+    ],
+    [
+     "matchbook",
+     8180,
+     30,
+     380
+    ],
+    [
+     "photo",
+     13160,
+     20
+    ]
+   ],
+   "waves": [
+    {
+     "at": 700,
+     "enemies": [
+      {
+       "kind": "glow_punk",
+       "from": "right",
+       "z": 60
+      },
+      {
+       "kind": "glow_punk",
+       "from": "right",
+       "z": 120
+      }
+     ]
+    },
+    {
+     "at": 2700,
+     "enemies": [
+      {
+       "kind": "snick",
+       "from": "right",
+       "z": 80
+      }
+     ]
+    },
+    {
+     "at": 4620,
+     "enemies": [
+      {
+       "kind": "bruiser",
+       "from": "right",
+       "z": 80
+      },
+      {
+       "kind": "glow_punk",
+       "from": "right",
+       "z": 130
+      },
+      {
+       "kind": "glow_punk",
+       "from": "left",
+       "z": 40
+      }
+     ]
+    },
+    {
+     "at": 6540,
+     "enemies": [
+      {
+       "kind": "snick",
+       "from": "left",
+       "z": 80
+      },
+      {
+       "kind": "glow_punk",
+       "from": "left",
+       "z": 40
+      },
+      {
+       "kind": "glow_punk",
+       "from": "left",
+       "z": 130
+      },
+      {
+       "kind": "glow_punk",
+       "dx": 600,
+       "z": 20,
+       "hidden": true
+      }
+     ]
+    },
+    {
+     "at": 10400,
+     "enemies": [
+      {
+       "kind": "snick",
+       "from": "right",
+       "z": 50
+      },
+      {
+       "kind": "snick",
+       "from": "right",
+       "z": 120
+      },
+      {
+       "kind": "glow_punk",
+       "from": "right",
+       "z": 85
+      },
+      {
+       "kind": "bruiser",
+       "from": "left",
+       "weapon": "bat",
+       "z": 80,
+       "after_down": 2
+      },
+      {
+       "kind": "glow_punk",
+       "from": "left",
+       "z": 40,
+       "after_down": 2
+      },
+      {
+       "kind": "glow_punk",
+       "from": "left",
+       "z": 130,
+       "after_down": 2
+      }
+     ]
+    },
+    {
+     "at": 12220,
+     "enemies": [
+      {
+       "kind": "bruiser_pipe",
+       "from": "right",
+       "z": 80
+      },
+      {
+       "kind": "glow_punk",
+       "from": "door",
+       "dx": 700,
+       "after_down": 1
+      },
+      {
+       "kind": "glow_punk",
+       "from": "door",
+       "dx": 800,
+       "after_down": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Big Mama's kitchen",
+   "length": 1920,
+   "obstacles": [
+    [
+     "crate",
+     900,
+     980,
+     120,
+     160,
+     96,
+     true,
+     4,
+     "",
+     "bowl"
+    ],
+    [
+     "table",
+     150,
+     350,
+     110,
+     160,
+     90,
+     true,
+     0
+    ]
+   ],
+   "items": [],
+   "waves": [],
+   "kitchen": {
+    "wet": [
+     1450,
+     1750
+    ],
+    "tap": 1800
+   }
+  }
+ ],
+ "links": [
+  {
+   "from": 0,
+   "x": 13180,
+   "to": 1,
+   "to_x": 300,
+   "kind": "ladder"
+  }
+ ],
+ "switches": [],
+ "boss": {
+  "floor": 1,
+  "x": 1000,
+  "kind": "big_mama",
+  "health": 50
+ }
+}

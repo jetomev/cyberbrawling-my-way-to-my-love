@@ -18,6 +18,8 @@ const TABLE := {
 	"bat": {"damage": 2.0, "reach": 175.0, "speed": 1, "hits": 10, "smash": "push"},
 	"sword": {"damage": 3.0, "reach": 200.0, "speed": 0, "hits": 20, "smash": "knockdown"},
 	"mic_stand": {"damage": 1.0, "reach": 170.0, "speed": 1, "hits": 40, "smash": "push"},  # DJ Volt's (level 1's boss)
+	"baguette": {"damage": 3.0, "reach": 150.0, "speed": 1, "hits": 8, "smash": "knockdown"},  # level 2's joke: hits hard, crumbles (about 8 hits)
+	"wok": {"damage": 2.0, "reach": 160.0, "speed": 2, "hits": 99, "smash": "knockdown", "guard_break": true},  # Big Mama Noodle's
 }
 
 ## The fist move each press becomes with a weapon in hand (the rest stay as they are).
@@ -65,12 +67,14 @@ static func swing_data(move: String, weapon: String) -> Dictionary:
 		d["recovery"] = maxi(4, d["recovery"] + w["speed"] * 2)
 	if move == "smash":
 		d["effect"] = w["smash"]
+		d["guard_break"] = w.get("guard_break", false)  # a heavy overhead smash knocks a plain guard open
 	return d
 
 
 ## The loose weapon a fighter standing at (x, z) can pick up from the street's items, or {}.
-static func within_reach(items: Array, x: float, z: float) -> Dictionary:
+static func within_reach(items: Array, x: float, z: float, y := 0.0) -> Dictionary:
 	for it in items:
-		if is_weapon(it["kind"]) and absf(it["x"] - x) <= PICK_UP_REACH and absf(it["z"] - z) <= PICK_UP_REACH:
+		if is_weapon(it["kind"]) and absf(it["x"] - x) <= PICK_UP_REACH and absf(it["z"] - z) <= PICK_UP_REACH \
+				and absf(it.get("y", 0.0) - y) < 20.0:
 			return it
 	return {}

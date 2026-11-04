@@ -53,6 +53,8 @@ fail() { echo "FAILED $*"; exit 1; }
   # level 1 played through by the bot: the waves, the stairs, the boss (Stage 1)
   "$ROOT/scripts/level_clip.sh" "$OUT" > "$OUT/level.txt" 2>&1 || { cat "$OUT/level.txt"; fail "could not record level 1"; }
   LEVEL_RESULT="$(tail -1 "$OUT/level.txt")"
+  "$ROOT/scripts/level_clip.sh" "$OUT" level2 1 > "$OUT/level2.txt" 2>&1 || { cat "$OUT/level2.txt"; fail "could not record level 2"; }
+  LEVEL2_RESULT="$(tail -1 "$OUT/level2.txt")"
   # the testers' controlled trials: one thing on purpose each, its numbers on screen (2026-11-03)
   "$ROOT/scripts/trials.sh" "$OUT" > "$OUT/trials.txt" 2>&1 || { cat "$OUT/trials.txt"; fail "could not record the trials"; }
   # the hero beside the recordings he was measured from (D-30); the recordings live outside the repo, so a machine
@@ -136,6 +138,9 @@ PY
     echo "  layout (levels/level1.json): seven screens, the groups (from the sides, a door, the lamppost), the street locked at"
     echo "  each until they're beaten, crates and the car with things inside, the stairs, the boss upstairs; three lives."
     echo "  How it went: $LEVEL_RESULT"
+    echo "- \`clips/level2.mp4\` and \`frames/level2.png\`: level 2, the Night Market (the team's settled layout), by the bot:"
+    echo "  Snick, the stall counters, the awning's ladder, the cracked tile, the fountain fight, the pipe Bruiser, the long"
+    echo "  ladder, Big Mama Noodle's kitchen (her soup, the wet patch, the tap). How it went: $LEVEL2_RESULT"
     echo "- \`clips/fight.mp4\` / \`fight-half.mp4\` and \`frames/fight.png\` (a frame every half second): a 25 s fight, a bot"
     echo "  playing the hero against thugs who fight back (red): they walk up, throw combos with a breath between, sometimes"
     echo "  block (a white flash is a perfect block); blows make them flinch, reel, get shoved, knocked down, thrown up;"

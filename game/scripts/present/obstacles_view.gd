@@ -6,7 +6,9 @@ extends Node2D
 ## outlines, two tones, a thin neon rim on the lit edge): a wooden crate, a boxy old car, an orange-and-white road
 ## barrier, a red hydrant, a green metal dumpster, black speakers. Grey-box stand-ins until the team's pictures land.
 const COLORS := {"crate": Color(0.58, 0.44, 0.28), "car": Color(0.36, 0.42, 0.52), "barrier": Color(0.95, 0.5, 0.15),
-	"hydrant": Color(0.78, 0.18, 0.16), "dumpster": Color(0.2, 0.42, 0.3), "speaker": Color(0.16, 0.16, 0.2)}
+	"hydrant": Color(0.78, 0.18, 0.16), "dumpster": Color(0.2, 0.42, 0.3), "speaker": Color(0.16, 0.16, 0.2),
+	"stall": Color(0.55, 0.38, 0.24), "fountain": Color(0.55, 0.56, 0.6), "cart": Color(0.45, 0.32, 0.2),
+	"tile": Color(0.85, 0.82, 0.72), "table": Color(0.62, 0.5, 0.36)}
 const RIM := Color(1.0, 0.24, 0.65)  # the magenta neon rim (#ff3ea5) on the edge facing the signs
 const EDGE := Color(0.08, 0.08, 0.10)
 
@@ -65,7 +67,27 @@ func set_marks(list: Array) -> void:
 func _draw_loose() -> void:
 	for m in marks:
 		var x: float = m["x"]
-		if m["kind"] == "doorway":  # a dark doorway in the back wall: the stairs
+		if m["kind"] == "wet":  # Big Mama's wet floor by the sink: shiny blue while it's wet
+			var c := Color(0.45, 0.7, 1.0, 0.45) if m["on"] else Color(0.5, 0.5, 0.55, 0.15)
+			loose.draw_rect(Rect2(m["x"], ground_y + 20.0, m["x1"] - m["x"], 130.0), c)
+			if m["on"]:
+				for k in 5:
+					loose.draw_line(Vector2(m["x"] + 30 + k * 50, ground_y + 50 + (k % 2) * 40), Vector2(m["x"] + 60 + k * 50, ground_y + 50 + (k % 2) * 40), Color(0.85, 0.95, 1.0, 0.7), 3.0)
+		elif m["kind"] == "tap":  # the sink's tap on the back wall, dripping
+			loose.draw_rect(Rect2(x - 40, ground_y - 110, 80, 40), Color(0.75, 0.78, 0.82))
+			loose.draw_rect(Rect2(x - 40, ground_y - 110, 80, 40), EDGE, false, 3.0)
+			loose.draw_rect(Rect2(x - 6, ground_y - 140, 12, 30), Color(0.6, 0.62, 0.66))
+			loose.draw_circle(Vector2(x, ground_y - 100 + (Time.get_ticks_msec() / 40 % 30)), 4.0, Color(0.5, 0.75, 1.0))
+		elif m["kind"] == "ladder":  # the long ladder up to the next floor, against the back wall
+			for rx in [x - 30.0, x + 24.0]:
+				loose.draw_rect(Rect2(rx, ground_y - 420.0, 6.0, 420.0), Color(0.55, 0.42, 0.25))
+			var ry := ground_y - 20.0
+			while ry > ground_y - 420.0:
+				loose.draw_line(Vector2(x - 30.0, ry), Vector2(x + 30.0, ry), Color(0.6, 0.47, 0.3), 4.0)
+				ry -= 34.0
+			loose.draw_colored_polygon(PackedVector2Array([Vector2(x - 14, ground_y - 440), Vector2(x + 14, ground_y - 440),
+				Vector2(x, ground_y - 462)]), Color(0.7, 0.7, 0.75))
+		elif m["kind"] == "doorway":  # a dark doorway in the back wall: the stairs
 			loose.draw_rect(Rect2(x - 46, ground_y - 160, 92, 160), Color(0.04, 0.04, 0.06))
 			loose.draw_rect(Rect2(x - 46, ground_y - 160, 92, 160), EDGE.lightened(0.3), false, 3.0)
 			loose.draw_colored_polygon(PackedVector2Array([Vector2(x - 14, ground_y - 120), Vector2(x + 14, ground_y - 120),
@@ -75,7 +97,7 @@ func _draw_loose() -> void:
 			loose.draw_rect(Rect2(x - 22, ground_y - 130, 44, 60), EDGE, false, 3.0)
 			loose.draw_circle(Vector2(x, ground_y - 112), 8.0, Color(0.3, 0.9, 0.4) if m["on"] else Color(0.9, 0.3, 0.3))
 	for it in world.items:
-		var at := Vector2(it["x"], ground_y + it["z"])
+		var at := Vector2(it["x"], ground_y + it["z"] - it.get("y", 0.0))  # up on a roof, it's drawn up there
 		if it["kind"] == "pipe":
 			loose.draw_line(at + Vector2(-46, -4), at + Vector2(46, -10), EDGE, 12.0)
 			loose.draw_line(at + Vector2(-44, -4), at + Vector2(44, -10), Color(0.62, 0.64, 0.68), 7.0)
@@ -88,6 +110,9 @@ func _draw_loose() -> void:
 		elif it["kind"] == "photo":  # a torn photo (to collect)
 			loose.draw_rect(Rect2(at + Vector2(-12, -6), Vector2(24, 6)), Color(0.95, 0.93, 0.85))
 			loose.draw_rect(Rect2(at + Vector2(-12, -6), Vector2(24, 6)), EDGE, false, 2.0)
+		elif it["kind"] in ["apple", "bowl"]:  # an apple, a bowl of noodles
+			loose.draw_circle(at + Vector2(0, -10), 10.0, Color(0.85, 0.15, 0.2) if it["kind"] == "apple" else Color(0.95, 0.9, 0.7))
+			loose.draw_arc(at + Vector2(0, -10), 10.0, 0.0, TAU, 16, EDGE, 2.0)
 		elif it["kind"] in ["food", "takeaway"]:  # a takeaway box
 			loose.draw_rect(Rect2(at + Vector2(-18, -22), Vector2(36, 22)), Color(0.92, 0.9, 0.84))
 			loose.draw_rect(Rect2(at + Vector2(-18, -22), Vector2(36, 22)), EDGE, false, 2.0)
@@ -118,6 +143,27 @@ func _draw_object(n: Node2D, o: Dictionary) -> void:
 			n.draw_rect(r, EDGE, false, 2.0)
 		return
 	var top: float = o["top"]
+	if o["kind"] == "ladder":  # two rails and rungs, leaning on what it reaches
+		for rx in [o["x0"], o["x1"] - 6.0]:
+			n.draw_rect(Rect2(rx, near - top, 6.0, top), Color(0.55, 0.42, 0.25))
+			n.draw_rect(Rect2(rx, near - top, 6.0, top), EDGE, false, 2.0)
+		var ry := near - 20.0
+		while ry > near - top:
+			n.draw_line(Vector2(o["x0"], ry), Vector2(o["x1"], ry), Color(0.6, 0.47, 0.3), 4.0)
+			ry -= 34.0
+		return
+	if o["kind"] == "awning":  # a stall's striped canopy roof up high, the stall under it open
+		var roof := Rect2(o["x0"], far - top, w, near - far)
+		n.draw_rect(Rect2(o["x0"], near - top, w, 26.0), Color(0.85, 0.25, 0.4))
+		for i in int(w / 40.0):
+			if i % 2 == 0:
+				n.draw_rect(Rect2(o["x0"] + i * 40.0, near - top, 40.0, 26.0), Color(0.95, 0.92, 0.85))
+		n.draw_rect(roof, Color(0.7, 0.2, 0.32))
+		n.draw_rect(roof, EDGE, false, 3.0)
+		n.draw_rect(Rect2(o["x0"], near - top, w, 26.0), EDGE, false, 3.0)
+		for px in [o["x0"] + 6.0, o["x1"] - 12.0]:
+			n.draw_rect(Rect2(px, near - top + 26.0, 6.0, top - 26.0), Color(0.3, 0.3, 0.34))
+		return
 	var top_face := Rect2(o["x0"], far - top, w, near - far)
 	var front := Rect2(o["x0"], near - top, w, top)
 	n.draw_rect(top_face, base.lightened(0.18))

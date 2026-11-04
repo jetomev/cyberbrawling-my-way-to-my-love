@@ -77,6 +77,8 @@ const FLY := 80.0
 
 static func _disarm(f, world, from_x: float) -> String:
 	var what: String = f.drop_weapon()
+	if f.weapon_snaps:
+		return what  # it bends and breaks as it lands: nothing to pick up
 	if world != null:
 		var away := 1.0 if f.x >= from_x else -1.0
 		world.drop(what, clampf(f.x + away * FLY, f.tune["street_left"], f.tune["street_right"]), f.z)

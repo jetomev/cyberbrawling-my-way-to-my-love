@@ -54,8 +54,27 @@ const DJ_VOLT := {
 	"records_from": 280.0,  # further off than this, he throws instead
 	"records_every": 110,
 }
+## Snick, the knife girl (the team's roster): "Paper Cuts", three quick slashes (her knife's swing, backswing,
+## smash), and from further off a dash in, knife first; "Backstep", she hops back out of the slow end kicks (the side
+## kick, the roundhouse). Beaten by a perfect block on her dash, or a low kick into a slash's wind-up (both knock the
+## knife away).
+const SNICK := {
+	"keep": 180.0, "strike": 125.0, "wait_min": 35, "wait_max": 75, "block_chance": 0.0, "block_ticks": 0,
+	"combos": [["punch", "punch", "punch"], ["punch", "punch"], ["punch"]],
+	"dash_from": 260.0, "dash_to": 520.0,  # between these, she dashes in
+	"backstep": ["side_kick", "roundhouse"],
+}
+## Big Mama Noodle, level 2's boss (the team's roster): "Order Up", ladle, ladle, then a wok smash that knocks a guard
+## open (her wok's swing, backswing, smash); from across the kitchen she charges (level.gd: onto the wet patch, she
+## slips). The hot soup and the floor are level.gd's.
+const BIG_MAMA := {
+	"keep": 170.0, "strike": 120.0, "wait_min": 45, "wait_max": 90, "block_chance": 0.2, "block_ticks": 20,
+	"combos": [["punch", "punch", "punch"]],
+	"dash_from": 300.0, "dash_to": 1900.0,  # her charge
+}
 ## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
-const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER, "DJ_VOLT": DJ_VOLT}
+const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER, "DJ_VOLT": DJ_VOLT,
+	"SNICK": SNICK, "BIG_MAMA": BIG_MAMA}
 
 var me
 var foe
@@ -100,6 +119,13 @@ func think() -> Dictionary:
 		if me.facing != int(toward):
 			inp["mx"] = toward  # turn to face the blow without dropping the guard
 		return inp
+	# a backstep out of the slow kicks she reads coming (Snick)
+	if kind.has("backstep") and foe.state in kind["backstep"] and foe.attack_phase() == "startup" and dist < 240.0 \
+			and foe.attack_serial != read_serial and me.state in Fighter.GROUND_STATES:
+		read_serial = foe.attack_serial
+		inp["roll"] = true
+		inp["mx"] = -toward
+		return inp
 	if foe.attack_phase() == "startup" and dist < 220.0 and foe.attack_serial != read_serial and plan.is_empty():
 		read_serial = foe.attack_serial
 		if dice.randf() < kind["block_chance"]:
@@ -114,6 +140,11 @@ func think() -> Dictionary:
 		return inp
 	if wait > 0:
 		wait -= 1
+	# a dasher (Snick): from mid range she runs straight in, then slashes
+	if kind.has("dash_from") and wait == 0 and dist > kind["dash_from"] and dist < kind["dash_to"] and me.state in Fighter.GROUND_STATES:
+		inp["run"] = true
+		inp["mx"] = toward
+		return inp
 	# a thrower, far off: a volley of records (level.gd flies them), then a breath
 	if kind.has("records_from") and dist > kind["records_from"] and wait == 0 and me.state in Fighter.GROUND_STATES:
 		wait = kind["records_every"]

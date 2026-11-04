@@ -524,3 +524,63 @@ func test_disarmed_he_cant_grab_it_straight_back() -> void:
 	for i in 90:
 		p[1].step({})
 	eq(p[1].weapon, "pipe", "a moment later he can")
+
+
+## Snick, the knife girl (the team's roster)
+func snick(gap := 110.0):
+	var p = pair(gap)
+	var t := Tuning.fresh()
+	t["health"] = 10.0
+	var s = Fighter.new(t, 400.0 + gap, 80.0)
+	s.team = 1
+	s.facing = -1
+	s.take_weapon("knife")
+	return [p[0], s, Brain.new(s, p[0], 3, Brain.SNICK)]
+
+
+func test_snick_slashes_with_her_knife() -> void:
+	var q = snick()
+	q[0].tune["health"] = 999.0
+	q[0].health = 999.0
+	var moves := []
+	for i in 600:
+		q[0].step({})
+		q[1].step(q[2].think())
+		if q[1].attack_phase() == "startup" and q[1].t == 0:
+			moves.append(q[1].state)
+	check("swing" in moves and "backswing" in moves, "quick slashes with the knife (%s)" % [moves])
+
+
+func test_snick_dashes_in_from_mid_range() -> void:
+	var q = snick(400.0)
+	q[2].wait = 0
+	var ran := false
+	for i in 60:
+		q[0].step({})
+		q[1].step(q[2].think())
+		ran = ran or q[1].state == "run"
+	check(ran, "from 400 px she runs straight in")
+
+
+func test_snick_hops_back_out_of_the_slow_kicks() -> void:
+	var q = snick(120.0)
+	q[2].wait = 999
+	q[0].chain = "KK"  # the third K is the side kick
+	q[0].chain_until = 999
+	q[0].step({"kick": true})
+	eq(q[0].state, "side_kick", "the hero throws the side kick")
+	var rolled := false
+	for i in 10:
+		q[1].step(q[2].think())
+		q[0].step({})
+		rolled = rolled or q[1].state == "roll"
+	check(rolled, "she rolls back out of it")
+	var r = snick(120.0)
+	r[2].wait = 999
+	r[0].step({"punch": true})
+	var rolled2 := false
+	for i in 10:
+		r[1].step(r[2].think())
+		r[0].step({})
+		rolled2 = rolled2 or r[1].state == "roll"
+	check(not rolled2, "but not out of a quick jab")

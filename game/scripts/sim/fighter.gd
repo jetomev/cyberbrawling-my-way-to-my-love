@@ -22,7 +22,7 @@ const DOUBLE_TAP_TICKS := 3
 const MAX_QUEUE := 2  # P then K pressed during one long blow play P then K
 const AIR_STATES := ["jump", "air_kick", "hammer_fist"]
 ## What food and first aid give back, as a share of a full health bar (D-14)
-const HEALS := {"food": 0.4, "takeaway": 0.4, "soda": 0.25, "first_aid": 1.0}
+const HEALS := {"food": 0.4, "takeaway": 0.4, "soda": 0.25, "apple": 0.25, "bowl": 0.4, "first_aid": 1.0, "noodles": 1.0}  # noodles: level 2's hidden bar
 ## Being hit: no input counts until the reaction ends (fight.gd decides who hits whom; take_hit() reacts)
 const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko", "dizzy"]
 
@@ -51,12 +51,16 @@ var air_kicked := false  # one air attack (flying kick or hammer fist) per jump
 var push_ticks := 0  # how long the stick has pushed into something climbable
 var climb_from := Vector2.ZERO  # (x, y) where a climb started
 var climb_to := Vector2.ZERO  # (x, y) where it ends, on top
+var climb_z := Vector2.ZERO  # up or down a ladder: the depth it starts from and ends at
+var on_ladder := false  # this climb is a ladder's (straight up or down, slower)
+var can_climb := true  # ladders are the hero's (enemies don't climb in level 2)
 var team := 0  # 0 = the hero's side; blows only land on the other team
 var max_health := 20.0
 var health := 20.0
 var weapon := ""  # what this fighter carries ("pipe", …); an enemy drops it when knocked down (take_weapon())
 var weapon_hits_left := 0  # it wears out (D-14)
 var soft := false  # a sparring friend: his blows don't hurt
+var weapon_snaps := false  # his weapon breaks as it's knocked loose (level 2's pipe Bruiser: the pipe stays level 5's prize)
 var shrugs := []  # blows (by move) that hurt him but don't make him flinch (the Bruiser's "Iron Gut": a jab)
 var no_pickup_until := -1  # knocked out of his hand, a weapon can't be grabbed straight back (until this tick)
 var knock_dir := 1  # which way the last blow drove him (+1 right, -1 left)
@@ -197,6 +201,20 @@ func _ground(mx: float, mz: float, run := false) -> void:
 		speed = "run_speed"
 	elif stance == "walk":
 		speed = "stroll_speed"
+	# at a ladder: up climbs it from its foot, down climbs it from the top (the team's level 2: "press up to climb,
+	# down to come off")
+	if can_climb and world != null and absf(mz) > 0.5:
+		var lad: Dictionary = world.ladder_near(x, z, y)
+		if not lad.is_empty() and ((lad["at"] == "foot" and mz < 0.0) or (lad["at"] == "top" and mz > 0.0)):
+			var o: Dictionary = lad["ladder"]
+			var cx: float = (o["x0"] + o["x1"]) * 0.5
+			climb_from = Vector2(x, y)
+			climb_to = Vector2(cx, o["top"] if lad["at"] == "foot" else 0.0)
+			climb_z = Vector2(z, maxf(0.0, o["z0"] - 25.0) if lad["at"] == "foot" else o["z1"] + 30.0)
+			on_ladder = true
+			vx = 0.0
+			_enter("climb")
+			return
 	vx = mx * tune[speed] * (tune["limp"] if limping() else 1.0)
 	var nx := clampf(x + vx, tune["street_left"], tune["street_right"])
 	if mx != 0.0:
@@ -216,13 +234,14 @@ func _ground(mx: float, mz: float, run := false) -> void:
 	# when he's hurt (an enemy leaves them)
 	if team == 0 and health < max_health and world != null and not world.items.is_empty():
 		for it in world.items:
-			if HEALS.has(it["kind"]) and absf(it["x"] - x) <= Weapons.PICK_UP_REACH and absf(it["z"] - z) <= Weapons.PICK_UP_REACH:
+			if HEALS.has(it["kind"]) and absf(it["x"] - x) <= Weapons.PICK_UP_REACH and absf(it["z"] - z) <= Weapons.PICK_UP_REACH \
+					and absf(it.get("y", 0.0) - y) < 20.0:
 				health = minf(max_health, health + HEALS[it["kind"]] * max_health)
 				world.items.erase(it)
 				break
 	# walking over a weapon with an empty hand picks it up (the bag for more than one comes with Stage 4)
 	if weapon == "" and world != null and not world.items.is_empty() and clock >= no_pickup_until:
-		var it: Dictionary = Weapons.within_reach(world.items, x, z)
+		var it: Dictionary = Weapons.within_reach(world.items, x, z, y)
 		if not it.is_empty():
 			world.items.erase(it)
 			take_weapon(it["kind"])
@@ -256,6 +275,15 @@ func _push(mx: float) -> void:
 
 
 func _climb() -> void:
+	if on_ladder:  # hand over hand, straight up or down
+		var lk := clampf(float(t) / float(tune.get("ladder_ticks", 45)), 0.0, 1.0)
+		y = lerpf(climb_from.y, climb_to.y, lk)
+		x = lerpf(climb_from.x, climb_to.x, clampf(lk * 4.0, 0.0, 1.0))
+		z = lerpf(climb_z.x, climb_z.y, lk)
+		if lk >= 1.0:
+			on_ladder = false
+			_enter(_rest())
+		return
 	var k := clampf(float(t) / float(tune["climb_ticks"]), 0.0, 1.0)
 	# up first, then over the edge
 	y = lerpf(climb_from.y, climb_to.y, clampf(k * 1.6, 0.0, 1.0))
@@ -328,6 +356,9 @@ func take_hit(blow: Dictionary, attacker) -> String:
 			return "perfect"
 		health = maxf(health - blow["damage"] * tune["block_damage"], 0.0)
 		_hurt("arm_f", blow["damage"] * tune["block_damage"])  # the forearms take a blocked blow
+		if blow.get("guard_break", false):
+			_enter("stagger")  # a heavy overhead smash knocks the guard open (break it, don't block it)
+			return "guard_broken"
 		_enter("block_hit")
 		return "blocked"
 	health = maxf(health - blow["damage"], 0.0)

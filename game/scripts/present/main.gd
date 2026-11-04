@@ -41,7 +41,9 @@ const ENEMY_TINT := Color(1.35, 0.78, 0.72)  # the thug, reddish, so he never re
 ## Each enemy type its own colour in the grey boxes (the team's art replaces them): the Glow Punk's light-up pink,
 ## the Bruiser a dark red, the boss magenta
 const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 0.55, 0.5), "boss": Color(1.6, 0.6, 1.4),
-	"dj_volt": Color(0.75, 1.1, 1.6)}  # DJ Volt: his LED jacket's cold blue
+	"dj_volt": Color(0.75, 1.1, 1.6),  # DJ Volt: his LED jacket's cold blue
+	"snick": Color(0.95, 1.3, 0.75), "bruiser_pipe": Color(1.1, 0.55, 0.5),  # Snick's glowing knife green-yellow
+	"big_mama": Color(1.5, 1.4, 1.25)}  # Big Mama Noodle: an enormous white apron
 const ENEMY_HEALTH := 12.0
 const RESPAWN_TICKS := 180
 
@@ -67,6 +69,7 @@ var level_views := {}  # enemy fighter id -> its view
 var ended_for := 0
 var items_seen := -1
 var flips_seen := -1
+var shown_wet := true
 var trial = null  # --trial <name>: one of the testers' controlled trials (present/trials.gd)
 var dummy
 var dummy_view
@@ -115,7 +118,9 @@ func _ready() -> void:
 			progress = Progress.new()  # the full game: the title, a hero, the levels in order, the save
 			if progress.has_save():
 				file = progress.level_file()
-		level = Level.new(Level.load_data(file), tune, 2 if "--bot" in args else 1)
+		var si := args.find("--seed")  # --seed <n>: which run the bot plays (2 by default: one it wins on level 1)
+		var run_seed: int = int(args[si + 1]) if si >= 0 and si + 1 < args.size() else (2 if "--bot" in args else 1)
+		level = Level.new(Level.load_data(file), tune, run_seed)
 		world = level.world
 	elif trial_name != "":
 		world = StreetWorld.new()  # a bare street: only the trial's two fighters
@@ -149,7 +154,8 @@ func _ready() -> void:
 	if trial_name != "":
 		_start_trial(trial_name)
 	if "--fight" in args or "--bot" in args:
-		bot = HeroBot.new(hero, 2 if "--bot" in args else 1)
+		var bs := args.find("--seed")
+		bot = HeroBot.new(hero, int(args[bs + 1]) if bs >= 0 and bs + 1 < args.size() else (2 if "--bot" in args else 1))
 	if bot != null and level == null:
 		_spawn_enemy(hero.x + 600.0)
 	var at := args.find("--marks")
@@ -250,6 +256,7 @@ func _play_level() -> void:
 	else:
 		if bot != null:
 			bot.me = level.hero
+			bot.goal = level.next_door()
 		level.step(bot.think(level.standing()) if bot != null else Controls.read())
 		sound.fight_tick(level.everyone(), level.events)
 	tick += 1
@@ -260,7 +267,8 @@ func _play_level() -> void:
 		obstacles_view.setup(world, Street.GROUND_Y)
 		$Street.setup(level.bounds().y, tune["street_depth"])
 		items_seen = -1
-	if world.items.size() != items_seen or not level.events.is_empty() or level.flipped.size() != flips_seen:
+	if world.items.size() != items_seen or not level.events.is_empty() or level.flipped.size() != flips_seen or level.wet != shown_wet:
+		shown_wet = level.wet
 		items_seen = world.items.size()
 		flips_seen = level.flipped.size()
 		obstacles_view.set_marks(_marks())
@@ -521,6 +529,10 @@ func _draw_flying() -> void:
 	var clock: int = level.tick if level != null else (trial.tick if trial != null else 0)
 	for p in flying:
 		var at := Vector2(p["x"], Street.GROUND_Y + p["z"] - (p["y0"] + p["y1"]) * 0.5)
+		if p["kind"] == "soup":  # hot soup: an orange splash
+			flying_view.draw_circle(at, 18.0, Color(0.95, 0.55, 0.15, 0.9))
+			flying_view.draw_circle(at + Vector2(-14, 6), 9.0, Color(0.98, 0.7, 0.3, 0.8))
+			continue
 		flying_view.draw_circle(at, 22.0, Color(0.06, 0.06, 0.08))
 		flying_view.draw_circle(at, 8.0, Color(0.9, 0.3, 0.5))
 		flying_view.draw_arc(at, 22.0, float(clock) * 0.6, float(clock) * 0.6 + 1.2, 8, Color(0.6, 0.6, 0.7), 2.0)
@@ -541,7 +553,12 @@ func _marks() -> Array:
 	var out := []
 	for l in level.plan.get("links", []):
 		if int(l["from"]) == level.on and not l.get("auto", false):
-			out.append({"kind": "doorway", "x": l["x"], "on": false})
+			out.append({"kind": l.get("kind", "doorway"), "x": l["x"], "on": false})
+	var room: Dictionary = level.plan["floors"][level.on].get("kitchen", {})
+	if room.has("wet"):
+		out.append({"kind": "wet", "x": room["wet"][0], "x1": room["wet"][1], "on": level.wet})
+	if room.has("tap"):
+		out.append({"kind": "tap", "x": room["tap"], "on": level.wet})
 	var sw: Array = level.plan.get("switches", [])
 	for i in sw.size():
 		if int(sw[i]["floor"]) == level.on:
