@@ -45,7 +45,7 @@ var buffer_left := 0  # once free, how long the waiting presses stay good
 var clock := 0  # ticks since this fighter was made
 var last_press := -100  # the tick of the last attack button that counted
 var chain := ""  # the combo so far ("P", "PK", …); "" = none
-var chain_left := 0  # ticks left to continue the chain once free
+var chain_until := -1  # the last tick a press still continues the chain (the blow's end + combo_window_ticks)
 var attack_serial := 0  # counts attacks, so a world can tell one blow from the next
 var air_kicked := false  # one air attack (flying kick or hammer fist) per jump
 var push_ticks := 0  # how long the stick has pushed into something climbable
@@ -143,7 +143,9 @@ func step(inp: Dictionary) -> void:
 			_climb()
 		_:
 			if _ground_attack() and t >= attack_length(state):
-				chain_left = tune["combo_window_ticks"]
+				# a press up to combo_window_ticks frames after this one continues the chain: exactly the setting (the
+				# testers, 2026-11-03: a countdown made it 22 frames against the setting's 24)
+				chain_until = clock + tune["combo_window_ticks"]
 				_enter("idle")
 	# a blow or a block from the walk stance raises the guard first; the press waits through it
 	if stance == "walk" and state in GROUND_STATES and (inp.get("block", false) or (not queue.is_empty() and queue[0] != "jump")):
@@ -158,9 +160,7 @@ func step(inp: Dictionary) -> void:
 		vx = 0.0
 		_enter("block")
 	if not _ground_attack() and not state in SWITCH_STATES:
-		if chain_left > 0:
-			chain_left -= 1
-		if chain_left == 0:
+		if clock >= chain_until:
 			chain = ""
 		if buffer_left > 0:
 			buffer_left -= 1
@@ -298,7 +298,7 @@ func _start(action: String, mx: float) -> void:
 		vx = 0.0
 		attack_serial += 1
 		chain = ""
-		chain_left = 0
+		chain_until = -1
 		_enter("sweep")
 	elif action == "punch" and weapon != "" and not broken("arm_f"):
 		# holding a weapon, the punch button swings it: swing, backswing, overhead smash (a broken arm can't)
@@ -306,14 +306,14 @@ func _start(action: String, mx: float) -> void:
 		attack_serial += 1
 		var link: Array = Weapons.next(chain if chain.begins_with("W") else "", "W")
 		chain = link[0]
-		chain_left = 0
+		chain_until = -1
 		_enter(link[1])
 	else:
 		vx = 0.0
 		attack_serial += 1
 		var link: Array = Moves.next(chain if not chain.begins_with("W") else "", "P" if action == "punch" else "K")
 		chain = link[0]
-		chain_left = 0
+		chain_until = -1
 		_enter(link[1])
 
 
@@ -340,7 +340,7 @@ func take_hit(blow: Dictionary, attacker) -> String:
 	stance = "fight"  # a hit snaps him out of the walk stance
 	queue.clear()
 	chain = ""
-	chain_left = 0
+	chain_until = -1
 	vx = 0.0
 	var effect: String = blow.get("effect", "")
 	if health <= 0.0 and effect != "launch":

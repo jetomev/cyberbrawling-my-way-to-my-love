@@ -3,7 +3,7 @@ extends Node2D
 ## Options after "--": --demo plays the scripted demo (scripts/sim/demo.gd) and quits when it ends (--lab shows the
 ## feel lab during it);
 ## --fight has a bot (hero_bot.gd) play the hero against the thugs for FIGHT_TICKS and quits (the build's fight clip);
-## --level <file> plays another layout (levels/*.json format); --bot has the bot play level 1 through and quits when it ends (prints how it went);
+## --trial <name> plays one of the testers' controlled trials (present/trials.gd) and quits; --level <file> plays another layout (levels/*.json format); --bot has the bot play level 1 through and quits when it ends (prints how it went);
 ## --flat uses the flat line instead of the shallow street (D-13); --marks <file> (with --demo) writes, for every drawn
 ## frame, where the hips, hands and feet are on screen, for the reviewers' close-ups (scripts/build.sh, D-22).
 ## F1 opens the feel lab (feel_panel.gd).
@@ -25,6 +25,7 @@ const Fight := preload("res://scripts/sim/fight.gd")
 const Brain := preload("res://scripts/sim/brain.gd")
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const Level := preload("res://scripts/sim/level.gd")
+const Trials := preload("res://scripts/present/trials.gd")
 const LEVEL_FILE := "res://levels/level1.json"
 const END_TICKS := 240  # how long "cleared" or "out of lives" shows before the level starts again
 const FIGHT_TICKS := 1500  # --fight: how long the recorded bot fight runs (25 s)
@@ -55,6 +56,11 @@ var level_views := {}  # enemy fighter id -> its view
 var ended_for := 0
 var items_seen := -1
 var flips_seen := -1
+var trial = null  # --trial <name>: one of the testers' controlled trials (present/trials.gd)
+var dummy
+var dummy_view
+var trial_label: Label
+var layer_was := {}
 
 
 func _ready() -> void:
@@ -71,7 +77,9 @@ func _ready() -> void:
 		add_child(feel)
 		if "--flat" in args:
 			tune["flat_line"] = true  # asked for on the command line: beats a saved setting
-	var playing: bool = not demo and not "--fight" in args  # (--bot: the bot plays level 1, for the build's level clip)
+	var ti := args.find("--trial")
+	var trial_name: String = args[ti + 1] if ti >= 0 and ti + 1 < args.size() else ""
+	var playing: bool = not demo and not "--fight" in args and trial_name == ""  # (--bot: the bot plays level 1)
 	if playing:
 		# (--bot plays seed 2, a run the bot wins, so the build's level clip shows the whole level, boss included)
 		var file := LEVEL_FILE
@@ -80,6 +88,8 @@ func _ready() -> void:
 			file = args[li + 1]
 		level = Level.new(Level.load_data(file), tune, 2 if "--bot" in args else 1)
 		world = level.world
+	elif trial_name != "":
+		world = StreetWorld.new()  # a bare street: only the trial's two fighters
 	else:
 		world = StreetWorld.grey_street()
 	obstacles_view = ObstaclesView.new()
@@ -87,7 +97,7 @@ func _ready() -> void:
 	add_child(obstacles_view)
 	obstacles_view.setup(world, Street.GROUND_Y)
 	shown_world = world
-	hero = level.hero if level != null else Fighter.new(tune, 400.0, 80.0, world)
+	hero = level.hero if level != null else Fighter.new(tune, 600.0 if trial_name != "" else 400.0, 80.0, world)
 	hero_view = HeroView.new()
 	hero_view.name = "Hero"
 	add_child(hero_view)
@@ -97,6 +107,8 @@ func _ready() -> void:
 	$Hud/Title.text = "%s   ·   %s%s" % [Version.TITLE, Version.STAGE, "   ·   demo" if demo else ""]
 	hero_view.sync(hero, Street.GROUND_Y)
 	_make_bars()
+	if trial_name != "":
+		_start_trial(trial_name)
 	if "--fight" in args or "--bot" in args:
 		bot = HeroBot.new(hero, 2 if "--bot" in args else 1)
 	if bot != null and level == null:
@@ -109,6 +121,9 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	if trial != null:
+		_play_trial()
+		return
 	if level != null:
 		_play_level()
 		return
@@ -225,6 +240,60 @@ func _play_level() -> void:
 	if not foes.is_empty():
 		foes.sort_custom(func(a, c): return absf(a.x - hero.x) < absf(c.x - hero.x))
 		bars["enemy"][1].size.x = 416.0 * foes[0].health / foes[0].max_health
+
+
+func _start_trial(trial_name: String) -> void:
+	dummy = Fighter.new(Tuning.fresh(), 700.0, 80.0, world)
+	dummy.team = 1
+	dummy.facing = -1
+	dummy_view = HeroView.new(ENEMY_TINT)
+	dummy_view.name = "Dummy"
+	add_child(dummy_view)
+	trial = Trials.new(trial_name, hero, dummy)
+	trial_label = Label.new()
+	trial_label.position = Vector2(32, 130)
+	trial_label.add_theme_font_size_override("font_size", 30)
+	trial_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.6))
+	$Hud.add_child(trial_label)
+	$Camera.position.x = 960.0
+
+
+## One of the testers' trials: the script's presses, the blows settled, the numbers on screen; it quits at the end,
+## printing what happened and when.
+func _play_trial() -> void:
+	var inp: Array = trial.inputs()
+	hero.step(inp[0])
+	dummy.step(inp[1])
+	Fight.separate([hero, dummy])
+	var events: Array = fight.step([hero, dummy], world)
+	trial.saw(events)
+	if not events.is_empty():
+		obstacles_view.refresh()
+	hero_view.sync(hero, Street.GROUND_Y)
+	dummy_view.sync(dummy, Street.GROUND_Y)
+	if trial.name == "scenery":
+		$Camera.position.x += 6.0  # a steady pan, so each layer's speed can be read
+		$Camera.position_smoothing_enabled = false
+	else:
+		$Camera.position.x = lerpf($Camera.position.x, (hero.x + dummy.x) * 0.5, 0.1)
+	var cam: float = $Camera.get_screen_center_position().x
+	$Street.follow(cam)
+	var speeds := {}
+	for spec in Street.LAYERS:
+		var x: float = $Street.layers[spec[0]].position.x
+		if layer_was.has(spec[0]) and layer_was.has("cam"):
+			speeds[spec[0]] = (cam - layer_was["cam"]) - (x - layer_was[spec[0]])  # seen on screen, px a frame
+		layer_was[spec[0]] = x
+	speeds["street"] = cam - layer_was.get("cam", cam)
+	layer_was["cam"] = cam
+	trial_label.text = trial.overlay(speeds)
+	bars["hero"][1].size.x = 416.0 * hero.health / hero.max_health
+	bars["enemy"][1].size.x = 416.0 * dummy.health / dummy.max_health
+	if trial.tick >= trial.length:
+		for line in trial.history:
+			print(line)
+		print("TRIAL DONE %s" % trial.name)
+		get_tree().quit()
 
 
 ## The stairs' doorways and the switches on the floor he's on, for the obstacles view.

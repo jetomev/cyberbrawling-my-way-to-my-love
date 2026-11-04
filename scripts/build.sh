@@ -53,6 +53,8 @@ fail() { echo "FAILED $*"; exit 1; }
   # level 1 played through by the bot: the waves, the stairs, the boss (Stage 1)
   "$ROOT/scripts/level_clip.sh" "$OUT" > "$OUT/level.txt" 2>&1 || { cat "$OUT/level.txt"; fail "could not record level 1"; }
   LEVEL_RESULT="$(tail -1 "$OUT/level.txt")"
+  # the testers' controlled trials: one thing on purpose each, its numbers on screen (2026-11-03)
+  "$ROOT/scripts/trials.sh" "$OUT" > "$OUT/trials.txt" 2>&1 || { cat "$OUT/trials.txt"; fail "could not record the trials"; }
   # the hero beside the recordings he was measured from (D-30); the recordings live outside the repo, so a machine
   # without them builds without these pictures and the note says so
   SBS="no"
@@ -121,6 +123,12 @@ PY
     else
       echo "- Side by side: not drawn (no reference recordings on this machine)"
     fi
+    echo "- \`trials/<name>.mp4\` / \`-half.mp4\` and \`trials/<name>.txt\` (what happened on which frame): the controlled"
+    echo "  trials, one thing on purpose each with its numbers on screen. combo_edge: the next press 23, 24, 25 frames after a"
+    echo "  jab ends (the window is $(grep -o '"combo_window_ticks": [0-9]*' "$ROOT/game/scripts/sim/tuning.gd" | grep -o '[0-9]*$') frames, the last frame that still chains); injuries: low kicks to"
+    echo "  bruised, swollen, broken, then the limp's speed; weapon_wear: a stick swung until it breaks; disarm: a perfect"
+    echo "  block, then a counter, each knocking a pipe loose; dizzy: two three-punch combos in a row; scenery: a steady"
+    echo "  6 px a frame pan with each layer's speed on screen"
     echo "- \`clips/level1.mp4\` and \`frames/level1.png\` (a frame every 5 s): level 1 played through by the bot: four"
     echo "  waves along the street (it locks at each until they're beaten), food and first aid lying about, the stairs, the"
     echo "  boss upstairs; three lives. A grey placeholder layout until the team's lands. How it went: $LEVEL_RESULT"

@@ -20,7 +20,8 @@ func _initialize() -> void:
 		f.step({"punch": true})
 		if f.state == "cross":
 			last_ok = k
-	print("combo: a press up to %d free frames after a blow ends continues the chain; at %d it starts a new one" % [last_ok, last_ok + 1])
+	# k empty frames, then the press: the press comes k + 1 frames after the frame the blow ended on
+	print("combo: a press up to %d frames after a blow ends continues the chain; at %d it starts a new one" % [last_ok + 1, last_ok + 2])
 	# early press: how many frames before a blow ends a press is kept
 	var early := -1
 	for k in range(1, 20):
