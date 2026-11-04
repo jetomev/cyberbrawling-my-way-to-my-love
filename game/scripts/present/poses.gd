@@ -995,6 +995,7 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 			_lift_knee(out, side)
 			_settle_foot(out, side, grounded)
 	_cover(out, pose)
+	_hold(out, pose)
 	return out
 
 
@@ -1028,6 +1029,125 @@ static func _cover(out: Dictionary, pose: Dictionary) -> void:
 		out[upper] = lerpf(out[upper], rad_to_deg(arm - root[1]) - BONES[upper][2], c)
 		out[lower] = lerpf(out[lower], rad_to_deg(fore - arm) - BONES[lower][2], c)
 		out[hand] = lerpf(out[hand], rad_to_deg(-PI / 2.0 - fore) - BONES[hand][2], c)
+
+
+## Weapons held as they're really used (Javier, 2026-11-04; the team's grips and pose sheets, art-in 2026-11-04-weapon-
+## grips-v2 and -weapon-poses): never over the shoulder. Each weapon's Ready, where the weapon hand sits from the hip
+## joint (forward, up) and where the weapon points (degrees, 0 = straight at the enemy, -90 = straight up), whether both
+## hands hold it, and its block. Heights from the hip: belt about 0, navel -20, chest -60, chin -95, head -115.
+const WEAPON_READY := {
+	"knife": {"at": Vector2(34, -10), "wpn": 0.0},  # belt height, close, blade forward and level
+	"stick": {"at": Vector2(46, -112), "wpn": -100.0},  # head height in front of the face, tip up and a little back
+	"pipe": {"at": Vector2(58, -90), "wpn": -48.0},  # chin height in front, tip up and forward, elbow bent
+	"wrench": {"at": Vector2(44, -62), "wpn": -35.0},  # chest height, jaw forward, tighter
+	"bat": {"at": Vector2(36, -26), "wpn": -45.0, "two": true},  # hands at the belly, a diagonal, tip at the enemy's head
+	"baguette": {"at": Vector2(36, -26), "wpn": -45.0, "two": true},  # held like the bat (Pippin)
+	"sword": {"at": Vector2(42, -20), "wpn": -18.0, "two": true},  # a fist before the navel, point at his throat
+	"lovelight": {"at": Vector2(42, -20), "wpn": -18.0, "two": true},  # as the sword
+	"cane": {"at": Vector2(48, -40), "wpn": -8.0},  # a fencer: point at your chest (Madame Chrome)
+	"baton": {"at": Vector2(46, -105), "wpn": -60.0},  # up in front at head height, tip forward (Mr. Static)
+	"mic_stand": {"at": Vector2(40, -45), "wpn": -10.0, "two": true},  # a staff across the body (DJ Volt)
+}
+const WEAPON_REST := 80.0  # walking, standing easy: the weapon hangs low at his side, tip down (a little forward)...
+## ...a long one angled forward so its tip just reaches the street (the Bruiser's pipe tip on the floor, roster v5):
+## how far each reaches past the fist (the drawn length less the grip), and the fist's height when it hangs.
+const WEAPON_REACH := {"knife": 38.0, "stick": 112.0, "pipe": 102.0, "wrench": 62.0, "bat": 112.0, "baguette": 112.0,
+	"sword": 142.0, "lovelight": 152.0, "mic_stand": 152.0, "cane": 122.0, "baton": 92.0}
+const HANG_HEIGHT := 92.0
+const WEAPON_SWING_REL := -78.0  # in a swing (till each weapon's own swings are drawn): through the fist, as before
+const FENCE := Vector2(50, -70)  # the free hand with a one-handed weapon: up before the chest, open (a fence)
+const BLOCK_AT := Vector2(46, -55)  # blocking: the weapon held across the body before the chest
+const READY_STATES := ["idle", "walk", "to_fight"]
+## The weapon's own blows (it moves with the arm through the fist) and lying on the street (it goes where the arm goes);
+## anything else armed, a kick among them, keeps the weapon in its Ready ("kicks with the weapon held in its Ready
+## place, not swung about": the pose sheet).
+const WEAPON_MOVES := ["swing", "backswing", "smash", "rising_swing", "handle_jab", "chop", "low_swing", "throw"]
+const LYING_STATES := ["knockdown", "down", "get_up", "launch", "ko", "tumble", "held", "land_hard"]
+const BLOCK_STATES := ["block", "block_hit"]
+const REST_STATES := ["stand", "stroll", "run", "to_walk"]
+
+
+## The weapon in hand on top of a pose: hold keys for bake (_hold) and the weapon's own angle. Every pose with a
+## weapon carries all the keys (0 when unused), so a blend from one pose to the next moves them smoothly.
+static func armed(pose: Dictionary, state: String, weapon: String) -> Dictionary:
+	if weapon == "":
+		return pose
+	var out := pose.duplicate()
+	var g: Dictionary = WEAPON_READY.get(weapon, WEAPON_READY["pipe"])
+	var two: bool = g.get("two", false)
+	for k in ["hold_f", "hold_b", "wpn_hold"]:
+		out[k] = 0.0
+	out["hold_fx"] = g["at"].x
+	out["hold_fy"] = g["at"].y
+	out["hold_bx"] = FENCE.x
+	out["hold_by"] = FENCE.y
+	out["wpn"] = g["wpn"]
+	out["wpn_len"] = 1.0
+	var relaxed: bool = pose.get("relaxed", 0.0) >= 0.5
+	if state in REST_STATES or (relaxed and state in READY_STATES):
+		var reach: float = WEAPON_REACH.get(weapon, 100.0)
+		out["wpn"] = minf(WEAPON_REST, rad_to_deg(asin(minf(1.0, HANG_HEIGHT / reach))))  # hanging low, tip down
+		out["wpn_hold"] = 1.0
+	elif not state in WEAPON_MOVES and not state in LYING_STATES:
+		var at: Vector2 = g["at"]
+		var dir_deg: float = g["wpn"]
+		if state in BLOCK_STATES:
+			if weapon == "knife":  # never with the blade: the knife hand back to the hip, the free forearm up (Pippin)
+				at = Vector2(22, -6)
+				dir_deg = 0.0
+				out["cover_b"] = 1.0
+			else:
+				at = BLOCK_AT
+				dir_deg = 0.0
+				out["wpn_len"] = 0.45  # across the body: seen end-on from the side, it draws short
+		out["hold_fx"] = at.x
+		out["hold_fy"] = at.y
+		out["hold_f"] = 1.0
+		out["cover_f"] = 0.0
+		out["wpn"] = dir_deg
+		out["wpn_hold"] = 1.0
+		if two:  # the other hand on the handle, a fist further down it
+			var down := at - Vector2.from_angle(deg_to_rad(dir_deg)) * 17.0
+			out["hold_bx"] = down.x
+			out["hold_by"] = down.y
+			out["hold_b"] = 1.0
+			out["cover_b"] = 0.0
+		elif not (weapon == "knife" and state in BLOCK_STATES):
+			out["hold_b"] = 1.0  # the free hand up, open, a fence
+			out["cover_b"] = 0.0
+			out["open_b"] = 1.0
+	return out
+
+
+## Brings a weapon hand (and a two-handed weapon's other hand, or the free hand's fence) to where the pose holds it, by
+## a two-bone solve of the arm from the hip joint's spot (the elbow down); then works out the weapon's angle in the
+## hand ("wpn_rel") from the way it should point.
+static func _hold(out: Dictionary, pose: Dictionary) -> void:
+	var hip := Vector2(pose.get("hip_x", 0.0), BONES["hip"][1].y + pose.get("hip_y", 0.0))
+	for side in ["f", "b"]:
+		var c: float = pose.get("hold_" + side, 0.0)
+		if c <= 0.0:
+			continue
+		var upper: String = "arm_%s_upper" % side
+		var lower: String = "arm_%s_lower" % side
+		var target: Vector2 = hip + Vector2(pose.get("hold_%sx" % side, 0.0), pose.get("hold_%sy" % side, 0.0))
+		var root: Array = _end("shoulder_" + side, out)
+		var l1: float = BONES[upper][3]
+		var l2: float = BONES[lower][3]
+		var to: Vector2 = target - root[0]
+		var d := clampf(to.length(), absf(l1 - l2) + 0.5, l1 + l2 - 0.5)
+		var cos_a := clampf((l1 * l1 + d * d - l2 * l2) / (2.0 * l1 * d), -1.0, 1.0)
+		var arm := to.angle() + acos(cos_a)  # the elbow below the line: down
+		var elbow: Vector2 = root[0] + Vector2(l1, 0).rotated(arm)
+		var fore := (target - elbow).angle()
+		out[upper] = lerpf(out[upper], rad_to_deg(arm - root[1]) - BONES[upper][2], c)
+		out[lower] = lerpf(out[lower], rad_to_deg(fore - arm) - BONES[lower][2], c)
+		out["hand_" + side] = lerpf(out["hand_" + side], 0.0, c)
+	if pose.has("wpn"):
+		var hand: Array = _end("hand_f", out)
+		var rel: float = wrapf(pose["wpn"] - rad_to_deg(hand[1]), -180.0, 180.0)
+		out["wpn_rel"] = rad_to_deg(lerp_angle(deg_to_rad(WEAPON_SWING_REL), deg_to_rad(rel), clampf(pose.get("wpn_hold", 0.0), 0.0, 1.0)))
+		out["wpn_len"] = pose.get("wpn_len", 1.0)
 
 
 static func _planted(out: Dictionary, side: String) -> bool:

@@ -2,7 +2,7 @@ extends SceneTree
 ## Draws poses side by side, large, on a plain street, and quits after a few frames: for judging a stance or a moment
 ## of a move by eye (Javier, 2026-11-02 morning: "more attention to detail"). Run windowed through scripts/pose_sheet.sh,
 ## which records the frame. Arguments after "--": state:tick[:air] ..., e.g. idle:0 cross:active air_kick:3:air (a tick,
-## or a moment name: windup, sweep, active, follow)
+## or a moment name: windup, sweep, active, follow; a fourth part puts a weapon in his hand: idle:0:ground:pipe)
 
 const Poses := preload("res://scripts/present/poses.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
@@ -42,7 +42,9 @@ func _initialize() -> void:
 		v.position = Vector2(step * (i + 0.5) - 20, 820 - (120 if air else 0))
 		v.scale = Vector2.ONE * SCALE
 		stage.add_child(v)
-		v.apply(Poses.angles(state, tick, t), not air)
+		var weapon: String = bits[3] if bits.size() > 3 else ""  # (a fourth part: the weapon in hand, e.g. idle:0:ground:pipe)
+		v._show_weapon(weapon)
+		v.apply(Poses.armed(Poses.angles(state, tick, t), state, weapon), not air)
 		var label := Label.new()
 		label.text = items[i]
 		label.position = Vector2(step * i + 12, 860)

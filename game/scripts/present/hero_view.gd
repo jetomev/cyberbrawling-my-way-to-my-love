@@ -22,6 +22,7 @@ const BLEND_TICKS := 6
 const AIR := ["air_kick", "hammer_fist"]  # (a plain jump already lands smoothly: test_landing)
 const LANDING := ["land", "idle", "stand", "walk", "stroll", "run"]
 const LAND_BLEND_TICKS := 18
+const ARMED_BLEND_TICKS := 4
 ## Pain on the drawing (D-9, no blood): each part's tint by its stage, fresh / bruised (purple) / swollen (red, and a
 ## swollen head puffs up) / broken (dark); the grey-box stand-in for the real art's damage sheets.
 const PAIN_TINT := [Color.WHITE, Color(0.9, 0.78, 1.05), Color(1.12, 0.72, 0.74), Color(0.78, 0.55, 0.62)]
@@ -172,6 +173,7 @@ func sync(f, ground_y: float) -> void:
 	shadow.position.y = -floor_y / scale.y  # under his feet on whatever he stands on (a crate, a step, a landing)
 	shadow.scale = Vector2.ONE * (1.0 - clampf((f.y - floor_y) / 200.0, 0.0, 1.0) * 0.45)  # smaller the higher above it
 	var pose := Poses.landing(Poses.angles(f.state, f.t, f.tune), since_touch if grounded else -1, f.y - floor_y, f.vy < 0.0)
+	pose = Poses.armed(pose, f.state, f.weapon)  # a weapon held as it's really used (the team's grips and pose sheets)
 	pose["tumble_dir"] = float(f.roll_dir)
 	# a broken arm hangs, bent wrong at the elbow, unless he's throwing a blow with it
 	var striking := ""
@@ -187,6 +189,11 @@ func sync(f, ground_y: float) -> void:
 		blend_from = last_pose
 		blend_left = BLEND_TICKS
 		blend_total = BLEND_TICKS
+	elif f.state != last_state and f.weapon != "" and not last_pose.is_empty() and last_pose.has("wpn"):
+		# armed: into a swing from the weapon's Ready and back again, the arms and the weapon move, not jump
+		blend_from = last_pose
+		blend_left = ARMED_BLEND_TICKS
+		blend_total = ARMED_BLEND_TICKS
 	elif f.state != last_state and last_state in AIR and f.state in LANDING and not last_pose.is_empty():
 		# touching down out of a jump or an air blow: the arms and legs come from where they were in the air (the
 		# testers, f744019: the flying kick's landing was abrupt, a 155 px jump of a hand in one frame)
@@ -196,6 +203,11 @@ func sync(f, ground_y: float) -> void:
 	last_state = f.state
 	if blend_left > 0:
 		var mixed := Poses.blend(blend_from, pose, 1.0 - float(blend_left) / (blend_total + 1))
+		if blend_total == ARMED_BLEND_TICKS:
+			for k in pose:  # (only the arms and the weapon: the legs and hips keep the move's own timing)
+				if not ((k as String).begins_with("arm_") or (k as String).begins_with("hand_") or (k as String).begins_with("hold_") \
+						or (k as String).begins_with("wpn") or (k as String).begins_with("cover_") or (k as String).begins_with("open_")):
+					mixed[k] = pose[k]
 		if blend_total == LAND_BLEND_TICKS:
 			# landing: only the upper body comes from the air; the legs and feet take the landing as it is, so the
 			# planted feet stay where they touched down
@@ -231,7 +243,7 @@ func _show_weapon(kind: String) -> void:
 	if weapon_node == null:
 		weapon_node = Polygon2D.new()
 		weapon_node.name = "Weapon"
-		weapon_node.rotation_degrees = -78.0  # held through the fist, pointing up and forward from the hand
+		weapon_node.rotation_degrees = Poses.WEAPON_SWING_REL  # (turned every frame in apply(): its own angle in the hand)
 		weapon_node.z_index = 1
 		bones["hand_f"].add_child(weapon_node)
 	weapon_node.visible = WEAPON_LOOK.has(kind)
@@ -282,6 +294,9 @@ func apply(pose: Dictionary, grounded := true) -> void:
 	for name in bones:
 		var bone: Bone2D = bones[name]
 		bone.rotation_degrees = Poses.BONES[name][2] + baked[name]
+	if weapon_node != null:  # the weapon's own angle in the hand (Poses._hold), and how long it draws (end-on: short)
+		weapon_node.rotation_degrees = baked.get("wpn_rel", Poses.WEAPON_SWING_REL)
+		weapon_node.scale.x = baked.get("wpn_len", 1.0)
 	bones["hip"].position = Poses.BONES["hip"][1] + Vector2(baked["hip_x"], baked["hip_y"])
 	# a spin turns the whole body around the up axis. It never squashes him thin (the assistant team's third review:
 	# a turn that flattens him to a line reads wrong): the arms and legs keep their thickness, only the chest narrows
