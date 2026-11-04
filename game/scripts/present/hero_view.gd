@@ -366,7 +366,7 @@ func apply(pose: Dictionary, grounded := true) -> void:
 	# a roll ("tumble") turns the whole drawing round about the hips, the way the roll goes along the street, and keeps
 	# its lowest point on the street: he rolls along it, never through it
 	body.rotation = 0.0
-	body.position = Vector2(0.0, body_y)
+	body.position = Vector2(0.0, body_y - baked.get("hop", 0.0))  # (a hop drawn off the street: the sword's jumping slash)
 	# turning on one planted foot, the drawing turns about that foot's ball: it stays where it was planted while the heel
 	# swings round it and the body comes round over it (the testers, 02:29 on 0922751: the sweep's supporting foot
 	# jumped across in a single frame as he spun; "keep the same forefoot planted, turn the heel around it")

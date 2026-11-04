@@ -14,6 +14,7 @@ const HeroView := preload("res://scripts/present/hero_view.gd")
 const WEAPONS := ["knife", "stick", "pipe", "wrench", "bat", "baguette", "sword", "lovelight"]
 const HOLD := 24  # frames a grip or a block close-up holds
 const CLOSE := 4.4  # how big a close-up draws him
+const FOE_AT := 130.0  # where the opponent stands, ahead of him (about a weapon's reach)
 const PAD := 6  # Ready frames before and after each blow
 ## Each punch-side press armed, and what it's called in the combos (Weapons.ARMED).
 const PRESSES := {"swing": "P, 1st (the jab's place)", "backswing": "P P, 2nd (the cross's place)",
@@ -29,6 +30,7 @@ var seg := 0
 var tick := 0
 var frame := 0
 var view
+var foe  # an opponent standing in reach, facing him, so contact can be judged (the testers on 2168465)
 var label: Label
 var tune := Tuning.fresh()
 
@@ -49,6 +51,10 @@ func _initialize() -> void:
 	view = HeroView.new()
 	view.z_index = 10
 	root.add_child(view)
+	foe = HeroView.new(Color(1.0, 0.75, 0.55))
+	foe.z_index = 9
+	foe.facing = -1
+	root.add_child(foe)
 	label = Label.new()
 	label.position = Vector2(16, 12)
 	label.add_theme_font_size_override("font_size", 22)
@@ -86,6 +92,9 @@ func _start(i: int) -> void:
 	var close: bool = s[3] in ["grip", "block"]
 	view.scale = Vector2.ONE * (CLOSE if close else 2.0)
 	view.position = Vector2(520, 600 - (110 if s[6] else 0))
+	foe.visible = not close
+	foe.scale = Vector2.ONE * 2.0
+	foe.position = Vector2(520 + FOE_AT * 2.0, 600)
 	if close:  # up close on the hands (the testers on b24110b: the grips and blocks were unclear): the weapon hand mid-screen
 		var pose: Dictionary = Poses.armed(Poses.angles(s[4], 0, tune), s[4], s[0], 0, tune)
 		var baked: Dictionary = Poses.bake(pose, true)
@@ -115,6 +124,8 @@ func _process(_delta: float) -> bool:
 			phase = "wind-up" if t < d["startup"] else ("CONTACT" if t < d["startup"] + d["active"] else "follow-through, recovering")
 	var pose: Dictionary = Poses.armed(Poses.angles(state, t, tune), state, s[0], t, tune)
 	view.apply(pose, not s[6] or state == "idle")
+	if foe.visible:
+		foe.apply(Poses.angles("idle", tick, tune), true)
 	label.text = "%s\nframe %d of %d%s" % [s[2], tick + 1, _length(s), ("  ·  " + phase) if phase != "" else ""]
 	tick += 1
 	frame += 1

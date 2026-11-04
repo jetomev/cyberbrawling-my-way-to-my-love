@@ -1056,8 +1056,8 @@ const WEAPON_REACH := {"knife": 38.0, "stick": 112.0, "pipe": 102.0, "wrench": 6
 const HANG_HEIGHT := 92.0
 const WEAPON_SWING_REL := -78.0  # in a swing (till each weapon's own swings are drawn): through the fist, as before
 const FENCE := Vector2(50, -70)  # the free hand with a one-handed weapon: up before the chest, open (a fence)
-const BLOCK_AT := Vector2(54, -58)  # blocking: the weapon hand before the chest, the weapon standing up before the face
-const BLOCK_ANGLE := -80.0  # (a little forward of upright)
+const BLOCK_FACE := ["stick", "pipe", "wrench"]  # these block before the face; the rest at chest height (the team's page)
+const BLOCK_LEN := 0.65  # a block's bar, seen a little from the side: most of the weapon's length
 ## Each weapon's own blows (the pose sheet, art-in 2026-11-04-weapon-poses): where the weapon points at the wind-up,
 ## at contact and at the follow-through (degrees as above: 0 at the enemy, -90 up, 90 down); from its Ready before
 ## and back to it after. By the weapon, else its kind. The arms keep the swings' shared shapes for now; the weapon's
@@ -1083,6 +1083,7 @@ const OWN_HANDS := {"wrench": {"smash": [Vector2(10, -125), Vector2(76, -96), Ve
 ## Finishers that end standing (the testers on b24110b: the sword's ended on the ground, the bat's swung down): the
 ## body keeps its height through them; only the pipe's floor smash goes down with it.
 const LOW_FINISHERS := ["pipe"]
+const SWORD_HOP := 70.0  # how high the sword's jumping slash lifts him
 const TRACK_KIND := {"knife": "knife", "stick": "stick", "bat": "two", "baguette": "two", "mic_stand": "two",
 	"sword": "blade", "lovelight": "blade", "cane": "blade"}  # (any other: heavy)
 ## And where the weapon hand goes in each (from the hip joint, as WEAPON_READY): wind-up, contact, follow-through.
@@ -1180,6 +1181,11 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 				track[state] = own
 			out["wpn"] = _along(keys, [g["wpn"]] + track[state] + [g["wpn"]], t)
 			out["wpn_hold"] = 1.0
+			if state == "smash" and family == "blade":
+				# the sword's (and Lovelight's) long jumping slash: up off the street from the wind-up, the cut at the top,
+				# down by the follow-through (the pose sheet; the testers on 2168465: the jump was missing)
+				var q: float = clampf(float(t - keys[1]) / maxf(1.0, keys[3] - keys[1]), 0.0, 1.0)
+				out["hop"] = SWORD_HOP * sin(PI * q)
 			if state == "smash" and not weapon in LOW_FINISHERS:
 				out["hip_y"] = minf(pose.get("hip_y", 0.0), 6.0)  # (standing through it, not down on the street)
 				out["torso"] = minf(pose.get("torso", 0.0), 18.0)
@@ -1237,25 +1243,35 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 				out["cover_" + o] = 1.0
 			elif weapon in ["shield", "wok"]:
 				pass  # a shield blocks where it's held: up in front, chin to knee
-			elif TRACK_KIND.get(weapon, "") == "blade":
-				at = Vector2(44, -70)  # a blade blocks upright before him, the edge out, both hands at chin height (a sword's guard)
-				dir_deg = -78.0
 			else:
-				at = BLOCK_AT  # an upright guard before the chest and face (the chief of staff, 2168465: the end-on stub at the
-				dir_deg = BLOCK_ANGLE  # face didn't read as a guard), the free hand on the shaft or both hands on it
+				# across the body like a bar, hands apart (the team's grips page v2, Blocking): the stick, pipe and wrench
+				# raised across before the face, the free hand pushing on the far end; the bat, sword and Lovelight across
+				# at chest height, the blade flat. Seen from the side: level, the weapon hand at the front end and the bar
+				# running back across him, long enough to read (not the end-on stub the testers sent back)
+				var high: bool = weapon in BLOCK_FACE
+				at = Vector2(60, -94 if high else -62)
+				dir_deg = 180.0
+				out["wpn_len"] = BLOCK_LEN
 		out["hold_%sx" % w] = at.x
 		out["hold_%sy" % w] = at.y
 		out["hold_" + w] = 1.0
 		out["cover_" + w] = 0.0
 		out["wpn"] = dir_deg
 		out["wpn_hold"] = 1.0
-		if two:  # the other hand on the handle, a fist further down it
+		if two and state in BLOCK_STATES:  # blocking two-handed: hands apart on the bar, the other near its far end
+			var span: float = WEAPON_REACH.get(weapon, 100.0) * BLOCK_LEN - 10.0
+			out["hold_%sx" % o] = at.x - span
+			out["hold_%sy" % o] = at.y
+			out["hold_" + o] = 1.0
+			out["cover_" + o] = 0.0
+		elif two:  # the other hand on the handle, a fist further down it
 			out["grip_o"] = 1.0
 			out["cover_" + o] = 0.0
 		elif state in BLOCK_STATES and weapon != "knife" and not weapon in ["shield", "wok"]:
-			var up: Vector2 = at + Vector2.from_angle(deg_to_rad(dir_deg)) * 46.0  # blocking one-handed: the free hand
-			out["hold_%sx" % o] = up.x  # flat on the shaft, higher up, bracing it
-			out["hold_%sy" % o] = up.y
+			var reach: float = WEAPON_REACH.get(weapon, 100.0) * BLOCK_LEN  # blocking one-handed: the free hand pushing on
+			var far_end: Vector2 = at + Vector2(-(reach - 6.0 if weapon != "wrench" else reach + 8.0), 0)  # the far end (just
+			out["hold_%sx" % o] = far_end.x  # behind it for the wrench: the team's page)
+			out["hold_%sy" % o] = far_end.y
 			out["hold_" + o] = 1.0
 			out["cover_" + o] = 0.0
 			out["open_" + o] = 1.0
@@ -1273,6 +1289,7 @@ static func _hold(out: Dictionary, pose: Dictionary) -> void:
 	out["wpn_side"] = pose.get("wpn_side", 0.0)  # (for the drawing: which hand holds it, and a switched stance)
 	out["switched"] = pose.get("switched", 0.0)
 	out["wpn_centre"] = pose.get("wpn_centre", 0.0)
+	out["hop"] = pose.get("hop", 0.0)
 	var hip := Vector2(pose.get("hip_x", 0.0), BONES["hip"][1].y + pose.get("hip_y", 0.0))
 	for side in ["f", "b"]:
 		var c: float = pose.get("hold_" + side, 0.0)
