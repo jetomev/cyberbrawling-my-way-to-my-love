@@ -94,7 +94,7 @@ func _start(i: int) -> void:
 	view.position = Vector2(520, 600 - (110 if s[6] else 0))
 	foe.visible = not close
 	foe.scale = Vector2.ONE * 2.0
-	foe.position = Vector2(520 + FOE_AT * 2.0, 600)
+	foe.position = Vector2(520 + _foe_at(s[0]) * 2.0, 600)
 	if close:  # up close on the hands (the testers on b24110b: the grips and blocks were unclear): the weapon hand mid-screen
 		var pose: Dictionary = Poses.armed(Poses.angles(s[4], 0, tune), s[4], s[0], 0, tune)
 		var baked: Dictionary = Poses.bake(pose, true)
@@ -102,6 +102,11 @@ func _start(i: int) -> void:
 		var head: Vector2 = Poses._end("head", baked)[0]  # (the head in frame too: the chief of staff, 2168465)
 		view.position = Vector2(640, 380) - hand.lerp(head, 0.45) * CLOSE
 	print("SEG %s %s %d %d %s" % [s[0], s[1], frame, frame + _length(s) - 1, s[2]])
+
+
+## Where the opponent stands: about the weapon's reach, so a long blade has room (the testers on eda22ca).
+func _foe_at(weapon: String) -> float:
+	return maxf(FOE_AT, Weapons.TABLE.get(weapon, {}).get("reach", 0.0) * 0.85)
 
 
 func _length(s: Array) -> int:

@@ -1204,6 +1204,8 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 				out["hold_" + w] = 1.0
 				out["hold_%sx" % w] = _along_v(keys, path, t).x
 				out["hold_%sy" % w] = _along_v(keys, path, t).y
+				if out.get("hop", 0.0) > 0.0:  # in the air: the cut stays at his opponent's chest (the testers on eda22ca), the
+					out["hold_%sy" % w] += out["hop"]  # hands coming down by as much as he rises
 				out["cover_" + w] = 0.0
 			if state == "smash" and weapon == "knife" and t >= 1 and t < keys[1]:
 				# the knife's finisher opens with three quick stabs, a frame each, before the spin (the pose sheet)
@@ -1230,8 +1232,8 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 				out["cover_" + o] = 0.0
 			else:
 				out["hold_" + o] = 1.0  # the free hand back to the chest, a guard (the sheet: "pulled back to the chest");
-				out["hold_%sx" % o] = 32.0 if weapon != "knife" else 40.0  # the knife's kept up at the face (a tester, 11-04)
-				out["hold_%sy" % o] = -62.0 if weapon != "knife" else -92.0
+				out["hold_%sx" % o] = 32.0 if weapon != "knife" else 40.0  # (the knife's a little forward: kept up at the chest,
+				out["hold_%sy" % o] = -62.0  # the testers on eda22ca)
 				out["cover_" + o] = 0.0
 				out["open_" + o] = 1.0
 	elif not state in WEAPON_MOVES and not state in LYING_STATES:
