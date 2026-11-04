@@ -30,6 +30,10 @@ func step(fighters: Array, left: float, right: float) -> Array:
 		if p["x"] < left - 200.0 or p["x"] > right + 200.0:
 			p["alive"] = false
 			continue
+		if p.has("range") and absf(p["x"] - p["x_from"]) > p["range"]:
+			p["alive"] = false  # a thrown weapon at the end of its flight: it drops (level.gd lays it on the street)
+			events.append({"target": null, "result": "landed", "kind": p["kind"], "projectile": p})
+			continue
 		for f in fighters:
 			if f.team == p["team"] or absf(f.x - p["x"]) > BODY_HALF_WIDTH or absf(f.z - p["z"]) > DEPTH:
 				continue
@@ -38,6 +42,11 @@ func step(fighters: Array, left: float, right: float) -> Array:
 			# the blow comes from where it flies from: a fighter-like stand-in for take_hit's "attacker"
 			var from := {"x": p["x"] - signf(p["vx"]) * 10.0, "y": 0.0}
 			var blow := {"damage": p["damage"], "effect": p["effect"], "low": p["y0"], "high": p["y1"], "move": p["kind"]}
+			if p.get("catchable", false) and f.catches and f.weapon == "" and signf(p["vx"]) == -float(f.facing):
+				f.take_weapon(p["kind"])  # caught out of the air, and his now (the Godfather)
+				p["alive"] = false
+				events.append({"target": f, "result": "caught", "kind": p["kind"], "projectile": p})
+				break
 			var result: String = f.take_hit(blow, from)
 			if result == "":
 				continue  # lying down: it flies over

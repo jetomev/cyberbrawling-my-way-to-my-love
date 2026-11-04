@@ -262,7 +262,7 @@ func think() -> Dictionary:
 		wait = kind["records_every"]
 		if me.facing != int(toward):
 			inp["mx"] = toward * 0.01
-		inp["throw"] = true
+		inp["records"] = true  # (his records, not the throw of a weapon in hand)
 		return inp
 	if to_the_stairs(me, foe, inp):
 		return inp

@@ -25,6 +25,11 @@ const TABLE := {
 	"baton": {"damage": 1.0, "reach": 140.0, "speed": 0, "hits": 999, "smash": "stagger"},  # Mr. Static's crackling baton
 }
 
+## How far each flies when thrown (px; the knife spins furthest), and the default for the rest
+const THROW_RANGE := {"knife": 900.0}
+const THROW_RANGE_DEFAULT := 650.0
+const THROW_SPEED := 14.0
+
 ## The fist move each press becomes with a weapon in hand (the rest stay as they are).
 const ARMED := {"punch": "swing", "cross": "backswing", "power_punch": "smash", "uppercut": "rising_swing",
 	"elbow": "handle_jab", "hammer_fist": "chop"}

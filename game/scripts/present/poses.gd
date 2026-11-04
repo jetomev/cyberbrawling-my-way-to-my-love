@@ -492,6 +492,13 @@ const SHOTS := {
 		["active_end", {"cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0, "arm_f_upper": -96.0, "arm_f_lower": 0.0, "arm_b_upper": -88.0, "arm_b_lower": -5.0, "torso": 24.0, "hip_x": 22.0, "step_f": 26.0}],
 		["follow", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -96.0, "arm_f_lower": -40.0, "arm_b_upper": -88.0, "arm_b_lower": -40.0, "torso": 26.0, "hip_x": 26.0, "step_f": 28.0}],
 		["end", {}]],
+	# the weapon thrown: the arm cocks back high behind the head, the hips and chest drive, the arm whips through
+	"throw": [["start", {}],
+		["windup", {"cover_f": 0.0, "arm_f_upper": 150.0, "arm_f_lower": -70.0, "torso": -10.0, "hip_x": -10.0, "turn": -20.0}],
+		["active", {"cover_f": 0.0, "arm_f_upper": -95.0, "arm_f_lower": 0.0, "torso": 20.0, "hip_x": 14.0, "turn": 30.0, "step_f": 16.0}],
+		["active_end", {"cover_f": 0.0, "arm_f_upper": -95.0, "arm_f_lower": 0.0, "torso": 20.0, "hip_x": 14.0, "turn": 30.0, "step_f": 16.0}],
+		["follow", {"cover_f": 0.0, "arm_f_upper": -60.0, "arm_f_lower": 10.0, "torso": 24.0, "hip_x": 16.0, "step_f": 16.0}],
+		["end", {}]],
 	# up out of a duck, the head driving into the face: the hips and chest lunge, the head leads (the Mechanic's)
 	"headbutt": [["start", {}],
 		["windup", {"torso": -16.0, "head": -12.0, "hip_x": -10.0, "hip_y": -14.0}],

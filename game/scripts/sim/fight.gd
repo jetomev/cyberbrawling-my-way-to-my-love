@@ -24,8 +24,8 @@ func step(fighters: Array, world = null) -> Array:
 	var events := []
 	for a in fighters:
 		var box: Dictionary = a.hit_box()
-		if box.is_empty():
-			continue
+		if box.is_empty() or a.state == "throw":
+			continue  # (a throw's arm hits nothing: the weapon it lets go of does, flying)
 		var blow: Dictionary = a.move()
 		blow["finisher"] = Moves.is_finisher(a.state)
 		blow["move"] = a.state

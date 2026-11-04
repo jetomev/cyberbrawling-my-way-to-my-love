@@ -22,6 +22,7 @@ const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
 const Projectiles := preload("res://scripts/sim/projectiles.gd")
 const Tutor := preload("res://scripts/sim/tutor.gd")
+const Weapons := preload("res://scripts/sim/weapons.gd")
 
 ## Enemy types by name: health, how they fight (brain.gd tables), what they drop when put down for good, and blows
 ## that don't make them flinch. From the team's enemy table (art-in 2026-11-03): the Glow Punk, the warm-up (slap,
@@ -314,6 +315,7 @@ func step(inp: Dictionary) -> void:
 	tune["street_left"] = b.x
 	tune["street_right"] = b.y
 	hero.step(inp)
+	_release(hero)
 	_take_turns()
 	_twins()
 	if friend != null and on == 0:
@@ -322,7 +324,7 @@ func step(inp: Dictionary) -> void:
 		if not e["gone"]:
 			e["was"] = [e["f"].x, e["f"].y, e["f"].z]  # where he stood, should the stairs be full
 			var think: Dictionary = e["brain"].think()
-			if think.get("throw", false):
+			if think.get("records", false):
 				e["volley"] = RECORDS.duplicate()  # his records go one after another
 				e["volley_at"] = tick
 			if think.get("hurl", false) and e["f"].weapon != "":
@@ -334,6 +336,7 @@ func step(inp: Dictionary) -> void:
 			think = _crane_cab(e, think)
 			_volley(e)
 			e["f"].step(think)
+			_release(e["f"])
 	var all := everyone()
 	for id in world.step_hits(all):  # something smashed: whatever was inside falls out
 		var o: Dictionary = world.objects[id]
@@ -403,6 +406,20 @@ func _bass_drop() -> void:
 		events.append({"target": hero, "result": "bass", "kind": "bass"})
 
 
+## A fighter's throw at its release frame: the weapon leaves his hand and flies (catchable, landing where its flight
+## ends, or a step past whoever it meets), hurting a little more than a swing.
+func _release(f) -> void:
+	if f.state != "throw" or f.t != int(Moves.data("throw", f.tune)["startup"]) or f.weapon == "":
+		return
+	var what: String = f.drop_weapon()
+	var dir := float(f.facing)
+	var p: Dictionary = projectiles.throw(what, f.x + dir * 40.0, f.z, 140.0, 230.0, dir * Weapons.THROW_SPEED,
+		Weapons.TABLE[what]["damage"] + 1.0, f.team, "stagger")
+	p["catchable"] = true
+	p["range"] = Weapons.THROW_RANGE.get(what, Weapons.THROW_RANGE_DEFAULT)
+	events.append({"target": f, "result": "thrown", "kind": what})
+
+
 ## The Wrench Mechanic hurls his weapon (the team's roster): it flies at the hero; a perfect block catches it (his
 ## now); landing on someone or flying past, it falls to the street.
 func _hurl(f) -> void:
@@ -419,8 +436,8 @@ func _hurl(f) -> void:
 func _roster_tricks() -> void:
 	for ev in events:
 		var p = ev.get("projectile")
-		if p != null and p.get("catchable", false) and ev["result"] in ["hit", "blocked", "evaded"]:
-			world.drop(p["kind"], clampf(p["x"] + signf(p["vx"]) * Fight.FLY, 0.0, floors[on]["length"]), p["z"])
+		if p != null and p.get("catchable", false) and ev["result"] in ["hit", "blocked", "evaded", "landed", "parried", "dodged", "shielded"]:
+			world.drop(p["kind"], clampf(p["x"] + signf(p["vx"]) * Fight.FLY * (0.0 if ev["result"] == "landed" else 1.0), 0.0, floors[on]["length"]), p["z"])
 		if ev.get("result", "") in ["dodged", "parried"]:
 			for e in enemies:
 				if e["f"] == ev.get("target"):
@@ -457,7 +474,7 @@ func _roster_tricks() -> void:
 			hug = {}
 		elif tick - hug["at"] >= HUG_TICKS:
 			hero._enter("idle")
-			hero.take_hit({"damage": HURL_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "throw"}, g)
+			hero.take_hit({"damage": HURL_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "bear_hug_throw"}, g)
 			hug["by"]["brain"].wait = 60
 			hug = {}
 

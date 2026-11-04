@@ -70,6 +70,7 @@ var rubber := false  # rubber gloves on (Mr. Static's prize): a perfect block ta
 var slam_in := -1  # frames till his floor slam lands (Mr. Static's), -1 when none: what a watcher reads to jump it
 var charging := false  # winding up for or running a charge (Coach Crusher's tackle): what a watcher reads to step aside
 var no_swing := false  # no room to swing a weapon here (the crane's cab): fists and feet only, the weapon kept
+var catches := false  # a thrown weapon coming at his front is caught, not taken (the Godfather's)
 var grip := false  # a perfect block doesn't knock his weapon loose (a boss's own: Velvet Rook's sword, Mr. Static's baton)
 var gloves := []  # blows his guard takes every time from the front, without raising it (Coach Crusher's big gloves)
 var dodges := []
@@ -116,6 +117,11 @@ func step(inp: Dictionary) -> void:
 		t += 1
 		queue.clear()
 		_react()
+		return
+	if inp.get("throw", false) and weapon != "" and state in GROUND_STATES and not no_swing:
+		vx = 0.0  # the weapon in hand, thrown (level.gd lets it fly at the release)
+		attack_serial += 1
+		_enter("throw")
 		return
 	for own in ["grab", "headbutt"]:  # enemies' own moves (the Grabber's, the Mechanic's): no button reaches them
 		if inp.get(own, false) and state in GROUND_STATES:
