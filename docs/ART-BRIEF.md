@@ -4,6 +4,9 @@
 This is the list of what the game needs, how each piece must come, and where it goes. The look is `docs/STYLE.md`;
 the words for ChatGPT are `docs/PROMPTS.md`; the three free style frames are on the Dailies page (link in `.dailies`).*
 
+**Who organizes it:** the team's chief of staff (Javier, 2026-11-03: the team's own organizer runs the team), who
+decides who makes what, keeps the order below, and is the one point of contact for batches and questions.
+
 ## The rules that don't bend
 - **Money:** only Javier's existing subscriptions (ChatGPT Plus). Anything paid on top (Suno, OpenArt, Runway, a
   sound library) waits for his own yes, with the cost written first.
