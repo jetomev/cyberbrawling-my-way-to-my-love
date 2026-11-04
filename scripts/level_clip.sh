@@ -11,6 +11,7 @@ mkdir -p "$TMP" "$OUT/clips" "$OUT/frames"
 timeout 900 "$ROOT/scripts/capped.sh" godot --path "$ROOT/game" --write-movie "$TMP/level.avi" --fixed-fps 60 \
   --resolution 960x540 -- --bot 2>&1 | grep -v '^Godot Engine' > "$TMP/godot.txt"
 if grep -q 'SCRIPT ERROR' "$TMP/godot.txt"; then cat "$TMP/godot.txt"; echo "FAILED the level has a script error"; exit 1; fi
+if grep -q 'dumped core' "$TMP/godot.txt"; then echo "FAILED Godot crashed as it quit (see the core dump: coredumpctl list godot)"; exit 1; fi
 RESULT="$(grep '^LEVEL ' "$TMP/godot.txt" | tail -1)"
 [ -n "$RESULT" ] || { echo "FAILED the level never ended"; exit 1; }
 ffmpeg -loglevel error -y -i "$TMP/level.avi" -c:v libx264 -crf 28 -pix_fmt yuv420p "$OUT/clips/level1.mp4"

@@ -19,6 +19,7 @@ ln -sfn "$(basename "$LOG")" "$ROOT/logs/record-latest.log"
     --fixed-fps 60 -- --demo "$@" 2>&1 | grep -v '^Godot Engine' | tee "$OUT/godot.txt"
   # a game that fails to load still opens a window and records nothing worth seeing: stop on any script error
   if grep -q 'SCRIPT ERROR' "$OUT/godot.txt"; then echo "FAILED the game has a script error"; exit 1; fi
+  if grep -q 'dumped core' "$OUT/godot.txt"; then echo "FAILED Godot crashed as it quit (coredumpctl list godot)"; exit 1; fi
   N=$(ls "$OUT/frames" | wc -l)
   echo "frames: $N"
   [ "$N" -gt 60 ] || { echo "FAILED too few frames"; exit 1; }

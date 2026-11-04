@@ -26,6 +26,7 @@ BIN="$ROOT/export/linux/cyberbrawling.x86_64"
   OUT="$(timeout 600 "$ROOT/scripts/capped.sh" "$BIN" --headless -- --bot 2>&1)"
   echo "$OUT" | grep -E 'SCRIPT ERROR|LEVEL ' | head -5
   if echo "$OUT" | grep -q 'SCRIPT ERROR'; then echo "FAILED the exported program has a script error"; exit 1; fi
+  if echo "$OUT" | grep -q 'dumped core'; then echo "FAILED the exported program crashed as it quit"; exit 1; fi
   echo "$OUT" | grep -q '^LEVEL WON' || { echo "FAILED the exported program didn't finish level 1"; exit 1; }
   echo "OK exported: $BIN ($(du -h "$BIN" | cut -f1)), plays level 1 through"
 } > "$LOG" 2>&1

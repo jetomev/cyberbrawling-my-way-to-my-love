@@ -368,8 +368,19 @@ func _show_bars() -> void:
 		bars["enemy"][1].size.x = 416.0 * foe.health / foe.max_health
 
 
+## A pad plugged in or out: its sticks start fresh (stick_guard.gd). A method of this node, unhooked as the game closes:
+## a hook left on Input (a lambda, before 2026-11-03) made Godot abort as it quit, on every run since 11-01.
 func _ready_pads() -> void:
-	Input.joy_connection_changed.connect(func(device: int, _connected: bool): Controls.guard.forget(device))
+	Input.joy_connection_changed.connect(_on_pad_change)
+
+
+func _on_pad_change(device: int, _connected: bool) -> void:
+	Controls.guard.forget(device)
+
+
+func _exit_tree() -> void:
+	if Input.joy_connection_changed.is_connected(_on_pad_change):
+		Input.joy_connection_changed.disconnect(_on_pad_change)
 
 
 func _input(event: InputEvent) -> void:

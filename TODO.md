@@ -91,7 +91,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Pain system in grey boxes: damage stages per part, broken arm/leg effects; no blood (solo) (#3) (2026-11-03: head, body, arms, legs go bruised → swollen → broken by where blows land; a broken leg limps, a broken arm hits at half and hangs; heals between levels)
 - [ ] Hit sounds, voices and the crack wired to the fight's events, from the team's sound batch
 - [x] The testers' send-back (2026-11-03): the combo window now ends exactly on its setting (24 frames, was 22 in practice); controlled trials in every build (combo edge, injuries, weapon wear, disarm, dizzy, scenery speeds)
-- [ ] Finding: Godot aborts (SIGABRT) as it quits, every run since 2026-11-01 (126 core dumps), after its work is written; find why before Javier's installable build
+- [x] Finding: Godot aborted (SIGABRT) as it quit, every run since 2026-11-01 (126 core dumps), after its work was written: a lambda hooked on Input's pad signal and never unhooked; now a method, unhooked on exit; every recording and the export fail on a crash from now on
 - [x] Pick up a weapon; it stays in the hand (solo) (2026-11-03: walk over it with an empty hand; drawn in the lead hand)
 - [x] Weapon combos (W,W,W swing, backswing, overhead smash) and each weapon's feel: knife, sword, bat, pipe/wrench, stick (solo) (2026-11-03: holding one, A swings it; each wears out after its hits)
 - [ ] Weapon mixes W,P,K (solo)
@@ -118,7 +118,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] First music cue (level 1, a minute, loops) and 8 sound effects × 3 takes, free drafts on the Dailies page (solo)
 - [ ] Javier listens: music and effects approved or sent back
 - [ ] Level 1 boss upstairs (solo)
-- [ ] Linux build he can install; test matrix in testing/ (solo)
+- [ ] Linux build he can install; test matrix in testing/ (solo) (2026-11-03: scripts/export.sh exports it and the exported program plays level 1 through by itself; left: the installer and launcher entry, the test matrix)
 - [ ] Javier plays level 1 with the matrix
 
 ## Stage 4 · Levels 2–5 (by Sun 31 Jan)

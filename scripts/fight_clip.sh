@@ -11,6 +11,7 @@ mkdir -p "$TMP" "$OUT/clips" "$OUT/frames"
 timeout 300 "$ROOT/scripts/capped.sh" godot --path "$ROOT/game" --write-movie "$TMP/f.png" --fixed-fps 60 \
   --resolution 1280x720 -- --fight 2>&1 | grep -v '^Godot Engine' > "$TMP/godot.txt"
 if grep -q 'SCRIPT ERROR' "$TMP/godot.txt"; then cat "$TMP/godot.txt"; echo "FAILED the fight has a script error"; exit 1; fi
+if grep -q 'dumped core' "$TMP/godot.txt"; then echo "FAILED Godot crashed as it quit (see the core dump: coredumpctl list godot)"; exit 1; fi
 N=$(ls "$TMP" | grep -c '^f.*png$')
 [ "$N" -gt 600 ] || { echo "FAILED too few fight frames ($N)"; exit 1; }
 ffmpeg -loglevel error -y -framerate 60 -i "$TMP/f%08d.png" -c:v libx264 -pix_fmt yuv420p "$OUT/clips/fight.mp4"
