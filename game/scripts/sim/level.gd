@@ -359,6 +359,7 @@ func step(inp: Dictionary) -> void:
 	_stairs()
 	_switches()
 	_waves()
+	_lift()
 	_links()
 	_downs()
 
@@ -781,6 +782,28 @@ func _crane() -> void:
 
 func plan_boss_down() -> bool:
 	return boss_spawned and enemies.filter(func(e): return e["boss"]).all(func(e): return e["f"].defeated())
+
+
+## A glass lift (the team's levels page, level 5: "a fight in a moving glass lift", about six seconds): a floor
+## ({"lift": {"to", "to_x", "ticks"}}) that rides while its fight goes on; once it has ridden its time and its fight
+## is beaten, the doors open on the floor it was going to.
+func _lift() -> void:
+	var lift: Dictionary = plan["floors"][on].get("lift", {})
+	if lift.is_empty():
+		return
+	var fl: Dictionary = floors[on]
+	fl["ride"] = fl.get("ride", 0) + 1
+	if fl["ride"] >= int(lift.get("ticks", 360)) and active_wave < 0 and cleared(on) and hero.on_ground():
+		events.append({"target": hero, "result": "lift_arrives", "kind": "lift"})
+		_go_to(int(lift["to"]), float(lift["to_x"]))
+
+
+## How far the lift has ridden, 0 to 1 (0 when he's not in one): for the view's passing walls.
+func lift_ride() -> float:
+	var lift: Dictionary = plan["floors"][on].get("lift", {})
+	if lift.is_empty():
+		return 0.0
+	return clampf(float(floors[on].get("ride", 0)) / float(lift.get("ticks", 360)), 0.0, 1.0)
 
 
 ## The Crane Operator push-kicked: shoved out of his cab onto a container, and that's it.

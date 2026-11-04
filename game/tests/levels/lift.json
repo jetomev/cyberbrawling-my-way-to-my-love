@@ -1,0 +1,64 @@
+{
+  "name": "a glass lift (a test layout): the street, the lift down with two Snicks in it, the main floor",
+  "floors": [
+    {
+      "name": "the balcony",
+      "length": 1200,
+      "obstacles": [],
+      "items": [],
+      "waves": []
+    },
+    {
+      "name": "the glass lift",
+      "length": 700,
+      "obstacles": [],
+      "items": [],
+      "waves": [
+        {
+          "at": 300,
+          "enemies": [
+            {
+              "kind": "snick",
+              "dx": 200,
+              "z": 80
+            },
+            {
+              "kind": "snick",
+              "dx": 260,
+              "z": 40
+            }
+          ]
+        }
+      ],
+      "lift": {
+        "to": 2,
+        "to_x": 400,
+        "ticks": 360,
+        "down": true
+      }
+    },
+    {
+      "name": "the main floor",
+      "length": 1920,
+      "obstacles": [],
+      "items": [],
+      "waves": []
+    }
+  ],
+  "links": [
+    {
+      "from": 0,
+      "x": 1000,
+      "to": 1,
+      "to_x": 150,
+      "auto": true
+    }
+  ],
+  "switches": [],
+  "boss": {
+    "floor": 2,
+    "x": 1500,
+    "kind": "thug",
+    "health": 8
+  }
+}

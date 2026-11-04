@@ -9,10 +9,7 @@ const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 
 func casino():
 	var l = Level.new(Level.load_data("res://levels/chrome_casino.json"), {}, 1)
-	for i in 400:
-		if l.on == 1:
-			break
-		l.step({"mx": 1.0})
+	l._go_to(2, 300.0)  # (past the doors and the lift: her floor)
 	return l
 
 

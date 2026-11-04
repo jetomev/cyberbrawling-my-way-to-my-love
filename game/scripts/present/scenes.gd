@@ -1,7 +1,7 @@
 extends RefCounted
 ## Scripted runs on the real levels, for the testers' picture proof of what lives in a level rather than on a bare
 ## street (their ask, 2026-11-04). main.gd plays one with --level <file> --scene <name>; scripts/trials.sh records
-## them with the trials, sheets and all. The level's waves are set aside so only the thing shown happens.
+## them with the trials, sheets and all. In the cat's, the level's waves are set aside so only the cat happens.
 ##
 ## cat    level 1's stray cat by its bins: the hero stands by it (the ring fills), it's fed; he walks on and it follows
 ##        at his heels; then level 2 starts and the cat is there with him, and follows him on
@@ -49,8 +49,9 @@ func _init(scene: String) -> void:
 
 ## Sets the level up for the scene: no fights, the hero where it happens.
 func setup(level) -> void:
-	for fl in level.floors:
-		fl["wave"] = fl["waves"].size()  # every wave set aside
+	if name == "cat":
+		for fl in level.floors:
+			fl["wave"] = fl["waves"].size()  # every wave set aside: only the cat
 	if level.friend != null:
 		level.friend.x = -5000.0
 	match name:
@@ -72,6 +73,9 @@ func inputs(level) -> Dictionary:
 	var inp := {}
 	match name:
 		"twins", "coach", "chrome", "static", "rook", "crane":
+			if level.where == "the glass lift" and not said.has("lift"):
+				said["lift"] = true
+				_say("into the GLASS LIFT: it rides down about six seconds, two Snicks in it with him")
 			if tick == 2:
 				_say({"twins": "Twin Loans: the short brother on the shop floor, the tall one at the top of the stairs",
 					"coach": "Coach Crusher: big gloves that block every punch, so kicks only",
@@ -113,6 +117,7 @@ func inputs(level) -> Dictionary:
 					"horn": _say("in the cab: the HORN blast shoves him back")
 					"shoved_out": _say("P P K: SHOVED OUT of his cab, and that's it")
 					"crate_smash": _say("a crate smashes down beside him (its shadow warned him)")
+					"lift_arrives": _say("the glass lift's ridden down and its fight is won: the doors open")
 					"blocked":
 						if name == "coach" and ev.get("target") != level.hero and not said.has("gloves"):
 							said["gloves"] = true
@@ -146,7 +151,7 @@ func inputs(level) -> Dictionary:
 			bot.goal_hit = level.goal_is_switch
 			bot.jump_cue = level.crane_jump_cue()
 			var boss: Array = level.enemies.filter(func(e): return e["kind"] == "chrome")
-			if name == "chrome" and tick < 420 and not boss.is_empty():
+			if name == "chrome" and not boss.is_empty() and (not said.has("set") or tick < said["set"] + 120):
 				# set up for the picture, said so on screen: her memory holds his last combo, P P P; she holds still; he
 				# starts P P P again (the second blow she reads and parries)
 				var e: Dictionary = boss[0]

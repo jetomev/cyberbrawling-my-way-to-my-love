@@ -687,6 +687,15 @@ func _draw_flying() -> void:
 		flying_view.draw_line(c + Vector2(-22, -12), c + Vector2(-38, -34), Color(0.55, 0.55, 0.6), 4.0)
 		if not level.cat_fed and level.cat_with > 0:
 			flying_view.draw_arc(c + Vector2(0, -50), 14.0, -PI / 2, -PI / 2 + TAU * level.cat_with / level.CAT_FEED_TICKS, 16, Color(1, 0.8, 0.4), 4.0)
+	if not level.plan["floors"][level.on].get("lift", {}).is_empty():  # a glass lift riding: the shaft's floors slide past
+		var b: Vector2 = level.bounds()
+		var ride: float = level.lift_ride()
+		var going: float = 1.0 if level.plan["floors"][level.on]["lift"].get("down", true) else -1.0
+		for k in 4:
+			var y: float = fposmod(float(level.tick) * 9.0 * going * (1.0 if ride < 1.0 else 0.0) + k * 300.0, 1200.0) - 200.0
+			flying_view.draw_line(Vector2(b.x - 400.0, y), Vector2(b.y + 400.0, y), Color(0.7, 0.75, 0.85, 0.35), 6.0)
+		for gx in [b.x + 20.0, b.y - 20.0]:  # the glass walls' frames
+			flying_view.draw_line(Vector2(gx, 80.0), Vector2(gx, Street.GROUND_Y + 160.0), Color(0.75, 0.85, 0.95, 0.6), 5.0)
 	if not level.crane.is_empty():  # the docks' crane: its container swinging low on its cable, the crates' shadows
 		var box: Dictionary = level.crane["container"]
 		if not box.is_empty():

@@ -1,6 +1,6 @@
 {
   "name": "The casino (a showcase for the testers, not a level of the game)",
-  "about": "Javier & Claude, 2026-11-04. Level 5's boss from the team's roster, Madame Chrome, on one casino floor: three cards thrown (she's open after), a low cane sweep (jump it), a cane jab; any combo used twice in a row she parries; three kicks into the cane's wind-up snap it and she's done. Her glass lift between floors comes with level 5's page. Not in levels.json.",
+  "about": "Javier & Claude, 2026-11-04. Level 5's boss from the team's roster, Madame Chrome, on one casino floor: three cards thrown (she's open after), a low cane sweep (jump it), a cane jab; any combo used twice in a row she parries; three kicks into the cane's wind-up snap it and she's done. On the way, the glass lift down (the team's levels page: a fight in a moving lift, about six seconds) with two Snicks in it. Her own rides on the lift between floors come with level 5's page. Not in levels.json.",
   "floors": [
     {
       "name": "the casino doors",
@@ -8,6 +8,35 @@
       "obstacles": [],
       "items": [],
       "waves": []
+    },
+    {
+      "name": "the glass lift",
+      "length": 700,
+      "obstacles": [],
+      "items": [],
+      "waves": [
+        {
+          "at": 300,
+          "enemies": [
+            {
+              "kind": "snick",
+              "dx": 200,
+              "z": 80
+            },
+            {
+              "kind": "snick",
+              "dx": 260,
+              "z": 40
+            }
+          ]
+        }
+      ],
+      "lift": {
+        "to": 2,
+        "to_x": 300,
+        "ticks": 360,
+        "down": true
+      }
     },
     {
       "name": "the casino floor",
@@ -28,13 +57,13 @@
       "from": 0,
       "x": 1000,
       "to": 1,
-      "to_x": 300,
+      "to_x": 150,
       "auto": true
     }
   ],
   "switches": [],
   "boss": {
-    "floor": 1,
+    "floor": 2,
     "x": 1300,
     "kind": "chrome"
   }
