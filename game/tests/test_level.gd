@@ -650,3 +650,33 @@ func test_the_bot_plays_level_three_and_is_never_stuck() -> void:
 		results.append("won" if l.won else ("lost on floor %d" % deepest if l.lost else "STUCK on floor %d at %.0f" % [l.on, l.hero.x]))
 	check(not results.any(func(r): return r.begins_with("STUCK")), "never stuck: %s" % [results])
 	check(results.all(func(r): return r == "won" or r.ends_with("2") or r.ends_with("3")), "down the fire escape every time: %s" % [results])
+
+
+## Levels 4 to 10, drafts from Merry's levels page (the Council, 2026-11-04: "build them as drafts so nothing waits")
+func test_the_draft_levels_load_and_say_so() -> void:
+	var names: Array = Level.load_data("res://levels/levels.json")["levels"]
+	eq(names.size(), 10, "all ten levels in the play order")
+	for n in ["level4", "level5", "level6", "level7", "level8", "level9", "level10"]:
+		var d: Dictionary = Level.load_data("res://levels/%s.json" % n)
+		check(d.get("draft", false), "%s is marked a draft" % n)
+		check(d["about"].contains("NOT BUILT YET"), "%s lists what isn't built yet" % n)
+		var l = Level.new(d, {}, 1)
+		check(l.floors.size() >= 2, "%s has its floors (%d)" % [n, l.floors.size()])
+		check(not d.get("boss", {}).is_empty() or not d.get("win", {}).is_empty(), "%s ends in a boss or a prize" % n)
+
+
+func test_the_bot_is_never_stuck_in_a_draft_level() -> void:
+	var results := []
+	for n in ["level4", "level5", "level6", "level7", "level8", "level9", "level10"]:
+		var l = Level.new(Level.load_data("res://levels/%s.json" % n), {}, 1)
+		var bot = HeroBot.new(l.hero, 1)
+		for i in 30000:
+			if l.won or l.lost:
+				break
+			bot.me = l.hero
+			bot.goal = l.next_door()
+			bot.goal_hit = l.goal_is_switch
+			bot.jump_cue = l.crane_jump_cue()
+			l.step(bot.think(l.standing()))
+		results.append("%s %s" % [n, "won" if l.won else ("lost on floor %d" % l.on if l.lost else "STUCK on floor %d at %.0f" % [l.on, l.hero.x])])
+	check(not results.any(func(r): return r.contains("STUCK")), "never stuck: %s" % [results])

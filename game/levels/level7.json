@@ -1,0 +1,306 @@
+{
+  "name": "Level 7 \u00b7 The Power Plant",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the turbine hall (floor 1, a live strip, up the ladder), the catwalk (floor 2, the Enforcer alone), the top catwalks over the water tanks (floor 3, a push kick by a tank and a goon's out), the control room, back down to the plant floor (floor 1, a live strip in the middle), Mr. Static's tank room (dry edges). NOT BUILT YET: passing behind the wall pipes, the warning stripes drawn before a strip goes live, the Enforcer's parry of the whole P P P (he parries the jab), Mr. Static down after two tank shorts (here: dizzy, and hurt).",
+  "draft": true,
+  "floors": [
+    {
+      "name": "The Power Plant: the turbine hall",
+      "length": 5760,
+      "obstacles": [
+        [
+          "wall",
+          5740,
+          5780,
+          0,
+          160,
+          500,
+          false,
+          0
+        ]
+      ],
+      "items": [],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 80
+            }
+          ]
+        },
+        {
+          "at": 2900,
+          "enemies": [
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 80
+            }
+          ],
+          "hint": "A live floor: time your crossing, lure them onto it."
+        }
+      ],
+      "live": [
+        [
+          2600,
+          3200,
+          120,
+          60
+        ]
+      ]
+    },
+    {
+      "name": "The Power Plant: the catwalk",
+      "length": 1920,
+      "obstacles": [],
+      "items": [],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "enforcer",
+              "dx": 300,
+              "z": 80
+            }
+          ],
+          "hint": "The Enforcer parries the jab: mix it up; perfect-block his cut and the sword is yours."
+        }
+      ]
+    },
+    {
+      "name": "The Power Plant: the top catwalks",
+      "length": 5760,
+      "obstacles": [
+        [
+          "tank",
+          1500,
+          1600,
+          0,
+          40,
+          160,
+          false,
+          0
+        ],
+        [
+          "tank",
+          2700,
+          2800,
+          0,
+          40,
+          160,
+          false,
+          0
+        ]
+      ],
+      "items": [
+        [
+          "sandwich",
+          4800,
+          20
+        ],
+        [
+          "matchbook",
+          5000,
+          40
+        ]
+      ],
+      "waves": [
+        {
+          "at": 1800,
+          "enemies": [
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "left",
+              "z": 80
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 80
+            }
+          ],
+          "hint": "Push kick (P P K) a goon by a tank: he's in, and out."
+        }
+      ],
+      "tanks_knock_out": true
+    },
+    {
+      "name": "The Power Plant: the plant floor",
+      "length": 1920,
+      "obstacles": [
+        [
+          "locker",
+          200,
+          260,
+          0,
+          24,
+          140,
+          false,
+          2,
+          "",
+          "first_aid"
+        ]
+      ],
+      "items": [
+        [
+          "photo",
+          1100,
+          10
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "enforcer",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 50
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "door",
+              "dx": 200,
+              "after_down": 2
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "door",
+              "dx": -200,
+              "after_down": 2
+            },
+            {
+              "kind": "enforcer",
+              "from": "right",
+              "z": 80,
+              "after_down": 2
+            }
+          ]
+        }
+      ],
+      "live": [
+        [
+          800,
+          1100,
+          120,
+          60
+        ]
+      ]
+    },
+    {
+      "name": "The Power Plant: the tank room",
+      "length": 1920,
+      "obstacles": [
+        [
+          "tank",
+          900,
+          1020,
+          0,
+          40,
+          160,
+          false,
+          0
+        ]
+      ],
+      "items": [
+        [
+          "soda",
+          200,
+          140
+        ]
+      ],
+      "waves": [],
+      "dry": [
+        [
+          0,
+          250
+        ],
+        [
+          1670,
+          1920
+        ]
+      ]
+    }
+  ],
+  "links": [
+    {
+      "from": 0,
+      "x": 5500,
+      "to": 1,
+      "to_x": 300,
+      "kind": "ladder"
+    },
+    {
+      "from": 1,
+      "x": 1700,
+      "to": 2,
+      "to_x": 300,
+      "kind": "ladder",
+      "requires_clear": true
+    },
+    {
+      "from": 2,
+      "x": 5600,
+      "to": 3,
+      "to_x": 300,
+      "kind": "ladder",
+      "requires_clear": true
+    },
+    {
+      "from": 3,
+      "x": 1800,
+      "to": 4,
+      "to_x": 300,
+      "auto": true
+    }
+  ],
+  "switches": [],
+  "boss": {
+    "floor": 4,
+    "x": 1200,
+    "kind": "static"
+  }
+}

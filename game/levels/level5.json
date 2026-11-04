@@ -1,0 +1,361 @@
+{
+  "name": "Level 5 \u00b7 Casino Glitter",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the casino floor (past the Doorman, the slots, up the broken escalator), the high-roller balcony, the glass lift down, the main floor, Madame Chrome's salon. NOT BUILT YET: the vending machine's apology note and fall, coins from the slots (score), the pipe cracking floor tiles, the chandelier, Madame Chrome riding the lift between floors, the casino key.",
+  "draft": true,
+  "floors": [
+    {
+      "name": "Casino Glitter: the casino floor",
+      "length": 7680,
+      "obstacles": [
+        [
+          "ropes",
+          1300,
+          1340,
+          40,
+          120,
+          40,
+          true,
+          0
+        ],
+        [
+          "slots",
+          2200,
+          2420,
+          0,
+          40,
+          150,
+          false,
+          3
+        ],
+        [
+          "slots",
+          3000,
+          3220,
+          0,
+          40,
+          150,
+          false,
+          3
+        ],
+        [
+          "vending",
+          5400,
+          5480,
+          0,
+          30,
+          150,
+          false,
+          3,
+          "",
+          "soda"
+        ],
+        [
+          "stairs",
+          6400,
+          7320,
+          0,
+          30,
+          500,
+          false,
+          0
+        ],
+        [
+          "wall",
+          7340,
+          7380,
+          0,
+          160,
+          600,
+          false,
+          0
+        ]
+      ],
+      "items": [
+        [
+          "pipe",
+          4100,
+          140
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "doorman",
+              "dx": 300,
+              "z": 80
+            }
+          ],
+          "hint": "The Doorman blocks everything from the front: low-kick into his bash, or get behind him."
+        },
+        {
+          "at": 2800,
+          "enemies": [
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 80
+            }
+          ]
+        },
+        {
+          "at": 4700,
+          "enemies": [
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "doorman",
+              "from": "right",
+              "z": 80
+            }
+          ]
+        },
+        {
+          "at": 6750,
+          "enemies": [
+            {
+              "kind": "snick",
+              "dx": 500,
+              "z": 15,
+              "hidden": true
+            },
+            {
+              "kind": "snick",
+              "dx": 420,
+              "z": 15,
+              "hidden": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Casino Glitter: the high-roller balcony",
+      "length": 1920,
+      "obstacles": [
+        [
+          "table",
+          700,
+          860,
+          40,
+          100,
+          80,
+          true,
+          0
+        ],
+        [
+          "buffet",
+          1500,
+          1600,
+          0,
+          30,
+          90,
+          false,
+          2,
+          "",
+          "food"
+        ]
+      ],
+      "items": [
+        [
+          "matchbook",
+          1200,
+          20
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "doorman",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 50
+            },
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 80
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Casino Glitter: the glass lift",
+      "length": 700,
+      "obstacles": [],
+      "items": [],
+      "waves": [
+        {
+          "at": 300,
+          "enemies": [
+            {
+              "kind": "snick",
+              "dx": 200,
+              "z": 80
+            },
+            {
+              "kind": "snick",
+              "dx": 260,
+              "z": 40
+            }
+          ]
+        }
+      ],
+      "lift": {
+        "to": 3,
+        "to_x": 300,
+        "ticks": 360,
+        "down": true
+      }
+    },
+    {
+      "name": "Casino Glitter: the main floor",
+      "length": 1920,
+      "obstacles": [
+        [
+          "cage",
+          1600,
+          1700,
+          0,
+          30,
+          140,
+          false,
+          3,
+          "",
+          "first_aid"
+        ]
+      ],
+      "items": [
+        [
+          "photo",
+          1300,
+          20
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "doorman",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 50
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "doorman",
+              "from": "door",
+              "dx": 200,
+              "after_down": 3
+            },
+            {
+              "kind": "snick",
+              "from": "door",
+              "dx": -200,
+              "after_down": 3
+            },
+            {
+              "kind": "snick",
+              "from": "door",
+              "dx": 300,
+              "after_down": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Madame Chrome's salon",
+      "length": 1920,
+      "obstacles": [
+        [
+          "table",
+          500,
+          660,
+          60,
+          110,
+          80,
+          true,
+          0
+        ]
+      ],
+      "items": [
+        [
+          "soda",
+          1700,
+          140
+        ]
+      ],
+      "waves": []
+    }
+  ],
+  "links": [
+    {
+      "from": 0,
+      "x": 7260,
+      "to": 1,
+      "to_x": 300,
+      "kind": "stairs"
+    },
+    {
+      "from": 1,
+      "x": 1800,
+      "to": 2,
+      "to_x": 150,
+      "requires_clear": true
+    },
+    {
+      "from": 3,
+      "x": 1800,
+      "to": 4,
+      "to_x": 300,
+      "auto": true
+    }
+  ],
+  "switches": [],
+  "boss": {
+    "floor": 4,
+    "x": 1200,
+    "kind": "chrome"
+  }
+}

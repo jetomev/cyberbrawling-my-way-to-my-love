@@ -1,0 +1,419 @@
+{
+  "name": "Level 6 \u00b7 The Docks",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the quay and the container corridor (floor 1; the locked container opened by the switch one ladder up, on the ledge), the stacks (floor 2, the Whistler, gaps), the gate yard (floor 1, the gate opened by the switch on floor 3), the gate yard's top (floor 3), then the crane yard (three floors and the cab). NOT BUILT YET: the boss's white cat sitting on the first switch, the Whistler up a lamp two floors up, falling through a stack gap to floor 1, the gate's second switch (floor 2: one switch opens it here), the dockworker's shed as its own room.",
+  "draft": true,
+  "floors": [
+    {
+      "name": "The Docks: the quay and the container corridor",
+      "length": 5760,
+      "obstacles": [
+        [
+          "door",
+          1840,
+          1880,
+          0,
+          160,
+          300,
+          false,
+          0,
+          "container"
+        ],
+        [
+          "drums",
+          2900,
+          2980,
+          60,
+          110,
+          70,
+          true,
+          3
+        ],
+        [
+          "wall",
+          5740,
+          5780,
+          0,
+          160,
+          500,
+          false,
+          0
+        ]
+      ],
+      "items": [],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "wrench_mechanic",
+              "from": "door",
+              "dx": 300
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "door",
+              "dx": 450
+            }
+          ]
+        },
+        {
+          "at": 2800,
+          "enemies": [
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "doorman",
+              "from": "right",
+              "z": 50
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 110
+            }
+          ]
+        },
+        {
+          "at": 4700,
+          "enemies": [
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "lookout",
+              "dx": 700,
+              "z": 30,
+              "calls": "wrench_mechanic",
+              "whistles": 4,
+              "calls_x": 5250
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Docks: the ledge with the switch",
+      "length": 1200,
+      "obstacles": [],
+      "items": [],
+      "waves": []
+    },
+    {
+      "name": "The Docks: the stacks",
+      "length": 5760,
+      "obstacles": [
+        [
+          "gap",
+          2000,
+          2080,
+          0,
+          160,
+          60,
+          false,
+          0
+        ],
+        [
+          "gap",
+          3500,
+          3580,
+          0,
+          160,
+          60,
+          false,
+          0
+        ],
+        [
+          "crate",
+          4500,
+          4580,
+          0,
+          30,
+          96,
+          true,
+          3,
+          "",
+          "apple"
+        ]
+      ],
+      "items": [
+        [
+          "soda",
+          5200,
+          20
+        ],
+        [
+          "matchbook",
+          5300,
+          40
+        ]
+      ],
+      "waves": [
+        {
+          "at": 2800,
+          "enemies": [
+            {
+              "kind": "doorman",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "doorman",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 80
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Docks: the gate yard",
+      "length": 1920,
+      "obstacles": [
+        [
+          "door",
+          1700,
+          1740,
+          0,
+          160,
+          300,
+          false,
+          0,
+          "gate"
+        ]
+      ],
+      "items": [
+        [
+          "photo",
+          1600,
+          10
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "left",
+              "z": 80
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Docks: the gate yard, floor 3",
+      "length": 1920,
+      "obstacles": [],
+      "items": [
+        [
+          "first_aid",
+          1400,
+          40
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "lookout",
+              "dx": 500,
+              "z": 40,
+              "calls": "wrench_mechanic",
+              "whistles": 1
+            },
+            {
+              "kind": "doorman",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "doorman",
+              "from": "right",
+              "z": 110
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The crane yard: the quay",
+      "length": 1920,
+      "obstacles": [],
+      "items": [],
+      "waves": []
+    },
+    {
+      "name": "The crane yard: the stack",
+      "length": 1920,
+      "obstacles": [],
+      "items": [
+        [
+          "soda",
+          1000,
+          30
+        ]
+      ],
+      "waves": []
+    },
+    {
+      "name": "The crane yard: the top of the stack",
+      "length": 1920,
+      "obstacles": [
+        [
+          "door",
+          1640,
+          1760,
+          0,
+          30,
+          260,
+          false,
+          0,
+          "cab"
+        ]
+      ],
+      "items": [],
+      "waves": []
+    },
+    {
+      "name": "The crane's cab",
+      "length": 900,
+      "obstacles": [],
+      "items": [],
+      "waves": [],
+      "cab": true
+    }
+  ],
+  "links": [
+    {
+      "from": 0,
+      "x": 1500,
+      "to": 1,
+      "to_x": 300,
+      "kind": "ladder"
+    },
+    {
+      "from": 1,
+      "x": 900,
+      "to": 0,
+      "to_x": 1500,
+      "kind": "ladder"
+    },
+    {
+      "from": 0,
+      "x": 5500,
+      "to": 2,
+      "to_x": 300,
+      "kind": "ladder"
+    },
+    {
+      "from": 2,
+      "x": 5600,
+      "to": 3,
+      "to_x": 300,
+      "requires_clear": true
+    },
+    {
+      "from": 3,
+      "x": 300,
+      "to": 4,
+      "to_x": 300,
+      "kind": "ladder"
+    },
+    {
+      "from": 4,
+      "x": 1700,
+      "to": 3,
+      "to_x": 400,
+      "kind": "ladder"
+    },
+    {
+      "from": 3,
+      "x": 1850,
+      "to": 5,
+      "to_x": 200,
+      "auto": true
+    },
+    {
+      "from": 5,
+      "x": 1700,
+      "to": 6,
+      "to_x": 200
+    },
+    {
+      "from": 6,
+      "x": 1700,
+      "to": 7,
+      "to_x": 200
+    },
+    {
+      "from": 7,
+      "x": 1700,
+      "to": 8,
+      "to_x": 150
+    }
+  ],
+  "switches": [
+    {
+      "floor": 1,
+      "x": 600,
+      "opens": "container"
+    },
+    {
+      "floor": 4,
+      "x": 1200,
+      "opens": "gate"
+    },
+    {
+      "floor": 5,
+      "x": 900,
+      "opens": "",
+      "crane": true
+    },
+    {
+      "floor": 6,
+      "x": 1000,
+      "opens": "",
+      "crane": true
+    },
+    {
+      "floor": 7,
+      "x": 1100,
+      "opens": "",
+      "crane": true
+    }
+  ],
+  "crane": {
+    "floors": [
+      5,
+      6,
+      7
+    ]
+  },
+  "boss": {
+    "floor": 8,
+    "x": 650,
+    "kind": "crane_operator"
+  }
+}

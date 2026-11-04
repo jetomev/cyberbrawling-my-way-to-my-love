@@ -1,0 +1,369 @@
+{
+  "name": "Level 9 \u00b7 The Tower",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Three floors, two screens each, stairs between, then the Lovelight room: no boss, smash the glass case and take the Lovelight. Floor 1 rehearses armour (Doormen), floor 2 speed (Dancers, Snicks), floor 3 rage (Enforcers, Maulers). NOT BUILT YET: everyone's 'hard version' (the roster's level 9 tricks: a Bruiser's shock ring, Snick throwing her knife, two wrenches, the shield bouncing you back, the Dancer's feint, the Enforcer lunging twice, the Whistler calling three, the Mauler grabbing faster).",
+  "draft": true,
+  "floors": [
+    {
+      "name": "The Tower: floor 1",
+      "length": 3840,
+      "obstacles": [
+        [
+          "crate",
+          1500,
+          1580,
+          110,
+          150,
+          96,
+          true,
+          4,
+          "",
+          "soda"
+        ],
+        [
+          "stairs",
+          2700,
+          3620,
+          0,
+          30,
+          400,
+          false,
+          0
+        ],
+        [
+          "wall",
+          3640,
+          3680,
+          0,
+          160,
+          500,
+          false,
+          0
+        ]
+      ],
+      "items": [],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "doorman",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "doorman",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "bruiser",
+              "from": "left",
+              "z": 80
+            }
+          ]
+        },
+        {
+          "at": 2400,
+          "enemies": [
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "doorman",
+              "from": "left",
+              "z": 80
+            },
+            {
+              "kind": "lookout",
+              "dx": -500,
+              "z": 40,
+              "calls": "glow_punk",
+              "whistles": 1,
+              "after_down": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Tower: floor 2",
+      "length": 3840,
+      "obstacles": [
+        [
+          "desk",
+          700,
+          820,
+          40,
+          90,
+          70,
+          true,
+          0
+        ],
+        [
+          "drawer",
+          300,
+          360,
+          0,
+          24,
+          90,
+          false,
+          2,
+          "",
+          "bowl"
+        ],
+        [
+          "stairs",
+          2700,
+          3620,
+          0,
+          30,
+          400,
+          false,
+          0
+        ],
+        [
+          "wall",
+          3640,
+          3680,
+          0,
+          160,
+          500,
+          false,
+          0
+        ]
+      ],
+      "items": [
+        [
+          "matchbook",
+          2300,
+          40
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "snick",
+              "from": "left",
+              "z": 80
+            }
+          ]
+        },
+        {
+          "at": 2400,
+          "enemies": [
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "left",
+              "z": 80
+            },
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 80,
+              "after_down": 3
+            },
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 50,
+              "after_down": 3
+            },
+            {
+              "kind": "snick",
+              "from": "left",
+              "z": 110,
+              "after_down": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Tower: floor 3",
+      "length": 3840,
+      "obstacles": [
+        [
+          "maptable",
+          900,
+          1060,
+          40,
+          100,
+          80,
+          true,
+          0
+        ]
+      ],
+      "items": [
+        [
+          "first_aid",
+          300,
+          20
+        ],
+        [
+          "sandwich",
+          3500,
+          150
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "enforcer",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "grabber",
+              "from": "right",
+              "z": 50
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "left",
+              "z": 110
+            }
+          ]
+        },
+        {
+          "at": 2800,
+          "enemies": [
+            {
+              "kind": "enforcer",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "enforcer",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "grabber",
+              "from": "left",
+              "z": 80
+            },
+            {
+              "kind": "enforcer",
+              "from": "right",
+              "z": 60,
+              "after_down": 3
+            },
+            {
+              "kind": "enforcer",
+              "from": "right",
+              "z": 110,
+              "after_down": 3
+            },
+            {
+              "kind": "grabber",
+              "from": "left",
+              "z": 80,
+              "after_down": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Lovelight room",
+      "length": 1920,
+      "obstacles": [
+        [
+          "case",
+          900,
+          1000,
+          0,
+          30,
+          130,
+          false,
+          2,
+          "",
+          "lovelight"
+        ],
+        [
+          "case",
+          1100,
+          1160,
+          0,
+          30,
+          110,
+          false,
+          2,
+          "",
+          "photo"
+        ]
+      ],
+      "items": [],
+      "waves": []
+    }
+  ],
+  "links": [
+    {
+      "from": 0,
+      "x": 3560,
+      "to": 1,
+      "to_x": 300,
+      "kind": "stairs"
+    },
+    {
+      "from": 1,
+      "x": 3560,
+      "to": 2,
+      "to_x": 300,
+      "kind": "stairs"
+    },
+    {
+      "from": 2,
+      "x": 3700,
+      "to": 3,
+      "to_x": 300,
+      "auto": true
+    }
+  ],
+  "switches": [],
+  "win": {
+    "floor": 3,
+    "weapon": "lovelight"
+  }
+}

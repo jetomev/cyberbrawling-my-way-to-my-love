@@ -127,7 +127,7 @@ func _draw_loose() -> void:
 		elif it["kind"] in ["apple", "bowl"]:  # an apple, a bowl of noodles
 			loose.draw_circle(at + Vector2(0, -10), 10.0, Color(0.85, 0.15, 0.2) if it["kind"] == "apple" else Color(0.95, 0.9, 0.7))
 			loose.draw_arc(at + Vector2(0, -10), 10.0, 0.0, TAU, 16, EDGE, 2.0)
-		elif it["kind"] in ["food", "takeaway"]:  # a takeaway box
+		elif it["kind"] in ["food", "takeaway", "sandwich"]:  # a takeaway box (a sandwich: drawn the same for now)
 			loose.draw_rect(Rect2(at + Vector2(-18, -22), Vector2(36, 22)), Color(0.92, 0.9, 0.84))
 			loose.draw_rect(Rect2(at + Vector2(-18, -22), Vector2(36, 22)), EDGE, false, 2.0)
 			loose.draw_rect(Rect2(at + Vector2(-18, -14), Vector2(36, 5)), Color(0.85, 0.3, 0.25))

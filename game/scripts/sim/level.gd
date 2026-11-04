@@ -140,6 +140,7 @@ var plan: Dictionary  # the level in its full form (short layouts are unfolded i
 var tune: Dictionary
 var floors := []  # each {name, length, world, waves, wave, active_wave, enemies}
 var on := 0  # the floor he's on
+var visited := {0: true}  # the floors he's been on (the bot doesn't go back up a ladder it came down)
 var hero
 var fight
 var flipped := {}  # switch index -> true once flipped
@@ -165,6 +166,7 @@ var tumbling := {}  # fighter -> the flight he's rolling down
 var compound := false  # Twin Loans at half their health: both rush the hero together
 var climbing_back := {}  # fighters tumbled down a flight, on their way back up (a Twin Loans brother: slowly)
 var live_until := -1  # Mr. Static's floor, live till this tick
+var shocked_beat := {}  # who a live strip has shocked this beat
 var crane := {}  # the docks' crane (the plan's "crane"): {next, container {x, dir, hit}, crates [{x, z, at}], stopped_until}
 var hint_text := ""  # a wave's small hint, the first time (shown till hint_until)
 var hint_until := -1
@@ -262,6 +264,7 @@ func restart() -> void:
 	hug = {}
 	tumbling = {}
 	compound = false
+	visited = {0: true}
 	hint_until = -1
 	hints_shown = {}
 	live_until = -1
@@ -373,6 +376,8 @@ func step(inp: Dictionary) -> void:
 	_static_after()
 	_rook_after()
 	_godfather()
+	_live_strips()
+	_tank_push()
 	_crane()
 	_shoved_out()
 	_stairs()
@@ -579,6 +584,9 @@ func _coach(e: Dictionary, think: Dictionary) -> Dictionary:
 			f._enter("ko")
 			early.append({"target": f, "result": "gives_up", "kind": "gives_up"})
 	e["was_dizzy"] = f.state == "dizzy"
+	if think.get("ball", false) and world.objects.any(func(o): return o["kind"] == "ball_rack") \
+			and world.objects.filter(func(o): return o["kind"] == "ball_rack").all(func(o): return o["broken"]):
+		return {}  # his rack of medicine balls smashed: nothing to throw (the team's level 4)
 	if think.get("ball", false):
 		var dir := 1.0 if hero.x >= f.x else -1.0
 		projectiles.throw("ball", f.x + dir * 40.0, f.z, 110.0, 190.0, dir * BALL_SPEED, BALL_DAMAGE, f.team)
@@ -740,7 +748,8 @@ func _static_after() -> void:
 						f._enter("ko" if f.health <= 0.0 else "dizzy")
 						events.append({"target": f, "result": "shorts_out", "kind": "shorts_out"})
 						break
-		if tick < live_until and not e.get("shocked_this", true) and hero.y < 1.0 and hero.on_ground() and hero.hittable():
+		var dry: bool = plan["floors"][on].get("dry", []).any(func(r): return hero.x >= r[0] and hero.x <= r[1])
+		if tick < live_until and not e.get("shocked_this", true) and hero.y < 1.0 and hero.on_ground() and hero.hittable() and not dry:
 			e["shocked_this"] = true
 			hero.take_hit({"damage": SHOCK_DAMAGE, "effect": "push", "low": 0.0, "high": 300.0, "move": "live_floor"}, f)
 			events.append({"target": hero, "result": "shocked", "kind": "live_floor"})
@@ -940,6 +949,43 @@ func _crane_cab(e: Dictionary, think: Dictionary) -> Dictionary:
 	return think
 
 
+## Live floor strips (the team's level 7: "sparking two seconds on, one off"): a floor's "live": [[x0, x1, on, off]]
+## shocks whoever stands on it while it's on, once a beat, goons too; the Neon Dancers skate straight over.
+func _live_strips() -> void:
+	for strip in plan["floors"][on].get("live", []):
+		var beat: int = int(strip[2]) + int(strip[3])
+		var live: bool = tick % beat < int(strip[2])
+		if tick % beat == 0:
+			shocked_beat = {}
+		if not live:
+			continue
+		for f in everyone():
+			var who: Array = enemies.filter(func(e): return e["f"] == f)
+			var kind: String = "hero" if f == hero else (who[0]["kind"] if not who.is_empty() else "")
+			if kind == "neon_dancer" or shocked_beat.has(f) or f.y >= 1.0 or not f.hittable() or f.x < strip[0] or f.x > strip[1]:
+				continue
+			shocked_beat[f] = true
+			f.take_hit({"damage": SHOCK_DAMAGE, "effect": "push", "low": 0.0, "high": 300.0, "move": "live_floor"}, {"x": f.x - f.facing * 10.0, "y": 0.0})
+			events.append({"target": f, "result": "shocked", "kind": "live_floor"})
+
+
+## Open water tanks below a catwalk (the team's level 7: "push a goon in and he's out"): on a floor with
+## "tanks_knock_out", a push kick landing on a goon by a tank sends him in, out of the fight.
+func _tank_push() -> void:
+	if not plan["floors"][on].get("tanks_knock_out", false):
+		return
+	for ev in events:
+		var d = ev.get("target")
+		if ev.get("attacker") != hero or ev.get("result", "") != "hit" or ev.get("move", "") != "push_kick" or d == null:
+			continue
+		for o in world.objects:
+			if o["kind"] == "tank" and absf((o["x0"] + o["x1"]) * 0.5 - d.x) < TANK_REACH and not enemies.any(func(e): return e["f"] == d and e["boss"]):
+				d.health = 0.0
+				d._enter("ko")
+				events.append({"target": d, "result": "into_the_tank", "kind": "tank"})
+				break
+
+
 ## Twin Loans (the team's roster, level 3's boss): while one brother attacks, the other holds his guard up and waits his
 ## turn; halfway through a combo they swap places ("Interest"), so an answer meant for the one swinging lands on the
 ## one guarding; at half their health together, both rush the hero at once ("Compound"). Knocked down a flight, a
@@ -1125,6 +1171,13 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 			x = at + OFF_SCREEN
 		"door":
 			z = 0.0
+	if from in ["left", "right"]:  # never from behind a wall or a shut door across the whole street: the near side of it
+		for o in world.objects:
+			if o["solid"] and not o["broken"] and o["z0"] <= 2.0 and o["z1"] >= tune["street_depth"] - 2.0 and o["top"] > 200.0:
+				if from == "right" and o["x0"] > at and x > o["x0"] - 60.0:
+					x = o["x0"] - 60.0
+				elif from == "left" and o["x1"] < at and x < o["x1"] + 60.0:
+					x = o["x1"] + 60.0
 	_spawn(e["kind"], x, z, e.get("weapon", ""), -1.0, wave_index)
 	for k in ["calls", "whistles"]:  # the lookout's: who he whistles in, and how many times
 		if e.has(k):
@@ -1136,6 +1189,8 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 		enemies[-1]["brain"].dormant_until_within = e.get("wake", 420.0)
 	if e.has("calls_x"):
 		enemies[-1]["calls_x"] = e["calls_x"]
+	if e.has("drops"):
+		enemies[-1]["drops"] = e["drops"]
 
 
 func _waves() -> void:
@@ -1165,7 +1220,7 @@ func _waves() -> void:
 	for e in enemies:
 		if e["f"].defeated() and not e["dropped"]:
 			e["dropped"] = true
-			var drop: String = KINDS.get(e["kind"], {}).get("drops", "")
+			var drop: String = e.get("drops", KINDS.get(e["kind"], {}).get("drops", ""))  # (a layout can say: level 10's kit)
 			if drop != "":
 				world.drop(drop, e["f"].x, e["f"].z)
 	if fl["active_wave"] >= 0 and fl["waiting"].is_empty() and not enemies.any(func(e): return e["wave"] == fl["active_wave"] and not e["gone"] and not e["f"].defeated()):
@@ -1173,6 +1228,9 @@ func _waves() -> void:
 	var bosses: Array = enemies.filter(func(e): return e["boss"])
 	var boss_down: bool = boss_spawned and not bosses.is_empty() and bosses.all(func(e): return e["f"].defeated())
 	if boss_down:
+		won = true
+	var win: Dictionary = plan.get("win", {})  # a level with no boss (level 9): won when he takes what it's for
+	if not win.is_empty() and on == int(win.get("floor", on)) and hero.weapon == win.get("weapon", "-"):
 		won = true
 
 
@@ -1182,22 +1240,48 @@ var goal_is_switch := false  # next_door() points at a switch to hit, not a way 
 
 func next_door() -> float:
 	goal_is_switch = false
-	if not cleared(on):
+	if active_wave >= 0:
 		return -1.0
 	var switches: Array = plan.get("switches", [])
-	for i in switches.size():  # the crane's switches first: they open the way up
-		if int(switches[i]["floor"]) == on and switches[i].get("crane", false) and not flipped.has(i):
+	for i in switches.size():  # a switch on this floor still to throw first: it opens the way (a door, the crane's cab)
+		if int(switches[i]["floor"]) == on and not flipped.has(i) and _waves_done_before(switches[i]["x"]):
 			goal_is_switch = true
 			return float(switches[i]["x"])
+	for l in plan.get("links", []):  # (a way to a floor he hasn't been on; back down a ladder or a cable too)
+		if int(l["from"]) == on and not l.get("auto", false) and int(l["to"]) < on and not visited.has(int(l["to"])) and _waves_done_before(l["x"]) \
+				and not plan.get("links", []).any(func(u): return int(u["from"]) == on and int(u["to"]) > on and not visited.has(int(u["to"]))):
+			return float(l["x"])
+		if int(l["from"]) == on and int(l["to"]) < on and not l.get("auto", false) and visited.has(int(l["to"])) and _floor_done_here() \
+				and cleared(on):
+			return float(l["x"])  # all done up here: back down the way he came (the switch thrown)
 	for l in plan.get("links", []):
+		if not _waves_done_before(l["x"]):
+			continue  # (a fight before the way on: that first)
 		if int(l["from"]) == on and l.get("kind", "") == "stairs" and int(l["to"]) > on:
 			var st: Dictionary = stairs_of(l)
 			# up the flight: first onto its bottom step, then on up to the landing's end
 			var on_its_line: bool = hero.z <= st["z1"] + 2.0 and hero.x >= st["x0"] - 40.0
 			return st["x1"] if not hero.flight().is_empty() or on_its_line else st["x0"] + 30.0
-		if int(l["from"]) == on and not l.get("auto", false) and int(l["to"]) > on:
+		if int(l["from"]) == on and not l.get("auto", false) and int(l["to"]) > on and not visited.has(int(l["to"])):
 			return float(l["x"])
 	return -1.0
+
+
+## Every fight on this floor that comes before x (by where it starts) beaten: the way at x is his to take.
+func _waves_done_before(x: float) -> bool:
+	var fl: Dictionary = floors[on]
+	var waves: Array = fl["waves"]
+	for i in waves.size():
+		if waves[i]["at"] - 300.0 < x and (i >= fl["wave"] or i == fl["active_wave"]):
+			return false
+	return true
+
+
+## Nothing left to do on this floor (no switch to throw, no floor further on from here): the way back is the way on.
+func _floor_done_here() -> bool:
+	if plan.get("links", []).any(func(u): return int(u["from"]) == on and int(u["to"]) > on and not visited.has(int(u["to"]))):
+		return false
+	return not plan.get("links", []).any(func(u): return int(u["from"]) == on and u.get("auto", false))
 
 
 ## The flight a stairs link stands on (its landing at the link's x).
@@ -1242,6 +1326,7 @@ func _links() -> void:
 
 func _go_to(floor_index: int, x: float, at_y := 0.0, at_z := 80.0) -> void:
 	on = floor_index
+	visited[floor_index] = true
 	hero.world = world
 	hero.x = x
 	hero.y = at_y

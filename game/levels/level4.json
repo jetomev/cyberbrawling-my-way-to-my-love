@@ -1,0 +1,285 @@
+{
+  "name": "Level 4 \u00b7 The Pit",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the locker room, weights room and ring hall (floor 1, up the ladder at screen 3), the balcony (floor 2, down the rope at screen 5), round the ring (floor 1), the ring (Coach Crusher). NOT BUILT YET: the punching bag that swings, the Mechanics on the balcony throwing down at floor 1, the balcony knock-off (waits on Balih's yes: a plain railing), the rope's free hammer fist, the ring's ropes bouncing everyone, Coach Crusher's prize (Last Call, or a first-aid kit and his whistle).",
+  "draft": true,
+  "floors": [
+    {
+      "name": "The Pit: locker room, weights room, the ring hall",
+      "length": 5760,
+      "obstacles": [
+        [
+          "bench",
+          700,
+          860,
+          70,
+          110,
+          50,
+          true,
+          0
+        ],
+        [
+          "locker",
+          1700,
+          1760,
+          0,
+          24,
+          140,
+          false,
+          2,
+          "",
+          "food"
+        ],
+        [
+          "plates",
+          5200,
+          5280,
+          110,
+          150,
+          40,
+          true,
+          0
+        ],
+        [
+          "wall",
+          5740,
+          5780,
+          0,
+          160,
+          500,
+          false,
+          0
+        ]
+      ],
+      "items": [],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 50
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 110
+            }
+          ]
+        },
+        {
+          "at": 1500,
+          "enemies": [
+            {
+              "kind": "grabber",
+              "from": "right",
+              "z": 80
+            }
+          ],
+          "hint": "The Mauler: jab into his reach, or step up or down the street. Caught? Tap punch fast."
+        },
+        {
+          "at": 2900,
+          "enemies": [
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 80
+            }
+          ],
+          "hint": "Punch her as she passes; P K P knocks her off her skates."
+        },
+        {
+          "at": 4700,
+          "enemies": [
+            {
+              "kind": "bruiser",
+              "from": "door",
+              "dx": 300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Pit: the balcony",
+      "length": 5760,
+      "obstacles": [
+        [
+          "bench",
+          3450,
+          3560,
+          0,
+          30,
+          50,
+          true,
+          0
+        ]
+      ],
+      "items": [
+        [
+          "matchbook",
+          3500,
+          40
+        ],
+        [
+          "soda",
+          4800,
+          10
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "wrench_mechanic",
+              "dx": 200,
+              "z": 60
+            },
+            {
+              "kind": "wrench_mechanic",
+              "dx": 320,
+              "z": 100
+            }
+          ]
+        },
+        {
+          "at": 2800,
+          "enemies": [
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 50
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 110
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Pit: round the ring",
+      "length": 1920,
+      "obstacles": [],
+      "items": [
+        [
+          "first_aid",
+          1700,
+          150
+        ],
+        [
+          "photo",
+          1500,
+          10
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "neon_dancer",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "grabber",
+              "from": "right",
+              "z": 80,
+              "after_down": 2
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "door",
+              "dx": 200,
+              "after_down": 2
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "door",
+              "dx": -200,
+              "after_down": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Pit: the ring",
+      "length": 1920,
+      "obstacles": [
+        [
+          "ball_rack",
+          300,
+          380,
+          0,
+          30,
+          90,
+          false,
+          3
+        ]
+      ],
+      "items": [
+        [
+          "soda",
+          1700,
+          140
+        ]
+      ],
+      "waves": []
+    }
+  ],
+  "links": [
+    {
+      "from": 0,
+      "x": 4040,
+      "to": 1,
+      "to_x": 300,
+      "kind": "ladder"
+    },
+    {
+      "from": 1,
+      "x": 5600,
+      "to": 2,
+      "to_x": 300,
+      "requires_clear": true
+    },
+    {
+      "from": 2,
+      "x": 1800,
+      "to": 3,
+      "to_x": 300,
+      "auto": true
+    }
+  ],
+  "switches": [],
+  "boss": {
+    "floor": 3,
+    "x": 1200,
+    "kind": "coach"
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "name": "Level 10 \u00b7 The Tower Top",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. One wide rooftop in the rain: two waves of Enforcers (the last of the second drops the only first-aid kit), then the Godfather of Glow in three rounds. He carries the Lovelight in from level 9. NOT BUILT YET: no scroll lock between the waves (it locks here), your love drawn tied up at the far right, the street cat from level 1 turning up at the end, the Lovelight that can't be thrown (Merry's suggestion, open).",
+  "draft": true,
+  "start_weapon": "lovelight",
+  "floors": [
+    {
+      "name": "The Tower Top",
+      "length": 3840,
+      "obstacles": [
+        [
+          "vending",
+          1800,
+          1880,
+          0,
+          30,
+          150,
+          false,
+          3,
+          "",
+          "soda"
+        ]
+      ],
+      "items": [
+        [
+          "photo",
+          300,
+          20
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "enemies": [
+            {
+              "kind": "enforcer",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "enforcer",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "enforcer",
+              "from": "left",
+              "z": 80
+            }
+          ]
+        },
+        {
+          "at": 2700,
+          "enemies": [
+            {
+              "kind": "enforcer",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "enforcer",
+              "from": "right",
+              "z": 110,
+              "drops": "first_aid"
+            },
+            {
+              "kind": "grabber",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "grabber",
+              "from": "left",
+              "z": 80
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Tower Top: the Godfather",
+      "length": 1920,
+      "obstacles": [],
+      "items": [],
+      "waves": []
+    }
+  ],
+  "links": [
+    {
+      "from": 0,
+      "x": 3700,
+      "to": 1,
+      "to_x": 300,
+      "auto": true
+    }
+  ],
+  "switches": [],
+  "boss": {
+    "floor": 1,
+    "x": 1200,
+    "kind": "godfather"
+  }
+}
