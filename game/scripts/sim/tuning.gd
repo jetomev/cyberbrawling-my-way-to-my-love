@@ -48,6 +48,19 @@ const DEFAULTS := {
 	"climb_hold_ticks": 10,
 	"climb_ticks": 18,
 	"climb_max": 140.0,  # taller than this can't be climbed (jump up a step, or go around)
+	# getting hit (Stage 1: an enemy that fights back): health, and how long each reaction lasts
+	"health": 20.0,  # the hero's; an enemy's tuning sets its own
+	"block_damage": 0.25,  # a plain block takes a quarter of the blow (D-19: less pain than a clean hit); perfect: none
+	"hurt_ticks": 14,  # a plain hit: a flinch
+	"block_hit_ticks": 10,  # a blow taken on the guard
+	"stagger_ticks": 28,  # reeling back (the power punch, the hook, the roundhouse)
+	"push_ticks": 18,  # shoved away (the push kick), fast at first
+	"push_speed": 9.0,
+	"knockback": 3.0,  # how far a plain hit moves him, px a tick at first
+	"knockdown_ticks": 22,  # falling (the side kick, the sweep, a spin kick)
+	"down_ticks": 50,  # lying on the street; he can't be hit there
+	"get_up_ticks": 24,
+	"launch_height": 110.0,  # the uppercut throws him up
 	# the view
 	"camera_zoom": 1.0,
 }

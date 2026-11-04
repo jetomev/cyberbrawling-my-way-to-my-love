@@ -48,6 +48,8 @@ fail() { echo "FAILED $*"; exit 1; }
   SWEEP="$(echo $MOMENTS | tr ' ' '\n' | grep '^sweep:' | head -n 1)"
   [ -n "$SWEEP" ] && python3 "$ROOT/scripts/sweep_spin.py" "$REC/frames" "$OUT/marks.txt" "$OUT/sweep_above.txt" "$SWEEP" \
     "$OUT/frames/sweep-spin.png" "$OUT/clips/sweep-spin.mp4" || fail "could not draw the sweep's spin with its circle"
+  # a whole fight: a bot plays the hero against the thugs, who fight back (Stage 1)
+  "$ROOT/scripts/fight_clip.sh" "$OUT" > "$OUT/fight.txt" 2>&1 || { cat "$OUT/fight.txt"; fail "could not record the fight"; }
   # the hero beside the recordings he was measured from (D-30); the recordings live outside the repo, so a machine
   # without them builds without these pictures and the note says so
   SBS="no"
@@ -116,6 +118,10 @@ PY
     else
       echo "- Side by side: not drawn (no reference recordings on this machine)"
     fi
+    echo "- \`clips/fight.mp4\` / \`fight-half.mp4\` and \`frames/fight.png\` (a frame every half second): a 25 s fight, a bot"
+    echo "  playing the hero against thugs who fight back (red): they walk up, throw combos with a breath between, sometimes"
+    echo "  block (a white flash is a perfect block); blows make them flinch, reel, get shoved, knocked down, thrown up;"
+    echo "  they get back up; the last blow puts one down for good and he drops his pipe; another walks in"
     echo "- \`frames/NN-roll-shoulder.png\` and \`clips/NN-roll-shoulder.mp4\` / \`-half.mp4\`: the shoulders up close through"
     echo "  the whole roll, every frame, the shoulder point ringed, the street under it"
     echo "- Moves in the demo: $(echo $MOMENTS | sed 's/:[0-9:]*//g')"

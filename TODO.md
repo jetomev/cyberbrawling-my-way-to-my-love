@@ -85,8 +85,8 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] Waits for Javier's own play (pictures can't show it): smooth movement and natural pace at full and half speed, whole moves, the sweep's circle moving, the spinning kick, the sweep's reach 195
 - [x] The run's first steps no longer snap: starting and stopping blend from the last drawn pose (was a 131 px jump)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
-- [ ] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo)
-- [ ] That enemy's own combos; the right hit or a perfect block interrupts them and can disarm him; a block takes less pain (solo)
+- [x] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo) (2026-11-03: fight.gd, brain.gd, the thug in play, a bot fight clip in every build)
+- [ ] That enemy's own combos; the right hit or a perfect block interrupts them and can disarm him; a block takes less pain (solo) (done: his combos, a hit or a perfect block stops them, a block takes a quarter; left: the disarm)
 - [ ] Two hero combos in a row make an enemy dizzy: the window for a finishing combo (solo)
 - [ ] Pain system in grey boxes: damage stages per part, broken arm/leg effects, hit sounds; no blood (solo) (#3)
 - [ ] Pick up a weapon; it stays in the hand (solo)

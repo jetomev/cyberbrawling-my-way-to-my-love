@@ -156,6 +156,14 @@ const STAND := {"feet": 1.0, "relaxed": 1.0, "cover_f": 0.0, "cover_b": 0.0, "pi
 const RUN := {"feet": 1.0, "relaxed": 1.0, "cover_f": 0.0, "cover_b": 0.0, "pivot_b": 0.0, "rise_b": 0.0,
 	"arm_f_lower": -95.0, "arm_b_lower": -95.0, "torso": 18.0, "neck": 4.0, "head": 2.0}
 
+## Lying on his back on the street (knocked down, out): the whole drawing turned back a quarter, the body long, the
+## knees a little up, the arms lying along his sides (arms flung back would prop him up off the street).
+const LYING := {"tumble": -88.0, "torso": 0.0, "neck": 0.0, "head": -6.0, "cover_f": 0.0, "cover_b": 0.0, "hip_y": 0.0,
+	"arm_f_upper": -25.0, "arm_f_lower": -10.0, "arm_b_upper": -8.0, "arm_b_lower": -10.0,
+	"leg_f_upper": -30.0, "leg_f_lower": 50.0, "leg_b_upper": -5.0, "leg_b_lower": 10.0, "pivot_b": 0.0, "rise_b": 0.0}
+## The states where he lies, falls or rises: the drawing is placed by its outline (no planted feet).
+const OFF_FEET := ["knockdown", "down", "ko", "get_up", "launch"]
+
 ## Looping states: [loop length in ticks, [tick, changes from GUARD], ...]
 const LOOPS := {
 	# the guard is never dead still: the weight rocks gently from the back leg to the front and back, knees giving
@@ -396,6 +404,40 @@ const SHOTS := {
 		["active_end", {"tall": 1.0, "step_b": 60.0, "hip_x": 20.0, "turn": 85.0, "pivot_b": 180.0, "leg_f_upper": -116.0, "leg_f_lower": 0.0, "torso": -48.0, "head": 22.0, "hip_turn": -30.0}],
 		["follow", {"tall": 1.0, "step_b": 56.0, "hip_x": 4.0, "turn": 60.0, "pivot_b": 180.0, "leg_f_upper": -110.0, "leg_f_lower": 130.0, "torso": -20.0, "head": 10.0, "hip_turn": -12.0}],
 		["end", {}]],
+	# getting hit (Stage 1: an enemy that fights back; fight.gd). A plain hit: the head snaps back and the shoulders
+	# give, the guard opened, then he settles back into it
+	"hurt": [["start", {}],
+		["hit_peak", {"torso": -14.0, "head": -26.0, "hip_x": -8.0, "cover_f": 0.3, "cover_b": 0.5, "arm_f_upper": -30.0, "arm_f_lower": -90.0}],
+		["end", {}]],
+	# a blow taken on the guard: the arms give a little and the body rocks back
+	"block_hit": [["start", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -38.0, "arm_f_lower": -140.0, "arm_b_upper": -30.0, "arm_b_lower": -145.0, "torso": 4.0, "head": 12.0, "hip_y": 6.0}],
+		["hit_peak", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -30.0, "arm_f_lower": -135.0, "arm_b_upper": -22.0, "arm_b_lower": -140.0, "torso": -6.0, "head": 4.0, "hip_x": -6.0, "hip_y": 8.0}],
+		["end", {"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -38.0, "arm_f_lower": -140.0, "arm_b_upper": -30.0, "arm_b_lower": -145.0, "torso": 4.0, "head": 12.0, "hip_y": 6.0}]],
+	# reeling back (the power punch, the hook): leaning away, arms flung open, the back foot catching him
+	"stagger": [["start", {}],
+		["hit_peak", {"torso": -26.0, "head": -32.0, "hip_x": -18.0, "step_b": -24.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 20.0, "arm_f_lower": -50.0, "arm_b_upper": 50.0, "arm_b_lower": -40.0}],
+		["reel", {"torso": -12.0, "head": -10.0, "hip_x": -10.0, "step_b": -16.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -10.0, "arm_f_lower": -80.0, "arm_b_upper": 20.0, "arm_b_lower": -70.0}],
+		["end", {}]],
+	# shoved away (the push kick): folded at the waist, sliding back on his feet
+	"push": [["start", {}],
+		["hit_peak", {"torso": 30.0, "head": 20.0, "hip_x": -20.0, "hip_y": 10.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 30.0, "arm_f_lower": -60.0, "arm_b_upper": 40.0, "arm_b_lower": -50.0}],
+		["reel", {"torso": 14.0, "head": 4.0, "hip_x": -8.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -20.0, "arm_f_lower": -90.0, "arm_b_upper": 10.0, "arm_b_lower": -80.0}],
+		["end", {}]],
+	# knocked down: the feet go out from under him and he falls back onto the street, then lies there
+	"knockdown": [["start", {}],
+		["hit_peak", {"torso": -30.0, "head": -30.0, "hip_x": -16.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 40.0, "arm_f_lower": -40.0, "arm_b_upper": 70.0, "arm_b_lower": -30.0, "tumble": -20.0}],
+		["fall_mid", {"torso": -10.0, "head": -10.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 80.0, "arm_f_lower": -20.0, "arm_b_upper": 100.0, "arm_b_lower": -20.0, "leg_f_upper": -60.0, "leg_f_lower": 50.0, "leg_b_upper": -30.0, "leg_b_lower": 40.0, "tumble": -55.0}],
+		["end", LYING]],
+	"down": [["start", LYING]],
+	"ko": [["start", LYING]],
+	# getting back up: rolls to sit, a knee under him, stands into the guard
+	"get_up": [["start", LYING],
+		["rise_mid", {"torso": 50.0, "head": -20.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 30.0, "arm_f_lower": -30.0, "arm_b_upper": 60.0, "arm_b_lower": -10.0, "leg_f_upper": -100.0, "leg_f_lower": 130.0, "leg_b_upper": -60.0, "leg_b_lower": 140.0, "tumble": -50.0}],
+		["rise_late", {"torso": 30.0, "head": 0.0, "hip_y": 50.0, "cover_f": 0.5, "cover_b": 0.5, "tumble": 0.0}],
+		["end", {}]],
+	# thrown up by the uppercut: arched back, limbs loose, coming round onto his back
+	"launch": [["start", {"torso": -20.0, "head": -40.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 60.0, "arm_f_lower": -30.0, "arm_b_upper": 90.0, "arm_b_lower": -20.0, "leg_f_upper": -20.0, "leg_f_lower": 30.0, "leg_b_upper": 10.0, "leg_b_lower": 30.0, "tumble": -15.0}],
+		["fall_mid", {"torso": -10.0, "head": -20.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": 90.0, "arm_f_lower": -20.0, "arm_b_upper": 110.0, "arm_b_lower": -20.0, "leg_f_upper": -50.0, "leg_f_lower": 40.0, "leg_b_upper": -20.0, "leg_b_lower": 40.0, "tumble": -60.0}]],
 	# X switches stance (Javier, 2026-11-02 18:48): the guard eases down to standing easy, and back up again
 	"to_walk": [["start", {"feet": 1.0}], ["end", STAND]],
 	"to_fight": [["start", STAND], ["end", {"feet": 1.0}]]
@@ -413,7 +455,20 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 				"jump_squat": return tune["jump_squat_ticks"]
 				"climb": return tune["climb_ticks"]
 				"roll": return tune["roll_ticks"]
+				"hurt", "block_hit", "stagger", "push", "knockdown", "get_up": return tune[state + "_ticks"]
+				"launch": return tune["jump_air_ticks"]
 			return Moves.length(state, tune)
+		# getting hit: the blow's peak comes quickly, then the reaction plays out
+		"hit_peak":
+			return 3
+		"reel":
+			return 12
+		"fall_mid":
+			return 10
+		"rise_mid":
+			return int(tune["get_up_ticks"] * 0.4)
+		"rise_late":
+			return int(tune["get_up_ticks"] * 0.75)
 		# the roll: down, over (upside down, a tight ball), up into a crouch
 		"roll_down":
 			return int(tune["roll_ticks"] * 0.15)

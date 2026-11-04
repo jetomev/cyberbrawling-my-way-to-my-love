@@ -180,7 +180,7 @@ func sync(f, ground_y: float) -> void:
 		pose = mixed
 		blend_left -= 1
 	last_pose = pose
-	apply(pose, grounded)
+	apply(pose, grounded and not f.state in Poses.OFF_FEET)  # falling, lying, rising: placed by the outline, no planted feet
 	body.modulate = Color(1.6, 1.6, 1.9) if f.blocking() == "perfect" else Color.WHITE  # a perfect block flashes
 
 

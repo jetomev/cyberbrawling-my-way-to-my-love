@@ -10,6 +10,8 @@ const BODY_HALF_DEPTH := 6.0
 ## Each object: {id, kind, x0, x1, z0, z1, top, climbable, breakable, strength, broken}
 var objects: Array[Dictionary] = []
 var _hit_log := {}  # attack serial -> ids it already hit, so one blow hits an object once
+## Things lying on the street that can be picked up: {kind, x, z} (a knocked-down enemy drops his weapon here)
+var items: Array[Dictionary] = []
 
 
 func add(kind: String, x0: float, x1: float, z0: float, z1: float, top: float, climbable := true, strength := 0) -> Dictionary:
@@ -17,6 +19,12 @@ func add(kind: String, x0: float, x1: float, z0: float, z1: float, top: float, c
 		"climbable": climbable, "breakable": strength > 0, "strength": strength, "broken": false}
 	objects.append(o)
 	return o
+
+
+func drop(kind: String, x: float, z: float) -> Dictionary:
+	var it := {"kind": kind, "x": x, "z": z}
+	items.append(it)
+	return it
 
 
 ## The street as it stands in the grey box: something to smash, something to climb, something to go around.

@@ -25,6 +25,31 @@ func setup(street_world, street_ground_y: float) -> void:
 func refresh() -> void:
 	for id in items:
 		items[id].queue_redraw()
+	refresh_items()
+
+
+## Things lying on the street (a dropped pipe, …), redrawn when one is dropped or picked up.
+var loose: Node2D
+
+
+func refresh_items() -> void:
+	if loose == null:
+		loose = Node2D.new()
+		loose.name = "Loose"
+		loose.z_index = 0
+		loose.draw.connect(_draw_loose)
+		add_child(loose)
+	loose.queue_redraw()
+
+
+func _draw_loose() -> void:
+	for it in world.items:
+		var at := Vector2(it["x"], ground_y + it["z"])
+		if it["kind"] == "pipe":
+			loose.draw_line(at + Vector2(-46, -4), at + Vector2(46, -10), EDGE, 12.0)
+			loose.draw_line(at + Vector2(-44, -4), at + Vector2(44, -10), Color(0.62, 0.64, 0.68), 7.0)
+		else:
+			loose.draw_rect(Rect2(at + Vector2(-20, -16), Vector2(40, 14)), Color(0.6, 0.6, 0.6))
 
 
 func _draw_object(n: Node2D, o: Dictionary) -> void:

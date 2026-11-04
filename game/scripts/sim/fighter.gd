@@ -20,6 +20,8 @@ const SWITCH_STATES := ["to_walk", "to_fight"]
 const DOUBLE_TAP_TICKS := 3
 const MAX_QUEUE := 2  # P then K pressed during one long blow play P then K
 const AIR_STATES := ["jump", "air_kick", "hammer_fist"]
+## Being hit: no input counts until the reaction ends (fight.gd decides who hits whom; take_hit() reacts)
+const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko"]
 
 var tune: Dictionary
 var world = null
@@ -46,6 +48,11 @@ var air_kicked := false  # one air attack (flying kick or hammer fist) per jump
 var push_ticks := 0  # how long the stick has pushed into something climbable
 var climb_from := Vector2.ZERO  # (x, y) where a climb started
 var climb_to := Vector2.ZERO  # (x, y) where it ends, on top
+var team := 0  # 0 = the hero's side; blows only land on the other team
+var max_health := 20.0
+var health := 20.0
+var weapon := ""  # what this fighter carries ("pipe", …); an enemy drops it when knocked down
+var knock_dir := 1  # which way the last blow drove him (+1 right, -1 left)
 
 
 func _init(tuning: Dictionary = {}, start_x := 200.0, start_z := 80.0, street = null) -> void:
@@ -53,12 +60,19 @@ func _init(tuning: Dictionary = {}, start_x := 200.0, start_z := 80.0, street = 
 	x = start_x
 	z = start_z
 	world = street
+	max_health = tune.get("health", 20.0)
+	health = max_health
 
 
 func step(inp: Dictionary) -> void:
 	var mx: float = clampf(inp.get("mx", 0.0), -1.0, 1.0)
 	var mz: float = clampf(inp.get("mz", 0.0), -1.0, 1.0)
 	clock += 1
+	if state in HURT_STATES:
+		t += 1
+		queue.clear()
+		_react()
+		return
 	for b in ["jump", "punch", "kick", "sweep"]:
 		if inp.get(b, false):
 			# during a blow, a press is kept until the blow ends, so a rhythm of presses chains a combo; a press
@@ -269,6 +283,102 @@ func _start(action: String, mx: float) -> void:
 		_enter(link[1])
 
 
+## Takes a blow from attacker (fight.gd calls it once per blow). Returns "hit", "blocked", "perfect", "evaded", or ""
+## when he can't be hit at all (falling, lying, getting up).
+func take_hit(blow: Dictionary, attacker) -> String:
+	if evading():
+		return "evaded"
+	if not hittable():
+		return ""
+	var dir := 1 if x >= attacker.x else -1  # driven away from whoever hit him
+	knock_dir = dir
+	var guard := blocking()
+	if guard != "" and facing == -dir:  # only a guard facing the blow stops it
+		if guard == "perfect":
+			return "perfect"
+		health = maxf(health - blow["damage"] * tune["block_damage"], 0.0)
+		_enter("block_hit")
+		return "blocked"
+	health = maxf(health - blow["damage"], 0.0)
+	stance = "fight"  # a hit snaps him out of the walk stance
+	queue.clear()
+	chain = ""
+	chain_left = 0
+	vx = 0.0
+	var effect: String = blow.get("effect", "")
+	if health <= 0.0 and effect != "launch":
+		effect = "knockdown"  # the last blow puts him down, for good
+	if effect in ["knockdown", "launch"]:
+		roll_dir = facing  # the drawing falls him backward, the way he faces
+	match effect:
+		"stagger", "push", "knockdown":
+			_enter(effect)
+		"launch":
+			vy = 4.0 * tune["launch_height"] / float(tune["jump_air_ticks"])
+			_enter("launch")
+		_:
+			_enter("hurt")
+	return "hit"
+
+
+## Can a blow land on him now? Not while falling, lying or getting up (no hitting a man when he's down).
+func hittable() -> bool:
+	return not state in ["knockdown", "down", "get_up", "ko"]
+
+
+func defeated() -> bool:
+	return state == "ko"
+
+
+## Driven along the street by a blow: stopped by the street's ends and by anything in the way.
+func _slide(speed: float) -> void:
+	var nx := clampf(x + knock_dir * speed, tune["street_left"], tune["street_right"])
+	if not _blocked(nx, z):
+		x = nx
+
+
+func _react() -> void:
+	match state:
+		"hurt", "block_hit":
+			var n: int = tune[state + "_ticks"]
+			_slide(tune["knockback"] * (1.0 - float(t) / n) * (0.5 if state == "block_hit" else 1.0))
+			if t >= n:
+				if state == "block_hit":
+					state = "block"  # back in the guard, past its perfect window (no chain of perfect blocks)
+					t = tune["perfect_block_ticks"]
+				else:
+					_enter("idle")
+		"stagger":
+			_slide(tune["knockback"] * 0.8 * (1.0 - float(t) / tune["stagger_ticks"]))
+			if t >= tune["stagger_ticks"]:
+				_enter("idle")
+		"push":
+			_slide(tune["push_speed"] * (1.0 - float(t) / tune["push_ticks"]))
+			if t >= tune["push_ticks"]:
+				_enter("idle")
+		"knockdown":
+			if t < tune["knockdown_ticks"] / 2:
+				_slide(tune["knockback"] * 1.2)
+			if t >= tune["knockdown_ticks"]:
+				_enter("ko" if health <= 0.0 else "down")
+		"launch":
+			_slide(tune["knockback"])
+			var ground: float = 0.0 if world == null else world.floor_at(x, z, y)
+			y += vy
+			vy -= Tuning.gravity(tune)
+			if y <= ground and vy < 0.0:
+				y = ground
+				vy = 0.0
+				_enter("ko" if health <= 0.0 else "down")
+		"down":
+			if t >= tune["down_ticks"]:
+				_enter("get_up")
+		"get_up":
+			if t >= tune["get_up_ticks"]:
+				stance = "fight"
+				_enter("idle")
+
+
 func _enter(s: String) -> void:
 	state = s
 	t = 0
@@ -304,7 +414,7 @@ func blocking() -> String:
 
 
 func on_ground() -> bool:
-	return not state in AIR_STATES
+	return not state in AIR_STATES and state != "launch"
 
 
 func attack_length(a: String) -> int:
