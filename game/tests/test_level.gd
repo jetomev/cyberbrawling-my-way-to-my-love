@@ -241,8 +241,16 @@ func real_level(seed_value := 1):
 	return Level.new(Level.load_data("res://levels/level1.json"), {}, seed_value)
 
 
-## The wave at index w on the street: walks there (earlier waves beaten for him).
+## Smashes everything breakable in the way, as a player would (the barrier, the car, the crates).
+func clear_path(l) -> void:
+	for o in l.floors[0]["world"].objects:
+		if o["breakable"]:
+			o["broken"] = true
+
+
+## The wave at index w on the street: walks there (earlier waves beaten for him, the way cleared).
 func reach_wave(l, w: int) -> void:
+	clear_path(l)
 	for i in w:
 		walk_to(l, l.floors[0]["waves"][i]["at"])
 		for k in 400:
@@ -299,6 +307,7 @@ func test_never_more_than_five_at_once() -> void:
 			one._enter("ko")
 		for i in 3:
 			l.step({})
+	check(peak >= 3, "the bakery fight really started (peak %d standing)" % peak)
 	check(peak <= Level.MAX_ON_SCREEN, "at most five standing at once (peak %d)" % peak)
 
 
@@ -351,3 +360,66 @@ func test_the_bot_plays_the_teams_level_one_through() -> void:
 		results.append("won" if l.won else "%s at %.0f, wave %d, %s" % ["lost" if l.lost else "stuck", l.hero.x, l.wave, l.where])
 	check(not results.any(func(r): return r.begins_with("stuck")), "the bot is never stuck: %s" % [results])
 	check(results.count("won") >= 2, "and wins on most seeds: %s" % [results])
+
+
+## DJ Volt, level 1's boss (the team's boss list)
+func at_the_boss(seed_value := 1):
+	var l = real_level(seed_value)
+	clear_path(l)
+	for i in l.floors[0]["waves"].size():
+		walk_to(l, l.floors[0]["waves"][i]["at"])
+		for k in 400:
+			beat_them(l, true)
+			l.step({})
+			if l.active_wave < 0:
+				break
+	walk_to(l, 7 * 1920.0)
+	l.step({})
+	return l
+
+
+func test_dj_volt_waits_upstairs_with_his_mic_stand() -> void:
+	var l = at_the_boss()
+	eq(l.where, "the club upstairs", "up the club's back stairs")
+	var dj = l.enemies.filter(func(e): return e["boss"])[0]
+	eq(dj["kind"], "dj_volt", "DJ Volt")
+	eq(dj["f"].weapon, "mic_stand", "with his mic stand")
+
+
+func test_from_range_he_throws_records_low_middle_high() -> void:
+	var l = at_the_boss()
+	var bands := []
+	for i in 200:
+		l.step({})
+		for p in l.projectiles.flying:
+			if not p.has("seen"):
+				p["seen"] = true
+				bands.append(int(p["y0"]))
+	check(bands.size() >= 3, "records thrown (%s)" % [bands])
+	eq(bands.slice(0, 3), [0, 110, 210], "low, middle, high")
+
+
+func test_the_bass_drop_needs_his_speakers() -> void:
+	var l = at_the_boss()
+	for e in l.enemies:
+		e["brain"].dormant_until_within = 1.0  # keep him still (he waits until the hero is within 1 px), so only the guard matters
+	var pushed := false
+	for i in Level.BASS_HOLD + 30:
+		l.step({"block": true})
+		pushed = pushed or l.bass_at > 0
+	check(pushed, "a guard held two seconds while his speakers stand: the wave pushes him back")
+	for o in l.world.objects:
+		if o["kind"] == "speaker":
+			o["broken"] = true
+	l.bass_at = -1
+	for i in Level.BASS_HOLD + 30:
+		l.step({"block": true})
+	eq(l.bass_at, -1, "both speakers smashed: no more wave")
+
+
+func test_he_drops_the_bat() -> void:
+	var l = at_the_boss()
+	beat_them(l)
+	l.step({})
+	check(l.won, "DJ Volt down: level 1 won")
+	check(l.world.items.any(func(i): return i["kind"] == "bat"), "and his prize, the bat, on the floor")

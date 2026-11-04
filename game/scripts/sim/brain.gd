@@ -45,8 +45,17 @@ const BRUISER := {
 	"keep": 170.0, "strike": 115.0, "wait_min": 70, "wait_max": 130, "block_chance": 0.25, "block_ticks": 24,
 	"combos": [["punch", "punch", "punch"], ["punch", "punch"], ["kick", "kick", "kick"]],
 }
+## DJ Volt, level 1's boss (the team's boss list): from range he throws his records ("Scratch": low, middle, high,
+## level.gd flies them); close in, the mic stand. His "Bass Drop" (a guard held too long while his speakers stand
+## pushes you back) is level.gd's, since it needs the speakers.
+const DJ_VOLT := {
+	"keep": 170.0, "strike": 120.0, "wait_min": 45, "wait_max": 90, "block_chance": 0.3, "block_ticks": 22,
+	"combos": [["punch", "punch", "punch"], ["punch", "punch"], ["kick", "punch", "kick"]],
+	"records_from": 280.0,  # further off than this, he throws instead
+	"records_every": 110,
+}
 ## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
-const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER}
+const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER, "DJ_VOLT": DJ_VOLT}
 
 var me
 var foe
@@ -105,6 +114,13 @@ func think() -> Dictionary:
 		return inp
 	if wait > 0:
 		wait -= 1
+	# a thrower, far off: a volley of records (level.gd flies them), then a breath
+	if kind.has("records_from") and dist > kind["records_from"] and wait == 0 and me.state in Fighter.GROUND_STATES:
+		wait = kind["records_every"]
+		if me.facing != int(toward):
+			inp["mx"] = toward * 0.01
+		inp["throw"] = true
+		return inp
 	# line up on the street's depth, then close to the distance he wants
 	var dz: float = foe.z - me.z
 	if absf(dz) > 6.0:

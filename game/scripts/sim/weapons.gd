@@ -17,6 +17,7 @@ const TABLE := {
 	"wrench": {"damage": 2.0, "reach": 145.0, "speed": 2, "hits": 16, "smash": "knockdown"},
 	"bat": {"damage": 2.0, "reach": 175.0, "speed": 1, "hits": 10, "smash": "push"},
 	"sword": {"damage": 3.0, "reach": 200.0, "speed": 0, "hits": 20, "smash": "knockdown"},
+	"mic_stand": {"damage": 1.0, "reach": 170.0, "speed": 1, "hits": 40, "smash": "push"},  # DJ Volt's (level 1's boss)
 }
 
 ## The fist move each press becomes with a weapon in hand (the rest stay as they are).

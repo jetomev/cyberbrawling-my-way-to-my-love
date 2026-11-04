@@ -40,7 +40,8 @@ const FIGHT_TICKS := 1500  # --fight: how long the recorded bot fight runs (25 s
 const ENEMY_TINT := Color(1.35, 0.78, 0.72)  # the thug, reddish, so he never reads as the hero
 ## Each enemy type its own colour in the grey boxes (the team's art replaces them): the Glow Punk's light-up pink,
 ## the Bruiser a dark red, the boss magenta
-const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 0.55, 0.5), "boss": Color(1.6, 0.6, 1.4)}
+const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 0.55, 0.5), "boss": Color(1.6, 0.6, 1.4),
+	"dj_volt": Color(0.75, 1.1, 1.6)}  # DJ Volt: his LED jacket's cold blue
 const ENEMY_HEALTH := 12.0
 const RESPAWN_TICKS := 180
 
@@ -82,6 +83,7 @@ var pages: Array = []  # the story lines still to show
 var then := ""  # after the pages: "level" (play the current level) or "title"
 var screen_ticks := 0
 var sound
+var flying_view: Node2D  # thrown things (DJ Volt's records) and his bass wave, redrawn every frame
 
 
 func _ready() -> void:
@@ -135,6 +137,11 @@ func _ready() -> void:
 	sound = Sound.new()
 	sound.name = "Sound"
 	add_child(sound)
+	flying_view = Node2D.new()
+	flying_view.name = "Flying"
+	flying_view.z_index = 600
+	flying_view.draw.connect(_draw_flying)
+	add_child(flying_view)
 	if progress != null:
 		_show_title()
 	if trial_name != "":
@@ -275,6 +282,7 @@ func _play_level() -> void:
 			level_views.erase(id)
 	hero_view.sync(hero, Street.GROUND_Y)
 	hero_view.z_index = world.draw_order(hero)
+	flying_view.queue_redraw()
 	var b: Vector2 = level.bounds()
 	$Camera.limit_left = int(b.x)
 	$Camera.limit_right = int(maxf(b.y, b.x + 1920.0))
@@ -473,6 +481,25 @@ func _start_level(file: String, who: String) -> void:
 	flips_seen = -1
 	ended_for = 0
 	bars["hero"][0].visible = true
+
+
+## DJ Volt's records, spinning black discs at their height, and his bass wave: rings rolling out from his speakers.
+func _draw_flying() -> void:
+	if level == null:
+		return
+	for p in level.projectiles.flying:
+		var at := Vector2(p["x"], Street.GROUND_Y + p["z"] - (p["y0"] + p["y1"]) * 0.5)
+		flying_view.draw_circle(at, 22.0, Color(0.06, 0.06, 0.08))
+		flying_view.draw_circle(at, 8.0, Color(0.9, 0.3, 0.5))
+		flying_view.draw_arc(at, 22.0, float(level.tick) * 0.6, float(level.tick) * 0.6 + 1.2, 8, Color(0.6, 0.6, 0.7), 2.0)
+	var since: int = level.tick - level.bass_at
+	if level.bass_at > 0 and since < 30:
+		for o in level.world.objects:
+			if o["kind"] == "speaker" and not o["broken"]:
+				var c := Vector2((o["x0"] + o["x1"]) * 0.5, Street.GROUND_Y + 10.0 - 120.0)
+				for k in 3:
+					var r := float(since) * 28.0 + k * 60.0
+					flying_view.draw_arc(c, r, 0.0, TAU, 48, Color(0.6, 0.9, 1.0, maxf(0.0, 0.7 - float(since) / 30.0)), 6.0)
 
 
 ## The stairs' doorways and the switches on the floor he's on, for the obstacles view.

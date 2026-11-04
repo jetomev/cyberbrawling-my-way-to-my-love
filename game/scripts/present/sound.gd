@@ -9,7 +9,7 @@ extends Node
 ## voice batch lands.
 
 const DIR := "res://assets/audio/sfx/"
-const NAMES := ["punch_whoosh", "kick_whoosh", "hit_light", "hit_heavy", "block", "crack", "land", "step", "weapon_break",
+const NAMES := ["punch_whoosh", "kick_whoosh", "hit_light", "hit_heavy", "block", "crack", "land", "step", "weapon_break", "bass_drop",
 	"grunt", "shout", "pain", "scream"]
 const TAKES := 3
 const VOICES := 8  # sounds at once
@@ -64,11 +64,14 @@ func fight_tick(fighters: Array, events: Array) -> void:
 	for e in events:
 		match e["result"]:
 			"hit":
-				var heavy: bool = e["attacker"].move().get("damage", 1) >= 3 or e["move"] in ["sweep", "smash"]
+				var by = e.get("attacker")  # (a thrown record has no attacker: it hits light)
+				var heavy: bool = by != null and (by.move().get("damage", 1) >= 3 or e.get("move", "") in ["sweep", "smash"])
 				play("hit_heavy" if heavy else "hit_light")
 				play("pain", -3.0)
 			"blocked", "perfect":
 				play("block")
+			"bass":
+				play("bass_drop")
 		if e.get("broke", "") != "":
 			play("crack")
 			play("scream", -2.0)

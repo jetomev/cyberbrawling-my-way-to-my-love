@@ -19,6 +19,7 @@ const Fight := preload("res://scripts/sim/fight.gd")
 const Brain := preload("res://scripts/sim/brain.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
+const Projectiles := preload("res://scripts/sim/projectiles.gd")
 
 ## Enemy types by name: health, how they fight (brain.gd tables), what they drop when put down for good, and blows
 ## that don't make them flinch. From the team's enemy table (art-in 2026-11-03): the Glow Punk, the warm-up (slap,
@@ -28,7 +29,16 @@ const KINDS := {
 	"glow_punk": {"health": 8.0, "brain": "GLOW_PUNK", "drops": "takeaway"},
 	"bruiser": {"health": 20.0, "brain": "BRUISER", "drops": "bat", "shrugs": ["punch"]},
 	"boss": {"health": 40.0, "brain": "BOSS"},
+	"dj_volt": {"health": 40.0, "brain": "DJ_VOLT", "drops": "bat"},
 }
+## DJ Volt's records (the team: "three records thrown like frisbees, low, middle, high"): their height bands above the
+## street, how fast they fly, how far apart in time, what they do
+const RECORDS := [[0.0, 60.0], [110.0, 180.0], [210.0, 280.0]]
+const RECORD_SPEED := 9.0
+const RECORD_GAP := 14
+const RECORD_DAMAGE := 1.5
+## "Bass Drop": a guard held this long while his speakers stand, and the music's wave pushes the hero back
+const BASS_HOLD := 120
 const MAX_ON_SCREEN := 5  # never more than five enemies at once; the rest wait off screen (the team's fairness rules)
 const OFF_SCREEN := 1150.0  # "from the left/right": they walk in from this far beyond the wave's spot
 const AMBUSH := 260.0  # a hidden enemy jumps out when the hero comes this close
@@ -58,6 +68,9 @@ var hero_down_for := 0
 var dice_seed := 1
 var events := []  # this tick's fight events (for sounds and the view)
 var collected := []  # what the hero has found (a matchbook, the torn photo)
+var projectiles  # what's flying (records)
+var held_guard := 0  # how long the hero has held his guard, for DJ Volt's Bass Drop
+var bass_at := -1  # the tick the last bass wave went out (for the view and the sound)
 var hero_tune: Dictionary
 
 ## The floor he's on, as the game and the tests read it
@@ -133,6 +146,9 @@ func restart() -> void:
 	hero_down_for = 0
 	events = []
 	collected = []
+	projectiles = Projectiles.new()
+	held_guard = 0
+	bass_at = -1
 	_maybe_boss()
 
 
@@ -167,7 +183,12 @@ func step(inp: Dictionary) -> void:
 	_take_turns()
 	for e in enemies:
 		if not e["gone"]:
-			e["f"].step(e["brain"].think())
+			var think: Dictionary = e["brain"].think()
+			if think.get("throw", false):
+				e["volley"] = RECORDS.duplicate()  # his records go one after another
+				e["volley_at"] = tick
+			_volley(e)
+			e["f"].step(think)
 	var all := everyone()
 	for id in world.step_hits(all):  # something smashed: whatever was inside falls out
 		var o: Dictionary = world.objects[id]
@@ -176,6 +197,8 @@ func step(inp: Dictionary) -> void:
 	_collect()
 	Fight.separate(all)
 	events = fight.step(all, world)
+	events.append_array(projectiles.step(all, 0.0, floors[on]["length"]))
+	_bass_drop()
 	_switches()
 	_waves()
 	_links()
@@ -188,6 +211,34 @@ func _take_turns() -> void:
 	up.sort_custom(func(a, b): return absf(a["f"].x - hero.x) < absf(b["f"].x - hero.x))
 	for i in up.size():
 		up[i]["brain"].allowed = i < ATTACKERS
+
+
+## A thrower's volley, one record every RECORD_GAP ticks, from his hand toward the hero.
+func _volley(e: Dictionary) -> void:
+	if not e.has("volley") or e["volley"].is_empty() or e["f"].defeated() or e["f"].state in Fighter.HURT_STATES:
+		return
+	if (tick - e["volley_at"]) % RECORD_GAP != 0:
+		return
+	var band: Array = e["volley"].pop_front()
+	var f = e["f"]
+	var dir := 1.0 if hero.x >= f.x else -1.0
+	projectiles.throw("record", f.x + dir * 40.0, f.z, band[0], band[1], dir * RECORD_SPEED, RECORD_DAMAGE, f.team)
+
+
+## DJ Volt's Bass Drop: while either speaker stands, a guard held BASS_HOLD ticks brings the wave: it pushes the
+## hero back. Smash both speakers and it's gone (the team's boss list: "smash them first").
+func _bass_drop() -> void:
+	var dj: Array = enemies.filter(func(e): return e.get("kind", "") == "dj_volt" and not e["f"].defeated())
+	if dj.is_empty():
+		return
+	held_guard = held_guard + 1 if hero.blocking() != "" else 0
+	var speakers: bool = world.objects.any(func(o): return o["kind"] == "speaker" and not o["broken"])
+	if held_guard >= BASS_HOLD and speakers:
+		held_guard = 0
+		bass_at = tick
+		hero._enter("idle")  # the wave tears his guard down
+		hero.take_hit({"damage": 1.0, "effect": "push", "low": 0.0, "high": 300.0, "move": "bass"}, dj[0]["f"])
+		events.append({"target": hero, "result": "bass", "kind": "bass"})
 
 
 ## Walking over a collectible (a matchbook, the torn photo) keeps it.

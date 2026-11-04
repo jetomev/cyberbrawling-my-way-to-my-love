@@ -1,6 +1,6 @@
 {
  "name": "Level 1 \u00b7 Neon Row",
- "about": "Javier & Claude, 2026-11-03, from the assistant team's level 1 layout (art-in 2026-11-03-level1-layout): seven street screens (1920 px each), the club's back stairs, the boss's room upstairs. Depth: back z 0-30, middle ~80, front ~140. Still to come from that page: the sparring friend on screen 1, the umbrella, the cat, DJ Volt's own fight (records, the speakers' wave, the mic stand).",
+ "about": "Javier & Claude, 2026-11-03, from the assistant team's level 1 layout (art-in 2026-11-03-level1-layout): seven street screens (1920 px each), the club's back stairs, the boss's room upstairs. Depth: back z 0-30, middle ~80, front ~140. DJ Volt: records low, middle and high from range, the mic stand close in, the speakers' Bass Drop. Still to come from that page: the sparring friend on screen 1, the umbrella, the cat.",
  "floors": [
   {
    "name": "Neon Row",
@@ -282,7 +282,8 @@
  "boss": {
   "floor": 1,
   "x": 1100,
-  "kind": "boss",
-  "health": 40
+  "kind": "dj_volt",
+  "health": 40,
+  "weapon": "mic_stand"
  }
 }

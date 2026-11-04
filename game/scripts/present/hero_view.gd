@@ -28,7 +28,8 @@ const PAIN_TINT := [Color.WHITE, Color(0.9, 0.78, 1.05), Color(1.12, 0.72, 0.74)
 ## The weapon in the lead hand, drawn through the fist: its length and colour by kind (the team's art replaces it).
 const WEAPON_LOOK := {"knife": [56.0, 8.0, Color(0.85, 0.87, 0.9)], "stick": [130.0, 10.0, Color(0.55, 0.42, 0.28)],
 	"pipe": [120.0, 12.0, Color(0.62, 0.64, 0.68)], "wrench": [80.0, 14.0, Color(0.5, 0.52, 0.56)],
-	"bat": [130.0, 16.0, Color(0.72, 0.58, 0.38)], "sword": [160.0, 9.0, Color(0.88, 0.9, 0.95)]}
+	"bat": [130.0, 16.0, Color(0.72, 0.58, 0.38)], "sword": [160.0, 9.0, Color(0.88, 0.9, 0.95)],
+	"mic_stand": [170.0, 7.0, Color(0.15, 0.15, 0.18)]}
 var weapon_drawn := ""
 var weapon_node: Polygon2D
 const PAIN_BONES := {
