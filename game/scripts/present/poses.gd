@@ -1118,6 +1118,7 @@ const NO_SWITCH := ["doorman", "big_mama"]  # (a shield in the front hand: the s
 ## The weapons held weapon side forward (the right foot front, the weapon in the front hand); the rest weapon side back.
 const WEAPON_SIDE_FORWARD := ["knife", "stick", "sword", "lovelight", "cane", "baton", "shield", "wok"]
 const SPIN_FINISHERS := ["knife", "stick"]
+const KNIFE_STABS := [2, 4, 6]  # the frames of the knife finisher's three quick stabs, before its spin
 ## Level swings, round the body at one height (the bat's swings, the sword's long slash): their track is the angle round
 ## the body (180 behind him, 0 at the enemy); seen from the side the weapon stays level, pointing back or forward, and
 ## draws shorter as it comes round toward the camera (it never dips past his legs).
@@ -1196,7 +1197,15 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 				out["hold_%sx" % w] = _along_v(keys, path, t).x
 				out["hold_%sy" % w] = _along_v(keys, path, t).y
 				out["cover_" + w] = 0.0
-			if state == "smash" and weapon in SPIN_FINISHERS:  # a whole turn of the body, from the wind-up to the follow,
+			if state == "smash" and weapon == "knife" and t >= 1 and t < keys[1]:
+				# the knife's finisher opens with three quick stabs, a frame each, before the spin (the pose sheet)
+				var out_now: bool = t in KNIFE_STABS
+				out["hold_" + w] = 1.0
+				out["hold_%sx" % w] = 92.0 if out_now else 44.0
+				out["hold_%sy" % w] = -32.0 if out_now else -26.0
+				out["cover_" + w] = 0.0
+				out["wpn"] = 0.0
+			elif state == "smash" and weapon in SPIN_FINISHERS:  # a whole turn of the body, from the wind-up to the follow,
 				out["spin"] = 360.0 * clampf(float(t - keys[1]) / maxf(1.0, keys[3] - keys[1]), 0.0, 1.0)
 				out["hold_" + w] = 1.0  # the arm out level at chest height through it ("the slash at chest height", the sheet)
 				out["hold_%sx" % w] = 74.0
