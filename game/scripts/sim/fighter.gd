@@ -415,7 +415,7 @@ func _start(action: String, mx: float) -> void:
 		attack_serial += 1
 		chain = ""
 		chain_until = -1
-		_enter("sweep")
+		_enter(_armed("sweep"))
 	else:
 		vx = 0.0
 		attack_serial += 1
@@ -545,6 +545,8 @@ func _hurt(part: String, amount: float) -> void:
 func _armed(move: String) -> String:
 	if weapon == "" or broken("arm_f") or no_swing:
 		return move
+	if Weapons.swings_replace_kicks and Weapons.ARMED_KICKS.has(move):
+		return Weapons.ARMED_KICKS[move]  # (Javier's order: armed, the kicks are swings too)
 	return Weapons.ARMED.get(move, move)
 
 

@@ -220,3 +220,33 @@ func test_a_swing_on_a_guard_doesnt_wear_it() -> void:
 			results.append(e["result"])
 	eq(results, ["blocked"], "the swing meets his guard")
 	eq(f.weapon_hits_left, whole, "a blocked swing doesn't wear the weapon (only a hit does)")
+
+
+## Javier's order (2026-11-04, through the team): armed, every attack press is a weapon swing, the kicks too. Ready
+## behind Weapons.swings_replace_kicks (off till the grip page, the pose sheet and a way to drop a weapon are in):
+## switched on, the kick chains become swings; off, they're kicks as before.
+func test_switched_on_armed_kicks_are_swings_too() -> void:
+	Weapons.swings_replace_kicks = true
+	eq(chain_of(["kick", "kick", "kick"]), ["swing", "backswing", "smash"], "K K K armed: swing, backswing, smash")
+	eq(chain_of(["punch", "punch", "kick"]), ["swing", "backswing", "smash"], "P P K armed: the finisher's a smash, no push kick")
+	eq(chain_of(["punch", "kick", "punch"]), ["swing", "backswing", "rising_swing"], "P K P armed: the knee's a backswing")
+	eq(chain_of(["kick", "punch", "kick"]), ["swing", "handle_jab", "smash"], "K P K armed: swing, handle jab, smash")
+	var j = armed("bat")
+	j.step({"jump": true})
+	for i in 10:
+		j.step({})
+	j.step({"kick": true})
+	j.step({})
+	eq(j.state, "chop", "a jumping kick armed: the chop")
+	var s = armed("pipe")
+	s.step({"sweep": true})
+	eq(s.state, "swing", "the sweep armed: a swing")
+	var bare = Fighter.new(Tuning.fresh(), 400.0, 80.0)
+	bare.step({"kick": true})
+	eq(bare.state, "kick", "bare-handed, a kick is still a kick")
+	var cab = armed("pipe")
+	cab.no_swing = true
+	cab.step({"kick": true})
+	eq(cab.state, "kick", "no room to swing (the crane's cab): fists and feet, as before")
+	Weapons.swings_replace_kicks = false
+	eq(chain_of(["kick", "kick", "kick"]), ["kick", "body_kick", "side_kick"], "switched off: K K K armed are kicks, as now")
