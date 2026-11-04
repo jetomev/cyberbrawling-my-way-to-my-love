@@ -13,7 +13,7 @@ const HeroView := preload("res://scripts/present/hero_view.gd")
 
 const WEAPONS := ["knife", "stick", "pipe", "wrench", "bat", "baguette", "sword", "lovelight"]
 const HOLD := 24  # frames a grip or a block close-up holds
-const CLOSE := 6.0  # how big a close-up draws him
+const CLOSE := 4.4  # how big a close-up draws him
 const PAD := 6  # Ready frames before and after each blow
 ## Each punch-side press armed, and what it's called in the combos (Weapons.ARMED).
 const PRESSES := {"swing": "P, 1st (the jab's place)", "backswing": "P P, 2nd (the cross's place)",
@@ -90,7 +90,8 @@ func _start(i: int) -> void:
 		var pose: Dictionary = Poses.armed(Poses.angles(s[4], 0, tune), s[4], s[0], 0, tune)
 		var baked: Dictionary = Poses.bake(pose, true)
 		var hand: Vector2 = Poses._end("arm_%s_lower" % ("b" if pose.get("wpn_side", 0.0) >= 0.5 else "f"), baked)[0]
-		view.position = Vector2(640, 380) - hand * CLOSE
+		var head: Vector2 = Poses._end("head", baked)[0]  # (the head in frame too: the chief of staff, 2168465)
+		view.position = Vector2(640, 380) - hand.lerp(head, 0.45) * CLOSE
 	print("SEG %s %s %d %d %s" % [s[0], s[1], frame, frame + _length(s) - 1, s[2]])
 
 

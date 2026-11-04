@@ -1,5 +1,5 @@
 {
-  "name": "Level 8 \u00b7 The Penthouse",
+  "name": "Level 8 · The Penthouse",
   "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the lobby (floor 1; the stair door opened by the switch at the top of the dead lift shaft, the cable back down), the shaft top, the staircase hall up to the gallery (floor 2), the bedroom wing (floor 3), the terrace corridor (floor 3, the switch for the study), Velvet Rook's study. NOT BUILT YET: Rook's Enforcers jumping down from the gallery (they come through the doors, one per door switch standing), the study switch one floor down (here: on the corridor itself), the window onto the tower.",
   "draft": true,
   "floors": [
@@ -367,5 +367,6 @@
     "floor": 5,
     "x": 1000,
     "kind": "rook"
-  }
+  },
+  "after_chrome": true
 }

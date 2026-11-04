@@ -1056,7 +1056,8 @@ const WEAPON_REACH := {"knife": 38.0, "stick": 112.0, "pipe": 102.0, "wrench": 6
 const HANG_HEIGHT := 92.0
 const WEAPON_SWING_REL := -78.0  # in a swing (till each weapon's own swings are drawn): through the fist, as before
 const FENCE := Vector2(50, -70)  # the free hand with a one-handed weapon: up before the chest, open (a fence)
-const BLOCK_AT := Vector2(62, -90)  # blocking: the weapon held across the body at chin height (the team's playtester)
+const BLOCK_AT := Vector2(54, -58)  # blocking: the weapon hand before the chest, the weapon standing up before the face
+const BLOCK_ANGLE := -80.0  # (a little forward of upright)
 ## Each weapon's own blows (the pose sheet, art-in 2026-11-04-weapon-poses): where the weapon points at the wind-up,
 ## at contact and at the follow-through (degrees as above: 0 at the enemy, -90 up, 90 down); from its Ready before
 ## and back to it after. By the weapon, else its kind. The arms keep the swings' shared shapes for now; the weapon's
@@ -1230,9 +1231,9 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 		var at: Vector2 = g["at"]
 		var dir_deg: float = g["wpn"]
 		if state in BLOCK_STATES:
-			if weapon == "knife":  # never with the blade: the knife hand back to the hip, the free forearm up (Pippin)
-				at = Vector2(22, -6)
-				dir_deg = 0.0
+			if weapon == "knife":  # never with the blade: the knife hand right back behind the hip, the blade down out of the
+				at = Vector2(4, 0)  # way, the free forearm up across the face (Pippin; the chief of staff: unlike its Ready)
+				dir_deg = 110.0
 				out["cover_" + o] = 1.0
 			elif weapon in ["shield", "wok"]:
 				pass  # a shield blocks where it's held: up in front, chin to knee
@@ -1240,10 +1241,8 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 				at = Vector2(44, -70)  # a blade blocks upright before him, the edge out, both hands at chin height (a sword's guard)
 				dir_deg = -78.0
 			else:
-				at = BLOCK_AT
-				dir_deg = 0.0
-				out["wpn_len"] = 0.3  # across the body: seen end-on from the side, a short stub across the fists
-				out["wpn_centre"] = 1.0
+				at = BLOCK_AT  # an upright guard before the chest and face (the chief of staff, 2168465: the end-on stub at the
+				dir_deg = BLOCK_ANGLE  # face didn't read as a guard), the free hand on the shaft or both hands on it
 		out["hold_%sx" % w] = at.x
 		out["hold_%sy" % w] = at.y
 		out["hold_" + w] = 1.0
@@ -1253,9 +1252,10 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 		if two:  # the other hand on the handle, a fist further down it
 			out["grip_o"] = 1.0
 			out["cover_" + o] = 0.0
-		elif state in BLOCK_STATES and weapon != "knife":
-			out["hold_%sx" % o] = at.x + 6.0  # blocking one-handed: the free hand flat on the weapon's far end (end-on: by the fist)
-			out["hold_%sy" % o] = at.y + 4.0
+		elif state in BLOCK_STATES and weapon != "knife" and not weapon in ["shield", "wok"]:
+			var up: Vector2 = at + Vector2.from_angle(deg_to_rad(dir_deg)) * 46.0  # blocking one-handed: the free hand
+			out["hold_%sx" % o] = up.x  # flat on the shaft, higher up, bracing it
+			out["hold_%sy" % o] = up.y
 			out["hold_" + o] = 1.0
 			out["cover_" + o] = 0.0
 			out["open_" + o] = 1.0

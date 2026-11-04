@@ -312,5 +312,6 @@
     "floor": 4,
     "x": 1200,
     "kind": "static"
-  }
+  },
+  "after_chrome": true
 }

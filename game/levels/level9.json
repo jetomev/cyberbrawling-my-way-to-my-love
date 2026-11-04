@@ -361,5 +361,6 @@
   "win": {
     "floor": 3,
     "weapon": "lovelight"
-  }
+  },
+  "after_chrome": true
 }

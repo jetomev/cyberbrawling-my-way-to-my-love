@@ -436,3 +436,18 @@ func test_one_wrench_in_the_air_where_the_floor_says_so() -> void:
 			eq(m["f"].weapon, "wrench", "(and keeps his wrench for later)")
 		else:
 			eq(now, 2, "anywhere else: he throws (the setup works: %d before)" % before)
+
+
+## Roster v6: a pipe Bruiser's pipe bends and breaks when knocked loose till Madame Chrome (level 5) is beaten; after
+## her (levels 6 to 10 say so) he drops one you can keep.
+func test_a_bruisers_pipe_is_kept_only_after_madame_chrome() -> void:
+	var l = street()
+	var b := bring(l, "bruiser_pipe", 200.0)
+	check(b["f"].weapon_snaps, "before Chrome: his pipe snaps")
+	l.plan["after_chrome"] = true
+	var b2 := bring(l, "bruiser_pipe", 300.0)
+	check(not b2["f"].weapon_snaps, "after her: it's a pipe you can keep")
+	for n in ["level2", "level3", "level4", "level5"]:
+		check(not Level.load_data("res://levels/%s.json" % n).get("after_chrome", false), "%s is before her" % n)
+	for n in ["level6", "level7", "level8", "level9", "level10"]:
+		check(Level.load_data("res://levels/%s.json" % n).get("after_chrome", false), "%s is after her" % n)

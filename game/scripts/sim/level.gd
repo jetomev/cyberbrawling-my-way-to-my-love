@@ -1336,7 +1336,8 @@ func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave
 	f.shrugs = KINDS[kind].get("shrugs", [])
 	if weapon == "" and KINDS[kind].has("weapon"):
 		f.take_weapon(KINDS[kind]["weapon"])  # an enemy type's own weapon (Snick's knife)
-	f.weapon_snaps = KINDS[kind].get("snaps", false)
+	# a pipe Bruiser's pipe bends and breaks till Madame Chrome is beaten; after her it's yours to keep (roster v6)
+	f.weapon_snaps = KINDS[kind].get("snaps", false) and not plan.get("after_chrome", false)
 	f.dodges = KINDS[kind].get("dodges", [])
 	f.parries = KINDS[kind].get("parries", [])
 	f.gloves = KINDS[kind].get("gloves", [])

@@ -1,5 +1,5 @@
 {
-  "name": "Level 10 \u00b7 The Tower Top",
+  "name": "Level 10 · The Tower Top",
   "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. One wide rooftop in the rain: two waves of Enforcers (the last of the second drops the only first-aid kit), then the Godfather of Glow in three rounds. He carries the Lovelight in from level 9. NOT BUILT YET: no scroll lock between the waves (it locks here), your love drawn tied up at the far right, the street cat from level 1 turning up at the end, the Lovelight that can't be thrown (Merry's suggestion, open). Balance ruling 2026-11-04: food between the two waves. Second ruling (2026-11-04 06:01): wave one 2 Enforcers; the Lovelight reaches 200, level with the sword.",
   "draft": true,
   "start_weapon": "lovelight",
@@ -99,5 +99,6 @@
     "floor": 1,
     "x": 1200,
     "kind": "godfather"
-  }
+  },
+  "after_chrome": true
 }
