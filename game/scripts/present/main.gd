@@ -49,6 +49,7 @@ const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 
 	"twin_tall": Color(1.3, 1.15, 0.75), "twin_short": Color(1.15, 1.0, 0.6),  # Twin Loans: matching checked suits
 	"coach": Color(0.7, 0.95, 1.35),  # Coach Crusher: an old blue tracksuit
 	"chrome": Color(1.35, 1.38, 1.5),  # Madame Chrome: a silver dress
+	"static": Color(0.85, 1.1, 1.45),  # Mr. Static: a rubber suit, crackling blue
 	# the rest of the roster, from the team's looks: the mechanic's blue overalls, the Doorman's black suit, the
 	# Dancer's bright tracksuit, the Enforcer's long dark coat, the lookout's neon raincoat, the Grabber's green glow
 	"wrench_mechanic": Color(0.7, 0.85, 1.25), "doorman": Color(0.45, 0.45, 0.5), "neon_dancer": Color(1.6, 1.2, 0.5),
@@ -678,6 +679,25 @@ func _draw_flying() -> void:
 		flying_view.draw_line(c + Vector2(-22, -12), c + Vector2(-38, -34), Color(0.55, 0.55, 0.6), 4.0)
 		if not level.cat_fed and level.cat_with > 0:
 			flying_view.draw_arc(c + Vector2(0, -50), 14.0, -PI / 2, -PI / 2 + TAU * level.cat_with / level.CAT_FEED_TICKS, 16, Color(1, 0.8, 0.4), 4.0)
+	for e in level.enemies:  # Mr. Static winding up his slam: sparks crackling over his head, growing till it lands
+		var f = e["f"]
+		if f.slam_in >= 0 and not e["gone"]:
+			var h := Vector2(f.x, Street.GROUND_Y + f.z - f.y - 400.0 * KIND_SIZE.get(e["kind"], 1.0))
+			var r: float = 18.0 + (level.SLAM_WINDUP - f.slam_in) * 1.5
+			for k in 8:
+				var a := TAU * k / 8.0 + float(level.tick) * 0.4
+				flying_view.draw_line(h + Vector2.from_angle(a) * r * 0.4, h + Vector2.from_angle(a + 0.3) * r, Color(0.6, 0.9, 1.0), 3.0)
+			flying_view.draw_circle(h, 8.0, Color(0.85, 0.95, 1.0))
+	if level.tick < level.live_until:  # Mr. Static's slam: the floor live, crackling (jump it)
+		var b: Vector2 = level.bounds()
+		for k in 4:
+			var pts := PackedVector2Array()
+			var y0: float = Street.GROUND_Y + 30.0 + k * 34.0
+			var x: float = b.x
+			while x <= b.y:
+				pts.append(Vector2(x, y0 + (10.0 if (int(x / 40.0) + k + level.tick / 3) % 2 == 0 else -10.0)))
+				x += 40.0
+			flying_view.draw_polyline(pts, Color(0.55, 0.85, 1.0, 0.85), 3.0)
 	var since: int = level.tick - level.bass_at
 	if level.bass_at > 0 and since < 30:
 		for o in level.world.objects:

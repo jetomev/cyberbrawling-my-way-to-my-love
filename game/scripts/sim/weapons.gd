@@ -22,6 +22,7 @@ const TABLE := {
 	"shield": {"damage": 1.0, "reach": 125.0, "speed": 1, "hits": 999, "smash": "push"},  # the Doorman's riot shield: bash, bash, shove
 	"wok": {"damage": 2.0, "reach": 160.0, "speed": 2, "hits": 99, "smash": "knockdown", "guard_break": true},  # Big Mama Noodle's
 	"cane": {"damage": 1.0, "reach": 150.0, "speed": 0, "hits": 999, "smash": "stagger"},  # Madame Chrome's chrome cane
+	"baton": {"damage": 1.0, "reach": 140.0, "speed": 0, "hits": 999, "smash": "stagger"},  # Mr. Static's crackling baton
 }
 
 ## The fist move each press becomes with a weapon in hand (the rest stay as they are).

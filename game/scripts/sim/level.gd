@@ -44,6 +44,8 @@ const KINDS := {
 	# level 5's boss, Madame Chrome (the team's roster): her chrome cane snaps after three kicks into its wind-up, and
 	# then she's done; the pipe is her prize (and the casino key, with level 5)
 	"chrome": {"health": 40.0, "brain": "CHROME", "weapon": "cane", "drops": "pipe"},
+	# level 7's boss, Mr. Static (the team's roster): a perfect block on his baton shocks the HERO; rubber gloves his prize
+	"static": {"health": 40.0, "brain": "STATIC", "weapon": "baton", "drops": "rubber_gloves"},
 	"coach": {"health": 40.0, "brain": "COACH", "drops": "first_aid",
 		"gloves": ["punch", "cross", "power_punch", "hook", "uppercut", "elbow", "hammer_fist", "air_punch"]},
 	# the rest of the team's roster (enemy roster v2)
@@ -90,6 +92,12 @@ const CARDS := [[110.0, 180.0], [200.0, 270.0], [110.0, 180.0]]
 const CHROME_OPEN := 50  # after her cards she's open this long: no guard, no parry
 const CANE_KICKS := 3  # kicks into the cane's wind-up that snap it
 const KICKS := ["kick", "body_kick", "side_kick", "push_kick", "front_kick", "roundhouse", "spin_kick", "air_kick", "sweep"]
+const SLAM_WINDUP := 24  # Mr. Static raises the baton over his head, crackling, then slams the floor
+const LIVE_TICKS := 30  # and it's live this long: jump as it comes down (a jump stays up 40 frames; the team's page
+# says "for a second", feel lab: half a second is what a jump can clear)
+const SHOCK_DAMAGE := 1.5
+const TANK_REACH := 140.0  # P P K'd in this close to the water tank, he shorts out
+const TANK_DAMAGE := 3.0
 const TWIN_CLIMB := 0.3  # how fast a Twin Loans brother goes up a flight, of his walk: knocked down it, about ten
 # seconds before he's back up (the team's roster, feel lab)
 const MAX_ON_SCREEN := 5  # never more than five enemies at once; the rest wait off screen (the team's fairness rules)
@@ -131,6 +139,7 @@ var hug := {}  # the bear hug under way: {by (the grabber's entry), at (tick)}
 var tumbling := {}  # fighter -> the flight he's rolling down
 var compound := false  # Twin Loans at half their health: both rush the hero together
 var climbing_back := {}  # fighters tumbled down a flight, on their way back up (a Twin Loans brother: slowly)
+var live_until := -1  # Mr. Static's floor, live till this tick
 var early := []  # events from before this tick's blows are settled (the twins' swap): joined to events after
 var cat_fed := false  # level 1's stray cat, fed (it follows him, and turns up in level 2)
 var cat := Vector2(-1.0e9, 0.0)  # where the cat is (x, z): by its bins, or at his heels once fed
@@ -222,6 +231,7 @@ func restart() -> void:
 	hug = {}
 	tumbling = {}
 	compound = false
+	live_until = -1
 	climbing_back = {}
 	early = []
 	friend = null
@@ -296,6 +306,7 @@ func step(inp: Dictionary) -> void:
 				_hurl(e["f"])
 			think = _coach(e, think)
 			think = _chrome(e, think)
+			think = _static(e, think)
 			_volley(e)
 			e["f"].step(think)
 	var all := everyone()
@@ -316,6 +327,7 @@ func step(inp: Dictionary) -> void:
 	_cat()
 	_roster_tricks()
 	_chrome_after()
+	_static_after()
 	_stairs()
 	_switches()
 	_waves()
@@ -600,6 +612,57 @@ func _chrome_after() -> void:
 					f.health = 0.0
 					f._enter("ko")
 					events.append({"target": f, "result": "cane_snaps", "kind": "cane_snaps"})
+
+
+## Mr. Static (the team's roster, level 7's boss): "slam" makes the floor live a second; while it is, the hero on his
+## feet on the floor is shocked (once a slam): jump it.
+func _static(e: Dictionary, think: Dictionary) -> Dictionary:
+	if e.get("kind", "") != "static" or e["f"].defeated():
+		return think
+	var f = e["f"]
+	if think.get("slam", false) and not e.has("slam_at") and f.weapon == "baton":  # (no baton, no slam)
+		e["slam_at"] = tick + SLAM_WINDUP
+		early.append({"target": f, "result": "slam", "kind": "slam"})
+	if e.has("slam_at"):
+		if f.state in Fighter.HURT_STATES:
+			e.erase("slam_at")  # hit out of it
+			f.slam_in = -1
+			return think
+		f.slam_in = e["slam_at"] - tick
+		if f.slam_in <= 0:
+			e.erase("slam_at")
+			f.slam_in = -1
+			live_until = tick + LIVE_TICKS
+			e["shocked_this"] = false
+			early.append({"target": f, "result": "live", "kind": "live"})
+		return {}  # (standing, baton raised)
+	return think
+
+
+## Mr. Static after the blows: a perfect block on his baton shocks the hero (unless he wears rubber gloves); P P K'd by
+## the water tank he shorts out, dizzy at once; and the live floor bites whoever's on it.
+func _static_after() -> void:
+	for e in enemies:
+		if e.get("kind", "") != "static" or e["f"].defeated():
+			continue
+		var f = e["f"]
+		for ev in events:
+			if ev.get("attacker") == f and ev.get("target") == hero and ev["result"] == "perfect" and f.weapon == "baton" and not hero.rubber:
+				hero.health = maxf(0.0, hero.health - SHOCK_DAMAGE)
+				hero._enter("hurt")
+				events.append({"target": hero, "result": "shocked", "kind": "shock"})
+			if ev.get("attacker") == hero and ev.get("target") == f and ev["result"] == "hit" and ev.get("move", "") == "push_kick":
+				for o in world.objects:
+					if o["kind"] == "tank" and absf((o["x0"] + o["x1"]) * 0.5 - f.x) < TANK_REACH:
+						f.health = maxf(0.0, f.health - TANK_DAMAGE)
+						f.dizzy_left = int(f.tune["dizzy_ticks"])
+						f._enter("ko" if f.health <= 0.0 else "dizzy")
+						events.append({"target": f, "result": "shorts_out", "kind": "shorts_out"})
+						break
+		if tick < live_until and not e.get("shocked_this", true) and hero.y < 1.0 and hero.on_ground() and hero.hittable():
+			e["shocked_this"] = true
+			hero.take_hit({"damage": SHOCK_DAMAGE, "effect": "push", "low": 0.0, "high": 300.0, "move": "live_floor"}, f)
+			events.append({"target": hero, "result": "shocked", "kind": "live_floor"})
 
 
 ## Twin Loans (the team's roster, level 3's boss): while one brother attacks, the other holds his guard up and waits his

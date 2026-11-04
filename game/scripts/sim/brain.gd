@@ -124,10 +124,16 @@ const CHROME := {
 	"keep": 220.0, "strike": 150.0, "wait_min": 110, "wait_max": 190, "block_chance": 0.2, "block_ticks": 18,
 	"combos": [["cards"]],
 }
+## Mr. Static, level 7's boss (the team's roster): baton, baton, baton jab, then he slams the floor and it goes live a
+## second (level.gd _static).
+const STATIC := {
+	"keep": 180.0, "strike": 125.0, "wait_min": 60, "wait_max": 110, "block_chance": 0.15, "block_ticks": 18,
+	"combos": [["punch", "punch", "punch", "slam"], ["punch", "punch", "punch"]],
+}
 ## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
 const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER, "DJ_VOLT": DJ_VOLT,
 	"SNICK": SNICK, "BIG_MAMA": BIG_MAMA, "WRENCH_MECHANIC": WRENCH_MECHANIC, "DOORMAN": DOORMAN,
-	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN, "COACH": COACH, "CHROME": CHROME}
+	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN, "COACH": COACH, "CHROME": CHROME, "STATIC": STATIC}
 
 var me
 var foe

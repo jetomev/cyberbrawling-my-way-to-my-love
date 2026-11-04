@@ -36,6 +36,10 @@ func think(enemies: Array) -> Dictionary:
 		return inp
 	if Brain.to_the_stairs(me, foe, inp):
 		return inp
+	# a floor slam about to land (Mr. Static's): jump it, timed so he's up while the floor's live
+	if foe.slam_in >= 0 and foe.slam_in <= 6 and me.state in ["idle", "walk", "block"]:
+		inp["jump"] = true
+		return inp
 	# a charge coming along his line of the street (Coach Crusher's tackle): step out of it
 	if foe.charging and absf(foe.x - me.x) < 600.0 and absf(foe.z - me.z) <= me.tune["hit_depth"] + 20.0 \
 			and me.state in ["idle", "walk", "block"]:

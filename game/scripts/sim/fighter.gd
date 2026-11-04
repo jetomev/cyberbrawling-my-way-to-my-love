@@ -64,8 +64,10 @@ var weapon := ""  # what this fighter carries ("pipe", …); an enemy drops it w
 var weapon_hits_left := 0  # it wears out (D-14)
 var soft := false  # a sparring friend: his blows don't hurt
 var shield := 0  # blows something he's holding will take for him (level 1's umbrella: one, then it breaks)
+var rubber := false  # rubber gloves on (Mr. Static's prize): a perfect block takes a shock like any blow
 ## The team's roster, each enemy's own trick: blows (by move) he ducks or hops out of, blows he parries with his
 ## weapon, slow weapons he's too quick for (the Neon Dancer)
+var slam_in := -1  # frames till his floor slam lands (Mr. Static's), -1 when none: what a watcher reads to jump it
 var charging := false  # winding up for or running a charge (Coach Crusher's tackle): what a watcher reads to step aside
 var gloves := []  # blows his guard takes every time from the front, without raising it (Coach Crusher's big gloves)
 var dodges := []
@@ -284,6 +286,12 @@ func _ground(mx: float, mz: float, run := false) -> void:
 		for it in world.items:
 			if it["kind"] == "umbrella" and absf(it["x"] - x) <= Weapons.PICK_UP_REACH and absf(it["z"] - z) <= Weapons.PICK_UP_REACH:
 				shield = 1
+				world.items.erase(it)
+				break
+	if team == 0 and not rubber and world != null:  # Mr. Static's rubber gloves: put on, and kept
+		for it in world.items:
+			if it["kind"] == "rubber_gloves" and absf(it["x"] - x) <= Weapons.PICK_UP_REACH and absf(it["z"] - z) <= Weapons.PICK_UP_REACH:
+				rubber = true
 				world.items.erase(it)
 				break
 	if team == 0 and health < max_health and world != null and not world.items.is_empty():
