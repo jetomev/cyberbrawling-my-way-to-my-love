@@ -4,6 +4,7 @@ extends RefCounted
 ## so a run replays the same. Not clever: steady, so a fight it loses or can't finish is a finding.
 
 const Brain := preload("res://scripts/sim/brain.gd")
+const Fighter := preload("res://scripts/sim/fighter.gd")
 
 var me
 var dice := RandomNumberGenerator.new()
@@ -32,6 +33,11 @@ func think(enemies: Array) -> Dictionary:
 			foe = e
 	if jump_cue and me.state in ["idle", "walk", "block", "run"]:
 		inp["jump"] = true  # the crane's container, low across the floor
+		return inp
+	if foe == null and me.health < me.max_health * 0.6 and _go_eat(inp):
+		return inp
+	# badly hurt mid-fight, nobody right on him: break off for the food (the props hold it in level 3)
+	if foe != null and me.health < me.max_health * 0.35 and absf(foe.x - me.x) > 160.0 and _go_eat(inp):
 		return inp
 	if foe == null:
 		if goal >= 0.0 and goal_hit and absf(me.x - goal) < 60.0:
@@ -72,6 +78,15 @@ func think(enemies: Array) -> Dictionary:
 		return inp
 	var dx: float = foe.x - me.x
 	var toward := 1.0 if dx >= 0.0 else -1.0
+	if me.world != null and me.state in ["idle", "walk"] and absf(dx) > 60.0:  # a gap between them (the fire escape): jump it
+		var gap: Dictionary = me.world.ahead(me.x, me.z, me.y, int(toward), 30.0)
+		if not gap.is_empty() and gap["kind"] == "gap":
+			inp["jump"] = true
+			inp["mx"] = toward
+			return inp
+	if absf(dx) > 115.0 and Brain.around(me, toward, inp):
+		inp["mx"] = toward
+		return inp
 	# too fast for anything but a blow into his wind-up (the Godfather's second round): guard up, and jab the moment he
 	# starts one
 	if foe.only_counters:
@@ -135,3 +150,35 @@ func _get_past(inp: Dictionary) -> void:
 			inp["jump"] = true
 	else:
 		inp["mz"] = 1.0 if o["z1"] < me.tune["street_depth"] - 10.0 else -1.0  # round it
+
+
+## Hurt, with the street clear: food or a first-aid kit lying near, or a prop holding some (the team's level 3: "the
+## props carry the food"), to walk over or smash. Fills inp and returns true while he's on his way.
+func _go_eat(inp: Dictionary) -> bool:
+	if me.world == null or not me.state in ["idle", "walk"]:
+		return false
+	var best := {}
+	var best_d := 1400.0
+	for it in me.world.items:
+		if Fighter.HEALS.has(it["kind"]) and absf(it.get("y", 0.0) - me.y) < 20.0 and absf(it["x"] - me.x) < best_d:
+			best = {"x": it["x"], "z": it["z"], "smash": false}
+			best_d = absf(it["x"] - me.x)
+	for o in me.world.objects:
+		var cx: float = (o["x0"] + o["x1"]) * 0.5
+		if o["breakable"] and not o["broken"] and Fighter.HEALS.has(o.get("holds", "")) and absf(cx - me.x) < best_d:
+			best = {"x": cx, "z": (o["z0"] + o["z1"]) * 0.5, "smash": true, "side": o["x0"] - 50.0 if me.x < cx else o["x1"] + 50.0}
+			best_d = absf(cx - me.x)
+	if best.is_empty():
+		return false
+	var tx: float = best["side"] if best["smash"] else best["x"]
+	var tz: float = clampf(best["z"], 0.0, me.tune["street_depth"])
+	if best["smash"] and absf(me.x - tx) < 12.0 and absf(me.z - tz) <= 8.0:
+		var face := 1 if best["x"] > me.x else -1
+		if me.facing != face:
+			inp["mx"] = face * 0.01
+		elif tick % 20 == 0:
+			inp["kick"] = true  # smash it open
+		return true
+	inp["mx"] = signf(tx - me.x) if absf(tx - me.x) > 6.0 else 0.0
+	inp["mz"] = clampf((tz - me.z) / 16.0, -1.0, 1.0) if absf(tz - me.z) > 6.0 else 0.0
+	return true

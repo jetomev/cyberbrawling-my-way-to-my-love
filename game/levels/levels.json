@@ -2,6 +2,7 @@
   "about": "The levels in play order (Javier & Claude). Each name is levels/<name>.json; the team's layouts are added here as they land.",
   "levels": [
     "level1",
-    "level2"
+    "level2",
+    "level3"
   ]
 }

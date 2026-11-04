@@ -1,0 +1,404 @@
+{
+  "name": "Level 3 \u00b7 Pawn Row",
+  "about": "Javier & Claude, 2026-11-04, from the team's AGREED level 3 page (art-in 2026-11-04-level3-layout-agreed, Merry, Boromir and Pippin) and Pippin's roster v3. Floors in walking order: 0 the street and the pawn shop (screens 1-3, up its stairs), 1 the flat above and the fire escape (screens 4-5, the gap, the Whistler), 2 the street again below the ladder (screen 6, the big fight), 3 Twin Loans' shop. 19 enemies (21 if the Whistler gets his second whistle in); no Glow Punks; he walks in with Big Mama's wrench. Obstacles: [kind, x0, x1, z0, z1, top, climbable, strength, name, holds].",
+  "start_weapon": "wrench",
+  "floors": [
+    {
+      "name": "Pawn Row",
+      "length": 5760,
+      "obstacles": [
+        [
+          "toolbox",
+          200,
+          260,
+          0,
+          24,
+          40,
+          false,
+          2
+        ],
+        [
+          "moped",
+          1500,
+          1640,
+          110,
+          150,
+          70,
+          true,
+          3
+        ],
+        [
+          "crate",
+          3500,
+          3580,
+          10,
+          60,
+          96,
+          true,
+          4,
+          "",
+          "soda"
+        ],
+        [
+          "crate",
+          3600,
+          3680,
+          10,
+          60,
+          96,
+          true,
+          4
+        ],
+        [
+          "case",
+          3950,
+          4010,
+          0,
+          20,
+          120,
+          false,
+          2,
+          "",
+          "trophy"
+        ],
+        [
+          "counter",
+          4100,
+          4300,
+          20,
+          50,
+          90,
+          false,
+          2
+        ],
+        [
+          "counter",
+          4500,
+          4680,
+          20,
+          50,
+          90,
+          false,
+          2
+        ],
+        [
+          "stairs",
+          4800,
+          5720,
+          0,
+          30,
+          400,
+          false,
+          0
+        ],
+        [
+          "wall",
+          5740,
+          5780,
+          0,
+          160,
+          500,
+          false,
+          0
+        ]
+      ],
+      "items": [
+        [
+          "stick",
+          2100,
+          20
+        ]
+      ],
+      "waves": [
+        {
+          "at": 900,
+          "hint": "Perfect-block his throw to catch the wrench.",
+          "enemies": [
+            {
+              "kind": "wrench_mechanic",
+              "from": "door",
+              "dx": 300
+            }
+          ]
+        },
+        {
+          "at": 2800,
+          "enemies": [
+            {
+              "kind": "snick",
+              "dx": 120,
+              "z": 80,
+              "arguing": true
+            },
+            {
+              "kind": "snick",
+              "dx": 240,
+              "z": 80,
+              "arguing": true
+            },
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 80,
+              "after_down": 0
+            }
+          ]
+        },
+        {
+          "at": 5050,
+          "hint": "Push kick (P P K): send them tumbling.",
+          "enemies": [
+            {
+              "kind": "wrench_mechanic",
+              "dx": -650,
+              "z": 5
+            },
+            {
+              "kind": "snick",
+              "dx": 470,
+              "z": 15,
+              "hidden": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pawn Row, the flat above and the fire escape",
+      "length": 5760,
+      "obstacles": [
+        [
+          "sofa",
+          2500,
+          2640,
+          60,
+          110,
+          60,
+          true,
+          2
+        ],
+        [
+          "fridge",
+          3500,
+          3580,
+          0,
+          30,
+          160,
+          false,
+          3,
+          "",
+          "sandwich"
+        ],
+        [
+          "gap",
+          4800,
+          4880,
+          0,
+          160,
+          60,
+          false,
+          0
+        ]
+      ],
+      "items": [
+        [
+          "matchbook",
+          4000,
+          30
+        ]
+      ],
+      "waves": [
+        {
+          "at": 2800,
+          "enemies": [
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 100
+            },
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 80
+            }
+          ]
+        },
+        {
+          "at": 4800,
+          "enemies": [
+            {
+              "kind": "lookout",
+              "dx": 500,
+              "z": 40,
+              "calls": "wrench_mechanic",
+              "whistles": 2,
+              "calls_x": 5600
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pawn Row, below the fire escape",
+      "length": 3840,
+      "obstacles": [
+        [
+          "safe",
+          2000,
+          2100,
+          120,
+          160,
+          70,
+          false,
+          3,
+          "",
+          "first_aid"
+        ]
+      ],
+      "items": [
+        [
+          "soda",
+          3300,
+          10
+        ],
+        [
+          "photo",
+          3500,
+          20
+        ]
+      ],
+      "waves": [
+        {
+          "at": 500,
+          "enemies": [
+            {
+              "kind": "snick",
+              "from": "left",
+              "z": 80
+            }
+          ]
+        },
+        {
+          "at": 2800,
+          "enemies": [
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 60
+            },
+            {
+              "kind": "snick",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 80
+            },
+            {
+              "kind": "bruiser_pipe",
+              "from": "door",
+              "dx": 200,
+              "after_down": 2
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "door",
+              "dx": 300,
+              "after_down": 2
+            },
+            {
+              "kind": "snick",
+              "from": "door",
+              "dx": 100,
+              "after_down": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Twin Loans' shop",
+      "length": 1920,
+      "obstacles": [
+        [
+          "counter",
+          300,
+          460,
+          20,
+          60,
+          90,
+          false,
+          2
+        ],
+        [
+          "stairs",
+          600,
+          1520,
+          0,
+          30,
+          400,
+          false,
+          0
+        ],
+        [
+          "watches",
+          1650,
+          1720,
+          110,
+          150,
+          50,
+          true,
+          2,
+          "",
+          "soda"
+        ]
+      ],
+      "items": [],
+      "waves": []
+    }
+  ],
+  "links": [
+    {
+      "from": 0,
+      "x": 5660,
+      "to": 1,
+      "to_x": 300,
+      "kind": "stairs"
+    },
+    {
+      "from": 1,
+      "x": 5600,
+      "to": 2,
+      "to_x": 300,
+      "requires_clear": true
+    },
+    {
+      "from": 2,
+      "x": 3700,
+      "to": 3,
+      "to_x": 150,
+      "auto": true
+    }
+  ],
+  "switches": [],
+  "boss": {
+    "floor": 3,
+    "x": 380,
+    "z": 5,
+    "kind": "twin_short",
+    "with": [
+      {
+        "kind": "twin_tall",
+        "x": 1460,
+        "z": 15
+      }
+    ]
+  }
+}

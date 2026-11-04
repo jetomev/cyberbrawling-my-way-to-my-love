@@ -190,12 +190,31 @@ func _init(fighter, target, dice_seed := 1, how: Dictionary = THUG) -> void:
 
 
 ## This tick's input for his fighter.
+## Something solid in the way while he heads for someone (a shop counter, a sofa): round the front of it (or the back,
+## if the front's against the kerb). Fills inp's depth and returns true while steering round.
+static func around(me, toward: float, inp: Dictionary) -> bool:
+	if me.world == null or not me.state in Fighter.GROUND_STATES:
+		return false
+	var o: Dictionary = me.world.ahead(me.x, me.z, me.y, int(toward), 10.0)
+	if o.is_empty() or o["kind"] in ["stairs", "gap"]:
+		return false
+	var front: float = o["z1"] + 14.0
+	var back: float = o["z0"] - 14.0
+	if front <= me.tune["street_depth"] - 4.0:
+		inp["mz"] = 1.0 if me.z < front else 0.0
+	elif back >= 4.0:
+		inp["mz"] = -1.0 if me.z > back else 0.0
+	return inp.get("mz", 0.0) != 0.0
+
+
 ## Someone up a flight of stairs he isn't on: round to its foot and up it (the side of a flight is a wall). Fills inp
 ## and returns true while he's on his way.
 static func to_the_stairs(me, foe, inp: Dictionary) -> bool:
 	var st: Dictionary = foe.flight()
 	if st.is_empty() or not me.flight().is_empty():
 		return false
+	if absf(foe.x - me.x) < 170.0 and foe.y - me.y < 80.0:
+		return false  # he's on the bottom steps, in reach: fight him where he is (not walk into him for the foot)
 	var fx: float = st["x0"] + 20.0
 	if absf(me.x - fx) > 30.0:
 		# along the street in front of the flight (behind it, past its top end, there's no way round)
@@ -283,6 +302,16 @@ func think() -> Dictionary:
 		return inp
 	if to_the_stairs(me, foe, inp):
 		return inp
+	if dist > kind["strike"] and around(me, toward, inp):
+		inp["mx"] = toward
+		return inp
+	# a gap in the floor ahead (the team's level 3 fire escape): hop it
+	if me.world != null and me.state in Fighter.GROUND_STATES:
+		var gap: Dictionary = me.world.ahead(me.x, me.z, me.y, int(toward), 30.0)
+		if not gap.is_empty() and gap["kind"] == "gap" and absf(dx) > 60.0:
+			inp["jump"] = true
+			inp["mx"] = toward
+			return inp
 	# line up on the street's depth, then close to the distance he wants
 	var dz: float = foe.z - me.z
 	if absf(dz) > 6.0:

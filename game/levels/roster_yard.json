@@ -86,7 +86,8 @@
             {
               "kind": "lookout",
               "dx": 500,
-              "z": 40
+              "z": 40,
+              "whistles": 2
             }
           ]
         },

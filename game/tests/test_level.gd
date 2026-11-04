@@ -614,3 +614,39 @@ func test_stand_by_the_stray_cat_and_it_follows() -> void:
 		l.step({"mx": -1.0})
 	check(absf(l.cat.x - l.hero.x) < 160.0, "it trots at his heels (%.0f, he's at %.0f)" % [l.cat.x, l.hero.x])
 
+
+
+## Level 3, Pawn Row (the team's agreed page, 2026-11-04)
+func test_level_three_is_the_teams_agreed_layout() -> void:
+	var d: Dictionary = Level.load_data("res://levels/level3.json")
+	var l = Level.new(d, {}, 1)
+	eq(l.floors.size(), 4, "the street, the flat above and the fire escape, the street again, Twin Loans' shop")
+	eq(l.hero.weapon, "wrench", "he walks in with Big Mama's wrench")
+	var kinds := []
+	for fl in d["floors"]:
+		for w in fl["waves"]:
+			for e in w["enemies"]:
+				kinds.append(e["kind"])
+	eq(kinds.size(), 17, "17 placed, and the Whistler's first two Mechanics make the page's 19 (21 if he whistles twice)")
+	check(not kinds.has("glow_punk"), "no Glow Punks in level 3")
+	check(d["floors"][0]["obstacles"].any(func(o): return o[0] == "stairs"), "the pawn shop's stairs")
+	check(d["floors"][1]["obstacles"].any(func(o): return o[0] == "gap"), "the fire escape's gap")
+	eq(d["boss"]["kind"], "twin_short", "Twin Loans")
+
+
+func test_the_bot_plays_level_three_and_is_never_stuck() -> void:
+	var results := []
+	for s in [1, 2, 3]:
+		var l = Level.new(Level.load_data("res://levels/level3.json"), {}, s)
+		var bot = HeroBot.new(l.hero, s)
+		var deepest := 0
+		for i in 40000:
+			if l.won or l.lost:
+				break
+			bot.me = l.hero
+			bot.goal = l.next_door()
+			l.step(bot.think(l.standing()))
+			deepest = maxi(deepest, l.on)
+		results.append("won" if l.won else ("lost on floor %d" % deepest if l.lost else "STUCK on floor %d at %.0f" % [l.on, l.hero.x]))
+	check(not results.any(func(r): return r.begins_with("STUCK")), "never stuck: %s" % [results])
+	check(results.all(func(r): return r == "won" or r.ends_with("2") or r.ends_with("3")), "down the fire escape every time: %s" % [results])

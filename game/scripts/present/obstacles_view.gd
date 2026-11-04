@@ -10,6 +10,9 @@ const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const COLORS := {"crate": Color(0.58, 0.44, 0.28), "car": Color(0.36, 0.42, 0.52), "barrier": Color(0.95, 0.5, 0.15),
 	"hydrant": Color(0.78, 0.18, 0.16), "dumpster": Color(0.2, 0.42, 0.3), "speaker": Color(0.16, 0.16, 0.2),
 	"tank": Color(0.36, 0.55, 0.7), "door_switch": Color(0.85, 0.7, 0.2),
+	"toolbox": Color(0.75, 0.15, 0.12), "moped": Color(0.2, 0.55, 0.75), "counter": Color(0.6, 0.75, 0.8),
+	"case": Color(0.62, 0.48, 0.3), "sofa": Color(0.45, 0.25, 0.4), "fridge": Color(0.85, 0.86, 0.84),
+	"safe": Color(0.3, 0.32, 0.34), "watches": Color(0.5, 0.36, 0.22), "wall": Color(0.22, 0.2, 0.24),
 	"stall": Color(0.55, 0.38, 0.24), "fountain": Color(0.55, 0.56, 0.6), "cart": Color(0.45, 0.32, 0.2),
 	"tile": Color(0.85, 0.82, 0.72), "table": Color(0.62, 0.5, 0.36)}
 const RIM := Color(1.0, 0.24, 0.65)  # the magenta neon rim (#ff3ea5) on the edge facing the signs
@@ -110,6 +113,11 @@ func _draw_loose() -> void:
 		elif it["kind"] == "umbrella":  # a folded umbrella leaning against the wall
 			loose.draw_line(at + Vector2(-6, 0), at + Vector2(14, -70), Color(0.85, 0.25, 0.45), 9.0)
 			loose.draw_line(at + Vector2(14, -70), at + Vector2(10, -82), Color(0.2, 0.2, 0.25), 3.0)
+		elif it["kind"] == "trophy":  # a gold-painted trophy (for score)
+			loose.draw_rect(Rect2(at + Vector2(-12, -34), Vector2(24, 18)), Color(0.95, 0.78, 0.2))
+			loose.draw_rect(Rect2(at + Vector2(-4, -16), Vector2(8, 10)), Color(0.85, 0.68, 0.15))
+			loose.draw_rect(Rect2(at + Vector2(-10, -6), Vector2(20, 6)), Color(0.85, 0.68, 0.15))
+			loose.draw_rect(Rect2(at + Vector2(-12, -34), Vector2(24, 34)), EDGE, false, 2.0)
 		elif it["kind"] == "matchbook":  # a small red book of matches (to collect)
 			loose.draw_rect(Rect2(at + Vector2(-10, -8), Vector2(20, 8)), Color(0.8, 0.2, 0.2))
 			loose.draw_rect(Rect2(at + Vector2(-10, -8), Vector2(20, 8)), Color(1, 0.9, 0.5), false, 2.0)
@@ -153,6 +161,11 @@ func _draw_object(n: Node2D, o: Dictionary) -> void:
 			n.draw_rect(r, EDGE, false, 2.0)
 		return
 	var top: float = o["top"]
+	if o["kind"] == "gap":  # a gap in the fire escape: the dark street far below shows through (jump it)
+		n.draw_rect(Rect2(o["x0"], far, w, near - far), Color(0.04, 0.04, 0.06))
+		n.draw_line(Vector2(o["x0"], far), Vector2(o["x0"], near), Color(0.5, 0.5, 0.55), 4.0)
+		n.draw_line(Vector2(o["x1"], far), Vector2(o["x1"], near), Color(0.5, 0.5, 0.55), 4.0)
+		return
 	if o["kind"] == "stairs":  # a flight up the back of the room: treads and risers, the landing, a banister in front
 		_draw_stairs(n, o, near, far)
 		return

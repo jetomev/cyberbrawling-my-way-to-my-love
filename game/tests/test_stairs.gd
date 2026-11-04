@@ -141,6 +141,18 @@ func test_whoever_he_rolls_into_goes_down_too() -> void:
 	check(upper.x < FOOT and lower.x < FOOT, "both end up at the foot (%.0f, %.0f)" % [upper.x, lower.x])
 
 
+func test_a_tumbling_enemy_doesnt_bowl_the_hero_over() -> void:
+	var l = shop()
+	on_flight(l, 1300.0)  # the hero below
+	var above = bring(l, "thug", 1600.0)["f"]
+	above._enter("knockdown")
+	l.events = [{"attacker": l.hero, "target": above, "result": "hit", "move": "push_kick"}]
+	l._stairs()
+	for i in 80:
+		l.step({})
+	check(l.hero.state != "tumble" and l.hero.y > 50.0, "he rolls past the hero (only a knockdown on him rolls the hero down)")
+
+
 func test_the_same_rule_for_the_hero() -> void:
 	var l = shop()
 	on_flight(l, 1500.0)

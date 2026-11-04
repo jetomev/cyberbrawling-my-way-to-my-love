@@ -55,6 +55,8 @@ fail() { echo "FAILED $*"; exit 1; }
   LEVEL_RESULT="$(tail -1 "$OUT/level.txt")"
   "$ROOT/scripts/level_clip.sh" "$OUT" level2 1 > "$OUT/level2.txt" 2>&1 || { cat "$OUT/level2.txt"; fail "could not record level 2"; }
   LEVEL2_RESULT="$(tail -1 "$OUT/level2.txt")"
+  "$ROOT/scripts/level_clip.sh" "$OUT" level3 1 > "$OUT/level3.txt" 2>&1 || { cat "$OUT/level3.txt"; fail "could not record level 3"; }
+  LEVEL3_RESULT="$(tail -1 "$OUT/level3.txt")"
   # the rest of the team's roster, one at a time down a plain street (the roster yard, a showcase, not a level)
   "$ROOT/scripts/level_clip.sh" "$OUT" roster_yard 1 > "$OUT/roster.txt" 2>&1 || { cat "$OUT/roster.txt"; fail "could not record the roster yard"; }
   ROSTER_RESULT="$(tail -1 "$OUT/roster.txt")"
@@ -153,6 +155,10 @@ PY
     echo "- \`clips/level2.mp4\` and \`frames/level2.png\`: level 2, the Night Market (the team's settled layout), by the bot:"
     echo "  Snick, the stall counters, the awning's ladder, the cracked tile, the fountain fight, the pipe Bruiser, the long"
     echo "  ladder, Big Mama Noodle's kitchen (her soup, the wet patch, the tap). How it went: $LEVEL2_RESULT"
+    echo "- \`clips/level3.mp4\`, \`frames/level3.png\` and \`-ending.png\`: level 3, Pawn Row (SETTLED: the team's agreed page),"
+    echo "  by the bot: the Mechanic and his toolbox, the arguing Snicks, the pawn shop's stairs, the flat above, the fire"
+    echo "  escape's gap and the Whistler, down the ladder, the big street fight, Twin Loans. How it went: $LEVEL3_RESULT"
+    echo "- Levels: 1, 2 and 3 SETTLED (the team's agreed pages); 4 to 10 not built yet (drafts from Merry's levels page next)."
     echo "- \`clips/roster_yard.mp4\` and \`frames/roster_yard.png\`: the rest of the team's roster, one at a time, by the bot:"
     echo "  the Wrench Mechanic (ducks high kicks, hurls his wrench, his toolbox by the wall), the Doorman (shield in front),"
     echo "  the Neon Dancer (skates), the Enforcer (parries the jab), the lookout (whistles in two), the Grabber (bear hug)."

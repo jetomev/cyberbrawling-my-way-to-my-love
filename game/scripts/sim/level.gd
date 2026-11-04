@@ -80,6 +80,7 @@ const BASS_HOLD := 120
 const SOUP_AFTER_BLOCKS := 3
 const SOUP_DAMAGE := 2.0
 const SLIP_DAZE := 150
+const HINT_TICKS := 240  # a wave's hint stays up this long
 const WHISTLE_EVERY := 360  # the lookout whistles in two more goons this often while he's up and the hero's near
 # (about six seconds: the team's level 3 page, feel lab)
 const WHISTLE_RANGE := 1000.0
@@ -165,6 +166,9 @@ var compound := false  # Twin Loans at half their health: both rush the hero tog
 var climbing_back := {}  # fighters tumbled down a flight, on their way back up (a Twin Loans brother: slowly)
 var live_until := -1  # Mr. Static's floor, live till this tick
 var crane := {}  # the docks' crane (the plan's "crane"): {next, container {x, dir, hit}, crates [{x, z, at}], stopped_until}
+var hint_text := ""  # a wave's small hint, the first time (shown till hint_until)
+var hint_until := -1
+var hints_shown := {}
 var early := []  # events from before this tick's blows are settled (the twins' swap): joined to events after
 var cat_fed := false  # level 1's stray cat, fed (it follows him, and turns up in level 2)
 var cat := Vector2(-1.0e9, 0.0)  # where the cat is (x, z): by its bins, or at his heels once fed
@@ -236,6 +240,8 @@ func restart() -> void:
 			"active_wave": -1, "enemies": [], "waiting": []})
 	on = 0
 	hero = Fighter.new(tune, 200.0, 80.0, world)
+	if plan.get("start_weapon", "") != "":
+		hero.take_weapon(plan["start_weapon"])  # (level 3: he walks in with the wrench from Big Mama)
 	fight = Fight.new()
 	flipped = {}
 	boss_spawned = false
@@ -256,6 +262,8 @@ func restart() -> void:
 	hug = {}
 	tumbling = {}
 	compound = false
+	hint_until = -1
+	hints_shown = {}
 	live_until = -1
 	crane = {}
 	dice.seed = dice_seed * 7919 + 1
@@ -290,6 +298,8 @@ func everyone() -> Array:
 
 ## The lesson's hint on screen, while the sparring friend is teaching ("" otherwise).
 func hint() -> String:
+	if tick < hint_until:
+		return hint_text
 	if tutor == null or on != 0 or (tutor.lesson == "done" and tutor.lesson_ticks > 150):
 		return ""
 	return tutor.hint()
@@ -327,6 +337,8 @@ func step(inp: Dictionary) -> void:
 		if not e["gone"]:
 			e["was"] = [e["f"].x, e["f"].y, e["f"].z]  # where he stood, should the stairs be full
 			var think: Dictionary = e["brain"].think()
+			if e.get("arguing", false) and e["brain"].dormant_until_within > 0.0:
+				think = _argue(e)
 			if think.get("records", false):
 				e["volley"] = RECORDS.duplicate()  # his records go one after another
 				e["volley_at"] = tick
@@ -461,13 +473,20 @@ func _roster_tricks() -> void:
 			f.too_quick = false  # off her skates for good: on foot, slow
 			f.tune["walk_speed"] = Tuning.DEFAULTS["walk_speed"] * 0.8
 			f.tune["run_speed"] = Tuning.DEFAULTS["run_speed"] * 0.8
+		if e.get("kind", "") == "lookout" and active_wave >= 0:  # he runs from the hero, but not off the locked screen:
+			var b := bounds()  # cornered, one hit drops him (the team's level 3)
+			f.x = clampf(f.x, b.x + 30.0, b.y - 30.0)
 		if e.get("kind", "") == "lookout" and absf(hero.x - f.x) < WHISTLE_RANGE and tick >= e.get("next_whistle", 0) \
 				and e.get("whistles", 99) > 0:
 			e["next_whistle"] = tick + WHISTLE_EVERY
 			e["whistles"] = e.get("whistles", 99) - 1  # (a layout can give him only so many: level 3's has two)
 			for side in ["left", "right"]:
 				if standing().size() < MAX_ON_SCREEN:
-					_arrive({"kind": e.get("calls", "glow_punk"), "from": side, "z": 80.0}, hero.x, e["wave"])
+					if e.has("calls_x"):  # up the ladder where it comes out (the team's level 3: Mechanics climb at you)
+						_arrive({"kind": e.get("calls", "glow_punk"), "dx": e["calls_x"] - hero.x + (0.0 if side == "left" else 50.0),
+							"z": 30.0 if side == "left" else 70.0}, hero.x, e["wave"])
+					else:
+						_arrive({"kind": e.get("calls", "glow_punk"), "from": side, "z": 80.0}, hero.x, e["wave"])
 			events.append({"target": f, "result": "whistle", "kind": "whistle"})
 	if not hug.is_empty():
 		var g = hug["by"]["f"]
@@ -498,8 +517,8 @@ func _stairs() -> void:
 	for f in tumbling.keys():
 		var st: Dictionary = tumbling[f]
 		var nx: float = f.x - TUMBLE_SPEED
-		for g in everyone():  # whoever he rolls into goes down with him
-			if g != f and not tumbling.has(g) and g.hittable() and g.x < f.x and g.x >= nx - 2.0 * Fight.BODY_HALF_WIDTH \
+		for g in everyone():  # whoever he rolls into goes down with him (not the hero: only a knockdown on him rolls him)
+			if g != f and g != hero and not tumbling.has(g) and g.hittable() and g.x < f.x and g.x >= nx - 2.0 * Fight.BODY_HALF_WIDTH \
 					and world.stairs_under(g.x, g.z, g.y) == st and g.y >= 1.0:
 				_tumble(g, st)
 		if nx > st["x0"]:
@@ -508,9 +527,11 @@ func _stairs() -> void:
 			continue
 		f.x = st["x0"] - 30.0
 		f.y = 0.0
-		f.health = maxf(0.0, f.health - TUMBLE_DAMAGE)
+		if f != hero:  # the hero's tumble is gentler (the team's level 3): no more hurt than a knockdown, his normal get-up
+			f.health = maxf(0.0, f.health - TUMBLE_DAMAGE)
 		f._enter("ko" if f.health <= 0.0 else "down")
-		f.t = -TUMBLE_DOWN_EXTRA
+		if f != hero:
+			f.t = -TUMBLE_DOWN_EXTRA
 		tumbling.erase(f)
 		climbing_back[f] = st
 	var on_slope := []
@@ -942,7 +963,7 @@ func _twins() -> void:
 		return
 	var hp: float = up.reduce(func(s, e): return s + e["f"].health, 0.0)
 	var most: float = up.reduce(func(s, e): return s + e["f"].max_health, 0.0)
-	if not compound and hp <= most * 0.5:
+	if not compound and hp <= most * 0.5:  # (roster v3: at half their health)
 		compound = true
 		early.append({"target": up[0]["f"], "result": "compound", "kind": "compound"})
 	if compound:
@@ -975,6 +996,19 @@ func _twins() -> void:
 			me["f"].facing = 1 if hero.x >= me["f"].x else -1
 			other["f"].facing = 1 if hero.x >= other["f"].x else -1
 			early.append({"target": other["f"], "result": "swap", "kind": "swap"})
+
+
+## Two of a wave squaring off (the team's level 3: two Snicks arguing over who gets the hero first): each faces the
+## other and slashes now and then (they're on one side: the blows don't land), until the hero comes close.
+func _argue(e: Dictionary) -> Dictionary:
+	var f = e["f"]
+	for o in enemies:
+		if o != e and o.get("arguing", false) and o["wave"] == e["wave"] and not o["f"].defeated():
+			f.facing = 1 if o["f"].x >= f.x else -1
+			if f.state in Fighter.GROUND_STATES and (tick + int(f.x)) % 55 == 0:
+				return {"punch": true}
+			break
+	return {}
 
 
 ## The stray cat (level 1, screen 7): stand by it a moment and it's fed; then it trots at his heels.
@@ -1033,7 +1067,7 @@ func _kitchen() -> void:
 
 
 ## Walking over a collectible (a matchbook, the torn photo) keeps it.
-const COLLECTIBLES := ["matchbook", "photo"]
+const COLLECTIBLES := ["matchbook", "photo", "trophy"]  # (the trophy: for score, level 3's pawn shop)
 
 
 func _collect() -> void:
@@ -1097,6 +1131,11 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 			enemies[-1][k] = e[k]
 	if e.get("hidden", false):
 		enemies[-1]["brain"].dormant_until_within = AMBUSH
+	if e.get("arguing", false):  # squaring off with another of his wave, slashing at him, till the hero comes close
+		enemies[-1]["arguing"] = true
+		enemies[-1]["brain"].dormant_until_within = e.get("wake", 420.0)
+	if e.has("calls_x"):
+		enemies[-1]["calls_x"] = e["calls_x"]
 
 
 func _waves() -> void:
@@ -1106,6 +1145,11 @@ func _waves() -> void:
 		fl["active_wave"] = fl["wave"]
 		fl["wave"] += 1
 		fl["waiting"] = (waves[fl["active_wave"]]["enemies"] as Array).duplicate()
+		var h: String = waves[fl["active_wave"]].get("hint", "")
+		if h != "" and not hints_shown.has(h):  # a small hint the first time (the team's level 3: "perfect-block his throw")
+			hints_shown[h] = true
+			hint_text = h
+			hint_until = tick + HINT_TICKS
 	# a wave's enemies come in as they may: those with "after_down" once that many of the wave are down, and never more
 	# than MAX_ON_SCREEN standing at once (the rest wait off screen)
 	if fl["active_wave"] >= 0 and not fl["waiting"].is_empty():
@@ -1149,7 +1193,8 @@ func next_door() -> float:
 		if int(l["from"]) == on and l.get("kind", "") == "stairs" and int(l["to"]) > on:
 			var st: Dictionary = stairs_of(l)
 			# up the flight: first onto its bottom step, then on up to the landing's end
-			return st["x1"] if not hero.flight().is_empty() else st["x0"] + 30.0
+			var on_its_line: bool = hero.z <= st["z1"] + 2.0 and hero.x >= st["x0"] - 40.0
+			return st["x1"] if not hero.flight().is_empty() or on_its_line else st["x0"] + 30.0
 		if int(l["from"]) == on and not l.get("auto", false) and int(l["to"]) > on:
 			return float(l["x"])
 	return -1.0
@@ -1189,7 +1234,8 @@ func _links() -> void:
 			continue
 		var auto: bool = l.get("auto", false)
 		var at_door: bool = absf(hero.x - l["x"]) <= DOORWAY and hero.z <= DOORWAY_Z
-		if (auto and hero.x >= l["x"] and cleared(on)) or (not auto and at_door and hero.on_ground()):
+		if (auto and hero.x >= l["x"] and cleared(on)) or (not auto and at_door and hero.on_ground() \
+				and (not l.get("requires_clear", false) or cleared(on))):  # (a way down only once its fight is won)
 			_go_to(int(l["to"]), l["to_x"], l.get("to_y", 0.0), l.get("to_z", 80.0))  # (to_y, to_z: back onto a landing)
 			return
 
