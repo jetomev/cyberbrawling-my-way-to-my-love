@@ -183,3 +183,17 @@ func test_the_bot_goes_up_the_flight_to_the_floor_above() -> void:
 		bot.goal = l.next_door()
 		l.step(bot.think(l.standing()))
 	eq(l.on, 1, "the bot finds the foot, walks up and through to the flat above (at %.0f, %.0f, %.0f)" % [l.hero.x, l.hero.y, l.hero.z])
+
+
+func test_the_bruiser_never_sets_foot_on_the_stairs() -> void:
+	var l = shop()
+	on_flight(l, 1500.0)
+	var e = bring(l, "bruiser", 700.0, 80.0)
+	e["brain"].dormant_until_within = 0.0
+	e["brain"].wait = 9999
+	var on_it := false
+	for i in 600:
+		l.step({"block": true})
+		on_it = on_it or (e["f"].y >= 1.0 and StreetWorld.on_slope(flight(l), e["f"].x))
+	check(not on_it, "he comes round to the foot but never up the flight (the team's roster v3)")
+	check(absf(e["f"].x - FOOT) < 150.0, "he waits at the foot (%.0f)" % e["f"].x)

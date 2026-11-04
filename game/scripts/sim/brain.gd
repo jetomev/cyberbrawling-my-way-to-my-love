@@ -80,6 +80,7 @@ const BIG_MAMA := {
 const WRENCH_MECHANIC := {
 	"keep": 170.0, "strike": 120.0, "wait_min": 50, "wait_max": 100, "block_chance": 0.15, "block_ticks": 20,
 	"combos": [["punch", "punch", "hurl"], ["punch", "punch"]], "toolbox": true,
+	"unarmed": [["punch", "punch", "headbutt"]],  # no wrench and no toolbox on his screen: fists, swing, swing, headbutt
 }
 ## Doorman: "Velvet Rope", shield bash, bash, shove; everything from the front bounces off the shield.
 const DOORMAN := {
@@ -261,7 +262,8 @@ func think() -> Dictionary:
 	# a combo under way: the next press as the last blow recovers, so it chains
 	if not plan.is_empty():
 		# (or straight away from his feet: a plan set from outside, the Mechanic's headbutt out of a duck)
-		if (me.attack_phase() == "recovery" and me.attack_serial != pressed_on) or me.state in Fighter.GROUND_STATES:
+		var own: bool = plan[0] in ["headbutt", "grab"]  # (his own moves start only from his feet, not chained off a blow)
+		if (me.attack_phase() == "recovery" and me.attack_serial != pressed_on and not own) or me.state in Fighter.GROUND_STATES:
 			pressed_on = me.attack_serial
 			inp[plan.pop_front()] = true
 		return inp
@@ -291,7 +293,8 @@ func think() -> Dictionary:
 	elif me.facing != int(toward):
 		inp["mx"] = toward * 0.01  # a tiny step just to turn and face him
 	if wait == 0 and allowed and dist <= kind["strike"] + 8.0 and absf(dz) <= me.tune["hit_depth"] and me.state in Fighter.GROUND_STATES:
-		plan = (kind["combos"][dice.randi_range(0, kind["combos"].size() - 1)] as Array).duplicate()
+		var pool: Array = kind["unarmed"] if me.weapon == "" and kind.has("unarmed") else kind["combos"]
+		plan = (pool[dice.randi_range(0, pool.size() - 1)] as Array).duplicate()
 		inp[plan.pop_front()] = true
 		pressed_on = -1
 		inp.erase("mx")

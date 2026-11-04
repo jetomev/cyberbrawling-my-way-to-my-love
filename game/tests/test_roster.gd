@@ -305,3 +305,17 @@ func test_a_layout_can_say_who_the_lookout_calls_and_how_often() -> void:
 	var called: Array = l.enemies.filter(func(e): return e["kind"] != "lookout").map(func(e): return e["kind"])
 	eq(called.size(), 4, "two whistles, two each, and that's his lot: %s" % [called])
 	check(called.all(func(k): return k == "wrench_mechanic"), "Mechanics, as the layout says")
+
+
+func test_no_wrench_and_no_toolbox_he_fights_on_swing_swing_headbutt() -> void:
+	var l = street()
+	var m = bring(l, "wrench_mechanic", 110.0)
+	m["f"].drop_weapon()
+	m["brain"].wait = 0
+	var moves := []
+	for i in 300:
+		l.step({"block": true})
+		if m["f"].attack_phase() == "startup" and m["f"].t == 0:
+			moves.append(m["f"].state)
+	check(moves.has("headbutt"), "fists: swing, swing, then the headbutt (%s)" % [moves.slice(0, 6)])
+	check(not moves.has("hurl"), "nothing to hurl")

@@ -30,11 +30,11 @@ const Weapons := preload("res://scripts/sim/weapons.gd")
 const KINDS := {
 	"thug": {"health": 12.0, "brain": "THUG"},
 	"glow_punk": {"health": 8.0, "brain": "GLOW_PUNK", "drops": "takeaway"},
-	"bruiser": {"health": 20.0, "brain": "BRUISER", "drops": "bat", "shrugs": ["punch"]},
+	"bruiser": {"health": 20.0, "brain": "BRUISER", "drops": "bat", "shrugs": ["punch"], "no_stairs": true},
 	"boss": {"health": 40.0, "brain": "BOSS"},
 	"dj_volt": {"health": 40.0, "brain": "DJ_VOLT", "drops": "bat"},
 	"snick": {"health": 10.0, "brain": "SNICK", "weapon": "knife"},  # her knife falls when she's put down
-	"bruiser_pipe": {"health": 20.0, "brain": "BRUISER", "weapon": "pipe", "shrugs": ["punch"], "snaps": true},
+	"bruiser_pipe": {"health": 20.0, "brain": "BRUISER", "weapon": "pipe", "shrugs": ["punch"], "snaps": true, "no_stairs": true},
 	"big_mama": {"health": 50.0, "brain": "BIG_MAMA", "weapon": "wok", "drops": "wrench"},
 	# level 3's boss, Twin Loans (the team's roster): two brothers, slow to climb back up a flight; the tall one has the
 	# prize, the stick
@@ -521,7 +521,11 @@ func _stairs() -> void:
 		var st: Dictionary = world.stairs_under(f.x, f.z, f.y)
 		if not st.is_empty() and StreetWorld.on_slope(st, f.x):
 			on_slope.append(e)
-	for e in on_slope.slice(ON_STAIRS_MAX):
+	# the Bruiser never sets foot on a flight (the team's roster v3: his slam can't be dodged there): he waits at the
+	# foot or on the landing; and no more than ON_STAIRS_MAX of the rest
+	var held_back: Array = on_slope.filter(func(e): return KINDS.get(e["kind"], {}).get("no_stairs", false))
+	on_slope = on_slope.filter(func(e): return not KINDS.get(e["kind"], {}).get("no_stairs", false))
+	for e in held_back + on_slope.slice(ON_STAIRS_MAX):
 		var was: Array = e.get("was", [])
 		var st_was: Dictionary = {} if was.is_empty() else world.stairs_under(was[0], was[2], was[1])
 		if not was.is_empty() and (st_was.is_empty() or was[1] < 1.0 or not StreetWorld.on_slope(st_was, was[0])):
