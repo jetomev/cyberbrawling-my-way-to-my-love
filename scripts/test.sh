@@ -22,7 +22,13 @@ FLOOR_FILE="$ROOT/game/tests/FLOOR"
 } > "$LOG" 2>&1
 STATUS=0
 LAST="$(tail -n 1 "$LOG")"
-if [[ "$LAST" =~ ^OK\ ([0-9]+)\ tests ]]; then
+# a script error inside a test stops that test where it stands, after the checks it already passed: the run would
+# still say OK (2026-11-03, the pain system: three tests crashed half-way and the run passed). Any script error fails it.
+ERRORS="$(grep -c 'SCRIPT ERROR' "$LOG")"
+if (( ERRORS > 0 )); then
+  echo "FAILED $ERRORS script error(s) during the tests (see SCRIPT ERROR above)" >> "$LOG"
+  STATUS=1
+elif [[ "$LAST" =~ ^OK\ ([0-9]+)\ tests ]]; then
   COUNT="${BASH_REMATCH[1]}"
   FLOOR="$(cat "$FLOOR_FILE" 2>/dev/null || echo 0)"
   if (( COUNT < FLOOR )); then

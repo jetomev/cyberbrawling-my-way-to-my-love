@@ -409,3 +409,92 @@ func test_the_finishers_are_the_chain_ends() -> void:
 		check(Moves.is_finisher(m), "%s ends a chain" % m)
 	for m in ["punch", "cross", "kick", "body_kick", "sweep", "air_kick"]:
 		check(not Moves.is_finisher(m), "%s doesn't" % m)
+
+
+func test_blows_hurt_the_part_they_land_on() -> void:
+	var p = pair()
+	var f = p[1]
+	f.health = 99.0
+	var M := Moves
+	eq(f.region_hit(M.data("punch", f.tune), p[0]), "head", "a jab goes to the face")
+	eq(f.region_hit(M.data("power_punch", f.tune), p[0]), "chest", "the power punch to the chest")
+	eq(f.region_hit(M.data("side_kick", f.tune), p[0]), "head", "the side kick to the face")
+	eq(f.region_hit(M.data("kick", f.tune), p[0]), "leg_f", "the low kick to the lead leg")
+	eq(f.region_hit(M.data("sweep", f.tune), p[0]), "leg_f", "the sweep to the legs")
+	f.take_hit(M.data("kick", f.tune), p[0])
+	eq(f.pain["leg_f"], 2.0, "the low kick's damage lands on the leg")
+	eq(f.pain["head"], 0.0, "and nowhere else")
+	eq(f.pain_stage("leg_f"), 1, "two points: bruised")
+
+
+func test_parts_go_bruised_swollen_broken_and_a_break_is_reported() -> void:
+	var p = pair()
+	var f = p[1]
+	f.health = 999.0
+	var low := {"damage": 2, "effect": "", "low": 0.0, "high": 110.0}
+	var stages := []
+	var broke_at := -1
+	for i in 6:
+		f.take_hit(low, p[0])
+		for k in 20:
+			f.step({})
+		stages.append(f.pain_stage("leg_f"))
+		if f.just_broke == "leg_f":
+			broke_at = i
+	eq(stages, [1, 1, 2, 2, 3, 3], "bruised, then swollen, then broken")
+	eq(broke_at, 4, "the break is reported once, on the blow that breaks it")
+	var head := {"damage": 3, "effect": "", "low": 170.0, "high": 280.0}
+	for i in 10:
+		f.take_hit(head, p[0])
+		for k in 20:
+			f.step({})
+	eq(f.pain_stage("head"), 2, "a head swells but never breaks")
+
+
+func test_a_blocked_blow_bruises_the_forearms() -> void:
+	var p = pair()
+	for i in 20:
+		p[1].step({"block": true})
+	p[1].take_hit({"damage": 3, "effect": "", "low": 170.0, "high": 280.0}, p[0])
+	check(p[1].pain["arm_f"] > 0.0, "the forearm takes it")
+	eq(p[1].pain["head"], 0.0, "not the face")
+
+
+func test_a_broken_leg_limps_and_a_broken_arm_hits_weak() -> void:
+	var p = pair()
+	var f = p[0]
+	var x0: float = f.x
+	for i in 30:
+		f.step({"mx": 1.0})
+	var sound: float = f.x - x0
+	f.pain["leg_b"] = 99.0
+	x0 = f.x
+	for i in 30:
+		f.step({"mx": 1.0})
+	check(f.limping(), "a broken leg")
+	check(f.x - x0 < sound * 0.7, "walks slower: a limp (%.0f px against %.0f)" % [f.x - x0, sound])
+	var g = Fighter.new()
+	g.step({"punch": true})
+	var whole: float = g.move()["damage"]
+	g.pain["arm_f"] = 99.0
+	eq(g.move()["damage"], whole * 0.5, "the jab with a broken lead arm lands at half")
+	g.pain["arm_f"] = 0.0
+	g.pain["leg_f"] = 99.0
+	eq(g.move()["damage"], whole, "a broken leg doesn't weaken a punch")
+
+
+func test_the_body_mends_between_levels() -> void:
+	var f = Fighter.new()
+	f.pain["arm_b"] = 99.0
+	f.pain["head"] = 6.0
+	f.heal()
+	for part in f.pain:
+		eq(f.pain_stage(part), 0, "%s is fresh again" % part)
+
+
+func test_the_fight_reports_a_break() -> void:
+	var p = pair(90.0)
+	p[1].health = 999.0
+	p[1].pain["leg_f"] = 8.5
+	var events := play(p[0], p[1], [{"kick": true}], 20)
+	eq(events[0]["broke"], "leg_f", "the low kick breaks the bruised leg, and the fight says so (for the crack)")

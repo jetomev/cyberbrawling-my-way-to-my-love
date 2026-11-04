@@ -64,6 +64,11 @@ const DEFAULTS := {
 	# D-19: two hero combos in a row make an enemy dizzy, the window for a finishing combo
 	"dizzy_window_ticks": 240,  # the second finisher must land within this of the first, with no blow of his between
 	"dizzy_ticks": 150,  # how long he stands dazed, open
+	# pain, not blood (D-9): pain points on a part for each stage, and what a broken leg does to his speed
+	"pain_bruised": 2.0,
+	"pain_swollen": 5.0,
+	"pain_broken": 9.0,
+	"limp": 0.6,
 	# the view
 	"camera_zoom": 1.0,
 }

@@ -22,6 +22,14 @@ const BLEND_TICKS := 6
 const AIR := ["air_kick", "hammer_fist"]  # (a plain jump already lands smoothly: test_landing)
 const LANDING := ["land", "idle", "stand", "walk", "stroll", "run"]
 const LAND_BLEND_TICKS := 18
+## Pain on the drawing (D-9, no blood): each part's tint by its stage, fresh / bruised (purple) / swollen (red, and a
+## swollen head puffs up) / broken (dark); the grey-box stand-in for the real art's damage sheets.
+const PAIN_TINT := [Color.WHITE, Color(0.9, 0.78, 1.05), Color(1.12, 0.72, 0.74), Color(0.78, 0.55, 0.62)]
+const PAIN_BONES := {
+	"head": ["head", "neck"], "chest": ["chest", "belly"],
+	"arm_f": ["arm_f_upper", "arm_f_lower", "hand_f"], "arm_b": ["arm_b_upper", "arm_b_lower", "hand_b"],
+	"leg_f": ["leg_f_upper", "leg_f_lower", "foot_f", "toe_f"], "leg_b": ["leg_b_upper", "leg_b_lower", "foot_b", "toe_b"],
+}
 const HEAD_CLEAR := 12.0  # rolling, the head's drawn outline stays this far above the street
 const OUTLINE_SINK := 5.0  # a standing foot's outline sits this far into the street line; a roll's does the same
 var last_state := ""
@@ -157,6 +165,16 @@ func sync(f, ground_y: float) -> void:
 	var floor_y: float = f.world.floor_at(f.x, f.z, f.y) if f.world != null else 0.0
 	var pose := Poses.landing(Poses.angles(f.state, f.t, f.tune), since_touch if grounded else -1, f.y - floor_y, f.vy < 0.0)
 	pose["tumble_dir"] = float(f.roll_dir)
+	# a broken arm hangs, bent wrong at the elbow, unless he's throwing a blow with it
+	var striking := ""
+	if f.move().has("limb"):
+		striking = f.limb_part(f.move()["limb"])
+	for side in ["f", "b"]:
+		if f.broken("arm_" + side) and striking != "arm_" + side and not f.state in Poses.OFF_FEET:
+			pose["cover_" + side] = 0.0
+			pose["arm_%s_upper" % side] = 14.0
+			pose["arm_%s_lower" % side] = 34.0
+			pose["open_" + side] = 1.0
 	if f.state != last_state and last_state in LOCOMOTION and f.state in LOCOMOTION and not last_pose.is_empty():
 		blend_from = last_pose
 		blend_left = BLEND_TICKS
@@ -182,6 +200,19 @@ func sync(f, ground_y: float) -> void:
 	last_pose = pose
 	apply(pose, grounded and not f.state in Poses.OFF_FEET)  # falling, lying, rising: placed by the outline, no planted feet
 	body.modulate = Color(1.6, 1.6, 1.9) if f.blocking() == "perfect" else Color.WHITE  # a perfect block flashes
+	for region in PAIN_BONES:
+		var stage: int = f.pain_stage(region)
+		for name in PAIN_BONES[region]:
+			var part: Node2D = bones[name].get_node_or_null("Part")
+			if part == null:
+				continue
+			# (apply() resets the limbs' modulate every frame for near/far; the body and head it leaves alone)
+			if name in ["belly", "chest", "neck", "head"]:
+				part.modulate = PAIN_TINT[stage]
+			else:
+				part.modulate *= PAIN_TINT[stage]
+	var head_part: Node2D = bones["head"].get_node("Part")
+	head_part.scale = Vector2.ONE * (1.1 if f.pain_stage("head") >= 2 else 1.0)
 
 
 ## Where the hips, hands, feet and the top of the head are drawn right now, in this view's own space (its origin is the spot under the

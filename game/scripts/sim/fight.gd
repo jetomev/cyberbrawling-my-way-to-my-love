@@ -18,7 +18,8 @@ var _hit := {}  # attacker id -> [attack serial, ids already hit by that blow]
 
 
 ## Settles this tick's blows. Returns what happened, one entry per blow that landed:
-## {attacker, target, result ("hit", "blocked", "perfect", "evaded"), move, drop (what fell, or "")}.
+## {attacker, target, result ("hit", "blocked", "perfect", "evaded"), move, drop (what fell, or ""), counter (caught
+## winding up), broke (the part the blow broke, or "")}.
 func step(fighters: Array, world = null) -> Array:
 	var events := []
 	for a in fighters:
@@ -57,7 +58,8 @@ func step(fighters: Array, world = null) -> Array:
 					drop = _disarm(a, world)
 			if result == "hit":
 				a.finishers_taken = 0  # landing a blow of his own breaks a run of combos on him
-			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "drop": drop, "counter": winding_up and result == "hit"})
+			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "drop": drop, "counter": winding_up and result == "hit",
+				"broke": d.just_broke})
 		_hit[id] = seen
 	return events
 

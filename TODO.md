@@ -88,7 +88,8 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] One enemy type that fights back and drops a weapon; reacts to stagger, knockdown, launch and push (solo) (2026-11-03: fight.gd, brain.gd, the thug in play, a bot fight clip in every build)
 - [x] That enemy's own combos; the right hit or a perfect block interrupts them and can disarm him; a block takes less pain (solo) (2026-11-03: a counter, caught winding up, or a perfect block knocks his weapon loose)
 - [x] Two hero combos in a row make an enemy dizzy: the window for a finishing combo (solo) (2026-11-03: within 4 s, no blow of his between; dazed 2.5 s)
-- [ ] Pain system in grey boxes: damage stages per part, broken arm/leg effects, hit sounds; no blood (solo) (#3)
+- [x] Pain system in grey boxes: damage stages per part, broken arm/leg effects; no blood (solo) (#3) (2026-11-03: head, body, arms, legs go bruised → swollen → broken by where blows land; a broken leg limps, a broken arm hits at half and hangs; heals between levels)
+- [ ] Hit sounds, voices and the crack wired to the fight's events, from the team's sound batch
 - [ ] Pick up a weapon; it stays in the hand (solo)
 - [ ] Weapon combos (W,W,W swing, backswing, overhead smash; W,P,K) and each weapon's feel: knife, sword, bat, pipe/wrench (solo)
 - [ ] Throw the held weapon at a far enemy; it lands and can be picked up again (solo)

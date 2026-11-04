@@ -56,6 +56,11 @@ var knock_dir := 1  # which way the last blow drove him (+1 right, -1 left)
 var finishers_taken := 0  # combo finishers landed on him in a row (D-19: two make him dizzy)
 var last_finisher := -1000  # the tick the last one landed
 var dizzy_left := 0  # ticks of dizziness still to come once the blow's reaction ends
+## Pain, not blood (D-9; DESIGN, "Pain, not blood"): every blow hurts the part it lands on, and the parts go fresh →
+## bruised → swollen → broken. A broken leg limps (slower), a broken arm hits weaker (and, with weapons, can't swing
+## one). The head and chest stop at swollen. It heals between levels (heal()).
+var pain := {"head": 0.0, "chest": 0.0, "arm_f": 0.0, "arm_b": 0.0, "leg_f": 0.0, "leg_b": 0.0}
+var just_broke := ""  # the part the last blow broke, or "" (for the crack sound)
 
 
 func _init(tuning: Dictionary = {}, start_x := 200.0, start_z := 80.0, street = null) -> void:
@@ -185,7 +190,7 @@ func _ground(mx: float, mz: float, run := false) -> void:
 		speed = "run_speed"
 	elif stance == "walk":
 		speed = "stroll_speed"
-	vx = mx * tune[speed]
+	vx = mx * tune[speed] * (tune["limp"] if limping() else 1.0)
 	var nx := clampf(x + vx, tune["street_left"], tune["street_right"])
 	if mx != 0.0:
 		facing = 1 if mx > 0.0 else -1
@@ -296,13 +301,16 @@ func take_hit(blow: Dictionary, attacker) -> String:
 	var dir := 1 if x >= attacker.x else -1  # driven away from whoever hit him
 	knock_dir = dir
 	var guard := blocking()
+	just_broke = ""
 	if guard != "" and facing == -dir:  # only a guard facing the blow stops it
 		if guard == "perfect":
 			return "perfect"
 		health = maxf(health - blow["damage"] * tune["block_damage"], 0.0)
+		_hurt("arm_f", blow["damage"] * tune["block_damage"])  # the forearms take a blocked blow
 		_enter("block_hit")
 		return "blocked"
 	health = maxf(health - blow["damage"], 0.0)
+	_hurt(region_hit(blow, attacker), blow["damage"])
 	stance = "fight"  # a hit snaps him out of the walk stance
 	queue.clear()
 	chain = ""
@@ -332,6 +340,45 @@ func take_hit(blow: Dictionary, attacker) -> String:
 		_:
 			_enter("hurt")
 	return "hit"
+
+
+## Where a blow lands on him, by the middle of its height band above his feet: the head (a jab, a cross, a hook, a
+## side kick to the face, an uppercut), the body, or the legs (a low kick, a sweep). The lead side takes it.
+func region_hit(blow: Dictionary, attacker) -> String:
+	var mid: float = attacker.y + (blow.get("low", 100.0) + blow.get("high", 200.0)) * 0.5 - y
+	if mid >= 175.0:
+		return "head"
+	if mid >= 100.0:
+		return "chest"
+	return "leg_f"
+
+
+## 0 fresh, 1 bruised, 2 swollen, 3 broken (the head and chest top out at swollen).
+func pain_stage(part: String) -> int:
+	var p: float = pain[part]
+	var stage := 3 if p >= tune["pain_broken"] else 2 if p >= tune["pain_swollen"] else 1 if p >= tune["pain_bruised"] else 0
+	return mini(stage, 2) if part in ["head", "chest"] else stage
+
+
+func broken(part: String) -> bool:
+	return pain_stage(part) == 3
+
+
+func limping() -> bool:
+	return broken("leg_f") or broken("leg_b")
+
+
+func _hurt(part: String, amount: float) -> void:
+	var was := pain_stage(part)
+	pain[part] += amount
+	if pain_stage(part) == 3 and was < 3:
+		just_broke = part
+
+
+## Between levels the body mends (the hero carries his damage into the boss fight; DESIGN).
+func heal() -> void:
+	for part in pain:
+		pain[part] = 0.0
 
 
 ## Out of a blow's reaction: dazed if two combos in a row got him (a hit while dazed doesn't clear it), else the guard.
@@ -458,7 +505,23 @@ func attack_phase() -> String:
 
 ## The move being thrown, with its damage and effect (moves.gd), or {}.
 func move() -> Dictionary:
-	return Moves.data(state, tune) if Moves.is_move(state) else {}
+	if not Moves.is_move(state):
+		return {}
+	var d := Moves.data(state, tune)
+	var part := limb_part(d["limb"])
+	if part != "" and broken(part):
+		d["damage"] = d["damage"] * 0.5  # a blow with a broken arm or leg lands weak
+	return d
+
+
+## Which of his parts throws a blow with this limb ("hand_f" → "arm_f", "leg_b_lower" → "leg_b"), or "".
+static func limb_part(limb: String) -> String:
+	var side := "f" if limb.ends_with("_f") or limb.contains("_f_") else "b"
+	if limb.begins_with("hand") or limb.begins_with("arm"):
+		return "arm_" + side
+	if limb.begins_with("foot") or limb.begins_with("leg"):
+		return "leg_" + side
+	return ""
 
 
 ## The space a blow covers this tick, or {} when nothing can be hit: {x0, x1, z0, z1} on the street.
