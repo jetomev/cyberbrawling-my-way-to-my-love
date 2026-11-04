@@ -28,6 +28,7 @@ const HEALS := {"food": 0.4, "takeaway": 0.4, "soda": 0.25, "apple": 0.25, "bowl
 const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko", "dizzy", "held",
 	"tumble"]
 const ESCAPE_TAPS := 3
+const DUCK_TICKS := 12  # how long a duck under a high kick lasts, before he comes up
 
 var tune: Dictionary
 var world = null
@@ -190,6 +191,9 @@ func step(inp: Dictionary) -> void:
 				_enter("jump")
 		"climb":
 			_climb()
+		"duck":
+			if t >= DUCK_TICKS:
+				_enter(_rest())
 		_:
 			if _ground_attack() and t >= attack_length(state):
 				# a press up to combo_window_ticks frames after this one continues the chain: exactly the setting (the
@@ -426,6 +430,8 @@ func take_hit(blow: Dictionary, attacker) -> String:
 	knock_dir = dir
 	var move: String = blow.get("move", "")
 	if move in dodges or (too_quick and blow.get("weapon_speed", 0) >= 1):
+		if move in dodges and state in GROUND_STATES:
+			_enter("duck")  # down under the high kick (the Wrench Mechanic): he comes up out of it
 		return "dodged"  # under it, or gone before it lands
 	if move in parries and facing == -dir and state in GROUND_STATES:
 		return "parried"  # caught on the flat of his blade

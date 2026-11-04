@@ -499,6 +499,9 @@ const SHOTS := {
 		["active_end", {"cover_f": 0.0, "arm_f_upper": -95.0, "arm_f_lower": 0.0, "torso": 20.0, "hip_x": 14.0, "turn": 30.0, "step_f": 16.0}],
 		["follow", {"cover_f": 0.0, "arm_f_upper": -60.0, "arm_f_lower": 10.0, "torso": 24.0, "hip_x": 16.0, "step_f": 16.0}],
 		["end", {}]],
+	# ducking under a high kick: down low, the chest over the knees, the head tucked, the guard kept up
+	"duck": [["start", {}],
+		["end", {"hip_y": 34.0, "torso": 46.0, "head": -26.0}]],
 	# up out of a duck, the head driving into the face: the hips and chest lunge, the head leads (the Mechanic's)
 	"headbutt": [["start", {}],
 		["windup", {"torso": -16.0, "head": -12.0, "hip_x": -10.0, "hip_y": -14.0}],
@@ -527,6 +530,7 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 				"roll": return tune["roll_ticks"]
 				"hurt", "block_hit", "stagger", "push", "knockdown", "get_up": return tune[state + "_ticks"]
 				"launch": return tune["jump_air_ticks"]
+				"duck": return 12  # (fighter.gd DUCK_TICKS)
 			return Moves.length(state, tune)
 		# getting hit: the blow's peak comes quickly, then the reaction plays out
 		"hit_peak":

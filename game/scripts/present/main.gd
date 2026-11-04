@@ -27,6 +27,7 @@ const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const Level := preload("res://scripts/sim/level.gd")
 const Trials := preload("res://scripts/present/trials.gd")
 const Scenes := preload("res://scripts/present/scenes.gd")
+const Proofs := preload("res://scripts/present/proofs.gd")
 const EDGE_INK := Color(0.08, 0.08, 0.10)  # the neon-ink outline
 const Progress := preload("res://scripts/sim/progress.gd")
 const Sound := preload("res://scripts/present/sound.gd")
@@ -143,7 +144,7 @@ func _ready() -> void:
 		world = level.world
 		var sc := args.find("--scene")
 		if sc >= 0 and sc + 1 < args.size():
-			scene = Scenes.new(args[sc + 1])
+			scene = (Proofs if args[sc + 1].begins_with("proof_") else Scenes).new(args[sc + 1])
 			scene.setup(level)
 			$Camera.position.x = level.hero.x  # the camera starts on him, not panning in
 	elif trial_name != "":

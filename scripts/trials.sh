@@ -10,9 +10,18 @@ mkdir -p "$OUT"
 # (scene:<name>@<level>: the scene on that level)
 for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy records bass_drop scenery umbrella first_aid \
     scene:cat@level1 scene:twins@roster_yard scene:coach@coach_gym scene:chrome@chrome_casino scene:static@static_plant \
-    scene:rook@rook_penthouse scene:crane@crane_docks scene:godfather@tower_top; do
+    scene:rook@rook_penthouse scene:crane@crane_docks scene:godfather@tower_top \
+    scene:proof_headbutt@tests/levels/open_street scene:proof_doorman@tests/levels/open_street \
+    scene:proof_dancer@tests/levels/open_street scene:proof_enforcer@tests/levels/open_street \
+    scene:proof_lookout@tests/levels/open_street scene:proof_grabber@tests/levels/open_street \
+    scene:proof_swap@tests/levels/twins scene:proof_shove@tests/levels/stairs scene:proof_climb@tests/levels/twins \
+    scene:proof_escape@tests/levels/stairs; do
   ARGS=(--trial "$T")
-  if [[ "$T" == scene:* ]]; then L="${T#*@}"; T="${T#scene:}"; T="${T%@*}"; ARGS=(--level "res://levels/$L.json" --scene "$T"); fi
+  if [[ "$T" == scene:* ]]; then
+    L="${T#*@}"; T="${T#scene:}"; T="${T%@*}"
+    [[ "$L" == */* ]] || L="levels/$L"  # (a showcase level, or a test layout by its path)
+    ARGS=(--level "res://$L.json" --scene "$T")
+  fi
   TMP="$ROOT/scratch/trial-$T.$$"
   mkdir -p "$TMP"
   timeout 300 "$ROOT/scripts/capped.sh" godot --path "$ROOT/game" --write-movie "$TMP/f.png" --fixed-fps 60 \
@@ -55,6 +64,23 @@ print("+".join("eq(n\\,%d)" % f for f in sorted(pick)))
     ffmpeg -loglevel error -y -f concat -safe 0 -i "$TMP/moments.txt" -vf "scale=480:-1,tile=6x$ROWS:padding=4:color=black" \
       -frames:v 1 "$OUT/$T-moments.png"
   fi
+  # a proof's unbroken sequence (the testers, 2026-11-04: "one unbroken sequence, start frame through the outcome"):
+  # every frame from the one before its START to 4 after its END, in order, pages of 60 (6 across, 10 down)
+  S=$(grep -oE '^frame [0-9]+: START' "$OUT/$T.txt" | head -1 | grep -oE '[0-9]+')
+  E=$(grep -oE '^frame [0-9]+: END' "$OUT/$T.txt" | head -1 | grep -oE '[0-9]+')
+  if [ -n "$S" ] && [ -n "$E" ]; then
+    rm -f "$OUT/$T"-sequence-*.png
+    FIRST=$((S > 1 ? S - 2 : 0)); LAST=$((E + 3)); [ "$LAST" -ge "$N" ] && LAST=$((N - 1))
+    PAGE=1; F=$FIRST
+    while [ "$F" -le "$LAST" ]; do
+      TO=$((F + 59)); [ "$TO" -gt "$LAST" ] && TO=$LAST
+      for k in $(seq "$F" "$TO"); do printf "file '%s'\n" "$TMP/$(printf 'f%08d.png' "$k")"; done > "$TMP/seq.txt"
+      ROWS=$(( (TO - F + 6) / 6 ))
+      ffmpeg -loglevel error -y -f concat -safe 0 -i "$TMP/seq.txt" -vf "scale=320:-1,tile=6x$ROWS:padding=3:color=black" \
+        -frames:v 1 "$OUT/$T-sequence-$PAGE.png"
+      PAGE=$((PAGE + 1)); F=$((TO + 1))
+    done
+  fi
   rm -rf "$TMP"
 done
-echo "OK trials: $(ls "$OUT"/*.mp4 | grep -vc half) clips at full and half speed, $(ls "$OUT"/*-moments.png | wc -l) moments sheets in trials/"
+echo "OK trials: $(ls "$OUT"/*.mp4 | grep -vc half) clips at full and half speed, $(ls "$OUT"/*-moments.png | wc -l) moments sheets, $(ls "$OUT"/*-sequence-1.png 2>/dev/null | wc -l) unbroken proof sequences in trials/"
