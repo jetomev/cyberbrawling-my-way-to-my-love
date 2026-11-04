@@ -132,3 +132,27 @@ func test_the_bot_beats_twin_loans() -> void:
 		results.append("won" if l.won else ("lost" if l.lost else "stuck"))
 	check(not results.has("stuck"), "never stuck: %s" % [results])
 	check(results.count("won") >= 2, "and wins on most seeds: %s" % [results])
+
+
+## The team's third ruling: the brothers open with their swap, once, whatever the hero does: here a hero who walks
+## straight at the short one and punches from the first frame. Hits still hurt them, but nothing rocks the opener
+## till they've swapped; after that they flinch as before.
+func test_they_open_with_their_swap_even_against_a_rush() -> void:
+	var l = Level.new(Level.load_data("res://levels/level3.json"), {}, 1)
+	l._go_to(3, 150.0)
+	var short: Dictionary = twin(l, "twin_short")
+	var opened := -1
+	var swapped := -1
+	for i in 600:
+		var dx: float = short["f"].x - l.hero.x
+		l.step({"mx": signf(dx) if absf(dx) > 100.0 else 0.0, "punch": i % 12 == 0})
+		for ev in l.events:
+			if ev.get("result", "") == "opening" and opened < 0:
+				opened = i
+			if ev.get("result", "") == "swap" and swapped < 0:
+				swapped = i
+	check(opened >= 0 and opened < 180, "they open within three seconds of him walking in (at %d)" % opened)
+	check(swapped > opened and swapped - opened < 30, "and swap on the opening combo's second blow (%d frames on)" % (swapped - opened))
+	check(short["f"].health < short["f"].max_health, "his punches really landed on the short one meanwhile")
+	check(not l.enemies.any(func(e): return e["f"].unflinching and not e["f"].defeated() and not l.compound and e["brain"].plan.is_empty()),
+		"after the opening, nobody stays unflinching")

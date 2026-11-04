@@ -74,6 +74,7 @@ var no_swing := false  # no room to swing a weapon here (the crane's cab): fists
 var reads_combos := false  # parries a combo used twice in a row (Madame Chrome; the Godfather's rage round): mix it up
 var hit_scale := 1.0  # his blows' damage, scaled (the team's balance ruling, 11-04: the Mechanic hits softer up close)
 var stays_up := false  # knockdown and launch blows only stagger him
+var unflinching := false  # every blow hurts, none rocks him (Twin Loans' opening swap, the team's third ruling)
 var min_health := 0.0  # blows can't take him lower than this (the Godfather's rage round: only the dizzy finisher ends it)
 var armour := false  # a coat only the Lovelight cuts: every other blow bounces off (the Godfather's first round)
 var only_counters := false  # too fast for anything but a blow into his wind-up (the Godfather's second round)
@@ -469,7 +470,7 @@ func take_hit(blow: Dictionary, attacker) -> String:
 		return "umbrella"  # the umbrella takes it, and breaks
 	health = maxf(health - blow["damage"], min_health)
 	_hurt(region_hit(blow, attacker), blow["damage"])
-	if blow.get("move", "") in shrugs and blow.get("effect", "") == "" and health > 0.0:
+	if (blow.get("move", "") in shrugs and blow.get("effect", "") == "" or unflinching) and health > 0.0:
 		return "hit"  # it hurts, but he doesn't flinch: whatever he was doing goes on
 	stance = "fight"  # a hit snaps him out of the walk stance
 	queue.clear()

@@ -37,6 +37,13 @@ func _level(n: String) -> Array:
 	var deaths := {}  # where lives were lost -> count
 	var per_screen := {}  # screen -> {kind -> health taken}, all runs
 	var reached_last := 0
+	var moments := {}  # a boss's set pieces seen (the twins' opening and swaps), all runs
+	var hard := []  # which enemies in this layout are the hard versions (the team's ask, third ruling)
+	for fl in d["floors"]:
+		for w in fl.get("waves", []):
+			for e in w.get("enemies", []):
+				if e.get("hard", false) and not hard.has(e["kind"]):
+					hard.append(e["kind"])
 	var last_floor: int = d["floors"].size() - 1
 	out.append("| Seed | Result | Health and lives leaving each screen | Lives lost at | Blows he landed |")
 	out.append("|---|---|---|---|---|")
@@ -63,6 +70,8 @@ func _level(n: String) -> Array:
 			for ev in l.events:
 				if ev.get("attacker") == l.hero and ev.get("result", "") == "hit":
 					landed += 1
+				if ev.get("result", "") in ["opening", "swap", "compound"]:
+					moments[ev["result"]] = moments.get(ev["result"], 0) + 1
 			if here != screen:
 				if screen != "":
 					marks.append("%s %.0f/%d" % [screen, l.hero.health, l.lives])
@@ -101,6 +110,13 @@ func _level(n: String) -> Array:
 	out.append("**Pass mark** (the team's: the bot reaches the level's last screen, F%d, at least once in %d runs): %s (%d of %d)" % [
 		last_floor, SEEDS.size(), "PASS" if reached_last > 0 else "UNDER", reached_last, SEEDS.size()])
 	out.append("")
+	out.append("**Hard versions** in this layout: %s" % (", ".join(hard) + " (tagged \"(hard)\" below)" if not hard.is_empty() \
+		else "none (no hard version of any enemy is built yet; when one is, it shows here and as \"(hard)\" below)"))
+	out.append("")
+	if not moments.is_empty():
+		out.append("**Boss moments seen**, all runs: %s" % ", ".join(moments.keys().map(func(k): return "%s ×%d" % [
+			{"opening": "the twins' opening", "swap": "the twins' swap", "compound": "the twins' Compound (both at once)"}.get(k, k), moments[k]])))
+		out.append("")
 	out.append("Health taken by screen, all runs:")
 	var screens: Array = per_screen.keys()
 	screens.sort()
@@ -124,7 +140,7 @@ func _kind_of(l, ev: Dictionary) -> String:
 	if a != null:
 		for e in l.enemies:
 			if e["f"] == a:
-				return e["kind"]
+				return e["kind"] + (" (hard)" if e.get("hard", false) else "")
 	var p = ev.get("projectile")
 	if p != null and p.get("catchable", false) and p["team"] == 1:
 		return "wrench_mechanic (thrown %s)" % p["kind"]  # (his hurl: his wrench, or whatever he'd picked up)

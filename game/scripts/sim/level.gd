@@ -92,6 +92,8 @@ const HURL_DAMAGE := 3.0
 const TUMBLE_SPEED := 10.0  # px a tick down the flight
 const TUMBLE_DAMAGE := 1.5
 const TUMBLE_DOWN_EXTRA := 46  # on top of down_ticks and get_up_ticks: about 2 s on the street in all
+const ONE_AT_A_TIME := ["enforcer", "neon_dancer"]  # of these kinds only one swings (or skates in) at a time (rulings two and three)
+const TWIN_OPEN_RANGE := 600.0  # how near he is when the brothers open with their swap
 const SWINGING_MAX := 2  # enemies throwing a blow at once (the team's balance ruling, 2026-11-04)
 const ON_STAIRS_MAX := 2  # enemies on the slope at once; the rest wait at the top or the foot
 const BALL_SPEED := 10.0  # Coach Crusher's medicine ball, at the chest
@@ -173,6 +175,7 @@ var crane := {}  # the docks' crane (the plan's "crane"): {next, container {x, d
 var hint_text := ""  # a wave's small hint, the first time (shown till hint_until)
 var hint_until := -1
 var hints_shown := {}
+var twins_opened := false  # Twin Loans have opened with their swap (the team's third ruling)
 var early := []  # events from before this tick's blows are settled (the twins' swap): joined to events after
 var cat_fed := false  # level 1's stray cat, fed (it follows him, and turns up in level 2)
 var cat := Vector2(-1.0e9, 0.0)  # where the cat is (x, z): by its bins, or at his heels once fed
@@ -346,10 +349,15 @@ func step(inp: Dictionary) -> void:
 				think = _argue(e)
 			# never more than two swinging at once, on every level, a boss's helpers included (the balance ruling)
 			var swinging: Array = enemies.filter(func(o): return not o["gone"] and o["f"].attack_phase() != "")
-			if e["f"].attack_phase() == "" and (swinging.size() >= SWINGING_MAX \
-					or (e.get("kind", "") == "enforcer" and swinging.any(func(o): return o.get("kind", "") == "enforcer"))):
+			var kind: String = e.get("kind", "")
+			var same_busy: bool = kind in ONE_AT_A_TIME and enemies.any(func(o): return o != e and not o["gone"] \
+					and o.get("kind", "") == kind and (o["f"].attack_phase() != "" or o.get("dashing", false)))
+			if e["f"].attack_phase() == "" and (swinging.size() >= SWINGING_MAX or same_busy):
 				for k in ["punch", "kick", "sweep", "grab", "headbutt", "throw"]:
-					think.erase(k)  # (and Enforcers one at a time: the team's second ruling)
+					think.erase(k)  # (and Enforcers, and Dancers, one at a time: the team's second and third rulings)
+			if same_busy and not e.get("dashing", false):
+				think.erase("run")  # (a Dancer waits for the other's skate-in before her own)
+			e["dashing"] = think.get("run", false) and kind == "neon_dancer"
 			if think.get("records", false):
 				e["volley"] = RECORDS.duplicate()  # his records go one after another
 				e["volley_at"] = tick
@@ -1017,18 +1025,39 @@ func _twins() -> void:
 			var st: Dictionary = climbing_back[f]
 			if f.y >= st["top"] - 1.0 or (f.flight().is_empty() and hero.flight().is_empty() and f.state in Fighter.GROUND_STATES):
 				climbing_back.erase(f)  # back up top (or the fight's come down to the floor)
-		f.tune["walk_speed"] = e["walk"] * (TWIN_CLIMB if climbing_back.has(f) and not f.flight().is_empty() else 1.0)
+		f.tune["walk_speed"] = e["walk"] * (TWIN_CLIMB if climbing_back.has(f) and not f.flight().is_empty() else 1.0) \
+				* (2.0 if not twins_opened and not climbing_back.has(f) and not f.flight().is_empty() else 1.0)  # (down the stairs in a hurry to open with his brother)
 	var up: Array = twins.filter(func(e): return not e["f"].defeated())
 	if up.size() < 2:
 		return
 	var hp: float = up.reduce(func(s, e): return s + e["f"].health, 0.0)
 	var most: float = up.reduce(func(s, e): return s + e["f"].max_health, 0.0)
+	# the opening (the team's third ruling): once both are up on one flight, near each other and he's coming, they open
+	# with their swap, the brother nearer him starting a combo from where he stands; nothing rocks him till they've
+	# swapped. After that a quick player can cut a combo short as before.
+	if not twins_opened and not compound and up[0]["f"].flight() == up[1]["f"].flight() \
+			and absf(up[0]["f"].x - up[1]["f"].x) < 500.0 and up.all(func(e): return e["brain"].dormant_until_within <= 0.0) \
+			and up.any(func(e): return absf(e["f"].x - hero.x) < TWIN_OPEN_RANGE and e["f"].state in Fighter.GROUND_STATES + ["block"]):
+		twins_opened = true
+		var att: Dictionary = up[0] if absf(up[0]["f"].x - hero.x) <= absf(up[1]["f"].x - hero.x) else up[1]
+		var other: Dictionary = up[1] if att == up[0] else up[0]
+		att["brain"].plan = (Brain.TYPES["TWIN"]["combos"][0] as Array).duplicate()
+		att["brain"].wait = 0
+		att["brain"].block_left = 0
+		att["f"].facing = 1 if hero.x >= att["f"].x else -1
+		att["f"].unflinching = true
+		other["swapped"] = false
+		early.append({"target": att["f"], "result": "opening", "kind": "opening"})
+	for e in up:
+		if e["f"].unflinching and (e.get("swapped", false) or (e["brain"].plan.is_empty() and e["f"].attack_phase() == "")):
+			e["f"].unflinching = false
 	if not compound and hp <= most * 0.5:  # (roster v3: at half their health)
 		compound = true
 		early.append({"target": up[0]["f"], "result": "compound", "kind": "compound"})
 	if compound:
 		for e in up:
 			e["brain"].allowed = true  # both at once
+			e["f"].unflinching = false
 		return
 	for i in 2:
 		var me: Dictionary = up[i]
@@ -1043,9 +1072,10 @@ func _twins() -> void:
 		if b.plan.is_empty() and other["f"].attack_phase() == "":
 			other["swapped"] = false  # his combo's over: the next one may swap again
 		if b.plan.size() == 1 and not other.get("swapped", false) \
-				and me["f"].state in Fighter.GROUND_STATES + ["block"] and me["f"].flight() == other["f"].flight() \
+				and (me["f"].state in Fighter.GROUND_STATES + ["block"] or other["f"].unflinching) and me["f"].flight() == other["f"].flight() \
 				and absf(me["f"].x - other["f"].x) < 500.0:  # (both on the shop floor, or both on the same stairs)
 			other["swapped"] = true  # once a combo
+			other["f"].unflinching = false  # (the opening's done)
 			var at := Vector3(me["f"].x, me["f"].y, me["f"].z)
 			me["f"].x = other["f"].x
 			me["f"].y = other["f"].y
@@ -1056,6 +1086,10 @@ func _twins() -> void:
 			me["f"].facing = 1 if hero.x >= me["f"].x else -1
 			other["f"].facing = 1 if hero.x >= other["f"].x else -1
 			early.append({"target": other["f"], "result": "swap", "kind": "swap"})
+	if not twins_opened:
+		for e in up:
+			e["brain"].allowed = false  # till they've opened together: they hang back, guards up, and nothing rocks them
+			e["f"].unflinching = true
 
 
 ## Two of a wave squaring off (the team's level 3: two Snicks arguing over who gets the hero first): each faces the
@@ -1195,7 +1229,7 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 				elif from == "left" and o["x1"] < at and x < o["x1"] + 60.0:
 					x = o["x1"] + 60.0
 	_spawn(e["kind"], x, z, e.get("weapon", ""), -1.0, wave_index)
-	for k in ["calls", "whistles"]:  # the lookout's: who he whistles in, and how many times
+	for k in ["calls", "whistles", "hard"]:  # the lookout's: who he whistles in, and how many times; a hard version's tag
 		if e.has(k):
 			enemies[-1][k] = e[k]
 	if e.get("hidden", false):

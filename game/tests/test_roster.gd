@@ -342,3 +342,21 @@ func test_at_most_two_swing_at_once_and_one_enforcer() -> void:
 	check(peak <= Level.SWINGING_MAX, "never more than two swinging at once (peak %d)" % peak)
 	eq(peak_enforcers, 1, "one Enforcer at a time, never two")
 	check(both_kinds, "an Enforcer and the thug can still swing together")
+
+
+## The team's third ruling: Dancers skate in one at a time too, like the Enforcers (another kind can still be second).
+func test_dancers_skate_in_one_at_a_time() -> void:
+	var l = street()
+	for dx in [400.0, 450.0, -420.0]:
+		bring(l, "neon_dancer", dx)
+	var peak := 0
+	var any := false
+	for i in 900:
+		l.hero.health = l.hero.max_health
+		l.step({"block": true})
+		var busy: int = l.enemies.filter(func(e): return not e["gone"] and e["kind"] == "neon_dancer" \
+				and (e["f"].attack_phase() != "" or e.get("dashing", false))).size()
+		peak = maxi(peak, busy)
+		any = any or busy > 0
+	check(any, "the Dancers really came at him")
+	eq(peak, 1, "never two Dancers skating in or striking at once")

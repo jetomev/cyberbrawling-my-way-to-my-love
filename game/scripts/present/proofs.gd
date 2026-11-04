@@ -68,19 +68,15 @@ func setup(level) -> void:
 		"proof_grabber":
 			foe = _bring(level, "grabber", h.x + 220.0)
 		"proof_swap":
-			level._go_to(1, 300.0)
+			# level 3's own Twin Loans shop, the hero in at the door, the bot playing him and rushing in (the testers: a
+			# real fight); the brothers open with their swap (the team's third ruling)
+			level._go_to(3, 150.0)
 			level.step({})
 			foe = level.enemies.filter(func(e): return e["kind"] == "twin_short")[0]
 			other = level.enemies.filter(func(e): return e["kind"] == "twin_tall")[0]
-			other["f"].x = level.hero.x + 320.0
-			other["f"].y = 0.0
-			other["f"].z = level.hero.z
-			foe["f"].x = level.hero.x + 130.0
-			foe["f"].z = level.hero.z
-			foe["brain"].wait = 30
-			zoom = 1.3
-			length = 2400
-			bot = HeroBot.new(h, 2)  # the hero fights back (the testers: show it in a real fight, not against a guard)
+			zoom = 1.0
+			length = 900
+			bot = HeroBot.new(h, 2)
 		"proof_shove":
 			_on_flight(level, h, 1600.0)
 			h.facing = -1
@@ -422,36 +418,31 @@ func inputs(level) -> Dictionary:
 			if tick > 300 and ended < 0:
 				_end("(the proof ran out of time)")
 		"proof_swap":
-			# a real fight (the bot plays the hero); the sequence is the first combo that swaps, from its first frame to its
-			# end (its START is logged when the swap shows which combo it was)
+			# the opening: from the frame the hero walks in to the hero's first blow landing after their opening combo
 			bot.me = h
+			bot.goal = level.next_door()
 			inp = bot.think(level.standing())
-			if [foe, other].any(func(e): return not e["brain"].plan.is_empty() or e["f"].attack_phase() != "") \
-					or (started < 0 and tick < 400):
-				inp = {"block": true}  # they open on him and he guards; once a combo's been thrown, he hits back between them
-			for e in [foe, other]:
-				var key: String = "plan_" + e["kind"]
-				if not e["brain"].plan.is_empty() and not data.get(key, false):
-					data["from_" + e["kind"]] = tick  # this brother's combo starts
-				data[key] = not e["brain"].plan.is_empty() or e["f"].attack_phase() != ""
+			if tick == 2:
+				_start("the hero walks into Twin Loans' shop, the robot playing him and going straight for them")
 			for ev in evs:
-				if ev.get("result", "") == "swap" and started < 0:
-					var who: Dictionary = foe if ev.get("target") == foe["f"] else other
-					started = data.get("from_" + who["kind"], tick)
-					data["swapper"] = who
-					history.append("frame %d: START: the %s brother starts a combo, his brother guarding, in a real fight" % [started,
-						"short" if who["kind"] == "twin_short" else "tall"])
-					_say("halfway through it (as his second blow starts): they SWAP places")
-			if started >= 0 and ended < 0 and data.has("swapper"):
-				var w: Dictionary = data["swapper"]
+				var r: String = ev.get("result", "")
+				if r == "opening":
+					data["opener"] = foe if ev.get("target") == foe["f"] else other
+					_say("they OPEN: the %s brother starts his combo (nothing rocks him till they've swapped)" % [
+						"short" if data["opener"]["kind"] == "twin_short" else "tall"])
+				if r == "swap" and not data.has("swapped"):
+					data["swapped"] = tick
+					_say("his second blow starts: they SWAP places")
+			if data.has("swapped") and ended < 0:
+				var w: Dictionary = data["opener"]
 				if w["brain"].plan.is_empty() and w["f"].attack_phase() == "" and not data.has("over"):
 					data["over"] = tick
-					_say("his combo's over: the hero hits back")
+					_say("their opening combo's over")
 				if data.has("over") and (evs.any(func(ev): return ev.get("attacker") == h and ev.get("result", "") == "hit") \
 						or tick > data["over"] + 120):
-					_end("the hero's blow lands on a brother: the fight goes on")
-			if tick > 2300 and ended < 0:
-				_end("(no swap came: the proof ran out of time)")
+					_end("the hero's blow lands on a brother: from here a quick player can cut their combos short")
+			if tick > 800 and ended < 0:
+				_end("(no opening came: the proof ran out of time)")
 		"proof_shove":
 			if tick == 9:
 				_start("P P K at the enemy below him on the stairs")
