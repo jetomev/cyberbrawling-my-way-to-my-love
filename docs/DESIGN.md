@@ -79,7 +79,7 @@ chain follows, so both open with the same kick: the low kick since Javier's comb
 > combos can lead them to get dizzy opening time for a third and final combo, and stuff like that. Each enemy have
 > different combos, and anti-combos, same as bosses which have different combinations and ways to kill."
 
-- **Block (built):** hold the block button (L or Shift; pad Y or RB). The hero covers up and stands his ground; he
+- **Block (built):** hold the block button (D; pad Y or RB). The hero covers up and stands his ground; he
   can turn to face a threat, and a punch or kick comes straight out of the guard. The first moments of a block
   (8 ticks, a feel-lab setting) are a **perfect block**, shown by a flash.
 - **With enemies (to build):** enemies throw their own combos. The right punch or kick, or a perfect block,

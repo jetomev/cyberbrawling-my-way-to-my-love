@@ -64,6 +64,39 @@ func test_a_blow_from_the_walk_stance_raises_the_guard_first() -> void:
 	eq(g.stance, "fight", "a block from the walk stance takes the fight stance too")
 
 
+## Javier, 2026-11-03 19:46: "The last list of keys I gave is the one we keep, any other old assigment needs to be
+## cleared." Exactly his list, nothing more: any other key on any action, or any extra action with keys, fails.
+const JAVIERS_KEYS := {
+	"move_left": [KEY_LEFT], "move_right": [KEY_RIGHT], "move_up": [KEY_UP], "move_down": [KEY_DOWN],
+	"punch": [KEY_A], "kick": [KEY_S], "block": [KEY_D], "run": [KEY_W], "stance": [KEY_X], "sweep": [KEY_Z],
+	"roll": [KEY_C], "jump": [KEY_SPACE],
+}
+
+
+func test_only_javiers_keys() -> void:
+	only_these_keys(Controls.KEYS)
+	# and what the game actually binds, after setting itself up
+	Controls.ensure()
+	var bound := {}
+	for action in Controls.KEYS:
+		bound[action] = []
+		for e in InputMap.action_get_events(action):
+			if e is InputEventKey:
+				bound[action].append(e.physical_keycode if e.physical_keycode != KEY_NONE else e.keycode)
+	only_these_keys(bound)
+
+
+func only_these_keys(k: Dictionary) -> void:
+	for action in k:
+		check(action in JAVIERS_KEYS, "%s isn't on Javier's list, yet has keys" % action)
+	for action in JAVIERS_KEYS:
+		var want: Array = JAVIERS_KEYS[action]
+		var got: Array = k.get(action, [])
+		var names := ", ".join(got.map(func(x): return OS.get_keycode_string(x)))
+		check(got.size() == want.size() and got.all(func(x): return x in want),
+			"%s is only on %s (bound: %s)" % [action, OS.get_keycode_string(want[0]), names])
+
+
 func test_the_keys_are_javiers() -> void:
 	var k: Dictionary = Controls.KEYS
 	# Javier's final set (2026-11-02 21:56, through the assistant team): "A punches, S kicks, D block, W for running, X
