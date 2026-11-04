@@ -6,13 +6,15 @@ sticks, knives, swords — keep it, switch between what you've collected, and sa
 
 It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 
-> **Status: Stage 1, the feel in grey boxes (2026-11-02).** A grey hero built from cut-out parts on 21 bones (spine,
-> neck, shoulders, fists and open hands, feet that plant, toes) stands in a low fighting stance, shuffles, switches to
-> an everyday walk, runs, jumps, punches, kicks and flying-kicks, blocks, and chains three-hit **combos** into
-> finishers (jab, cross, power punch; low kick, body kick, side kick to the face; and more); kicks smash crates; cars
-> are climbed and jumped off; nothing is ever walked through. The jump, the flying kick, the walk and the guard are
-> drawn from measurements of recorded human motion; the punches and kicks are next. A feel lab (F1) changes the feel
-> while you play. No enemies yet, no art yet.
+> **Status: all ten levels playable in grey boxes (2026-11-04).** A grey hero built from cut-out parts on 21 bones
+> fights in a low stance, walks, runs, jumps, climbs and fights on stairs, blocks, and chains three-hit **combos** into
+> finishers. Every level is in, from two floors up to nine: levels 1 to 5 built from the design team's agreed pages, levels
+> 6 to 10 from their drafts. The enemies each have their own tricks and their own way to be beaten (a riot shield you
+> walk round, a skater who dodges slow weapons, a grabber you punch your way out of, a knife fighter who parries), and
+> every boss is in with their own fight (level 9 is the tower gauntlet, no boss), from DJ Volt and Big Mama Noodle up to the Godfather of Glow. Weapons are
+> picked up, held the way they're really used and swung with the punch button; they wear out. A computer player
+> plays every level in each build to check it can be won, and 378 automated tests guard the rest. No art yet: the
+> look comes next.
 > First level playable: mid-December 2026. Whole game: by 21 March 2027 at the latest. It ships with **KognogOS 1.0** (April 2027).
 
 | | |
