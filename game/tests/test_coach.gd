@@ -120,3 +120,32 @@ func test_the_bot_beats_coach_crusher() -> void:
 		results.append("won" if l.won else ("lost" if l.lost else "stuck"))
 	check(not results.has("stuck"), "never stuck: %s" % [results])
 	check(results.count("won") >= 2, "and wins on most seeds: %s" % [results])
+
+
+## The testers' send-back on 9ce3cd1 (the team's level 4: "he bounces off the ropes"): the ropes give and throw him back
+## into the ring, then he stands dazed; the view bends the ropes where he hit.
+func test_off_the_ropes_he_bounces_back_into_the_ring() -> void:
+	var l = gym()
+	var e = coach(l)
+	var f = e["f"]
+	f.x = l.hero.x + 400.0
+	f.z = 120.0
+	l.hero.z = 20.0
+	e["brain"].wait = 9999
+	l._coach(e, {"tackle": true})
+	var at_ropes := -1.0
+	var rebound := false
+	for i in 400:
+		l.step({})
+		if at_ropes < 0.0 and l.events.any(func(ev): return ev.get("result", "") == "ropes"):
+			at_ropes = f.x
+			var middle: float = (l.bounds().x + l.bounds().y) * 0.5
+			check(not l.rope_hit.is_empty() and float(l.rope_hit["side"]) == signf(at_ropes - middle),
+				"the ropes on the side he ran into are marked hit (they bend)")
+		if l.events.any(func(ev): return ev.get("result", "") == "rebound"):
+			rebound = true
+			break
+	check(at_ropes > 0.0 and rebound, "into the ropes, and back off them")
+	var mid: float = (l.bounds().x + l.bounds().y) * 0.5
+	check(absf(f.x - mid) < absf(at_ropes - mid) - 60.0, "thrown back toward the middle of the ring (%.0f px off the ropes)" % absf(at_ropes - f.x))
+	eq(f.state, "stagger", "then dazed, open")

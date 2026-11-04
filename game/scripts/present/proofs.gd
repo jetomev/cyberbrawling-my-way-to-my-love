@@ -20,11 +20,14 @@ extends RefCounted
 ## proof_static    a kick into Mr. Static's wind-up knocks the baton loose; P P K by the tank shorts him out; finished
 ## proof_rook      both door switches smashed (Checkmate calls nobody); three perfect blocks on his last cut: the sword
 ##                 breaks
+## proof_ropes     Coach Crusher's tackle stepped aside: he hits the ropes, they give, he bounces back off them, dazed
+## proof_cab       in the crane's cab with a pipe: no room to swing (a punch comes out) while he fights back; P P K
+##                 shoves him out of the cab, over the side
 ## (The boss proofs start their boss part-worn where a whole fight would run to many pages: said so on screen.)
 
 const NAMES := ["proof_headbutt", "proof_doorman", "proof_dancer", "proof_enforcer", "proof_lookout", "proof_grabber",
 	"proof_swap", "proof_shove", "proof_climb", "proof_escape", "proof_coach", "proof_chrome", "proof_crane", "proof_static",
-	"proof_rook"]
+	"proof_rook", "proof_ropes", "proof_cab"]
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
@@ -135,6 +138,25 @@ func setup(level) -> void:
 				foe["f"].x = 1450.0  # by the water tank
 				h.x = 1330.0
 				foe["f"].z = h.z
+		"proof_ropes":
+			level._go_to(1, 300.0)
+			level.step({})
+			foe = level.enemies.filter(func(e): return e["kind"] == "coach")[0]
+			foe["brain"].wait = 9999
+			foe["brain"].dormant_until_within = 0.0001
+			foe["f"].x = h.x + 420.0
+			foe["f"].z = h.z
+			zoom = 1.0
+			length = 600
+		"proof_cab":
+			for i in 3:
+				level.flipped[i] = true  # all three crane switches thrown, the cab open (said on screen)
+			level._go_to(3, 150.0)
+			level.step({})
+			foe = level.enemies.filter(func(e): return e["kind"] == "crane_operator")[0]
+			h.take_weapon("pipe")
+			zoom = 1.2
+			length = 2400
 		"proof_crane":
 			level.flipped[0] = true  # the quay's and the stack's switches already thrown (said on screen)
 			level.flipped[1] = true
@@ -194,6 +216,65 @@ func inputs(level) -> Dictionary:
 	var evs: Array = level.events if fresh else []
 	var f = foe.get("f")
 	match name:
+		"proof_ropes":
+			if tick == 9:
+				_start("Coach Crusher's tackle: the hero steps out of his line")
+				level._coach(foe, {"tackle": true})
+			if (foe.has("tackle") or foe.get("tackle_next", false)) and h.state in ["idle", "walk", "block"]:
+				inp["mz"] = 1.0 if h.z < 130.0 else 0.0
+			for ev in evs:
+				match ev.get("result", ""):
+					"ropes":
+						_say("he slams into the ROPES: they give")
+					"rebound":
+						data["rebound"] = tick
+						_say("and BOUNCE him back into the ring: he stands dazed, open (K K K now)")
+			if data.has("rebound") and tick >= data["rebound"] + 12:
+				_end("dazed off the ropes, %.0f px back into the ring" % absf(f.x - (level.ropes().x if level.rope_hit.get("side", 1.0) < 0.0 else level.ropes().y)))
+			if tick > 500 and ended < 0:
+				_end("(no rebound came: the proof ran out of time)")
+		"proof_cab":
+			if tick == 9:
+				_start("in the crane's cab, a pipe in his hand, the Crane Operator fighting back")
+			for ev in evs:
+				var r: String = ev.get("result", "")
+				if r == "horn":
+					data["resisted"] = data.get("resisted", 0) + 1
+					_say("he RESISTS: his horn blasts the hero back")
+				elif ev.get("target") == f and ev.get("attacker") == h and r in ["blocked", "perfect"]:
+					data["resisted"] = data.get("resisted", 0) + 1
+					_say("he RESISTS: blocks it")
+				elif ev.get("attacker") == f and ev.get("target") == h and r == "hit":
+					data["resisted"] = data.get("resisted", 0) + 1
+					_say("he RESISTS: hits back")
+				elif r == "shoved_out":
+					_say("P P K: the push kick SHOVES him out of the cab")
+				elif r == "out_of_cab":
+					_end("OUT of the cab, over the side and gone: that's it")
+			if h.state in ["punch", "cross", "power_punch"] and h.weapon == "pipe" and h.attack_serial != data.get("swing_serial", -1):
+				data["swing_serial"] = h.attack_serial
+				data["refused"] = data.get("refused", 0) + 1
+				_say("no room to swing: the PIPE stays in his hand, a %s comes out (refused %d)" % [h.state.replace("_", " ").to_upper(), data["refused"]])
+			if tick > 9 and (data.get("refused", 0) < 2 or data.get("resisted", 0) < 1) and h.weapon != "":
+				inp = _swing_at(level, f)  # a weapon press each time he's in reach
+			elif tick > 9 and not foe.has("shoved"):
+				if not data.has("ppk"):
+					data["ppk"] = true
+					var k: Dictionary = foe["brain"].kind.duplicate()
+					k["block_chance"] = 0.0  # (for the shove he stops blocking: said on screen, as in the crane proof)
+					foe["brain"].kind = k
+					foe["brain"].block_left = 0
+					data["thrown"] = 0
+					data["serial"] = h.attack_serial
+					_say("now P P K at him (for this shove he stops blocking)")
+				if h.state in ["kick", "body_kick", "side_kick"]:
+					data["thrown"] = 0  # (the chain came out as kicks: start the P P K over)
+					data["serial"] = h.attack_serial
+				_combo(level, inp, ["punch", "punch", "kick"], ["punch", "cross", "push_kick"])
+				if data.get("thrown", 0) >= 3 and h.state in Fighter.GROUND_STATES:
+					data["thrown"] = 0
+			if tick > 2300 and ended < 0:
+				_end("(he wasn't shoved out: the proof ran out of time)")
 		"proof_coach":
 			if tick == 9:
 				_start("Coach Crusher's tackle: step out of his line, and he hits the ropes (he starts part-worn: 10 of 40)")
@@ -488,6 +569,20 @@ func inputs(level) -> Dictionary:
 
 
 ## Kicks at a boss, stepping in to reach him and lining up with him (Coach Crusher's gloves take every punch).
+## Steps into reach and presses punch now and then (with a weapon in hand that's a swing, where there's room).
+func _swing_at(level, f) -> Dictionary:
+	var h = level.hero
+	var inp := {}
+	if absf(f.x - h.x) > 110.0 or absf(f.z - h.z) > 8.0:
+		inp["mx"] = signf(f.x - h.x) if absf(f.x - h.x) > 110.0 else 0.0
+		inp["mz"] = clampf((f.z - h.z) / 16.0, -1.0, 1.0)
+	elif h.facing != (1 if f.x >= h.x else -1):
+		inp["mx"] = signf(f.x - h.x) * 0.01
+	elif h.state in Fighter.GROUND_STATES and tick % 17 == 0:
+		inp["punch"] = true
+	return inp
+
+
 func _kick_at(level, f) -> Dictionary:
 	var h = level.hero
 	var inp := {}
@@ -558,6 +653,8 @@ func overlay(level) -> String:
 		line += "  ·  called: %d, nearest %s px off" % [called.size(), str(int(called.map(func(e): return absf(e["f"].x - h.x)).min())) if not called.is_empty() else "-"]
 	if name in ["proof_coach", "proof_static"]:
 		line += "  ·  (he starts part-worn, 10 of 40: the whole fight would run to many pages)"
+	if name == "proof_cab":
+		line += "  ·  in hand: %s  ·  swings refused %d  ·  he resisted %d" % [h.weapon if h.weapon != "" else "nothing", data.get("refused", 0), data.get("resisted", 0)]
 	if name == "proof_crane":
 		line += "  ·  %s  ·  switches thrown %d of 3" % [level.where, level.flipped.size()]
 	if name == "proof_rook" and f != null:

@@ -97,9 +97,19 @@ func test_a_push_kick_shoves_him_out_and_thats_it() -> void:
 	l.events = [{"attacker": l.hero, "target": op, "result": "hit", "move": "punch"}]
 	l._shoved_out()
 	check(not op.defeated(), "a jab: no")
+	var x0: float = op.x
 	l.events = [{"attacker": l.hero, "target": op, "result": "hit", "move": "push_kick"}]
 	l._shoved_out()
-	check(op.defeated(), "P P K's push kick: shoved out, and that's it")
+	eq(op.state, "launch", "P P K's push kick: he's off his feet, shoved out")
+	var top := 0.0
+	var out := false
+	for i in Level.SHOVE_TICKS + 5:
+		l.step({})
+		top = maxf(top, op.y)
+		out = out or l.events.any(func(ev): return ev.get("result", "") == "out_of_cab")
+	check(absf(op.x - x0) >= Level.SHOVE_DISTANCE - 1.0, "carried out past the cab's side (%.0f px)" % absf(op.x - x0))
+	check(top > 40.0, "in an arc, up and over (%.0f px up)" % top)
+	check(out and op.defeated(), "out of the cab, and that's it")
 	l.step({})
 	check(l.won, "the level's won")
 

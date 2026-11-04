@@ -741,6 +741,36 @@ func _draw_flying() -> void:
 				var a := TAU * k / 8.0 + float(level.tick) * 0.4
 				flying_view.draw_line(h + Vector2.from_angle(a) * r * 0.4, h + Vector2.from_angle(a + 0.3) * r, Color(0.6, 0.9, 1.0), 3.0)
 			flying_view.draw_circle(h, 8.0, Color(0.85, 0.95, 1.0))
+	if level.plan["floors"][level.on].get("cab", false):  # the crane's cab: its walls, window and open door, in outline
+		var cb: Vector2 = level.bounds()
+		var top: float = Street.GROUND_Y - 470.0
+		var low: float = Street.GROUND_Y + tune["street_depth"]
+		var cc := Color(0.95, 0.75, 0.2)
+		flying_view.draw_line(Vector2(cb.x + 10.0, top), Vector2(cb.y, top), cc, 6.0)  # the roof
+		flying_view.draw_line(Vector2(cb.x + 10.0, top), Vector2(cb.x + 10.0, low), cc, 6.0)  # the back wall's side
+		flying_view.draw_rect(Rect2(cb.x + 120.0, top + 60.0, cb.y - cb.x - 300.0, 170.0), Color(0.6, 0.8, 0.95, 0.5), false, 4.0)  # the window
+		for px in [cb.y - 8.0, cb.y + 8.0]:  # the open door's frame, on the far side
+			flying_view.draw_line(Vector2(px, top), Vector2(px, low), cc, 5.0)
+		flying_view.draw_line(Vector2(cb.y, low), Vector2(cb.y + 60.0, low + 40.0), Color(0.5, 0.5, 0.55), 4.0)  # the sill, and the drop
+	if level.plan["floors"][level.on].get("ring", false):  # a boxing ring: corner posts and three ropes at each side
+		var b: Vector2 = level.ropes()
+		var depth: float = tune["street_depth"]
+		var hit: Dictionary = level.rope_hit
+		var age: int = level.tick - int(hit.get("at", -999))
+		for side in [-1.0, 1.0]:
+			var ex: float = (b.x - 30.0) if side < 0.0 else (b.y + 30.0)  # (just outside where they stop him)
+			var give: float = 0.0
+			if not hit.is_empty() and float(hit["side"]) == side and age < 24:
+				give = 70.0 * (1.0 - age / 24.0) * (1.0 if age < 6 else 0.6)  # the ropes give where he hit them, then spring back
+			for z in [0.0, depth]:  # the corner posts, back and front
+				flying_view.draw_line(Vector2(ex, Street.GROUND_Y + z), Vector2(ex, Street.GROUND_Y + z - 200.0), Color(0.15, 0.15, 0.18), 10.0)
+			for k in 3:
+				var hgt: float = 70.0 + k * 55.0
+				var pts := PackedVector2Array([Vector2(ex, Street.GROUND_Y - hgt)])
+				if give > 0.0:
+					pts.append(Vector2(ex + side * give, Street.GROUND_Y + float(hit["z"]) - hgt))
+				pts.append(Vector2(ex, Street.GROUND_Y + depth - hgt))
+				flying_view.draw_polyline(pts, [Color(0.9, 0.2, 0.2), Color(0.95, 0.95, 0.95), Color(0.2, 0.35, 0.9)][k], 5.0)
 	for strip in level.plan["floors"][level.on].get("live", []):  # a live floor strip: hazard stripes, crackling when on
 		var z0: float = strip[4] if strip.size() > 5 else 0.0
 		var z1: float = strip[5] if strip.size() > 5 else tune["street_depth"]

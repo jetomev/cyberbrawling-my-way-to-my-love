@@ -103,6 +103,13 @@ const BALL_DAMAGE := 2.0
 const TACKLE_DAMAGE := 3.0
 const TACKLE_REACH := 70.0  # he runs into the hero when this close along the street (and on his line of the street)
 const ROPES_DAZE := 70  # the tackle missed: he slams into the ropes and is open this long
+const SHOVE_TICKS := 50  # the Crane Operator flying out of his cab: this long
+const SHOVE_DISTANCE := 1150.0  # out through the cab's open door and off the screen
+const SHOVE_HEIGHT := 140.0  # up in an arc...
+const SHOVE_DROP := 260.0  # ...and down past the cab's floor as he goes over the side
+const RING_IN := 150.0  # a ring's ropes stand this far inside the room's walls (so the camera shows them give)
+const REBOUND_TICKS := 16  # off the ropes he bounces back this long (the team's level 4: "he bounces off the ropes")
+const REBOUND_SPEED := 11.0  # px a frame at the start of the bounce, easing to nothing (about 90 px in all)
 const TACKLE_WINDUP := 30  # first he backs off a few steps, head down, then charges: time to step aside (feel lab)
 const CARD_SPEED := 12.0  # Madame Chrome's cards, three in a row at the chest and the head
 const CARD_DAMAGE := 1.0
@@ -178,6 +185,7 @@ var hint_text := ""  # a wave's small hint, the first time (shown till hint_unti
 var hint_until := -1
 var hints_shown := {}
 var hugs_thrown := false  # a bear hug has thrown him this level (the first is gentle where the level says)
+var rope_hit := {}  # the ropes he last slammed into (the view bends them a moment): side, z, tick
 var twins_opened := false  # Twin Loans have opened with their swap (the team's third ruling)
 var early := []  # events from before this tick's blows are settled (the twins' swap): joined to events after
 var cat_fed := false  # level 1's stray cat, fed (it follows him, and turns up in level 2)
@@ -276,6 +284,7 @@ func restart() -> void:
 	hint_until = -1
 	hints_shown = {}
 	hugs_thrown = false
+	rope_hit = {}
 	live_until = -1
 	crane = {}
 	dice.seed = dice_seed * 7919 + 1
@@ -348,6 +357,14 @@ func standing() -> Array:
 
 
 ## How far the hero may go along this floor right now: a wave being fought locks him near it.
+## Where the fighters stop at the room's sides: a boxing ring's ropes stand RING_IN inside its walls (the team's level 4:
+## "the ropes are the walls"), anywhere else just inside the edge.
+func ropes() -> Vector2:
+	var b := bounds()
+	var m: float = RING_IN if plan["floors"][on].get("ring", false) else 40.0
+	return Vector2(b.x + m, b.y - m)
+
+
 func bounds() -> Vector2:
 	var length: float = floors[on]["length"]
 	if active_wave >= 0:
@@ -371,7 +388,7 @@ func step(inp: Dictionary) -> void:
 	if friend != null and on == 0:
 		friend.step(tutor.think())
 	for e in enemies:
-		if not e["gone"]:
+		if not e["gone"] and not e.has("shoved"):  # (the Crane Operator flying out of his cab: _out_of_the_cab carries him)
 			e["was"] = [e["f"].x, e["f"].y, e["f"].z]  # where he stood, should the stairs be full
 			var think: Dictionary = e["brain"].think()
 			if e.get("arguing", false) and e["brain"].dormant_until_within > 0.0:
@@ -408,6 +425,10 @@ func step(inp: Dictionary) -> void:
 				e["f"].x = b.x  # nobody walks back onto a screen the hero has cleared (the team's second ruling)
 			_release(e["f"])
 	var all := everyone()
+	if plan["floors"][on].get("ring", false):  # inside the ropes, everyone
+		var r := ropes()
+		for f in all:
+			f.x = clampf(f.x, r.x, r.y)
 	for id in world.step_hits(all):  # something smashed: whatever was inside falls out
 		var o: Dictionary = world.objects[id]
 		if o.has("holds"):
@@ -433,6 +454,7 @@ func step(inp: Dictionary) -> void:
 	_tank_push()
 	_crane()
 	_shoved_out()
+	_out_of_the_cab()
 	_stairs()
 	_switches()
 	_waves()
@@ -644,6 +666,19 @@ func _coach(e: Dictionary, think: Dictionary) -> Dictionary:
 			f._enter("ko")
 			early.append({"target": f, "result": "gives_up", "kind": "gives_up"})
 	e["was_dizzy"] = f.state == "dizzy"
+	if e.has("rebound"):  # off the ropes: carried back by them, easing, then he stands dazed (a blow of the hero's ends it)
+		var rb: Dictionary = e["rebound"]
+		rb["t"] += 1
+		if f.state != "stagger" or rb["t"] > REBOUND_TICKS:
+			e.erase("rebound")
+			if f.state == "stagger":
+				f.t = -ROPES_DAZE
+				early.append({"target": f, "result": "rebound", "kind": "rebound"})
+			return {}
+		var r0 := ropes()
+		f.x = clampf(f.x + rb["dir"] * REBOUND_SPEED * (1.0 - float(rb["t"]) / REBOUND_TICKS), r0.x, r0.y)
+		f.t = 0  # (held in his stagger while the ropes carry him)
+		return {}
 	if think.get("ball", false) and world.objects.any(func(o): return o["kind"] == "ball_rack") \
 			and world.objects.filter(func(o): return o["kind"] == "ball_rack").all(func(o): return o["broken"]):
 		return {}  # his rack of medicine balls smashed: nothing to throw (the team's level 4)
@@ -672,7 +707,7 @@ func _coach(e: Dictionary, think: Dictionary) -> Dictionary:
 	if e["tackle_t"] <= TACKLE_WINDUP:
 		f.facing = int(dir)
 		if not f._blocked(f.x - dir * 2.4, f.z):
-			f.x = clampf(f.x - dir * 2.4, bounds().x + 40.0, bounds().y - 40.0)  # backing off for the run-up, facing him
+			f.x = clampf(f.x - dir * 2.4, ropes().x, ropes().y)  # backing off for the run-up, facing him
 		return {}
 	if absf(hero.x - f.x) < TACKLE_REACH and absf(hero.z - f.z) <= f.tune["hit_depth"] and hero.hittable() and signf(hero.x - f.x) == dir:
 		hero.take_hit({"damage": TACKLE_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "tackle"}, f)
@@ -681,12 +716,13 @@ func _coach(e: Dictionary, think: Dictionary) -> Dictionary:
 		e["brain"].wait = 60
 		early.append({"attacker": f, "target": hero, "result": "hit", "move": "tackle", "drop": "", "counter": false, "broke": "", "worn": ""})
 		return {}
-	var b := bounds()
-	if (dir > 0.0 and f.x >= b.y - 40.0) or (dir < 0.0 and f.x <= b.x + 40.0):
+	var b := ropes()
+	if (dir > 0.0 and f.x >= b.y) or (dir < 0.0 and f.x <= b.x):
 		e.erase("tackle")
 		f.charging = false
-		f._enter("stagger")  # into the ropes: dazed, open
-		f.t = -ROPES_DAZE
+		f._enter("stagger")  # into the ropes: they give, and throw him back (then he's dazed, open)
+		e["rebound"] = {"dir": -dir, "t": 0}
+		rope_hit = {"side": dir, "z": f.z, "at": tick}
 		early.append({"target": f, "result": "ropes", "kind": "ropes"})
 		return {}
 	return {"run": true, "mx": dir}
@@ -979,10 +1015,28 @@ func _shoved_out() -> void:
 		var d = ev.get("target")
 		if ev.get("attacker") == hero and ev.get("result", "") == "hit" and ev.get("move", "") == "push_kick":
 			for e in enemies:
-				if e["f"] == d and e.get("kind", "") == "crane_operator" and not d.defeated():
-					d.health = 0.0
-					d._enter("ko")
+				if e["f"] == d and e.get("kind", "") == "crane_operator" and not d.defeated() and not e.has("shoved"):
+					d._enter("launch")  # out through the cab's open side, and down onto the container below
+					e["shoved"] = {"dir": 1.0 if d.x >= hero.x else -1.0, "t": 0, "x0": d.x}
 					events.append({"target": d, "result": "shoved_out", "kind": "shoved_out"})
+
+
+## The Crane Operator flying out of his cab (push-kicked): an arc out through its open side, over the edge, gone.
+func _out_of_the_cab() -> void:
+	for e in enemies:
+		if not e.has("shoved") or e["gone"]:
+			continue
+		var s: Dictionary = e["shoved"]
+		var d = e["f"]
+		s["t"] += 1
+		var p: float = float(s["t"]) / SHOVE_TICKS
+		d.x = s["x0"] + s["dir"] * SHOVE_DISTANCE * p
+		d.y = SHOVE_HEIGHT * sin(PI * p) - SHOVE_DROP * p * p * p
+		if s["t"] >= SHOVE_TICKS:
+			d.health = 0.0
+			d._enter("ko")
+			e["gone"] = true  # out of the cab, down on the container below: out of the fight
+			events.append({"target": d, "result": "out_of_cab", "kind": "out_of_cab"})
 
 
 ## When the bot should jump the crane's container: it's coming at him and about to reach him.
