@@ -72,7 +72,8 @@ func _ready() -> void:
 			tune["flat_line"] = true  # asked for on the command line: beats a saved setting
 	var playing: bool = not demo and not "--fight" in args  # (--bot: the bot plays level 1, for the build's level clip)
 	if playing:
-		level = Level.new(Level.load_data(LEVEL_FILE), tune)
+		# (--bot plays seed 2, a run the bot wins, so the build's level clip shows the whole level, boss included)
+		level = Level.new(Level.load_data(LEVEL_FILE), tune, 2 if "--bot" in args else 1)
 		world = level.world
 	else:
 		world = StreetWorld.grey_street()
@@ -92,7 +93,7 @@ func _ready() -> void:
 	hero_view.sync(hero, Street.GROUND_Y)
 	_make_bars()
 	if "--fight" in args or "--bot" in args:
-		bot = HeroBot.new(hero, 1)
+		bot = HeroBot.new(hero, 2 if "--bot" in args else 1)
 	if bot != null and level == null:
 		_spawn_enemy(hero.x + 600.0)
 	var at := args.find("--marks")
@@ -129,6 +130,7 @@ func _physics_process(_delta: float) -> void:
 	_show_bars()
 	$Camera.position.x = lerpf($Camera.position.x, hero.x + hero.facing * 160.0, 0.08)
 	$Camera.zoom = Vector2.ONE * tune["camera_zoom"]
+	$Street.follow($Camera.get_screen_center_position().x)
 	if demo and tick > Demo.length():
 		get_tree().quit()
 	if bot != null and tick > FIGHT_TICKS:
@@ -206,6 +208,7 @@ func _play_level() -> void:
 	$Camera.limit_right = int(maxf(b.y, b.x + 1920.0))
 	$Camera.position.x = lerpf($Camera.position.x, hero.x + hero.facing * 160.0, 0.08)
 	$Camera.zoom = Vector2.ONE * tune["camera_zoom"]
+	$Street.follow($Camera.get_screen_center_position().x)
 	if not (level.won or level.lost):
 		var where: String = "the boss" if level.where == "upstairs" else ("fight!" if level.active_wave >= 0 else "go →")
 		$Hud/Title.text = "Level 1   ·   %s   ·   lives %s" % [where, "♥ ".repeat(level.lives).strip_edges()]

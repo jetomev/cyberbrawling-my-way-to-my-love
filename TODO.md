@@ -94,7 +94,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Weapon combos (W,W,W swing, backswing, overhead smash) and each weapon's feel: knife, sword, bat, pipe/wrench, stick (solo) (2026-11-03: holding one, A swings it; each wears out after its hits)
 - [ ] Weapon mixes W,P,K (solo)
 - [ ] Throw the held weapon at a far enemy; it lands and can be picked up again (solo)
-- [ ] Layers: foreground props, play lane, skyline; in front / behind (solo)
+- [x] Layers: foreground props, play lane, skyline; in front / behind (solo) (2026-11-03: sky, far skyline, the block across, the shopfronts, the street, lampposts in front; each slides at its own speed; the team's level art replaces each)
 - [x] Keyboard + gamepad, dead zone, drifting-stick test (solo) (2026-11-01: brought forward for F-1, the G13 stuck stick; 51 tests)
 - [x] Both lane depths to try: flat line and shallow street (solo) (built with D-13: `scripts/play.sh --flat`, the feel lab's flat_line; tested in test_fighter and test_feel_lab)
 - [x] A grey level 1 with the boss upstairs; the bot plays it (solo) (2026-11-03: level.gd + levels/level1.json, a placeholder layout; waves lock the street, two attack at once, food and first aid, three lives then a restart; the bot wins 2 of 3 seeds; a level clip in every build)
