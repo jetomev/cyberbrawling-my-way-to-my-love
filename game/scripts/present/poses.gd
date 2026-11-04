@@ -1097,8 +1097,19 @@ const SWING_HANDS := {
 		"handle_jab": [Vector2(10, -20), Vector2(75, -40), Vector2(70, -40)], "chop": [Vector2(25, -120), Vector2(85, -45), Vector2(80, -40)],
 		"low_swing": [Vector2(15, -20), Vector2(92, -25), Vector2(88, -25)]},
 }
+## The enemies' own Ready where it differs from the hero's with the same weapon (the pose sheet's enemy table): the
+## weapon hand's spot and the weapon's angle, one hand or two, and where the free hand goes ("fence" otherwise).
+const ENEMY_READY := {
+	"enforcer": {"at": Vector2(50, -42), "wpn": -12.0, "two": false, "free": Vector2(-24, 6)},  # one hand, point at your chest, the free hand behind his back (showing off)
+	"rook": {"at": Vector2(54, -55), "wpn": -6.0, "two": false, "free": Vector2(-34, -112)},  # a fencer, side-on, the free hand raised behind him
+	"doorman": {"at": Vector2(56, -98), "wpn": 92.0, "two": false, "free": Vector2(-18, -60)},  # the shield up before him, chin to knee; the other fist clenched behind it
+	"big_mama": {"at": Vector2(56, -70), "wpn": 92.0, "two": false},  # the wok out in front like a shield
+}
+## Their warning, the frame the glint shows on, where it's a weapon pose (the sheet): both arms rise overhead.
+const BOTH_ARMS_UP := ["bruiser", "bruiser_pipe", "big_mama"]
+const NO_SWITCH := ["doorman", "big_mama"]  # (a shield in the front hand: the stance stays as it is)
 ## The weapons held weapon side forward (the right foot front, the weapon in the front hand); the rest weapon side back.
-const WEAPON_SIDE_FORWARD := ["knife", "stick", "sword", "lovelight", "cane", "baton"]
+const WEAPON_SIDE_FORWARD := ["knife", "stick", "sword", "lovelight", "cane", "baton", "shield", "wok"]
 const SPIN_FINISHERS := ["knife", "stick"]
 ## Level swings, round the body at one height (the bat's swings, the sword's long slash): their track is the angle round
 ## the body (180 behind him, 0 at the enemy); seen from the side the weapon stays level, pointing back or forward, and
@@ -1116,11 +1127,13 @@ const REST_STATES := ["stand", "stroll", "run", "to_walk"]
 
 ## The weapon in hand on top of a pose: hold keys for bake (_hold) and the weapon's own angle. Every pose with a
 ## weapon carries all the keys (0 when unused), so a blend from one pose to the next moves them smoothly.
-static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune := {}) -> Dictionary:
+static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune := {}, kind := "") -> Dictionary:
 	if weapon == "":
 		return pose
 	var out := pose.duplicate()
 	var g: Dictionary = WEAPON_READY.get(weapon, WEAPON_READY["pipe"])
+	if ENEMY_READY.has(kind):
+		g = g.merged(ENEMY_READY[kind], true)
 	var two: bool = g.get("two", false)
 	# which hand holds it: his right hand, the far one (the camera sees his left side). With the weapon side forward
 	# (the knife, stick, sword) that's the front hand and his stance switches, right foot front; with it back (the pipe,
@@ -1128,13 +1141,14 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 	var w: String = "f" if weapon in WEAPON_SIDE_FORWARD else "b"
 	var o: String = "b" if w == "f" else "f"
 	out["wpn_side"] = 0.0 if w == "f" else 1.0
-	out["switched"] = 1.0 if w == "f" else 0.0
+	out["switched"] = 1.0 if w == "f" and not kind in NO_SWITCH else 0.0
 	for k in ["hold_f", "hold_b", "wpn_hold", "grip_o"]:
 		out[k] = 0.0
 	out["hold_%sx" % w] = g["at"].x
 	out["hold_%sy" % w] = g["at"].y
-	out["hold_%sx" % o] = FENCE.x
-	out["hold_%sy" % o] = FENCE.y
+	var free: Vector2 = g.get("free", FENCE)
+	out["hold_%sx" % o] = free.x
+	out["hold_%sy" % o] = free.y
 	out["wpn"] = g["wpn"]
 	out["wpn_len"] = 1.0
 	var relaxed: bool = pose.get("relaxed", 0.0) >= 0.5
@@ -1146,20 +1160,20 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 			out["arm_b_upper"] = pose.get("arm_f_upper", 0.0)
 			out["arm_b_lower"] = pose.get("arm_f_lower", 0.0)
 	elif state in WEAPON_MOVES and t >= 0 and not tune.is_empty():
-		var kind: String = TRACK_KIND.get(weapon, "heavy")
-		var track: Dictionary = SWING_TRACK[kind]
+		var family: String = TRACK_KIND.get(weapon, "heavy")
+		var track: Dictionary = SWING_TRACK[family]
 		if track.has(state):
 			var keys: Array = [0, moment(state, "windup", tune), moment(state, "active", tune), moment(state, "follow", tune),
 				moment(state, "end", tune)]
 			out["wpn"] = _along(keys, [g["wpn"]] + track[state] + [g["wpn"]], t)
 			out["wpn_hold"] = 1.0
-			if state in LEVEL_SWINGS.get(kind, []) and t >= keys[1] and t <= keys[3]:
+			if state in LEVEL_SWINGS.get(family, []) and t >= keys[1] and t <= keys[3]:
 				var round_deg: float = _along(keys, [g["wpn"]] + track[state] + [g["wpn"]], t)
 				var across: float = cos(deg_to_rad(round_deg))
 				out["wpn"] = 0.0 if across >= 0.0 else 180.0
 				out["wpn_len"] = maxf(0.25, absf(across))
 			# the weapon hand on its own path (the sheet's wind-up, contact and follow-through), from Ready and back
-			var hands: Array = SWING_HANDS[kind].get(state, [])
+			var hands: Array = SWING_HANDS[family].get(state, [])
 			if not hands.is_empty():
 				var path: Array = [g["at"]] + hands + [g["at"]]
 				out["hold_" + w] = 1.0
@@ -1176,6 +1190,11 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 			if two:
 				out["grip_o"] = 1.0  # the other hand stays on the handle through the swing
 				out["cover_" + o] = 0.0
+			elif kind in BOTH_ARMS_UP and state == "smash" and t >= keys[1] and t < keys[2]:
+				out["hold_" + o] = 1.0  # the warning: both arms up overhead before it comes down (the sheet)
+				out["hold_%sx" % o] = 4.0
+				out["hold_%sy" % o] = -126.0
+				out["cover_" + o] = 0.0
 			else:
 				out["hold_" + o] = 1.0  # the free hand back to the chest, a guard (the sheet: "pulled back to the chest")
 				out["hold_%sx" % o] = 32.0
@@ -1190,6 +1209,8 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 				at = Vector2(22, -6)
 				dir_deg = 0.0
 				out["cover_" + o] = 1.0
+			elif weapon in ["shield", "wok"]:
+				pass  # a shield blocks where it's held: up in front, chin to knee
 			else:
 				at = BLOCK_AT
 				dir_deg = 0.0
@@ -1211,9 +1232,9 @@ static func armed(pose: Dictionary, state: String, weapon: String, t := -1, tune
 			out["cover_" + o] = 0.0
 			out["open_" + o] = 1.0
 		elif not (weapon == "knife" and state in BLOCK_STATES):
-			out["hold_" + o] = 1.0  # the free hand up, open, a fence
+			out["hold_" + o] = 1.0  # the free hand up, open, a fence (or the enemy's own: behind his back, raised, clenched)
 			out["cover_" + o] = 0.0
-			out["open_" + o] = 1.0
+			out["open_" + o] = 0.0 if g.has("free") else 1.0
 	return out
 
 

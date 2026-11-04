@@ -32,8 +32,11 @@ const WEAPON_LOOK := {"knife": [56.0, 8.0, Color(0.85, 0.87, 0.9)], "stick": [13
 	"bat": [130.0, 16.0, Color(0.72, 0.58, 0.38)], "sword": [160.0, 9.0, Color(0.88, 0.9, 0.95)],
 	"mic_stand": [170.0, 7.0, Color(0.15, 0.15, 0.18)], "cane": [140.0, 6.0, Color(0.85, 0.88, 0.95)],
 	"baton": [110.0, 10.0, Color(0.4, 0.75, 1.0)], "lovelight": [170.0, 10.0, Color(1.0, 0.55, 0.85)],
-	"baguette": [130.0, 15.0, Color(0.85, 0.66, 0.36)]}  # (level 2's frozen baguette, held like the bat)
+	"baguette": [130.0, 15.0, Color(0.85, 0.66, 0.36)],  # (level 2's frozen baguette, held like the bat)
+	"shield": [150.0, 34.0, Color(0.25, 0.27, 0.33)],  # the Doorman's riot shield, strapped on the forearm, chin to knee
+	"wok": [80.0, 30.0, Color(0.2, 0.2, 0.22)]}  # Big Mama's wok, out in front like a shield
 var weapon_drawn := ""
+var kind := ""  # which enemy this view draws (main.gd sets it): his own way of holding his weapon (the pose sheet)
 var weapon_node: Polygon2D
 const PAIN_BONES := {
 	"head": ["head", "neck"], "chest": ["chest", "belly"],
@@ -174,7 +177,7 @@ func sync(f, ground_y: float) -> void:
 	shadow.position.y = -floor_y / scale.y  # under his feet on whatever he stands on (a crate, a step, a landing)
 	shadow.scale = Vector2.ONE * (1.0 - clampf((f.y - floor_y) / 200.0, 0.0, 1.0) * 0.45)  # smaller the higher above it
 	var pose := Poses.landing(Poses.angles(f.state, f.t, f.tune), since_touch if grounded else -1, f.y - floor_y, f.vy < 0.0)
-	pose = Poses.armed(pose, f.state, f.weapon, f.t, f.tune)  # a weapon held as it's really used (the team's grips and pose sheets)
+	pose = Poses.armed(pose, f.state, f.weapon, f.t, f.tune, kind)  # a weapon held as it's really used (the team's grips and pose sheets)
 	pose["tumble_dir"] = float(f.roll_dir)
 	# a broken arm hangs, bent wrong at the elbow, unless he's throwing a blow with it
 	var striking := ""

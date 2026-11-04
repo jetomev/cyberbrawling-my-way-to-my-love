@@ -320,6 +320,7 @@ func _play_level() -> void:
 		live[id] = true
 		if not level_views.has(id):
 			var v = HeroView.new(KIND_TINT.get(e["kind"], ENEMY_TINT))
+			v.kind = e["kind"]
 			v.scale = Vector2.ONE * KIND_SIZE.get(e["kind"], 1.0)  # (drawn from the feet: they stay on the street)
 			add_child(v)
 			level_views[id] = v
