@@ -146,10 +146,25 @@ const CRANE := {
 	"keep": 140.0, "strike": 110.0, "wait_min": 60, "wait_max": 110, "block_chance": 0.25, "block_ticks": 18,
 	"combos": [["punch", "punch", "horn"], ["punch", "punch"]],
 }
+## The Godfather of Glow, level 10's boss (the team's roster): four-hit combos that change every round (level.gd
+## _godfather moves him round to round).
+const GODFATHER_1 := {
+	"keep": 190.0, "strike": 140.0, "wait_min": 50, "wait_max": 90, "block_chance": 0.2, "block_ticks": 18,
+	"combos": [["punch", "punch", "kick", "punch"], ["punch", "punch", "punch"]],
+}
+const GODFATHER_2 := {
+	"keep": 200.0, "strike": 130.0, "wait_min": 30, "wait_max": 60, "block_chance": 0.0, "block_ticks": 0,
+	"combos": [["kick", "kick", "punch", "kick"], ["kick", "kick"]],
+}
+const GODFATHER_3 := {
+	"keep": 180.0, "strike": 130.0, "wait_min": 80, "wait_max": 130, "block_chance": 0.25, "block_ticks": 18,
+	"combos": [["punch", "kick", "punch", "kick"], ["kick", "punch", "kick", "punch"]],
+}
 ## Every enemy type's way of fighting, by name (level.gd's KINDS points here).
 const TYPES := {"THUG": THUG, "BOSS": BOSS, "GLOW_PUNK": GLOW_PUNK, "BRUISER": BRUISER, "DJ_VOLT": DJ_VOLT,
 	"SNICK": SNICK, "BIG_MAMA": BIG_MAMA, "WRENCH_MECHANIC": WRENCH_MECHANIC, "DOORMAN": DOORMAN,
-	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN, "COACH": COACH, "CHROME": CHROME, "STATIC": STATIC, "ROOK": ROOK, "ROOK_OLD": ROOK_OLD, "CRANE": CRANE}
+	"NEON_DANCER": NEON_DANCER, "ENFORCER": ENFORCER, "LOOKOUT": LOOKOUT, "GRABBER": GRABBER, "TWIN": TWIN, "COACH": COACH, "CHROME": CHROME, "STATIC": STATIC, "ROOK": ROOK, "ROOK_OLD": ROOK_OLD, "CRANE": CRANE,
+	"GODFATHER_1": GODFATHER_1, "GODFATHER_2": GODFATHER_2, "GODFATHER_3": GODFATHER_3}
 
 var me
 var foe

@@ -44,7 +44,7 @@ const KINDS := {
 	# the team's call (the "Last Call" combo, or a first-aid kit and his whistle): a first-aid kit for now
 	# level 5's boss, Madame Chrome (the team's roster): her chrome cane snaps after three kicks into its wind-up, and
 	# then she's done; the pipe is her prize (and the casino key, with level 5)
-	"chrome": {"health": 40.0, "brain": "CHROME", "weapon": "cane", "drops": "pipe"},
+	"chrome": {"health": 40.0, "brain": "CHROME", "weapon": "cane", "drops": "pipe", "reads": true},
 	# level 7's boss, Mr. Static (the team's roster): a perfect block on his baton shocks the HERO; rubber gloves his prize
 	"static": {"health": 40.0, "brain": "STATIC", "weapon": "baton", "drops": "rubber_gloves", "grip": true},
 	# level 8's boss, Velvet Rook (the team's roster): the sword from his cane, held through perfect blocks till the
@@ -52,6 +52,9 @@ const KINDS := {
 	# level 6's boss, the Crane Operator (the team's roster): out of reach in his cab till the three switches are thrown;
 	# P P K shoves him out of it, and that's it; the better knife his prize (it spins further once throwing comes)
 	"crane_operator": {"health": 30.0, "brain": "CRANE", "drops": "knife"},
+	# level 10's boss, the Godfather of Glow (the team's roster): three rounds (armour, speed, rage); he catches any
+	# weapon thrown at him; his prize is the ending
+	"godfather": {"health": 30.0, "brain": "GODFATHER_1", "catches": true},
 	"rook": {"health": 45.0, "brain": "ROOK", "weapon": "sword", "drops": "sword", "grip": true,
 		"parries": ["power_punch", "side_kick", "smash"]},
 	"coach": {"health": 40.0, "brain": "COACH", "drops": "first_aid",
@@ -357,6 +360,7 @@ func step(inp: Dictionary) -> void:
 	_chrome_after()
 	_static_after()
 	_rook_after()
+	_godfather()
 	_crane()
 	_shoved_out()
 	_stairs()
@@ -596,18 +600,22 @@ func _coach(e: Dictionary, think: Dictionary) -> Dictionary:
 
 
 ## Madame Chrome (the team's roster, level 5's boss): her cards, three in a row, then she's open a moment (no guard,
-## no parry), then the low cane sweep and the cane jab; any combo the hero uses twice in a row she parries from its
-## second blow (mix it up); three kicks into her cane's wind-up snap it, and then she's done.
+## no parry), then the low cane sweep and the cane jab; any combo the hero uses twice in a row she parries at its
+## finisher (mix it up); three kicks into her cane's wind-up snap it, and then she's done.
 func _chrome(e: Dictionary, think: Dictionary) -> Dictionary:
-	if e.get("kind", "") != "chrome":
+	if e.get("kind", "") != "chrome" and not (e.get("kind", "") == "godfather" and e.get("round", 1) == 3):
 		return think
 	var f = e["f"]
 	if f.defeated():
 		return think
 	var open: bool = tick < e.get("open_until", 0)
-	# the same combo again: from its second blow, she parries it (the finisher too: then his chain reads empty)
-	var now: String = hero.chain if hero.chain != "" else _combo_of(hero.state)
-	var again: bool = e.get("last_combo", "") != "" and now.length() >= 2 and e["last_combo"].begins_with(now)
+	# the same combo again: its finisher she parries (a different finish after the same opening isn't a repeat: the
+	# finisher reads the whole combo; his chain reads empty on it)
+	var now: String = _combo_of(hero.state) if hero.chain == "" else ""
+	var again: bool = e.get("last_combo", "") != "" and now == e["last_combo"]
+	if e.get("kind", "") == "godfather":
+		f.parries = [hero.state] if again else []  # (his third round: he blocks the last combo used on him)
+		return think
 	f.parries = [hero.state] if again and not open else []
 	if open:
 		e["brain"].block_left = 0
@@ -642,7 +650,7 @@ static func _combo_of(move: String) -> String:
 ## cane's wind-up (three snap it).
 func _chrome_after() -> void:
 	for e in enemies:
-		if e.get("kind", "") != "chrome" or e["f"].defeated():
+		if not e.get("kind", "") in ["chrome", "godfather"] or e["f"].defeated():
 			continue
 		var f = e["f"]
 		for ev in events:
@@ -650,6 +658,8 @@ func _chrome_after() -> void:
 				continue
 			if Moves.is_finisher(ev.get("move", "")):
 				e["last_combo"] = _combo_of(ev["move"])
+			if e["kind"] != "chrome":
+				continue
 			if ev.get("counter", false) and ev.get("move", "") in KICKS and f.weapon == "cane":
 				e["cane_kicks"] = e.get("cane_kicks", 0) + 1
 				if e["cane_kicks"] >= CANE_KICKS:
@@ -709,6 +719,52 @@ func _static_after() -> void:
 			e["shocked_this"] = true
 			hero.take_hit({"damage": SHOCK_DAMAGE, "effect": "push", "low": 0.0, "high": 300.0, "move": "live_floor"}, f)
 			events.append({"target": hero, "result": "shocked", "kind": "live_floor"})
+
+
+## The Godfather of Glow (the team's roster, level 10's boss), three rounds, each its own health: 1, armour (only the
+## Lovelight cuts his coat; thrown, he catches it, and a perfect block on his next swing knocks it loose); 2, speed
+## (the coat's off: only a blow into his wind-up lands); 3, rage (he blocks the last combo used on him; two combos make
+## him dizzy, and the finisher landed while he's dazed saves your love). Lose a life and only the round restarts.
+func _godfather() -> void:
+	for e in enemies:
+		if e.get("kind", "") != "godfather":
+			continue
+		var f = e["f"]
+		if not e.has("round"):
+			e["round"] = 1
+			e["lives_seen"] = lives
+		if lives < e["lives_seen"]:  # the hero lost a life: only this round starts again
+			e["lives_seen"] = lives
+			f.health = f.max_health
+			events.append({"target": f, "result": "round_again", "kind": "round", "round": e["round"]})
+		if e["round"] == 3:
+			for ev in events:
+				if ev.get("attacker") == hero and ev.get("target") == f and ev["result"] == "hit" and Moves.is_finisher(ev.get("move", "")) \
+						and e.get("was_dizzy", false):
+					f.health = 0.0  # the dizzy finisher: it's over
+					f._enter("ko")
+					e["saved"] = true
+					events.append({"target": f, "result": "saved", "kind": "ending"})
+			e["was_dizzy"] = f.state == "dizzy"
+		if f.health > 0.0 or e["round"] >= 3:
+			continue
+		# a round won: up he gets for the next
+		e["round"] += 1
+		f.health = f.max_health
+		f._enter("stagger")
+		f.armour = false
+		f.only_counters = e["round"] == 2
+		f.min_health = 1.0 if e["round"] == 3 else 0.0  # worn down in the rage round he won't fall
+		f.reads_combos = e["round"] == 3
+		f.stays_up = e["round"] == 3
+		if e["round"] == 2:
+			f.tune["walk_speed"] = f.tune["walk_speed"] * 1.5  # the coat's off: fast
+			f.tune["run_speed"] = f.tune["run_speed"] * 1.5
+		else:
+			f.tune["walk_speed"] = f.tune["walk_speed"] / 1.5
+			f.tune["run_speed"] = f.tune["run_speed"] / 1.5
+		e["brain"].kind = Brain.TYPES["GODFATHER_%d" % e["round"]]
+		events.append({"target": f, "result": "round", "kind": "round", "round": e["round"]})
 
 
 ## Velvet Rook (the team's roster, level 8's boss): "Checkmate" calls his Enforcers through the doors, one for each
@@ -1007,6 +1063,9 @@ func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave
 	f.parries = KINDS[kind].get("parries", [])
 	f.gloves = KINDS[kind].get("gloves", [])
 	f.grip = KINDS[kind].get("grip", false)
+	f.catches = KINDS[kind].get("catches", false)
+	f.armour = kind == "godfather"  # (round one)
+	f.reads_combos = KINDS[kind].get("reads", false)
 	f.too_quick = KINDS[kind].get("too_quick", false)
 	for k in ["walk_speed", "run_speed"]:
 		f.tune[k] = f.tune[k] * KINDS[kind].get("speed", 1.0)

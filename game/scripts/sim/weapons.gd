@@ -23,6 +23,7 @@ const TABLE := {
 	"wok": {"damage": 2.0, "reach": 160.0, "speed": 2, "hits": 99, "smash": "knockdown", "guard_break": true},  # Big Mama Noodle's
 	"cane": {"damage": 1.0, "reach": 150.0, "speed": 0, "hits": 999, "smash": "stagger"},  # Madame Chrome's chrome cane
 	"baton": {"damage": 1.0, "reach": 140.0, "speed": 0, "hits": 999, "smash": "stagger"},  # Mr. Static's crackling baton
+	"lovelight": {"damage": 3.0, "reach": 190.0, "speed": -1, "hits": 60, "smash": "knockdown"},  # the best weapon (level 9, D-12)
 }
 
 ## How far each flies when thrown (px; the knife spins furthest), and the default for the rest

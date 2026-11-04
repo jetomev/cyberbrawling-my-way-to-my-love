@@ -11,6 +11,7 @@ var tick := 0
 var combo: Array = []  # the presses of the combo under way
 var block_left := 0
 var read_serial := -1
+var last_combo: Array = []  # the combo it threw last (against someone who reads combos, never the same twice running)
 var goal := -1.0  # a doorway or ladder to take when the street is clear (the level tells it: level.next_door())
 var goal_hit := false  # the goal is a switch to hit, not a way through (level.goal_is_switch)
 var jump_cue := false  # something low is about to sweep through him: jump (level.crane_jump_cue())
@@ -47,6 +48,16 @@ func think(enemies: Array) -> Dictionary:
 		return inp
 	if Brain.to_the_stairs(me, foe, inp):
 		return inp
+	# an armoured coat only the Lovelight cuts (the Godfather's first round): without it in hand, go and get it
+	if foe.armour and me.weapon != "lovelight" and me.world != null:
+		for it in me.world.items:
+			if it["kind"] == "lovelight":
+				if me.weapon != "":
+					pass  # (walking over it with another weapon in hand won't take it: he keeps fighting with what he has)
+				else:
+					inp["mx"] = signf(it["x"] - me.x) if absf(it["x"] - me.x) > 6.0 else 0.0
+					inp["mz"] = clampf((it["z"] - me.z) / 16.0, -1.0, 1.0)
+					return inp
 	# a floor slam about to land (Mr. Static's): jump it, timed so he's up while the floor's live
 	if foe.slam_in >= 0 and foe.slam_in <= 6 and me.state in ["idle", "walk", "block"]:
 		inp["jump"] = true
@@ -61,6 +72,18 @@ func think(enemies: Array) -> Dictionary:
 		return inp
 	var dx: float = foe.x - me.x
 	var toward := 1.0 if dx >= 0.0 else -1.0
+	# too fast for anything but a blow into his wind-up (the Godfather's second round): guard up, and jab the moment he
+	# starts one
+	if foe.only_counters:
+		if me.facing != int(toward):
+			inp["mx"] = toward * 0.01
+		if foe.attack_phase() == "startup" and absf(dx) < 150.0 and me.state in ["idle", "walk", "block"]:
+			inp["punch"] = true
+		elif absf(dx) > 150.0:
+			inp["mx"] = toward
+		elif me.state in ["idle", "walk", "block"]:
+			inp["block"] = true
+		return inp
 	if block_left > 0:
 		block_left -= 1
 		inp["block"] = true
@@ -69,7 +92,7 @@ func think(enemies: Array) -> Dictionary:
 		return inp
 	if foe.attack_phase() == "startup" and absf(dx) < 200.0 and foe.attack_serial != read_serial:
 		read_serial = foe.attack_serial
-		if dice.randf() < 0.55:
+		if dice.randf() < (0.9 if foe.reads_combos else 0.55):
 			block_left = 20
 			inp["block"] = true
 			return inp
@@ -87,6 +110,9 @@ func think(enemies: Array) -> Dictionary:
 		pass  # he's down: wait for him to get up
 	elif combo.is_empty() and me.state in ["idle", "walk"] and absf(dz) <= me.tune["hit_depth"]:
 		combo = (COMBOS[dice.randi_range(0, COMBOS.size() - 1)] as Array).duplicate()
+		while foe.reads_combos and combo == last_combo:  # he'd read it: mix it up
+			combo = (COMBOS[dice.randi_range(0, COMBOS.size() - 1)] as Array).duplicate()
+		last_combo = combo.duplicate()
 	if not combo.is_empty() and tick % 9 == 0:
 		inp[combo.pop_front()] = true
 	return inp

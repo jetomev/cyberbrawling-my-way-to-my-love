@@ -52,12 +52,13 @@ const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 
 	"static": Color(0.85, 1.1, 1.45),  # Mr. Static: a rubber suit, crackling blue
 	"rook": Color(1.15, 0.45, 0.5),  # Velvet Rook: a dark red velvet suit
 	"crane_operator": Color(1.45, 1.35, 0.4),  # the Crane Operator: a neon safety vest
+	"godfather": Color(1.5, 1.45, 1.4),  # the Godfather of Glow: a white armoured coat
 	# the rest of the roster, from the team's looks: the mechanic's blue overalls, the Doorman's black suit, the
 	# Dancer's bright tracksuit, the Enforcer's long dark coat, the lookout's neon raincoat, the Grabber's green glow
 	"wrench_mechanic": Color(0.7, 0.85, 1.25), "doorman": Color(0.45, 0.45, 0.5), "neon_dancer": Color(1.6, 1.2, 0.5),
 	"enforcer": Color(0.6, 0.5, 0.6), "lookout": Color(1.4, 1.5, 0.55), "grabber": Color(0.8, 1.35, 0.8)}
 ## Some are bigger or smaller than the hero (Twin Loans: one tall brother, one short)
-const KIND_SIZE := {"twin_tall": 1.1, "twin_short": 0.85, "coach": 1.15}
+const KIND_SIZE := {"twin_tall": 1.1, "twin_short": 0.85, "coach": 1.15, "godfather": 1.2}
 const ENEMY_HEALTH := 12.0
 const RESPAWN_TICKS := 180
 

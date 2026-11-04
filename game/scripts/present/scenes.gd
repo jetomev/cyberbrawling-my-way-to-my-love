@@ -15,6 +15,9 @@ extends RefCounted
 ##        doors), the plain combos parried, his sword breaking on the third perfect block of his last cut
 ## crane  the Crane Operator (level 6's boss) at the docks, the bot playing: the container swinging along the floor (and
 ##        jumped), the crates, a switch on each floor stopping the crane, the cab door opening, the horn, the shove out
+## godfather  the Godfather of Glow (level 10's boss) at the tower top, the bot playing: the Lovelight picked up, his
+##        armoured coat (fists bounce, the Lovelight cuts), round two's speed (only blows into his wind-up), round
+##        three's rage (repeats blocked), the dizzy finisher that saves your love
 ## coach  Coach Crusher (level 4's boss) in the gym, the bot fighting him: the medicine ball, the tackle (and the ropes
 ##        when it misses), punches into his gloves, kicks landing, two dizzies and he gives up
 
@@ -43,7 +46,7 @@ func _init(scene: String) -> void:
 		"cat":
 			length = 520
 			zoom = 1.7
-		"twins", "coach", "chrome", "static", "rook", "crane":
+		"twins", "coach", "chrome", "static", "rook", "crane", "godfather":
 			length = 4800
 
 
@@ -55,8 +58,8 @@ func setup(level) -> void:
 	if level.friend != null:
 		level.friend.x = -5000.0
 	match name:
-		"twins", "coach", "chrome", "static", "rook", "crane":
-			if level.on == 0 and name != "crane":  # (the docks start on the quay: the crane is the fight)
+		"twins", "coach", "chrome", "static", "rook", "crane", "godfather":
+			if level.on == 0 and not name in ["crane", "godfather"]:  # (the docks and the tower start below: the way up is part of it)
 				level._go_to(1, 200.0 if name == "twins" else 300.0)  # straight into the boss's room: he steps out
 			if bot == null:
 				bot = HeroBot.new(level.hero, 1)
@@ -72,7 +75,7 @@ func inputs(level) -> Dictionary:
 	tick += 1
 	var inp := {}
 	match name:
-		"twins", "coach", "chrome", "static", "rook", "crane":
+		"twins", "coach", "chrome", "static", "rook", "crane", "godfather":
 			if level.where == "the glass lift" and not said.has("lift"):
 				said["lift"] = true
 				_say("into the GLASS LIFT: it rides down about six seconds, two Snicks in it with him")
@@ -82,7 +85,8 @@ func inputs(level) -> Dictionary:
 					"chrome": "Madame Chrome: the chrome cane; mix your combos, and kick into the cane's wind-up",
 					"static": "Mr. Static: a crackling baton; don't block it, break it (kick into the wind-up)",
 					"rook": "Velvet Rook: a sword from his cane; mixed combos only; perfect-block his last cut",
-					"crane": "The docks: the Crane Operator's up in his cab; a switch on each floor stops his crane"}[name])
+					"crane": "The docks: the Crane Operator's up in his cab; a switch on each floor stops his crane",
+					"godfather": "The tower top: the Lovelight lies on the last stairs; the Godfather waits above, in three rounds"}[name])
 			for p in level.projectiles.flying:
 				if p["kind"] == "card" and not p.has("said"):
 					p["said"] = true
@@ -102,7 +106,8 @@ func inputs(level) -> Dictionary:
 					"tackle": _say("the TACKLE: he charges along the street")
 					"ropes": _say("the tackle MISSES: he slams into the ROPES, dazed and open")
 					"gives_up": _say("dizzied TWICE: Coach Crusher GIVES UP")
-					"parried": _say(("a plain combo's end: he PARRIES it (%s)" if name == "rook" else "the same combo twice in a row: she PARRIES it (%s)") % ev.get("move", ""))
+					"parried": _say({"rook": "a plain combo's end: he PARRIES it (%s)", "godfather": "the same combo twice in a row: he BLOCKS it (%s)"}.get(
+						name, "the same combo twice in a row: she PARRIES it (%s)") % ev.get("move", ""))
 					"cane_snaps": _say("the third kick into the cane's wind-up: the cane SNAPS, and she's done")
 					"slam": _say("he raises the baton over his head, crackling: the SLAM is coming (jump as it comes down)")
 					"live": _say("the floor is LIVE for half a second%s" % (": the hero's up in the air, over it" if level.hero.y > 0.0 else ""))
@@ -118,11 +123,27 @@ func inputs(level) -> Dictionary:
 					"shoved_out": _say("P P K: SHOVED OUT of his cab, and that's it")
 					"crate_smash": _say("a crate smashes down beside him (its shadow warned him)")
 					"lift_arrives": _say("the glass lift's ridden down and its fight is won: the doors open")
+					"round": _say({2: "ROUND TWO, speed: the coat's off; only a blow into his wind-up lands",
+						3: "ROUND THREE, rage: he blocks the last combo used; two combos make him dizzy"}.get(ev.get("round", 0), "next round"))
+					"round_again": _say("a life lost: only this round starts again")
+					"saved": _say("the finisher while he's DIZZY: it's over, your love is SAVED")
+					"bounced":
+						if not said.has("bounced"):
+							said["bounced"] = true
+							_say("a blow off his armoured coat: it BOUNCES (only the Lovelight cuts it)")
+					"caught": _say("he CATCHES the thrown %s out of the air" % ev.get("kind", "weapon"))
+					"dodged":
+						if name == "godfather" and not said.has("too_fast"):
+							said["too_fast"] = true
+							_say("too fast: the blow misses him (only one into his wind-up lands)")
 					"blocked":
 						if name == "coach" and ev.get("target") != level.hero and not said.has("gloves"):
 							said["gloves"] = true
 							_say("a punch into the GLOVES: blocked, no harm")
 					"hit":
+						if name == "godfather" and ev.get("attacker") == level.hero and level.hero.weapon == "lovelight" and not said.has("cut"):
+							said["cut"] = true
+							_say("the LOVELIGHT cuts his coat")
 						if name == "crane" and ev.get("kind", "") in ["container", "crate"]:
 							_say("the %s KNOCKS HIM DOWN" % ev["kind"])
 						if name == "static" and ev.get("attacker") == level.hero and ev.get("drop", "") == "baton":
@@ -144,7 +165,8 @@ func inputs(level) -> Dictionary:
 					"chrome": "Madame Chrome's beaten: the level's won, and the PIPE is the prize",
 					"static": "Mr. Static's beaten: the level's won, and RUBBER GLOVES are the prize",
 					"rook": "Velvet Rook's beaten: the level's won, and a SWORD is the prize",
-					"crane": "the Crane Operator's out of his cab: the level's won, and the better KNIFE is the prize"}[name])
+					"crane": "the Crane Operator's out of his cab: the level's won, and the better KNIFE is the prize",
+					"godfather": "the Godfather of Glow is beaten: the ending"}[name])
 				length = tick + 120
 			bot.me = level.hero
 			bot.goal = level.next_door()
@@ -219,6 +241,13 @@ func overlay(level) -> String:
 		note_left -= 1
 	var line := ""
 	match name:
+		"godfather":
+			var c: Array = level.enemies.filter(func(e): return e["kind"] == "godfather")
+			if not c.is_empty():
+				line = "the Godfather: round %d of 3, %s, health %.0f of %.0f  ·  the hero holds: %s" % [c[0].get("round", 1), c[0]["f"].state,
+					c[0]["f"].health, c[0]["f"].max_health, level.hero.weapon if level.hero.weapon != "" else "nothing"]
+			else:
+				line = "the last stairs  ·  the hero holds: %s" % (level.hero.weapon if level.hero.weapon != "" else "nothing")
 		"crane":
 			var flipped: int = level.flipped.size()
 			line = "%s  ·  the crane: %s  ·  switches thrown %d of 3" % [level.where,

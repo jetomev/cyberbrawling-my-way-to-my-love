@@ -50,6 +50,7 @@ func step(fighters: Array, world = null) -> Array:
 			if winding_up and d.weapon == "shield" and blow["move"] == "kick":
 				_disarm(d, world, a.x)
 				d.facing = -d.facing
+			blow["counter"] = winding_up  # (the Godfather's second round: only these land)
 			var result: String = d.take_hit(blow, a)
 			if result == "":
 				continue

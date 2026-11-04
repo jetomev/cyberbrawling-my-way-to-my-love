@@ -70,6 +70,11 @@ var rubber := false  # rubber gloves on (Mr. Static's prize): a perfect block ta
 var slam_in := -1  # frames till his floor slam lands (Mr. Static's), -1 when none: what a watcher reads to jump it
 var charging := false  # winding up for or running a charge (Coach Crusher's tackle): what a watcher reads to step aside
 var no_swing := false  # no room to swing a weapon here (the crane's cab): fists and feet only, the weapon kept
+var reads_combos := false  # parries a combo used twice in a row (Madame Chrome; the Godfather's rage round): mix it up
+var stays_up := false  # knockdown and launch blows only stagger him
+var min_health := 0.0  # blows can't take him lower than this (the Godfather's rage round: only the dizzy finisher ends it)
+var armour := false  # a coat only the Lovelight cuts: every other blow bounces off (the Godfather's first round)
+var only_counters := false  # too fast for anything but a blow into his wind-up (the Godfather's second round)
 var catches := false  # a thrown weapon coming at his front is caught, not taken (the Godfather's)
 var grip := false  # a perfect block doesn't knock his weapon loose (a boss's own: Velvet Rook's sword, Mr. Static's baton)
 var gloves := []  # blows his guard takes every time from the front, without raising it (Coach Crusher's big gloves)
@@ -424,6 +429,10 @@ func take_hit(blow: Dictionary, attacker) -> String:
 		return "dodged"  # under it, or gone before it lands
 	if move in parries and facing == -dir and state in GROUND_STATES:
 		return "parried"  # caught on the flat of his blade
+	if armour and not (attacker is Object and attacker.weapon == "lovelight"):
+		return "bounced"  # off the armoured coat: only the Lovelight cuts it
+	if only_counters and not blow.get("counter", false) and state in GROUND_STATES:
+		return "dodged"  # too fast: only a blow into his wind-up catches him
 	if move in gloves and facing == -dir and state in GROUND_STATES + ["block", "block_hit"]:
 		_enter("block_hit")
 		return "blocked"  # the big gloves take it: no harm done
@@ -449,7 +458,7 @@ func take_hit(blow: Dictionary, attacker) -> String:
 	if shield > 0:
 		shield -= 1
 		return "umbrella"  # the umbrella takes it, and breaks
-	health = maxf(health - blow["damage"], 0.0)
+	health = maxf(health - blow["damage"], min_health)
 	_hurt(region_hit(blow, attacker), blow["damage"])
 	if blow.get("move", "") in shrugs and blow.get("effect", "") == "" and health > 0.0:
 		return "hit"  # it hurts, but he doesn't flinch: whatever he was doing goes on
@@ -461,6 +470,8 @@ func take_hit(blow: Dictionary, attacker) -> String:
 	var effect: String = blow.get("effect", "")
 	if health <= 0.0 and effect != "launch":
 		effect = "knockdown"  # the last blow puts him down, for good
+	if stays_up and effect in ["knockdown", "launch"]:
+		effect = "stagger"  # too angry to fall (the Godfather's rage round): rocked, still on his feet, the count kept
 	if effect in ["knockdown", "launch"]:
 		roll_dir = facing  # the drawing falls him backward, the way he faces
 		dizzy_left = 0  # put down, he comes up clear-headed

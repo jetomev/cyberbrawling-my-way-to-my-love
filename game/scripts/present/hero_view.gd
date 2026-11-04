@@ -30,7 +30,7 @@ const WEAPON_LOOK := {"knife": [56.0, 8.0, Color(0.85, 0.87, 0.9)], "stick": [13
 	"pipe": [120.0, 12.0, Color(0.62, 0.64, 0.68)], "wrench": [80.0, 14.0, Color(0.5, 0.52, 0.56)],
 	"bat": [130.0, 16.0, Color(0.72, 0.58, 0.38)], "sword": [160.0, 9.0, Color(0.88, 0.9, 0.95)],
 	"mic_stand": [170.0, 7.0, Color(0.15, 0.15, 0.18)], "cane": [140.0, 6.0, Color(0.85, 0.88, 0.95)],
-	"baton": [110.0, 10.0, Color(0.4, 0.75, 1.0)]}
+	"baton": [110.0, 10.0, Color(0.4, 0.75, 1.0)], "lovelight": [170.0, 10.0, Color(1.0, 0.55, 0.85)]}
 var weapon_drawn := ""
 var weapon_node: Polygon2D
 const PAIN_BONES := {

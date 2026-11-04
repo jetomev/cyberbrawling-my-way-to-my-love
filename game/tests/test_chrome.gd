@@ -51,18 +51,17 @@ func test_a_combo_used_twice_in_a_row_she_parries() -> void:
 	var f = e["f"]
 	e["last_combo"] = "PPP"  # he's just finished P P P on her
 	e["brain"].wait = 9999
-	l.hero.chain = "PP"  # and starts it again
-	l.hero._enter("cross")
-	l._chrome(e, {})
 	f.facing = -1 if f.x > l.hero.x else 1
-	f._enter("idle")
-	eq(f.take_hit({"damage": 1.0, "effect": "", "low": 120.0, "high": 230.0, "move": "cross"}, l.hero), "parried", "the same combo again: parried")
-	# the finisher of the same combo too (his chain reads empty on it)
-	l.hero.chain = ""
+	l.hero.chain = ""  # and finishes P P P again (his chain reads empty on a finisher)
 	l.hero._enter("power_punch")
 	l._chrome(e, {})
 	f._enter("idle")
-	eq(f.take_hit({"damage": 2.0, "effect": "", "low": 120.0, "high": 230.0, "move": "power_punch"}, l.hero), "parried", "its finisher: parried too")
+	eq(f.take_hit({"damage": 2.0, "effect": "", "low": 120.0, "high": 230.0, "move": "power_punch"}, l.hero), "parried", "the same combo again: its finisher parried")
+	# the same opening with a different finish isn't a repeat: P P K after P P P
+	l.hero._enter("push_kick")
+	l._chrome(e, {})
+	f._enter("idle")
+	eq(f.take_hit({"damage": 2.0, "effect": "", "low": 60.0, "high": 160.0, "move": "push_kick"}, l.hero), "hit", "P P K after P P P: a different combo, it lands")
 	# a finished combo is read from its finisher
 	l.events = [{"attacker": l.hero, "target": f, "result": "hit", "move": "side_kick", "counter": false}]
 	l._chrome_after()

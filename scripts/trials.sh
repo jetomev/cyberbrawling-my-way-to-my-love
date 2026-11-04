@@ -10,7 +10,7 @@ mkdir -p "$OUT"
 # (scene:<name>@<level>: the scene on that level)
 for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy records bass_drop scenery umbrella first_aid \
     scene:cat@level1 scene:twins@roster_yard scene:coach@coach_gym scene:chrome@chrome_casino scene:static@static_plant \
-    scene:rook@rook_penthouse scene:crane@crane_docks; do
+    scene:rook@rook_penthouse scene:crane@crane_docks scene:godfather@tower_top; do
   ARGS=(--trial "$T")
   if [[ "$T" == scene:* ]]; then L="${T#*@}"; T="${T#scene:}"; T="${T%@*}"; ARGS=(--level "res://levels/$L.json" --scene "$T"); fi
   TMP="$ROOT/scratch/trial-$T.$$"
