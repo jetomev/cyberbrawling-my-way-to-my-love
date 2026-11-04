@@ -656,9 +656,9 @@ func test_the_bot_plays_level_three_and_is_never_stuck() -> void:
 func test_the_draft_levels_load_and_say_so() -> void:
 	var names: Array = Level.load_data("res://levels/levels.json")["levels"]
 	eq(names.size(), 10, "all ten levels in the play order")
-	for n in ["level3", "level4"]:  # (settled from the team's agreed pages)
+	for n in ["level3", "level4", "level5"]:  # (settled from the team's agreed pages)
 		check(not Level.load_data("res://levels/%s.json" % n).get("draft", false), "%s is settled, not a draft" % n)
-	for n in ["level5", "level6", "level7", "level8", "level9", "level10"]:
+	for n in ["level6", "level7", "level8", "level9", "level10"]:
 		var d: Dictionary = Level.load_data("res://levels/%s.json" % n)
 		check(d.get("draft", false), "%s is marked a draft" % n)
 		check(d["about"].contains("NOT BUILT YET"), "%s lists what isn't built yet" % n)
@@ -701,3 +701,36 @@ func test_every_wave_can_finish() -> void:
 					check(int(e.get("after_down", 0)) <= list.size() - 1, "%s F%d wave %d: the %s waits for %d down, the wave has %d others" % [
 						n, fi, wi, e["kind"], int(e.get("after_down", 0)), list.size() - 1])
 	check(waves > 20, "the waves were really read (%d)" % waves)
+
+
+
+## Level 5, settled (art-in 2026-11-04-level5-layout-final): 20 enemies (10 Snicks, 5 Doormen, 5 Dancers), the Doorman
+## met alone first, no pipe on the street, the vending machine: a snack, a note, then over onto whoever's in front.
+func test_level_5_as_the_team_settled_it() -> void:
+	var d: Dictionary = Level.load_data("res://levels/level5.json")
+	var kinds := {}
+	for f in d["floors"]:
+		for w in f.get("waves", []):
+			for e in w["enemies"]:
+				kinds[e["kind"]] = kinds.get(e["kind"], 0) + 1
+	eq(kinds, {"doorman": 5, "snick": 10, "neon_dancer": 5}, "20 enemies: 10 Snicks, 5 Doormen, 5 Dancers")
+	eq(d["floors"][0]["waves"][0]["enemies"].map(func(e): return e["kind"]), ["doorman"], "the Doorman, first time, alone")
+	check(not d["floors"].any(func(f): return f.get("items", []).any(func(i): return i[0] == "pipe")), "no pipe on the street")
+	eq(d["boss"].get("drops", ""), "pipe", "the pipe is Madame Chrome's prize")
+	var l = Level.new(d, {}, 1)
+	var vend: Dictionary = l.world.objects.filter(func(o): return o["kind"] == "vending")[0]
+	l._spawn("doorman", (vend["x0"] + vend["x1"]) * 0.5, vend["z1"] + 40.0)
+	var doorman = l.enemies[-1]["f"]
+	l.hero.x = vend["x0"] - 40.0
+	var drops := []
+	for k in 3:
+		vend["hits"] = vend.get("hits", 0) + 1
+		vend["hit_team"] = l.hero.team
+		vend["hit_move"] = "kick"
+		var before: int = l.world.items.size()
+		l._vending()
+		if l.world.items.size() > before:
+			drops.append(l.world.items[-1]["kind"])
+	eq(drops, ["snack", "note"], "first kick a snack, second an apology note")
+	check(vend["broken"], "the third tips it over")
+	eq(doorman.state, "knockdown", "onto the Doorman in front of it, shield or no shield")

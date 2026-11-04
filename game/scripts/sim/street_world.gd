@@ -143,6 +143,10 @@ func step_hits(fighters: Array) -> Array:
 			var y_ok: bool = low < o["top"] and f.y + blow["high"] > 0.0
 			if x_ok and z_ok and y_ok:
 				seen.append(o["id"])
+				o["hits"] = o.get("hits", 0) + 1  # (who hit it last and how: level 5's vending machine counts kicks)
+				o["hit_team"] = f.team  # (the side and the move, not the fighter: no reference kept)
+				o["hit_move"] = f.state
+				o["hit_kick"] = f.from_kick
 				o["strength"] -= blow["damage"]
 				if o["strength"] <= 0:
 					o["broken"] = true

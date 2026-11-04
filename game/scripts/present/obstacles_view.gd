@@ -133,6 +133,19 @@ func _draw_loose() -> void:
 			loose.draw_rect(Rect2(at + Vector2(-8, -30), Vector2(16, 30)), c)
 			loose.draw_rect(Rect2(at + Vector2(-8, -30), Vector2(16, 30)), EDGE, false, 2.0)
 			loose.draw_line(at + Vector2(3, -30), at + Vector2(7, -42), EDGE, 3.0)
+		elif it["kind"] in ["mints", "chocolates", "shrimp", "snack"]:  # level 5's food: a bowl, a box, a plate, a bar
+			var c2: Color = {"mints": Color(0.95, 0.97, 1.0), "chocolates": Color(0.45, 0.25, 0.15), "shrimp": Color(1.0, 0.6, 0.55),
+				"snack": Color(0.95, 0.55, 0.2)}[it["kind"]]
+			loose.draw_rect(Rect2(at + Vector2(-16, -12), Vector2(32, 12)), c2)
+			loose.draw_rect(Rect2(at + Vector2(-16, -12), Vector2(32, 12)), EDGE, false, 2.0)
+		elif it["kind"] in ["coins", "key"]:  # slot coins, the casino key (gold, for score)
+			loose.draw_circle(at + Vector2(0, -8), 8.0, Color(0.95, 0.8, 0.2))
+			loose.draw_arc(at + Vector2(0, -8), 8.0, 0.0, TAU, 12, EDGE, 2.0)
+			if it["kind"] == "key":
+				loose.draw_line(at + Vector2(6, -8), at + Vector2(26, -8), Color(0.95, 0.8, 0.2), 4.0)
+		elif it["kind"] == "note":  # the vending machine's apology note
+			loose.draw_rect(Rect2(at + Vector2(-12, -14), Vector2(24, 14)), Color(1, 1, 0.95))
+			loose.draw_rect(Rect2(at + Vector2(-12, -14), Vector2(24, 14)), EDGE, false, 2.0)
 		elif it["kind"] == "glove":  # a signed red boxing glove (for score)
 			loose.draw_circle(at + Vector2(0, -14), 14.0, Color(0.85, 0.15, 0.15))
 			loose.draw_arc(at + Vector2(0, -14), 14.0, 0.0, TAU, 16, EDGE, 2.0)

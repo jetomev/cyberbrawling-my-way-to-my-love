@@ -63,8 +63,9 @@ const KINDS := {
 	# the rest of the team's roster (enemy roster v2)
 	"wrench_mechanic": {"health": 14.0, "brain": "WRENCH_MECHANIC", "weapon": "wrench", "dodges": ["side_kick", "roundhouse"],
 		"hit_scale": 0.6},  # (the team's balance ruling, 11-04: softer up close; his thrown wrench as it was)
-	"doorman": {"health": 18.0, "brain": "DOORMAN", "weapon": "shield"},
-	"neon_dancer": {"health": 12.0, "brain": "NEON_DANCER", "too_quick": true, "speed": 1.8, "drops": "stick"},
+	"doorman": {"health": 18.0, "brain": "DOORMAN", "weapon": "shield", "no_stairs": true},  # (off the stairs: his only weak side
+	# is his back, and nobody walks round anyone on a flight; the team's level 5)
+	"neon_dancer": {"health": 12.0, "brain": "NEON_DANCER", "too_quick": true, "speed": 1.8, "drops": "stick", "no_stairs": true},  # (skates on flat floor only)
 	"enforcer": {"health": 20.0, "brain": "ENFORCER", "weapon": "sword", "parries": ["punch"]},
 	"lookout": {"health": 1.0, "brain": "LOOKOUT", "drops": "takeaway"},
 	"grabber": {"health": 22.0, "brain": "GRABBER", "drops": "takeaway"},
@@ -103,6 +104,9 @@ const BALL_DAMAGE := 2.0
 const TACKLE_DAMAGE := 3.0
 const TACKLE_REACH := 70.0  # he runs into the hero when this close along the street (and on his line of the street)
 const ROPES_DAZE := 70  # the tackle missed: he slams into the ropes and is open this long
+const VENDING_REACH := 30.0  # the machine falls across its own width and this much either side...
+const VENDING_FALL := 150.0  # ...onto the street in front of it, this deep
+const VENDING_DAMAGE := 2.0
 const SHOVE_TICKS := 50  # the Crane Operator flying out of his cab: this long
 const SHOVE_DISTANCE := 1150.0  # out through the cab's open door and off the screen
 const SHOVE_HEIGHT := 140.0  # up in an arc...
@@ -186,7 +190,8 @@ var crane := {}  # the docks' crane (the plan's "crane"): {next, container {x, d
 var hint_text := ""  # a wave's small hint, the first time (shown till hint_until)
 var hint_until := -1
 var hints_shown := {}
-var hugs_thrown := false  # a bear hug has thrown him this level (the first is gentle where the level says)
+var hugs_thrown := false
+var used_moves := {}  # the hero's moves used this level (a wave's hint about one he already knows is skipped)  # a bear hug has thrown him this level (the first is gentle where the level says)
 var rope_hit := {}  # the ropes he last slammed into (the view bends them a moment): side, z, tick
 var crossing := {}  # Twin Loans walking past each other mid-combo ("Interest"): who, from where, to where
 var twins_opened := false  # Twin Loans have opened with their swap (the team's third ruling)
@@ -287,6 +292,7 @@ func restart() -> void:
 	hint_until = -1
 	hints_shown = {}
 	hugs_thrown = false
+	used_moves = {}
 	rope_hit = {}
 	crossing = {}
 	live_until = -1
@@ -323,6 +329,8 @@ func everyone() -> Array:
 
 ## A small hint the first time (the team's level 3: "perfect-block his throw"): once a level.
 func _show_hint(h: String) -> void:
+	if tick < hint_until and hint_text != h:
+		return  # one hint at a time (the team's level 5): it comes the next time its moment does
 	if h != "" and not hints_shown.has(h):
 		hints_shown[h] = true
 		hint_text = h
@@ -339,6 +347,19 @@ func _moment_hints() -> void:
 		_show_hint(hs["glow"])
 	if hs.has("caught") and hero.state == "held":
 		_show_hint(hs["caught"])
+	if hs.has("shield"):  # a blow of his first bounces off a Doorman's shield (level 5)
+		for ev in events:
+			if ev.get("attacker") == hero and ev.get("result", "") == "shielded":
+				_show_hint(hs["shield"])
+	if hs.has("bash") and enemies.any(func(e): return not e["gone"] and e["kind"] == "doorman" and e["f"].attack_phase() == "startup"):
+		_show_hint(hs["bash"])  # a Doorman's first bash glint: that's when the low kick works (Boromir, level 5)
+	if hs.has("parry"):  # Madame Chrome first parries a combo used twice in a row
+		for ev in events:
+			if ev.get("attacker") == hero and ev.get("result", "") == "parried" \
+					and enemies.any(func(e): return e["f"] == ev.get("target") and e["kind"] == "chrome"):
+				_show_hint(hs["parry"])
+	if hs.has("cane") and enemies.any(func(e): return not e["gone"] and e["kind"] == "chrome" and e["f"].attack_phase() == "startup"):
+		_show_hint(hs["cane"])
 	if hs.has("too_slow"):
 		for ev in events:
 			if ev.get("attacker") == hero and ev.get("result", "") == "dodged" and hero.weapon != "" \
@@ -437,6 +458,7 @@ func step(inp: Dictionary) -> void:
 		var r := ropes()
 		for f in all:
 			f.x = clampf(f.x, r.x, r.y)
+	used_moves[hero.state] = true
 	for id in world.step_hits(all):  # something smashed: whatever was inside falls out
 		var o: Dictionary = world.objects[id]
 		if o.has("holds"):
@@ -465,6 +487,7 @@ func step(inp: Dictionary) -> void:
 	_crane()
 	_shoved_out()
 	_out_of_the_cab()
+	_vending()
 	_stairs()
 	_switches()
 	_waves()
@@ -1031,6 +1054,35 @@ func _shoved_out() -> void:
 					events.append({"target": d, "result": "shoved_out", "kind": "shoved_out"})
 
 
+## Level 5's vending machine (Pippin's joke, the team's page): the hero's first kick gives a snack, the second an
+## apology note, the third tips it over, and it flattens whoever stands in front of it, a Doorman too (a knockdown
+## from above, shield or no shield).
+func _vending() -> void:
+	for o in world.objects:
+		if o["kind"] != "vending" or o["broken"] or o.get("hits", 0) == o.get("hits_read", 0):
+			continue
+		o["hits_read"] = o["hits"]
+		if o.get("hit_team", -1) != hero.team or not (o.get("hit_move", "") in KICKS or o.get("hit_kick", false)):
+			continue
+		o["kicks"] = o.get("kicks", 0) + 1
+		var x: float = (o["x0"] + o["x1"]) * 0.5
+		var front: float = clampf(o["z1"] + 30.0, 0.0, tune["street_depth"])
+		match o["kicks"]:
+			1:
+				world.drop("snack", x, front)
+			2:
+				world.drop("note", x, front)
+			_:
+				o["broken"] = true  # over it goes, onto whoever's in front
+				events.append({"target": null, "result": "vending_tipped", "kind": "vending"})
+				for f in everyone():
+					if f.x > o["x0"] - VENDING_REACH and f.x < o["x1"] + VENDING_REACH and f.z > o["z1"] and f.z < o["z1"] + VENDING_FALL \
+							and f.hittable():
+						f.take_hit({"damage": VENDING_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "vending",
+							"from_above": true}, {"x": x, "y": 0.0})
+						events.append({"target": f, "result": "hit", "kind": "vending", "move": "vending"})
+
+
 ## The Crane Operator flying out of his cab (push-kicked): an arc out through its open side, over the edge, gone.
 func _out_of_the_cab() -> void:
 	for e in enemies:
@@ -1306,8 +1358,8 @@ func _kitchen() -> void:
 
 
 ## Walking over a collectible (a matchbook, the torn photo) keeps it.
-const COLLECTIBLES := ["matchbook", "photo", "trophy", "glove", "whistle"]  # (for score: level 3's trophy, level 4's
-# signed boxing glove and Coach's whistle)
+const COLLECTIBLES := ["matchbook", "photo", "trophy", "glove", "whistle", "coins", "note", "key"]  # (for score: level 3's trophy, level 4's
+# signed boxing glove and Coach's whistle; level 5's slot coins, the vending machine's note, the casino key)
 
 
 func _collect() -> void:
@@ -1398,7 +1450,8 @@ func _waves() -> void:
 		fl["wave"] += 1
 		fl["waiting"] = (waves[fl["active_wave"]]["enemies"] as Array).duplicate()
 		var h: String = waves[fl["active_wave"]].get("hint", "")
-		_show_hint(h)
+		if not used_moves.has(waves[fl["active_wave"]].get("unless_used", "-")):
+			_show_hint(h)  # (unless he's already used the move it teaches: level 5's escalator, the push kick)
 	# a wave's enemies come in as they may: those with "after_down" once that many of the wave are down, and never more
 	# than MAX_ON_SCREEN standing at once (the rest wait off screen)
 	if fl["active_wave"] >= 0 and not fl["waiting"].is_empty():
