@@ -71,3 +71,38 @@ func test_the_hard_mauler_throws_you_sooner() -> void:
 				thrown_at = i
 		var want: int = Level.HARD_HUG_TICKS if hard else Level.HUG_TICKS
 		check(thrown_at >= want - 3 and thrown_at <= want + 3, "%s Mauler: thrown after %d frames (about %d)" % ["hard" if hard else "plain", thrown_at, want])
+
+
+## Counts how many times the enemy's state enters the move within frames, from a standing start (pushed into it once).
+func finishers(l, e: Dictionary, move: String, frames := 120) -> int:
+	var f = e["f"]
+	f._enter(move)
+	f.attack_serial += 1
+	var n := 1
+	var serial: int = f.attack_serial
+	for i in frames:
+		l.step({})
+		if f.state == move and f.attack_serial != serial:  # (a new blow of it: the second starts as the first ends)
+			n += 1
+		serial = f.attack_serial
+	return n
+
+
+func test_the_hard_glow_punk_shoves_twice_and_the_hard_enforcer_lunges_twice() -> void:
+	for c in [["glow_punk", "push_kick"], ["enforcer", "smash"]]:
+		for hard in [false, true]:
+			var l = street()
+			var e: Dictionary = bring(l, c[0], hard, l.hero.x + 300.0)
+			eq(finishers(l, e, c[1]), 2 if hard else 1, "%s %s: its last blow %s" % ["hard" if hard else "plain", c[0], "twice" if hard else "once"])
+
+
+func test_the_hard_doormans_shield_bounces_you_back() -> void:
+	for hard in [false, true]:
+		var l = street()
+		var e: Dictionary = bring(l, "doorman", hard, l.hero.x + 100.0)
+		e["f"].facing = -1
+		var bounced := false
+		for i in 30:
+			l.step({"punch": i == 0})
+			bounced = bounced or l.events.any(func(ev): return ev.get("result", "") == "shield_bounce")
+		check(bounced == hard, "%s Doorman: a jab off his shield %s" % ["hard" if hard else "plain", "bounces you back" if hard else "just bounces off"])

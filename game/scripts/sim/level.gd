@@ -93,6 +93,8 @@ const HUG_TICKS := 70  # the bear hug: this long without wriggling free, and he 
 const HARD_HEALTH := 1.25
 const HARD_GLINT := 2  # ticks off every blow's wind-up
 const HARD_HUG_TICKS := 40  # the hard Mauler: "only a heartbeat to jab free"
+const HARD_TWICE := {"glow_punk": "push_kick", "enforcer": "smash"}  # the hard Glow Punk shoves twice, the hard Enforcer
+# lunges twice: his combo's last blow again, straight after the first
 const HURL_DAMAGE := 3.0
 const GENTLE_THROW := 1.5  # the first bear hug's throw where a level says so: a plain knockdown's damage (feel lab)
 ## The stairs (the team's level 3 page): a push kick or any knockdown on the slope rolls him to the foot, bowling over
@@ -542,6 +544,7 @@ func step(inp: Dictionary) -> void:
 	_over_the_rail()
 	_vending()
 	_bag()
+	_hard_tricks()
 	_from_above()
 	_lift_ride()
 	_chandelier()
@@ -1332,6 +1335,31 @@ func shadow_cue() -> float:
 				away = -away  # (against the screen's edge: the other way)
 			return away
 	return 0.0
+
+
+## The hard versions' tricks that live in the level: the finisher twice (Glow Punk, Enforcer); the Doorman's shield
+## bouncing the hero back when a blow of his bounces off it.
+func _hard_tricks() -> void:
+	for e in enemies:
+		if e["gone"] or not e.get("hard", false):
+			continue
+		var f = e["f"]
+		var fin: String = HARD_TWICE.get(e.get("kind", ""), "")
+		if fin != "":
+			var was: String = e.get("last_state", "")
+			if was == fin and f.state != fin:
+				if not e.get("twice_done", false) and f.state in ["idle", "walk"] and not f.defeated():
+					e["twice_done"] = true
+					f._enter(fin)  # again, straight away
+					f.attack_serial += 1
+				else:
+					e["twice_done"] = false
+			e["last_state"] = f.state
+		if e.get("kind", "") == "doorman":
+			for ev in events:
+				if ev.get("attacker") == hero and ev.get("target") == f and ev.get("result", "") == "shielded" and hero.hittable():
+					hero.take_hit({"damage": 0.0, "effect": "push", "low": 0.0, "high": 300.0, "move": "shield_bounce"}, f)
+					events.append({"target": hero, "result": "shield_bounce", "kind": "shield_bounce"})
 
 
 ## Level 4's punching bag: a blow swings it away from the one who hit it, and it knocks down whoever stands behind it.
