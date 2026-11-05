@@ -466,7 +466,7 @@ func step(inp: Dictionary) -> void:
 	if friend != null and on == 0:
 		friend.step(tutor.think())
 	for e in enemies:
-		if not e["gone"] and not e.has("shoved") and not e.has("over_rail") and not e.has("ride"):  # (the Crane Operator flying out of his cab, a goon
+		if not e["gone"] and not e.has("shoved") and not e.has("over_rail") and not e.has("ride") and not e.has("hop"):  # (the Crane Operator flying out of his cab, a goon
 			# going over the balcony's railing: _out_of_the_cab and _over_the_rail carry them)
 			e["was"] = [e["f"].x, e["f"].y, e["f"].z]  # where he stood, should the stairs be full
 			var think: Dictionary = _crossing(e) if not crossing.is_empty() and (crossing["a"] == e or crossing["b"] == e) \
@@ -573,6 +573,7 @@ func step(inp: Dictionary) -> void:
 	_over_the_rail()
 	_vending()
 	_bag()
+	_hops()
 	_fallen()
 	_cat_on_switch()
 	_hard_tricks()
@@ -697,11 +698,21 @@ func _roster_tricks() -> void:
 		if e.get("kind", "") == "lookout" and active_wave >= 0:  # he runs from the hero, but not off the locked screen:
 			var b := bounds()  # cornered, one hit drops him (the team's level 3)
 			f.x = clampf(f.x, b.x + 30.0, b.y - 30.0)
-		if e.get("kind", "") == "lookout" and f.y > 1.0 and f.state in ["idle", "walk", "run"]:
-			for o in world.objects:  # up on a stack (level 6): he runs along it, never off its edge
+		if e.get("kind", "") == "lookout" and f.y > 1.0 and f.state in ["idle", "walk", "run"] and not e.has("hop"):
+			for o in world.objects:  # up on a stack (level 6): he runs along it, never off its edge...
 				if o["solid"] and absf(float(o["top"]) - f.y) < 1.0 and f.x > o["x0"] - 40.0 and f.x < o["x1"] + 40.0 \
 						and f.z < o["z1"] + 6.0:
 					f.x = clampf(f.x, o["x0"] + 10.0, o["x1"] - 10.0)
+					# ...but cornered at its lip, with the next lamp's stack a hop away, over he goes (lamp to lamp)
+					var side: float = 1.0 if f.x >= o["x1"] - 12.0 else (-1.0 if f.x <= o["x0"] + 12.0 else 0.0)
+					if side != 0.0 and absf(hero.y - f.y) < 30.0 and absf(hero.x - f.x) < 220.0 and signf(f.x - hero.x) == side:
+						for o2 in world.objects:
+							var near_edge: float = o2["x0"] if side > 0.0 else o2["x1"]
+							if o2 != o and o2["solid"] and absf(float(o2["top"]) - f.y) < 1.0 and f.z < o2["z1"] + 6.0 \
+									and (near_edge - f.x) * side > 0.0 and absf(near_edge - f.x) < 160.0:
+								e["hop"] = {"t": 0, "x0": f.x, "x1": near_edge + side * 40.0, "y": f.y}
+								events.append({"target": f, "result": "hop", "kind": "hop"})
+								break
 					break
 		var paced: bool = e.get("paced", false)  # (level 6's Whistlers: the team's page times them from arrivals)
 		if e.get("kind", "") == "lookout" and paced and e.has("called") and not e.has("next_whistle_set"):
@@ -1465,6 +1476,24 @@ func _cat_on_switch() -> void:
 			at_door = at_door + 1 if at_it else 0
 			if at_door >= DOOR_HINT_TICKS:
 				_show_hint(hs["locked"])
+
+
+## The Whistler's hop from one lamp's stack to the next (level 6): a short arc over the gap.
+const HOP_TICKS := 22
+func _hops() -> void:
+	for e in enemies:
+		if not e.has("hop") or e["gone"]:
+			continue
+		var h: Dictionary = e["hop"]
+		var f = e["f"]
+		h["t"] += 1
+		var p: float = minf(float(h["t"]) / HOP_TICKS, 1.0)
+		f.x = lerpf(h["x0"], h["x1"], p)
+		f.y = h["y"] + 70.0 * sin(PI * p)
+		f.air_from = h["y"]
+		if h["t"] >= HOP_TICKS:
+			f.y = h["y"]
+			e.erase("hop")
 
 
 ## A goon knocked off a container stack (level 6, the team's page): he lands hurt (about half his health) and waits

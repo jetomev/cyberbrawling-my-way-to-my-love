@@ -134,3 +134,19 @@ func test_on_the_docks_a_goon_knocked_off_a_stack_lands_hurt_and_waits_at_the_pa
 	check(f.health <= f.max_health * Level.FALLEN_HEALTH + 0.01, "hurt (%.0f of %.0f)" % [f.health, f.max_health])
 	check(absf(f.x - 7640.0) < 40.0, "gone to the foot of the path down and waiting there (x %.0f)" % f.x)
 	check(e.get("waits_below", false), "not coming at him while he's up there")
+
+
+func test_on_the_docks_the_whistler_hops_from_lamp_to_lamp() -> void:
+	var l = Level.new(Level.load_data("res://levels/level6.json"), {}, 1)
+	l.floors[0]["wave"] = l.floors[0]["waves"].size()
+	l.hero.x = 5130.0
+	l.hero.y = 400.0
+	l.hero.z = 20.0
+	l._arrive({"kind": "lookout", "dx": 130.0, "z": 20.0, "y": 400.0, "whistles": 0}, l.hero.x, -1)
+	var f = l.enemies[-1]["f"]
+	var hopped := false
+	for i in 120:
+		l.step({"mx": 0.3})
+		hopped = hopped or l.events.any(func(ev): return ev.get("result", "") == "hop")
+	check(hopped, "cornered at his lamp's lip, he hops the short gap")
+	check(f.x > 5380.0 and absf(f.y - 400.0) < 1.0, "onto the next lamp's stack (x %.0f, %.0f up)" % [f.x, f.y])
