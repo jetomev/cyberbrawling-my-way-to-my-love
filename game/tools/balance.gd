@@ -59,6 +59,7 @@ func _level(n: String) -> Array:
 		var hp: float = l.hero.health
 		var landed := 0
 		var got_there := false
+		var called := {}  # the goons whistled in this run, counted as each one arrives (a floor left behind drops its list)
 		for i in MAX_TICKS:
 			if l.won or l.lost:
 				break
@@ -69,6 +70,9 @@ func _level(n: String) -> Array:
 			l.step(bot.think(l.standing()))
 			var here := "F%d s%d" % [l.on, int(l.hero.x / SCREEN) + 1]
 			got_there = got_there or l.on == last_floor
+			for e in l.enemies:
+				if e.get("whistled", false):
+					called[e["f"]] = true
 			for ev in l.events:
 				if ev.get("attacker") == l.hero and ev.get("result", "") == "hit":
 					landed += 1
@@ -100,7 +104,7 @@ func _level(n: String) -> Array:
 						per_screen[here] = {}
 					per_screen[here][k] = per_screen[here].get(k, 0.0) + drop / who.size()
 			hp = l.hero.health
-		whistled += l.enemies.filter(func(e): return e.get("whistled", false)).size()
+		whistled += called.size()
 		var result: String = "won" if l.won else ("lost on %s" % screen if l.lost else "not finished at %s" % screen)
 		if got_there:
 			reached_last += 1
