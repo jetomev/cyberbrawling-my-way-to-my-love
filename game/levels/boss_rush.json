@@ -1,0 +1,14 @@
+{
+  "about": "The boss rush (the assistant team's agreed list, 2026-11-05): the nine bosses in order, each in his own room (level 9 has none), three lives for the whole run, a bowl of noodles between fights, the hero starting with nothing and earning each prize as he wins; the Lovelight handed over before the Godfather. Javier & Claude.",
+  "fights": [
+    {"level": "level1", "floor": 1, "x": 400},
+    {"level": "level2", "floor": 1, "x": 300},
+    {"level": "level3", "floor": 3, "x": 150},
+    {"level": "level4", "floor": 3, "x": 300},
+    {"level": "level5", "floor": 4, "x": 300},
+    {"level": "level6", "floor": 1, "x": 200},
+    {"level": "level7", "floor": 4, "x": 300},
+    {"level": "level8", "floor": 5, "x": 300},
+    {"level": "level10", "floor": 1, "x": 300, "hand": "lovelight"}
+  ]
+}
