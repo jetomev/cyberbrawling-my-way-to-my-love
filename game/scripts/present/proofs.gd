@@ -28,11 +28,12 @@ extends RefCounted
 ## proof_bag       level 4's punching bag: a jab swings it into the Mechanic standing behind it, knocked down
 ## proof_above     level 4's ring hall under the balcony: a wrench thrown down lands on the hero standing still; he
 ##                 steps out of the next one's shadow and it clangs on the floor
+## proof_signs     a level's signs on its ground floor, one after another (the hero set under each, a second each)
 ## (The boss proofs start their boss part-worn where a whole fight would run to many pages: said so on screen.)
 
 const NAMES := ["proof_headbutt", "proof_doorman", "proof_dancer", "proof_enforcer", "proof_lookout", "proof_grabber",
 	"proof_swap", "proof_shove", "proof_climb", "proof_escape", "proof_coach", "proof_chrome", "proof_crane", "proof_static",
-	"proof_rook", "proof_ropes", "proof_cab", "proof_gap", "proof_bag", "proof_above"]
+	"proof_rook", "proof_ropes", "proof_cab", "proof_gap", "proof_bag", "proof_above", "proof_signs"]
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
@@ -162,6 +163,11 @@ func setup(level) -> void:
 			h.take_weapon("pipe")
 			zoom = 1.2
 			length = 2400
+		"proof_signs":
+			level.floors[0]["wave"] = level.floors[0]["waves"].size()  # (no fights: just the walls)
+			data["signs"] = level.plan["floors"][0].get("signs", [])
+			zoom = 1.0
+			length = 30 + 70 * maxi(1, (data["signs"] as Array).size())
 		"proof_above":
 			level.floors[0]["wave"] = level.floors[0]["waves"].size()  # the ring hall's goon set aside
 			h.x = 4300.0
@@ -307,6 +313,15 @@ func inputs(level) -> Dictionary:
 					data["thrown"] = 0
 			if tick > 2300 and ended < 0:
 				_end("(he wasn't shoved out: the proof ran out of time)")
+		"proof_signs":
+			var k: int = (tick - 10) / 70
+			if tick == 9:
+				_start("%d sign(s) on this level's street" % (data["signs"] as Array).size())
+			if tick >= 10 and (tick - 10) % 70 == 0 and k < (data["signs"] as Array).size():
+				h.x = float(data["signs"][k][0]) - 150.0
+				_say("sign %d: %s" % [k + 1, (data["signs"][k][2] as String).replace("\n", " / ")])
+			if tick == length - 25:
+				_end("every sign shown")
 		"proof_above":
 			if tick == 9:
 				_start("under the balcony: the two Mechanics up there throw wrenches down (shadow first)")

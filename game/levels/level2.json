@@ -4,6 +4,7 @@
  "floors": [
   {
    "name": "the Night Market",
+   "signs": [[960, 330, "EVERYTHING FRESH, MOSTLY"], [4800, 330, "FRESH YESTERDAY"]],
    "length": 13440,
    "obstacles": [
     [

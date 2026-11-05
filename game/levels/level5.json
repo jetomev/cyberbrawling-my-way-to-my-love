@@ -164,6 +164,13 @@
           0,
           "front door"
         ]
+      ],
+      "signs": [
+        [
+          960,
+          330,
+          "YOU'RE ALREADY WINNING\n(YOU'RE NOT)"
+        ]
       ]
     },
     {

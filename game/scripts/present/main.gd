@@ -635,13 +635,28 @@ func _draw_signs() -> void:
 		var text: String = sg[2]
 		if sg.size() > 3 and level.tick % 170 in [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]:
 			text = sg[3]  # (a stutter, then a long half-second dark: then lit again)
-		var size := 34
-		var w: float = font.get_string_size(sg[2], HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-		var at := Vector2(float(sg[0]) - w * 0.5, Street.GROUND_Y - float(sg[1]))
-		sign_view.draw_rect(Rect2(at + Vector2(-18.0, -size - 10.0), Vector2(w + 36.0, size + 26.0)), Color(0.07, 0.06, 0.09))
-		sign_view.draw_rect(Rect2(at + Vector2(-18.0, -size - 10.0), Vector2(w + 36.0, size + 26.0)), Color(0.3, 0.1, 0.25), false, 3.0)
-		for k in [[Vector2(2, 2), Color(1.0, 0.24, 0.65, 0.35)], [Vector2.ZERO, Color(1.0, 0.55, 0.85)]]:  # the glow, then the tube
-			sign_view.draw_string(font, at + k[0], text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, k[1])
+		var full: PackedStringArray = (sg[2] as String).split("\n")  # (a second line comes smaller: "we're tired")
+		var lines: PackedStringArray = text.split("\n")
+		var sizes := [34, 24]
+		var w := 0.0
+		var tall := 0.0
+		for i in full.size():
+			w = maxf(w, font.get_string_size(full[i], HORIZONTAL_ALIGNMENT_LEFT, -1, sizes[mini(i, 1)]).x)
+			tall += sizes[mini(i, 1)] + 8.0
+		var top := Vector2(float(sg[0]) - w * 0.5, Street.GROUND_Y - float(sg[1]) - tall)
+		var board := Rect2(top + Vector2(-18.0, -10.0), Vector2(w + 36.0, tall + 20.0))
+		sign_view.draw_rect(board, Color(0.07, 0.06, 0.09))
+		sign_view.draw_rect(board, Color(0.3, 0.1, 0.25), false, 3.0)
+		var y: float = top.y
+		for i in lines.size():
+			var sz: int = sizes[mini(i, 1)]
+			y += sz
+			var lw: float = font.get_string_size(lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, sz).x
+			var at := Vector2(float(sg[0]) - (w if i == 0 else lw) * 0.5, y)  # (the first line keeps its place as it flickers)
+			var tube: Color = Color(1.0, 0.55, 0.85) if i == 0 else Color(0.55, 0.95, 0.97)
+			sign_view.draw_string(font, at + Vector2(2, 2), lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, sz, Color(tube, 0.35))  # the glow
+			sign_view.draw_string(font, at, lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, sz, tube)
+			y += 8.0
 
 
 func _draw_flying() -> void:

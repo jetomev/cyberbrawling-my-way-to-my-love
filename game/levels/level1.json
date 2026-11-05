@@ -4,6 +4,7 @@
  "floors": [
   {
    "name": "Neon Row",
+   "signs": [[2880, 330, "WE BUY GOLD, SILVER\nAND REGRETS"], [6720, 330, "LINUX REPAIR\nWE FIX IT IN THE TERMINAL"], [8640, 330, "OPEN 25 HOURS\nwe're tired"], [10560, 330, "MAFIA HQ\nTOTALLY NORMAL BAKERY"]],
    "length": 13440,
    "obstacles": [
     [
