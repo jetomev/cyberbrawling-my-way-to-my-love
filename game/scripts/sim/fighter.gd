@@ -23,7 +23,8 @@ const MAX_QUEUE := 2  # P then K pressed during one long blow play P then K
 const AIR_STATES := ["jump", "air_kick", "hammer_fist"]
 ## What food and first aid give back, as a share of a full health bar (D-14)
 const HEALS := {"food": 0.4, "takeaway": 0.4, "sandwich": 0.4, "soda": 0.25, "apple": 0.25, "bowl": 0.4, "first_aid": 1.0, "noodles": 1.0,
-	"protein_bar": 0.4, "shake": 0.4, "water": 0.25, "mints": 0.25, "snack": 0.4, "shrimp": 0.4, "chocolates": 0.25}  # (level 4's gym: a protein bar, a shake, Coach's water bottle; level 5's mints, snack, shrimp plate, chocolates)  # noodles: level 2's hidden bar
+	"protein_bar": 0.4, "shake": 0.4, "water": 0.25, "mints": 0.25, "snack": 0.4, "shrimp": 0.4, "chocolates": 0.25,
+	"pork_bun": 0.4, "oranges": 0.25, "tea": 0.25}  # (level 4's gym: a protein bar, a shake, Coach's water bottle; level 5's mints, snack, shrimp plate, chocolates)  # noodles: level 2's hidden bar; level 6's pork bun (the Whistler's), oranges, the shed's tea, the Crane Operator's sandwich
 ## Being hit: no input counts until the reaction ends (fight.gd decides who hits whom; take_hit() reacts); "held":
 ## in the Grabber's bear hug, where only wriggling counts (3 quick punches, or a roll)
 const HURT_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch", "down", "get_up", "ko", "dizzy", "held",

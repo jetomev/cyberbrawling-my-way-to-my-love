@@ -37,7 +37,9 @@ func think(enemies: Array) -> Dictionary:
 		if not e.defeated() and (foe == null or absf(e.x - me.x) < absf(foe.x - me.x)):
 			foe = e
 	if jump_cue and me.state in ["idle", "walk", "block", "run"]:
-		inp["jump"] = true  # the crane's container, low across the floor
+		inp["jump"] = true  # the crane's container, low across the floor; up on a stack (level 6), across the gap ahead
+		if me.y > 1.0:
+			inp["mx"] = float(me.facing)
 		return inp
 	if not climb.is_empty() and me.state in ["idle", "walk", "block", "run"]:
 		if absf(me.x - climb["x"]) > 10.0 or absf(me.z - climb["z"]) > 10.0:  # to the ladder, then onto it

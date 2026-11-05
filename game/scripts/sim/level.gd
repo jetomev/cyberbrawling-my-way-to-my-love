@@ -226,6 +226,9 @@ var hugs_thrown := false
 var used_moves := {}  # the hero's moves used this level (a wave's hint about one he already knows is skipped)  # a bear hug has thrown him this level (the first is gentle where the level says)
 var from_above := []  # wrenches falling from a balcony at the hero below: [{x, z, at}] (level 4's screen 3)
 var from_above_next := -1
+var cats_moved := {}  # switch index -> true: its sleeping cat has strolled off (level 6)
+var cat_near := 0  # how long the hero has stood beside a sleeping cat
+var at_door := 0  # how long he's stood at a locked door (level 6's hint)
 var rings := []  # shock rings along the floor from a hard Bruiser's slam: [{x, z, at, hit}]
 var hero_rope := {}  # the hero thrown back off the ropes: {dir, t} (the team's level 4, Boromir: a safe moment)
 var rope_hit := {}  # the ropes he last slammed into (the view bends them a moment): side, z, tick
@@ -335,6 +338,9 @@ func restart() -> void:
 	rope_hit = {}
 	hero_rope = {}
 	rings = []
+	cats_moved = {}
+	cat_near = 0
+	at_door = 0
 	from_above = []
 	from_above_next = -1
 	crossing = {}
@@ -494,6 +500,8 @@ func step(inp: Dictionary) -> void:
 			if think.get("hurl", false) and plan["floors"][on].get("one_throw", false) \
 					and projectiles.flying.any(func(p): return p["alive"] and p["team"] == e["f"].team and p.get("catchable", false)):
 				think.erase("hurl")  # one wrench in the air at a time here (the team's level 4: the balcony, Boromir)
+			if think.get("hurl", false) and hero.state in Fighter.AIR_STATES and hero.y > 1.0:
+				think.erase("hurl")  # never a wrench at him mid-jump (level 6's gaps, Boromir)
 			if think.get("hurl", false) and e["f"].weapon != "":
 				# his throw winds up first: the wrench cranked back past his ear (the pose sheet's warning), then it flies
 				think.erase("hurl")
@@ -561,6 +569,7 @@ func step(inp: Dictionary) -> void:
 	_vending()
 	_bag()
 	_fallen()
+	_cat_on_switch()
 	_hard_tricks()
 	_from_above()
 	_lift_ride()
@@ -683,19 +692,34 @@ func _roster_tricks() -> void:
 		if e.get("kind", "") == "lookout" and active_wave >= 0:  # he runs from the hero, but not off the locked screen:
 			var b := bounds()  # cornered, one hit drops him (the team's level 3)
 			f.x = clampf(f.x, b.x + 30.0, b.y - 30.0)
+		var paced: bool = e.get("paced", false)  # (level 6's Whistlers: the team's page times them from arrivals)
+		if e.get("kind", "") == "lookout" and paced and e.has("called") and not e.has("next_whistle_set"):
+			# the next whistle: six seconds after the last he called is in the fight (by the hero, or down: level 6's page)
+			if (e["called"] as Array).all(func(c): return c.defeated() or absf(c.x - hero.x) < 300.0):
+				e["next_whistle"] = tick + WHISTLE_EVERY
+				e["next_whistle_set"] = true
 		if e.get("kind", "") == "lookout" and absf(hero.x - f.x) < WHISTLE_RANGE and tick >= e.get("next_whistle", 0) \
-				and e.get("whistles", 99) > 0:
+				and e.get("whistles", 99) > 0 and not (paced and (hero.state == "climb" or (e.has("called") and not e.has("next_whistle_set")))):
 			e["next_whistle"] = tick + WHISTLE_EVERY
+			e.erase("next_whistle_set")
+			e["called"] = []
 			e["whistles"] = e.get("whistles", 99) - 1  # (a layout can give him only so many: level 3's has two)
 			var sides := ["left", "right"] + (["right"] if e.get("hard", false) else [])  # (the hard Whistler calls three)
 			for i in sides.size():
 				var side: String = sides[i]
 				if standing().size() < MAX_ON_SCREEN:
 					if e.has("calls_x"):  # up the ladder where it comes out (the team's level 3: Mechanics climb at you)
-						_arrive({"kind": e.get("calls", "glow_punk"), "dx": e["calls_x"] - hero.x + (0.0 if side == "left" else 50.0),
-							"z": 30.0 if side == "left" else 70.0 + 30.0 * (i - 1), "whistled": true}, hero.x, e["wave"])
+						var called := {"kind": e.get("calls", "glow_punk"), "dx": e["calls_x"] - hero.x + (0.0 if side == "left" else 50.0),
+							"z": 30.0 if side == "left" else 70.0 + 30.0 * (i - 1), "whistled": true}
+						if e.has("calls_y"):
+							called["y"] = e["calls_y"]  # (they come up the ladder onto the stack: level 6's gate yard)
+							called["z"] = 20.0 + 15.0 * i
+						_arrive(called, hero.x, e["wave"])
 					else:
 						_arrive({"kind": e.get("calls", "glow_punk"), "from": side, "z": 80.0 + 40.0 * maxi(0, i - 1), "whistled": true}, hero.x, e["wave"])
+			for c in enemies.slice(enemies.size() - sides.size()):
+				if c.get("whistled", false):
+					(e["called"] as Array).append(c["f"])
 			events.append({"target": f, "result": "whistle", "kind": "whistle"})
 	hero.held_by = hug["by"]["f"] if not hug.is_empty() and hero.state == "held" else null
 	if not hug.is_empty():
@@ -1331,16 +1355,21 @@ func climb_cue() -> Dictionary:
 			continue
 		if foe == null or absf(e["f"].x - hero.x) < absf(foe.x - hero.x):
 			foe = e["f"]
-	if foe == null or absf(foe.y - hero.y) < 60.0 or not foe.flight().is_empty() or not hero.flight().is_empty():
+	var want: float = -1.0  # the height to get to: the foe's, or (nobody to fight) a switch's up on a stack
+	if foe != null and absf(foe.y - hero.y) >= 60.0 and foe.flight().is_empty() and hero.flight().is_empty():
+		want = foe.y
+	elif foe == null and absf(goal_y - hero.y) >= 60.0 and hero.flight().is_empty():
+		want = goal_y
+	if want < 0.0:
 		return {}  # (on his level, or on a flight of stairs: no ladders)
-	var up: bool = foe.y > hero.y
+	var up: bool = want > hero.y
 	var best := {}
 	for o in world.objects:  # the nearest ladder that goes the right way from where he stands
 		if o["kind"] != "ladder":
 			continue
 		var from_y: float = float(o.get("base", 0.0)) if up else float(o["top"])
 		var to_y: float = float(o["top"]) if up else float(o.get("base", 0.0))
-		if absf(from_y - hero.y) > 2.0 or (up and to_y > foe.y + 30.0) or (not up and to_y < foe.y - 30.0):
+		if absf(from_y - hero.y) > 2.0 or (up and to_y > want + 30.0) or (not up and to_y < want - 30.0):
 			continue  # (from where he stands, and not past where the foe is)
 		var cx: float = (o["x0"] + o["x1"]) * 0.5
 		if best.is_empty() or absf(cx - hero.x) < absf(best["x"] - hero.x):
@@ -1390,6 +1419,30 @@ func _hard_think(e: Dictionary, think: Dictionary) -> Dictionary:
 
 ## The hard versions' tricks that live in the level: the finisher twice (Glow Punk, Enforcer); the Doorman's shield
 ## bouncing the hero back when a blow of his bounces off it.
+## Level 6's big white cat asleep on the first switch (the team's page): stand beside it a moment (no button) and it
+## stretches and strolls off; stand at the locked door a while instead and the hint comes.
+const CAT_WAKE := 60
+const DOOR_HINT_TICKS := 480
+func _cat_on_switch() -> void:
+	var switches: Array = plan.get("switches", [])
+	for i in switches.size():
+		var s: Dictionary = switches[i]
+		if not s.get("cat", false) or cats_moved.has(i) or int(s["floor"]) != on:
+			continue
+		var beside: bool = absf(hero.x - float(s["x"])) < 90.0 and absf(hero.y - float(s.get("y", 0.0))) < 30.0
+		cat_near = cat_near + 1 if beside else 0
+		if cat_near >= CAT_WAKE:
+			cats_moved[i] = true
+			events.append({"target": hero, "result": "cat_strolls", "kind": "cat"})
+		var door: Array = world.objects.filter(func(o): return o.get("name", "") == s["opens"] and not o["broken"])
+		var hs: Dictionary = plan.get("hints", {})
+		if not door.is_empty() and hs.has("locked"):
+			var at_it: bool = absf(hero.x - float(door[0]["x0"])) < 220.0 and hero.y < 1.0
+			at_door = at_door + 1 if at_it else 0
+			if at_door >= DOOR_HINT_TICKS:
+				_show_hint(hs["locked"])
+
+
 ## A goon knocked off a container stack (level 6, the team's page): he lands hurt (about half his health) and waits
 ## where he fell, not moving off his spot, till the hero comes down onto the quay near him.
 const FALLEN_HEALTH := 0.5
@@ -1547,6 +1600,20 @@ func _over_the_rail() -> void:
 
 ## When the bot should jump the crane's container: it's coming at him and about to reach him.
 func crane_jump_cue() -> bool:
+	if gap_jump_cue():
+		return true
+	return _crane_cue()
+
+
+## For the bot on a container stack (level 6): at a gap's lip, walking on, it jumps (a person would).
+func gap_jump_cue() -> bool:
+	if not plan["floors"][on].get("stacks", false) or hero.y < 1.0 or not hero.state in ["idle", "walk", "run"]:
+		return false
+	var ahead: float = hero.x + hero.facing * 45.0
+	return world.floor_at(ahead, hero.z, hero.y) < hero.y - Fighter.HIGH_EDGE and world.floor_at(ahead + hero.facing * 160.0, hero.z, hero.y + 1.0) >= hero.y - 1.0
+
+
+func _crane_cue() -> bool:
 	var box: Dictionary = crane.get("container", {})
 	if box.is_empty():
 		return false
@@ -1873,7 +1940,7 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 				elif from == "left" and o["x1"] < at and x < o["x1"] + 60.0:
 					x = o["x1"] + 60.0
 	_spawn(e["kind"], x, z, e.get("weapon", ""), -1.0, wave_index)
-	for k in ["calls", "whistles", "hard", "whistled"]:  # the lookout's: who he whistles in, and how many times; a hard
+	for k in ["calls", "whistles", "hard", "whistled", "calls_x", "calls_y", "paced"]:  # the lookout's: who he whistles in, and how many times; a hard
 		# version's tag; a goon he whistled in (the robot's numbers name him apart, the team's ask 11-05)
 		if e.has(k):
 			enemies[-1][k] = e[k]
@@ -1947,16 +2014,19 @@ func _waves() -> void:
 
 ## Where the way on is, for a bot: the x of a doorway or ladder on this floor once its waves are beaten, or -1.
 var goal_is_switch := false  # next_door() points at a switch to hit, not a way to walk through
+var goal_y := 0.0  # the height of the switch the bot should throw next (up on a stack: climb to it)
 
 
 func next_door() -> float:
 	goal_is_switch = false
+	goal_y = 0.0
 	if active_wave >= 0:
 		return -1.0
 	var switches: Array = plan.get("switches", [])
 	for i in switches.size():  # a switch on this floor still to throw first: it opens the way (a door, the crane's cab)
 		if int(switches[i]["floor"]) == on and not flipped.has(i) and _waves_done_before(switches[i]["x"]):
 			goal_is_switch = true
+			goal_y = float(switches[i].get("y", 0.0))
 			return float(switches[i]["x"])
 	for l in plan.get("links", []):  # (a way to a floor he hasn't been on; back down a ladder or a cable too)
 		if int(l["from"]) == on and not l.get("auto", false) and int(l["to"]) < on and not visited.has(int(l["to"])) and _waves_done_before(l["x"]) \
@@ -2073,6 +2143,10 @@ func _switches() -> void:
 		var s: Dictionary = switches[i]
 		if flipped.has(i) or int(s["floor"]) != on:
 			continue
+		if absf(hero.y - float(s.get("y", 0.0))) > 30.0:
+			continue  # (up on a stack, level 6: he has to be up there with it)
+		if s.get("cat", false) and not cats_moved.has(i):
+			continue  # the big white cat asleep on it: nothing doing till it strolls off (level 6)
 		if box["x0"] - SWITCH_REACH <= s["x"] and s["x"] <= box["x1"] + SWITCH_REACH:
 			flipped[i] = true
 			if s.get("crane", false):  # a crane switch: thrown for good, the container stops along this floor; all of them
@@ -2085,10 +2159,14 @@ func _switches() -> void:
 							if o.get("name", "") == "cab":
 								o["broken"] = true
 					events.append({"target": hero, "result": "cab_open", "kind": "switch"})
-			for fl in floors:
-				for o in fl["world"].objects:
-					if o.get("name", "") == s["opens"]:
-						o["broken"] = true  # an open door no longer blocks
+			var all_of_it: bool = range(switches.size()).filter(func(k): return switches[k].get("opens", "") == s["opens"]) \
+					.all(func(k): return flipped.has(k))  # (level 6's gate: both its switches)
+			if s["opens"] != "" and all_of_it:
+				for fl in floors:
+					for o in fl["world"].objects:
+						if o.get("name", "") == s["opens"]:
+							o["broken"] = true  # an open door no longer blocks
+				events.append({"target": hero, "result": "opened", "kind": "switch", "what": s["opens"]})
 
 
 func _downs() -> void:

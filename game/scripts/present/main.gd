@@ -959,7 +959,8 @@ func _marks() -> Array:
 	var sw: Array = level.plan.get("switches", [])
 	for i in sw.size():
 		if int(sw[i]["floor"]) == level.on:
-			out.append({"kind": "switch", "x": sw[i]["x"], "on": level.flipped.has(i)})
+			out.append({"kind": "switch", "x": sw[i]["x"], "on": level.flipped.has(i), "y": float(sw[i].get("y", 0.0)),
+				"cat": "asleep" if sw[i].get("cat", false) and not level.cats_moved.has(i) else ("up" if sw[i].get("cat", false) else "")})
 	return out
 
 
