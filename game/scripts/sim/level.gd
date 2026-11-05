@@ -122,6 +122,7 @@ const ROPES_DAZE := 70  # the tackle missed: he slams into the ropes and is open
 const VENDING_REACH := 30.0  # the machine falls across its own width and this much either side...
 const VENDING_FALL := 150.0  # ...onto the street in front of it, this deep
 const VENDING_DAMAGE := 2.0
+const CAB_CLIMB_BACK := 180  # the Crane Operator, shoved out the first time, is back in his cab this much later
 const SHOVE_TICKS := 50  # the Crane Operator flying out of his cab: this long
 const SHOVE_DISTANCE := 1150.0  # out through the cab's open door and off the screen
 const SHOVE_HEIGHT := 140.0  # up in an arc...
@@ -1210,6 +1211,8 @@ func _crane() -> void:
 		crane["warned"] = true
 		crane["from"] = -1.0 if hero.x > (b.x + b.y) * 0.5 else 1.0  # from the far side of him
 		events.append({"target": hero, "result": "crane_warn", "kind": "crane"})
+		if plan.get("hints", {}).has("crane"):
+			_show_hint(plan["hints"]["crane"])  # (the first time: "Jump it, or climb!")
 	if box.is_empty() and running and tick >= crane["next"]:
 		var dir: float = -crane.get("from", 1.0)
 		crane["container"] = {"x": b.x - CONTAINER_WIDTH if dir > 0.0 else b.y + CONTAINER_WIDTH, "dir": dir, "hit": false}
@@ -1553,10 +1556,30 @@ func _out_of_the_cab() -> void:
 		d.x = s["x0"] + s["dir"] * SHOVE_DISTANCE * p
 		d.y = SHOVE_HEIGHT * sin(PI * p) - SHOVE_DROP * p * p * p
 		if s["t"] >= SHOVE_TICKS:
+			if not e.get("came_back", false):  # the first time he climbs back up into his cab for a second round
+				e["came_back"] = true  # (the team's level 6 page: once, like Twin Loans; the second P P K ends it)
+				e.erase("shoved")
+				e["back_at"] = tick + CAB_CLIMB_BACK
+				e["cab_x"] = s["x0"]
+				d.x = -5000.0  # (down on the container below, out of sight, climbing)
+				d.y = 0.0
+				d._enter("idle")
+				e["brain"].wait = 9999
+				events.append({"target": d, "result": "out_of_cab", "kind": "out_of_cab", "again": true})
+				continue
 			d.health = 0.0
 			d._enter("ko")
 			e["gone"] = true  # out of the cab, down on the container below: out of the fight
 			events.append({"target": d, "result": "out_of_cab", "kind": "out_of_cab"})
+	for e in enemies:  # back up into the cab, same moves
+		if e.has("back_at") and tick >= e["back_at"]:
+			e.erase("back_at")
+			var d = e["f"]
+			d.x = e["cab_x"]
+			d.z = 80.0
+			d.facing = -1 if d.x > hero.x else 1
+			e["brain"].wait = 30
+			events.append({"target": d, "result": "climbs_back", "kind": "climbs_back"})
 
 
 ## The balcony's railing gap on this floor, [x0, x1] ([] if none).
@@ -2121,6 +2144,11 @@ func _links() -> void:
 
 
 func _go_to(floor_index: int, x: float, at_y := 0.0, at_z := 80.0) -> void:
+	if plan["floors"][floor_index].get("cab", false) and hero.weapon != "" and plan.get("cab_door_drop", false):
+		# no room to swing in the cab (level 6): he sets his weapon down at its door, and picks it up after
+		if plan.get("hints", {}).has("cab"):
+			_show_hint(plan["hints"]["cab"])
+		world.drop(hero.drop_weapon(), hero.x - 60.0, hero.z)
 	on = floor_index
 	hero.falls_hurt = plan["floors"][on].get("stacks", false)  # (container stacks: level 6's falls and edges)
 	visited[floor_index] = true

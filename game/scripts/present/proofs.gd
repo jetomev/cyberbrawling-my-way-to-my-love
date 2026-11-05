@@ -314,7 +314,7 @@ func inputs(level) -> Dictionary:
 				elif r == "shoved_out":
 					_say("P P K: the push kick SHOVES him out of the cab")
 				elif r == "out_of_cab":
-					_end("OUT of the cab, over the side and gone: that's it")
+					_end("OUT of the cab, over the side%s" % (": he'll climb back once for a second round (the next P P K ends it)" if ev.get("again", false) else " and gone: that's it"))
 			if h.state in ["punch", "cross", "power_punch"] and h.weapon == "pipe" and h.attack_serial != data.get("swing_serial", -1):
 				data["swing_serial"] = h.attack_serial
 				data["refused"] = data.get("refused", 0) + 1
@@ -576,7 +576,7 @@ func inputs(level) -> Dictionary:
 				match ev.get("result", ""):
 					"cab_open": _say("the third switch: the CAB door opens")
 					"horn": _say("in the cab: his HORN shoves the hero back")
-					"shoved_out": _end("P P K: SHOVED OUT of his cab, and that's it")
+					"shoved_out": _end("P P K: SHOVED OUT of his cab (the first time he climbs back for a second round)")
 			var op: Array = level.enemies.filter(func(e): return e["kind"] == "crane_operator")
 			if not op.is_empty() and op[0]["f"].defeated():
 				_end("the Crane Operator's down (by blows in the cab, not the push kick)")

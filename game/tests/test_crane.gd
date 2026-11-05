@@ -98,7 +98,7 @@ func test_all_three_switches_open_the_cab_and_its_no_room_for_a_weapon() -> void
 	eq(l.hero.state, "punch", "in the cab, a weapon in hand still throws a jab: no room to swing it")
 
 
-func test_a_push_kick_shoves_him_out_and_thats_it() -> void:
+func test_a_push_kick_shoves_him_out_he_climbs_back_once_and_the_second_ends_it() -> void:
 	var l = docks()
 	l._go_to(3, 150.0)
 	var op = l.enemies.filter(func(e): return e["kind"] == "crane_operator")[0]["f"]
@@ -118,7 +118,19 @@ func test_a_push_kick_shoves_him_out_and_thats_it() -> void:
 		out = out or l.events.any(func(ev): return ev.get("result", "") == "out_of_cab")
 	check(absf(op.x - x0) >= Level.SHOVE_DISTANCE - 1.0, "carried out past the cab's side (%.0f px)" % absf(op.x - x0))
 	check(top > 40.0, "in an arc, up and over (%.0f px up)" % top)
-	check(out and op.defeated(), "out of the cab, and that's it")
+	check(out and not op.defeated() and not l.won, "out of the cab, the first time: he climbs back (the team's level 6 page)")
+	var back := false
+	for i in Level.CAB_CLIMB_BACK + 5:
+		l.step({})
+		back = back or l.events.any(func(ev): return ev.get("result", "") == "climbs_back")
+	check(back and absf(op.x - x0) < 80.0, "back in his cab for a second round (%.0f px from where he stood)" % absf(op.x - x0))
+	l.events = [{"attacker": l.hero, "target": op, "result": "hit", "move": "push_kick"}]
+	l._shoved_out()
+	out = false
+	for i in Level.SHOVE_TICKS + 5:
+		l.step({})
+		out = out or l.events.any(func(ev): return ev.get("result", "") == "out_of_cab")
+	check(out and op.defeated(), "the second P P K: out, and that's it")
 	l.step({})
 	check(l.won, "the level's won")
 
