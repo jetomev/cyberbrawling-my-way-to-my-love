@@ -118,7 +118,7 @@ func ladder_near(x: float, z: float, y: float) -> Dictionary:
 	for o in objects:
 		if o["kind"] != "ladder" or absf(x - (o["x0"] + o["x1"]) * 0.5) > 40.0:
 			continue
-		if y < 1.0 and z <= o["z1"] + 50.0:
+		if absf(y - float(o.get("base", 0.0))) < 2.0 and z <= o["z1"] + 50.0:  # (a ladder can stand on a stack's top: level 6)
 			return {"ladder": o, "at": "foot"}
 		if absf(y - o["top"]) < 2.0:
 			return {"ladder": o, "at": "top"}

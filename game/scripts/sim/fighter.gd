@@ -56,6 +56,13 @@ var attack_serial := 0  # counts attacks, so a world can tell one blow from the 
 var air_kicked := false  # one air attack (flying kick or hammer fist) per jump
 var push_ticks := 0  # how long the stick has pushed into something climbable
 var climb_from := Vector2.ZERO  # (x, y) where a climb started
+const HIGH_EDGE := 150.0  # a drop deeper than this (a container stack's edge, level 6) nobody walks off by mistake, and the
+# hero is never knocked off; a step off a car, a crate or a stall stays a step
+const FALL_DROP := 160.0  # landing this far below where he left the ground: a fall (level 6's gaps; a car or a stall is lower)
+const FALL_DAMAGE := 3.0  # the hero's fall: no worse than a plain knockdown (level 6), and never his last life
+var air_from := 0.0  # the height he left the ground at (a jump, or a step off an edge)
+var moved_from := Vector2.ZERO  # where a step started (to take it back at a stack's edge)
+var fell := 0.0  # set on landing from a fall: how far (the level reads it, a goon's then waits below, hurt)
 var climb_to := Vector2.ZERO  # (x, y) where it ends, on top
 var climb_z := Vector2.ZERO  # up or down a ladder: the depth it starts from and ends at
 var on_ladder := false  # this climb is a ladder's (straight up or down, slower)
@@ -197,6 +204,7 @@ func step(inp: Dictionary) -> void:
 			if t >= tune["jump_squat_ticks"]:
 				vy = Tuning.takeoff_speed(tune)
 				vx = (mx if mx != 0.0 else squat_mx) * tune["jump_speed"]
+				air_from = y
 				_enter("jump")
 		"climb":
 			_climb()
@@ -282,13 +290,14 @@ func _ground(mx: float, mz: float, run := false) -> void:
 			var o: Dictionary = lad["ladder"]
 			var cx: float = (o["x0"] + o["x1"]) * 0.5
 			climb_from = Vector2(x, y)
-			climb_to = Vector2(cx, o["top"] if lad["at"] == "foot" else 0.0)
+			climb_to = Vector2(cx, o["top"] if lad["at"] == "foot" else float(o.get("base", 0.0)))
 			climb_z = Vector2(z, maxf(0.0, o["z0"] - 25.0) if lad["at"] == "foot" else o["z1"] + 30.0)
 			on_ladder = true
 			vx = 0.0
 			_enter("climb")
 			return
 	vx = mx * tune[speed] * (tune["limp"] if limping() else 1.0)
+	moved_from = Vector2(x, z)
 	var nx := clampf(x + vx, tune["street_left"], tune["street_right"])
 	if mx != 0.0:
 		facing = 1 if mx > 0.0 else -1
@@ -333,8 +342,12 @@ func _ground(mx: float, mz: float, run := false) -> void:
 		if not it.is_empty():
 			world.items.erase(it)
 			take_weapon(it["kind"])
+	if world != null and world.floor_at(x, z, y) < y - HIGH_EDGE and moved_from != Vector2(x, z):
+		x = moved_from.x  # a container stack's edge: nobody walks off it by mistake (only a missed jump drops him)
+		z = moved_from.y
 	if world != null and world.floor_at(x, z, y) < y - 0.5:
 		vy = 0.0  # walked off an edge: fall
+		air_from = y
 		_enter("jump")
 		return
 	var next := _rest()
@@ -398,6 +411,14 @@ func _air(mx: float) -> void:
 		y = ground
 		vy = 0.0
 		air_kicked = false
+		if air_from - y > FALL_DROP:  # a fall (a missed jump over a gap): no worse than a plain knockdown, never the last life
+			fell = air_from - y
+			air_from = y
+			if team == 0:
+				health = maxf(1.0 if health > 0.0 else 0.0, health - FALL_DAMAGE)
+			_enter("knockdown")
+			return
+		air_from = y
 		_enter("land")
 
 
@@ -411,6 +432,7 @@ func _start(action: String, mx: float) -> void:
 		else:
 			vy = Tuning.takeoff_speed(tune)
 			vx = mx * tune["jump_speed"]
+			air_from = y
 			_enter("jump")
 	elif action == "sweep":
 		# its own move on Z (Javier, 2026-11-02 19:28), outside the combos: it ends any chain
@@ -615,8 +637,16 @@ func _fall() -> void:
 
 func _slide(speed: float) -> void:
 	var nx := clampf(x + knock_dir * speed, tune["street_left"], tune["street_right"])
+	if team == 0 and world != null and y > 1.0 and world.floor_at(nx, z, y) < y - HIGH_EDGE:
+		return  # knocked to a stack's edge: it stops him (level 6: only his own missed jump drops him)
 	if not _blocked(nx, z):
 		x = nx
+	if world != null and y > 1.0 and world.floor_at(x, z, y) < y - HIGH_EDGE and not state in ["launch"]:
+		vy = 0.0  # a goon knocked off a stack's edge: down he goes (stairs and low things keep their own rules)
+		air_from = y
+		y -= 0.01
+		_enter("launch")
+		return
 	_settle()
 
 
@@ -661,6 +691,9 @@ func _react() -> void:
 			if y <= ground and vy < 0.0:
 				y = ground
 				vy = 0.0
+				if air_from - y > FALL_DROP:
+					fell = air_from - y  # (off a stack: the level makes him wait below, hurt)
+				air_from = y
 				_enter("ko" if health <= 0.0 else "down")
 		"down":
 			if t >= tune["down_ticks"]:

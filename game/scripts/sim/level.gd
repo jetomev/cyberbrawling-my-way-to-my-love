@@ -296,6 +296,8 @@ func restart() -> void:
 				obj["name"] = o[8]
 			if o.size() > 9:
 				obj["holds"] = o[9]  # a crate or a car with something inside: it falls out when it's smashed
+			if o.size() > 10:
+				obj["base"] = float(o[10])  # a ladder's foot, standing on a stack's top (level 6)
 		for it in f.get("items", []):  # food, first aid, a weapon lying ready; a 4th number: lying up high (a roof)
 			w.drop(it[0], it[1], it[2], it[3] if it.size() > 3 else 0.0)
 		floors.append({"name": f["name"], "length": f["length"], "world": w, "waves": f.get("waves", []), "wave": 0,
