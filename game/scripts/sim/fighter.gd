@@ -619,7 +619,8 @@ func _recover() -> void:
 
 ## Can a blow land on him now? Not while falling, lying or getting up (no hitting a man when he's down).
 func hittable() -> bool:
-	return not state in ["knockdown", "down", "get_up", "ko", "tumble"] and clock >= safe_until
+	return not state in ["knockdown", "down", "get_up", "ko", "tumble", "climb"] and clock >= safe_until  # (nobody fights on
+	# ladders, the house rule from levels 2 and 3: on one, nothing lands on him)
 
 
 func defeated() -> bool:

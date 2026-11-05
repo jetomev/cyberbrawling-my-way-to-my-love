@@ -1,12 +1,42 @@
 {
   "name": "Level 6 · The Docks",
-  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the quay and the container corridor (floor 1; the locked container opened by the switch one ladder up, on the ledge), the stacks (floor 2, the Whistler, gaps), the gate yard (floor 1, the gate opened by the switch on floor 3), the gate yard's top (floor 3), then the crane yard (three floors and the cab). NOT BUILT YET: the boss's white cat sitting on the first switch, the Whistler up a lamp two floors up, falling through a stack gap to floor 1, the gate's second switch (floor 2: one switch opens it here), the dockworker's shed as its own room. Balance ruling batch two (2026-11-04, under the pass mark): one Mechanic fewer on F0 s2, and on F0 s3 (the Whistler calls three, not four).",
-  "draft": true,
+  "about": "SETTLED (art-in 2026-11-05-level6-docks-agreed: Merry's second draft, agreed by Boromir and Pippin). One long quay in fog with container stacks you climb (floor 2 at 200, floor 3 at 400), ladders between them; falls only through the gaps by your own missed jump (never worse than a knockdown, never your last life), goons pushed off land hurt and wait below. Screen 1: two Mechanics and their toolbox, the big white cat asleep on the switch up on the ledge (stand by it and it strolls off; stand at the locked door and the hint comes). Screen 2: the corridor, a Doorman and two Mechanics. Screen 3: a Bruiser below, the Whistler up on floor 3 (two whistles of two Mechanics, paced from their arrival, never while you climb; a pork bun). Screen 4: floor 2 with two gaps, two Doormen and a Mechanic at the second (no wrench at you mid-jump), oranges. Screen 5: the shed, tea and the matchbook. Screen 6: the gate needs two switches (floor 2, floor 3); a pipe Bruiser, a Mauler and a Mechanic below, then a second Whistler and two Doormen at the floor 3 switch; the first-aid kit; the torn photo. 16 placed (6 Mechanics, 5 Doormen, 2 Bruisers, 2 Whistlers, 1 Mauler). Then the crane yard: the crane's container and crates, a switch a floor each (thrown, it calms its floor for good), the sandwich, the cab. NOT BUILT YET: the corridor's two lanes (it's the full depth), the oil-drum lid to throw (the throw key waits on Javier), the Whistler running lamp to lamp, the fallen goons gathering at the path down (they wait where they land), the lit lips (drawn next), the Crane Operator's second round and the weapon left at the cab door, the cat on the cab roof.",
   "floors": [
     {
-      "name": "The Docks: the quay and the container corridor",
-      "length": 5760,
+      "name": "The Docks: the quay, the stacks and the gate yard",
+      "length": 11520,
+      "stacks": true,
       "obstacles": [
+        [
+          "toolbox",
+          260,
+          320,
+          120,
+          144,
+          40,
+          false,
+          2
+        ],
+        [
+          "container",
+          820,
+          1220,
+          0,
+          60,
+          200,
+          false,
+          0
+        ],
+        [
+          "ladder",
+          940,
+          980,
+          60,
+          80,
+          200,
+          false,
+          0
+        ],
         [
           "door",
           1840,
@@ -29,155 +59,156 @@
           3
         ],
         [
-          "wall",
-          5740,
-          5780,
+          "container",
+          3900,
+          6260,
           0,
-          160,
-          500,
-          false,
-          0
-        ]
-      ],
-      "items": [],
-      "waves": [
-        {
-          "at": 900,
-          "enemies": [
-            {
-              "kind": "wrench_mechanic",
-              "from": "door",
-              "dx": 300
-            },
-            {
-              "kind": "wrench_mechanic",
-              "from": "door",
-              "dx": 450
-            }
-          ]
-        },
-        {
-          "at": 2800,
-          "enemies": [
-            {
-              "kind": "bruiser",
-              "from": "right",
-              "z": 80
-            },
-            {
-              "kind": "doorman",
-              "from": "right",
-              "z": 50
-            }
-          ]
-        },
-        {
-          "at": 4700,
-          "enemies": [
-            {
-              "kind": "bruiser",
-              "from": "right",
-              "z": 80
-            },
-            {
-              "kind": "lookout",
-              "dx": 700,
-              "z": 30,
-              "calls": "wrench_mechanic",
-              "whistles": 3,
-              "calls_x": 5250
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "The Docks: the ledge with the switch",
-      "length": 1200,
-      "obstacles": [],
-      "items": [],
-      "waves": []
-    },
-    {
-      "name": "The Docks: the stacks",
-      "length": 5760,
-      "obstacles": [
-        [
-          "gap",
-          2000,
-          2080,
-          0,
-          160,
-          60,
+          70,
+          200,
           false,
           0
         ],
         [
-          "gap",
-          3500,
-          3580,
+          "container",
+          4900,
+          5760,
           0,
-          160,
-          60,
+          40,
+          400,
           false,
           0
         ],
         [
-          "crate",
-          4500,
-          4580,
+          "ladder",
+          3990,
+          4030,
+          70,
+          90,
+          200,
+          false,
+          0
+        ],
+        [
+          "ladder",
+          4960,
+          5000,
+          40,
+          60,
+          400,
+          false,
           0,
-          30,
-          96,
-          true,
-          3,
           "",
-          "apple"
-        ]
-      ],
-      "items": [
-        [
-          "soda",
-          5200,
-          20
+          "",
+          200
         ],
         [
-          "matchbook",
-          5300,
-          40
-        ]
-      ],
-      "waves": [
-        {
-          "at": 2800,
-          "enemies": [
-            {
-              "kind": "doorman",
-              "from": "right",
-              "z": 60
-            },
-            {
-              "kind": "doorman",
-              "from": "right",
-              "z": 110
-            },
-            {
-              "kind": "wrench_mechanic",
-              "from": "right",
-              "z": 80
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "The Docks: the gate yard",
-      "length": 1920,
-      "obstacles": [
+          "container",
+          6380,
+          6980,
+          0,
+          70,
+          200,
+          false,
+          0
+        ],
+        [
+          "container",
+          7100,
+          7680,
+          0,
+          70,
+          200,
+          false,
+          0
+        ],
+        [
+          "ladder",
+          6420,
+          6460,
+          70,
+          90,
+          200,
+          false,
+          0
+        ],
+        [
+          "ladder",
+          7140,
+          7180,
+          70,
+          90,
+          200,
+          false,
+          0
+        ],
+        [
+          "ladder",
+          7620,
+          7660,
+          70,
+          90,
+          200,
+          false,
+          0,
+          "the path down"
+        ],
+        [
+          "container",
+          9700,
+          11300,
+          0,
+          70,
+          200,
+          false,
+          0
+        ],
+        [
+          "ladder",
+          9760,
+          9800,
+          70,
+          90,
+          200,
+          false,
+          0
+        ],
+        [
+          "container",
+          10900,
+          11300,
+          0,
+          40,
+          400,
+          false,
+          0
+        ],
+        [
+          "ladder",
+          10640,
+          10680,
+          70,
+          90,
+          200,
+          false,
+          0
+        ],
+        [
+          "ladder",
+          10950,
+          10990,
+          40,
+          60,
+          400,
+          false,
+          0,
+          "",
+          "",
+          200
+        ],
         [
           "door",
-          1700,
-          1740,
+          11400,
+          11440,
           0,
           160,
           300,
@@ -186,67 +217,180 @@
           "gate"
         ]
       ],
-      "items": [
+      "lit_lips": [
         [
-          "photo",
-          1600,
-          10
+          6260,
+          200
+        ],
+        [
+          6380,
+          200
+        ],
+        [
+          6980,
+          200
+        ],
+        [
+          7100,
+          200
         ]
       ],
+      "items": [
+        [
+          "oranges",
+          7400,
+          20,
+          200
+        ],
+        [
+          "tea",
+          8640,
+          40
+        ],
+        [
+          "matchbook",
+          8400,
+          30
+        ],
+        [
+          "first_aid",
+          11150,
+          15,
+          400
+        ],
+        [
+          "photo",
+          11380,
+          140
+        ]
+      ],
+      "signs": [],
       "waves": [
         {
           "at": 900,
           "enemies": [
             {
-              "kind": "bruiser",
+              "kind": "wrench_mechanic",
               "from": "right",
-              "z": 60
-            },
-            {
-              "kind": "bruiser",
-              "from": "right",
-              "z": 110
+              "z": 100
             },
             {
               "kind": "wrench_mechanic",
-              "from": "left",
-              "z": 80
+              "from": "right",
+              "z": 140
             }
           ]
-        }
-      ]
-    },
-    {
-      "name": "The Docks: the gate yard, floor 3",
-      "length": 1920,
-      "obstacles": [],
-      "items": [
-        [
-          "first_aid",
-          1400,
-          40
-        ]
-      ],
-      "waves": [
+        },
         {
-          "at": 900,
+          "at": 2700,
+          "enemies": [
+            {
+              "kind": "doorman",
+              "from": "right",
+              "z": 100
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 120
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 140,
+              "after_down": 1
+            }
+          ]
+        },
+        {
+          "at": 4500,
+          "enemies": [
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 110
+            },
+            {
+              "kind": "lookout",
+              "dx": 1000,
+              "z": 20,
+              "y": 400,
+              "calls": "wrench_mechanic",
+              "whistles": 2,
+              "paced": true,
+              "drops": "pork_bun"
+            }
+          ]
+        },
+        {
+          "at": 6600,
+          "enemies": [
+            {
+              "kind": "doorman",
+              "dx": 350,
+              "z": 30,
+              "y": 200
+            },
+            {
+              "kind": "doorman",
+              "dx": 560,
+              "z": 40,
+              "y": 200
+            },
+            {
+              "kind": "wrench_mechanic",
+              "dx": 800,
+              "z": 30,
+              "y": 200
+            }
+          ]
+        },
+        {
+          "at": 9900,
+          "enemies": [
+            {
+              "kind": "bruiser",
+              "from": "right",
+              "z": 110,
+              "weapon": "pipe"
+            },
+            {
+              "kind": "grabber",
+              "from": "right",
+              "z": 130
+            },
+            {
+              "kind": "wrench_mechanic",
+              "from": "right",
+              "z": 90
+            }
+          ]
+        },
+        {
+          "at": 10700,
           "enemies": [
             {
               "kind": "lookout",
-              "dx": 500,
-              "z": 40,
+              "dx": 400,
+              "z": 15,
+              "y": 400,
               "calls": "wrench_mechanic",
-              "whistles": 1
+              "whistles": 1,
+              "paced": true,
+              "calls_x": 10970,
+              "calls_y": 400
             },
             {
               "kind": "doorman",
-              "from": "right",
-              "z": 60
+              "dx": 300,
+              "z": 30,
+              "y": 400
             },
             {
               "kind": "doorman",
-              "from": "right",
-              "z": 110
+              "dx": 200,
+              "z": 25,
+              "y": 400
             }
           ]
         }
@@ -265,7 +409,7 @@
       "obstacles": [],
       "items": [
         [
-          "soda",
+          "sandwich",
           1000,
           30
         ]
@@ -303,97 +447,64 @@
   "links": [
     {
       "from": 0,
-      "x": 1500,
+      "x": 11500,
       "to": 1,
-      "to_x": 300,
-      "kind": "ladder"
-    },
-    {
-      "from": 1,
-      "x": 900,
-      "to": 0,
-      "to_x": 1500,
-      "kind": "ladder"
-    },
-    {
-      "from": 0,
-      "x": 5500,
-      "to": 2,
-      "to_x": 300,
-      "kind": "ladder"
-    },
-    {
-      "from": 2,
-      "x": 5600,
-      "to": 3,
-      "to_x": 300,
-      "requires_clear": true
-    },
-    {
-      "from": 3,
-      "x": 300,
-      "to": 4,
-      "to_x": 300,
-      "kind": "ladder"
-    },
-    {
-      "from": 4,
-      "x": 1700,
-      "to": 3,
-      "to_x": 400,
-      "kind": "ladder"
-    },
-    {
-      "from": 3,
-      "x": 1850,
-      "to": 5,
       "to_x": 200,
       "auto": true
     },
     {
-      "from": 5,
+      "from": 1,
       "x": 1700,
-      "to": 6,
+      "to": 2,
       "to_x": 200
     },
     {
-      "from": 6,
+      "from": 2,
       "x": 1700,
-      "to": 7,
+      "to": 3,
       "to_x": 200
     },
     {
-      "from": 7,
+      "from": 3,
       "x": 1700,
-      "to": 8,
+      "to": 4,
       "to_x": 150
     }
   ],
   "switches": [
     {
-      "floor": 1,
-      "x": 600,
-      "opens": "container"
+      "floor": 0,
+      "x": 1120,
+      "y": 200,
+      "opens": "container",
+      "cat": true
     },
     {
-      "floor": 4,
-      "x": 1200,
+      "floor": 0,
+      "x": 9900,
+      "y": 200,
       "opens": "gate"
     },
     {
-      "floor": 5,
+      "floor": 0,
+      "x": 11200,
+      "y": 400,
+      "opens": "gate"
+    },
+    {
+      "floor": 1,
       "x": 900,
       "opens": "",
       "crane": true
     },
     {
-      "floor": 6,
+      "floor": 2,
       "x": 1000,
       "opens": "",
       "crane": true
     },
     {
-      "floor": 7,
+      "floor": 3,
       "x": 1100,
       "opens": "",
       "crane": true
@@ -401,15 +512,23 @@
   ],
   "crane": {
     "floors": [
-      5,
-      6,
-      7
+      1,
+      2,
+      3
     ]
   },
   "boss": {
-    "floor": 8,
+    "floor": 4,
     "x": 650,
-    "kind": "crane_operator"
+    "kind": "crane_operator",
+    "drops": "knife"
   },
-  "after_chrome": true
+  "after_chrome": true,
+  "hints": {
+    "locked": "The door's locked. Somebody's sitting on the switch.",
+    "edge": "Jump the gap, or push them down it.",
+    "crane": "Jump it, or climb!",
+    "cab": "No room to swing in there. Fists and feet!"
+  },
+  "start_weapon": "pipe"
 }

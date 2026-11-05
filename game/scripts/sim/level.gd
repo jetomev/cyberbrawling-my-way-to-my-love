@@ -692,6 +692,12 @@ func _roster_tricks() -> void:
 		if e.get("kind", "") == "lookout" and active_wave >= 0:  # he runs from the hero, but not off the locked screen:
 			var b := bounds()  # cornered, one hit drops him (the team's level 3)
 			f.x = clampf(f.x, b.x + 30.0, b.y - 30.0)
+		if e.get("kind", "") == "lookout" and f.y > 1.0 and f.state in ["idle", "walk", "run"]:
+			for o in world.objects:  # up on a stack (level 6): he runs along it, never off its edge
+				if o["solid"] and absf(float(o["top"]) - f.y) < 1.0 and f.x > o["x0"] - 40.0 and f.x < o["x1"] + 40.0 \
+						and f.z < o["z1"] + 6.0:
+					f.x = clampf(f.x, o["x0"] + 10.0, o["x1"] - 10.0)
+					break
 		var paced: bool = e.get("paced", false)  # (level 6's Whistlers: the team's page times them from arrivals)
 		if e.get("kind", "") == "lookout" and paced and e.has("called") and not e.has("next_whistle_set"):
 			# the next whistle: six seconds after the last he called is in the fight (by the hero, or down: level 6's page)
@@ -1353,6 +1359,11 @@ func climb_cue() -> Dictionary:
 	for e in enemies:
 		if e["gone"] or e["f"].defeated() or e.has("ride") or e.get("waits_below", false):
 			continue
+		if e.get("kind", "") == "lookout" and e["f"].y - hero.y >= 60.0:
+			foe = e["f"]  # a Whistler up above: him first, the way a person learns to (level 6's screen 3)
+			break
+		if absf(e["f"].y - hero.y) < 60.0 and e["f"].flight().is_empty() == hero.flight().is_empty():
+			return {}  # someone to fight on his own level: that first (no climbing away from a fight)
 		if foe == null or absf(e["f"].x - hero.x) < absf(foe.x - hero.x):
 			foe = e["f"]
 	var want: float = -1.0  # the height to get to: the foe's, or (nobody to fight) a switch's up on a stack
@@ -1374,6 +1385,10 @@ func climb_cue() -> Dictionary:
 		var cx: float = (o["x0"] + o["x1"]) * 0.5
 		if best.is_empty() or absf(cx - hero.x) < absf(best["x"] - hero.x):
 			best = {"x": cx, "z": o["z1"] + 10.0 if up else maxf(0.0, o["z0"] - 25.0), "mz": -1.0 if up else 1.0}
+	if not best.is_empty():  # in line first, unless he stands at a ladder's top (a step in depth there takes him down it)
+		best["z_first"] = not world.objects.any(func(o): return o["kind"] == "ladder" \
+				and (absf(float(o["top"]) - hero.y) < 2.0 or absf(float(o.get("base", 0.0)) - hero.y) < 2.0) \
+				and absf((o["x0"] + o["x1"]) * 0.5 - hero.x) < 50.0)  # (at either end of another ladder: off it sideways first)
 	return best
 
 
@@ -2025,8 +2040,8 @@ func next_door() -> float:
 	var switches: Array = plan.get("switches", [])
 	for i in switches.size():  # a switch on this floor still to throw first: it opens the way (a door, the crane's cab)
 		if int(switches[i]["floor"]) == on and not flipped.has(i) and _waves_done_before(switches[i]["x"]):
-			goal_is_switch = true
 			goal_y = float(switches[i].get("y", 0.0))
+			goal_is_switch = absf(goal_y - hero.y) < 30.0  # (up on a stack: climb to it first, then hit it)
 			return float(switches[i]["x"])
 	for l in plan.get("links", []):  # (a way to a floor he hasn't been on; back down a ladder or a cable too)
 		if int(l["from"]) == on and not l.get("auto", false) and int(l["to"]) < on and not visited.has(int(l["to"])) and _waves_done_before(l["x"]) \

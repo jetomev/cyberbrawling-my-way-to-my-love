@@ -30,10 +30,24 @@ func _init(hero, dice_seed := 1) -> void:
 
 
 func think(enemies: Array) -> Dictionary:
+	var inp: Dictionary = _think(enemies)
+	# at a ladder's foot "up" climbs it, at its top "down" does: a step in depth to line up on someone there isn't a
+	# climb, so it's dropped unless he means to climb (the level's climb cue)
+	if me.world != null and climb.is_empty() and absf(inp.get("mz", 0.0)) > 0.5:
+		var lad: Dictionary = me.world.ladder_near(me.x, me.z, me.y)
+		if not lad.is_empty() and ((lad["at"] == "foot" and inp["mz"] < 0.0) or (lad["at"] == "top" and inp["mz"] > 0.0)):
+			inp.erase("mz")
+	return inp
+
+
+func _think(enemies: Array) -> Dictionary:
 	tick += 1
 	var inp := {}
 	var foe = null
 	for e in enemies:
+		if me.world != null and e.flight().is_empty() and me.flight().is_empty() \
+				and absf(me.world.floor_at(e.x, e.z, e.y + 1.0) - me.world.floor_at(me.x, me.z, me.y + 1.0)) > 180.0:
+			continue  # (standing up on a stack, or below it: out of reach; the level's climb cue takes him there)
 		if not e.defeated() and (foe == null or absf(e.x - me.x) < absf(foe.x - me.x)):
 			foe = e
 	if jump_cue and me.state in ["idle", "walk", "block", "run"]:
@@ -42,8 +56,12 @@ func think(enemies: Array) -> Dictionary:
 			inp["mx"] = float(me.facing)
 		return inp
 	if not climb.is_empty() and me.state in ["idle", "walk", "block", "run"]:
-		if absf(me.x - climb["x"]) > 10.0 or absf(me.z - climb["z"]) > 10.0:  # to the ladder, then onto it
+		var z_first: bool = climb.get("z_first", false)  # (in line with its foot first, past a stack's side; but at another
+		if z_first and absf(me.z - climb["z"]) > 10.0:  # ladder's top, along first: a step in depth there takes him down it)
+			inp["mz"] = clampf((climb["z"] - me.z) / 16.0, -1.0, 1.0)
+		elif absf(me.x - climb["x"]) > 10.0:
 			inp["mx"] = clampf((climb["x"] - me.x) / 20.0, -1.0, 1.0)
+		elif absf(me.z - climb["z"]) > 10.0:
 			inp["mz"] = clampf((climb["z"] - me.z) / 16.0, -1.0, 1.0)
 		else:
 			inp["mz"] = climb["mz"]

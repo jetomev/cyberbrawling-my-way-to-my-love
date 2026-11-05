@@ -656,9 +656,9 @@ func test_the_bot_plays_level_three_and_is_never_stuck() -> void:
 func test_the_draft_levels_load_and_say_so() -> void:
 	var names: Array = Level.load_data("res://levels/levels.json")["levels"]
 	eq(names.size(), 10, "all ten levels in the play order")
-	for n in ["level3", "level4", "level5"]:  # (settled from the team's agreed pages)
+	for n in ["level3", "level4", "level5", "level6"]:  # (settled from the team's agreed pages)
 		check(not Level.load_data("res://levels/%s.json" % n).get("draft", false), "%s is settled, not a draft" % n)
-	for n in ["level6", "level7", "level8", "level9", "level10"]:
+	for n in ["level7", "level8", "level9", "level10"]:
 		var d: Dictionary = Level.load_data("res://levels/%s.json" % n)
 		check(d.get("draft", false), "%s is marked a draft" % n)
 		check(d["about"].contains("NOT BUILT YET"), "%s lists what isn't built yet" % n)
