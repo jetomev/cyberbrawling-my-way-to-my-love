@@ -25,6 +25,10 @@ const Fight := preload("res://scripts/sim/fight.gd")
 const Brain := preload("res://scripts/sim/brain.gd")
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const Level := preload("res://scripts/sim/level.gd")
+const BossRush := preload("res://scripts/sim/boss_rush.gd")
+## The score on screen (a number top right, a tally at each level's end): the team's proposal, waiting on Javier's yes.
+## Counted all along; switched on here.
+const SHOW_SCORE := false
 const Trials := preload("res://scripts/present/trials.gd")
 const Scenes := preload("res://scripts/present/scenes.gd")
 const Proofs := preload("res://scripts/present/proofs.gd")
@@ -105,6 +109,18 @@ var story := {}
 var pages: Array = []  # the story lines still to show
 var then := ""  # after the pages: "level" (play the current level) or "title"
 var screen_ticks := 0
+var name_mz := 0.0
+var chosen_hero := "man"  # picked on the title, before the mode
+var mode_options := ["normal", "harder", "rush", "helper"]
+var mode_choice := 0
+var helper_on := false  # the helper's switch, on the start screen until Javier names a pause key
+var offer_choice := 0  # "Another life?": 0 yes, 1 no
+var name_letters := [0, 0, 0]  # the neon letters being typed (A=0)
+var name_at := 0
+var after_name := []  # [lines, next]: the story pages that follow the letters
+var neon_next := false  # the letters go up on the next level's first screen
+var rush_carry := {}  # the boss rush: what the run carries from fight to fight
+var score_label: Label
 var sound
 var sign_view: Node2D  # a level's signs on the wall behind the street (level 4's flickering gym sign), every frame
 var flying_view: Node2D  # thrown things (DJ Volt's records) and his bass wave, redrawn every frame
@@ -261,6 +277,17 @@ func _mark() -> void:
 
 ## Level 1, played: the level steps everyone; this draws what it holds and says how it stands.
 func _play_level() -> void:
+	if SHOW_SCORE and bot == null and scene == null:  # the running total, top right beside the health bar (the proposal)
+		if score_label == null:
+			score_label = Label.new()
+			score_label.position = Vector2(1500, 18)
+			score_label.add_theme_font_size_override("font_size", 30)
+			$Hud.add_child(score_label)
+		score_label.text = _fmt(level.bank + level.score)
+	if level.life_offer and bot == null and scene == null:  # the helper: "Another life for 2,000?"
+		offer_choice = 0
+		_show_screen("offer")
+		return
 	if (level.won or level.lost) and scene != null:
 		scene.inputs(level)  # a scripted scene sees its ending (its last events, the win) and ends; no restart
 		_play_scene()
@@ -279,17 +306,37 @@ func _play_level() -> void:
 				print("LEVEL %s at tick %d, lives %d" % ["WON" if level.won else "LOST", level.tick, level.lives])
 				get_tree().quit()
 				return
+			if progress != null and progress.mode == "rush":
+				_after_rush_fight()
+				return
 			if level.won and progress != null:
+				progress.total = level.bank  # (the helper's price may have come off the earlier levels)
+				progress.add_score(level.score, level.helper_used)
 				progress.cat = progress.cat or level.cat_fed  # the cat comes along (saved with the next level's start)
 				var won_no: int = progress.level + 1
 				var after: Array = story.get("after", {}).get(str(won_no), [])
+				var clean: bool = level.hits_taken == 0
+				var lines: Array
+				var next: String
 				if progress.level_won():  # the last level there is
+					next = "title"
 					if won_no >= LAST_LEVEL:
-						_show_pages(after + story.get("ending", []), "title")
+						var lit: Array = ["%s, IN NEON OVER THE CITY." % progress.name] if clean and progress.name != "" else []
+						lines = after + lit + story.get("ending", [])  # (a clean level 10 lights the letters in the ending)
 					else:
-						_show_pages(after + ["The rest of the route is still being built. Come back soon."], "title")
+						lines = after + ["The rest of the route is still being built. Come back soon."]
 				else:  # on to the next, fresh-bodied, saved at its start
-					_show_pages(after + story.get("before", {}).get(str(won_no + 1), []), "level")
+					next = "level"
+					lines = after + story.get("before", {}).get(str(won_no + 1), [])
+				if SHOW_SCORE:
+					lines = [_tally_text()] + lines
+				if clean and progress.name == "" and won_no < LAST_LEVEL:  # the first level without a hit: the letters
+					after_name = [lines, next]
+					name_letters = [0, 0, 0]
+					name_at = 0
+					_show_screen("name")
+				else:
+					_show_pages(lines, next)
 				return
 			level.restart()
 	else:
@@ -478,7 +525,7 @@ func _show_title() -> void:
 		var parsed = JSON.parse_string(FileAccess.get_file_as_string(STORY_FILE))
 		story = parsed if parsed is Dictionary else {}
 	title_options = []
-	if progress.has_save():
+	if progress.has_save() and progress.mode != "rush":
 		title_options.append("continue")
 	title_options.append_array(["man", "woman"])
 	title_choice = 0
@@ -520,8 +567,28 @@ func _draw_screen() -> void:
 			for i in title_options.size():
 				var n: String = names[title_options[i]]
 				row.append("▶ %s ◀" % n if i == title_choice else n.to_lower())
-			title_label.text = "CYBERBRAWLING MY WAY TO MY LOVE!\n\n%s\n\n%s\n\n←  →  to choose   ·   A  to start" % [
-				"\n".join(choose.get("lines", ["Choose your hero"])), "     ".join(row)]
+			title_label.text = "CYBERBRAWLING MY WAY TO MY LOVE!\n\n%s\n\n%s\n\n←  →  to choose   ·   A  to start\n\n%s" % [
+				"\n".join(choose.get("lines", ["Choose your hero"])), "     ".join(row), _best_line()]
+		"mode":
+			var names := {"normal": "THE GAME", "harder": "HARDER", "rush": "BOSS RUSH", "helper": "HELPER: %s" % ("ON" if helper_on else "OFF")}
+			var row := []
+			for i in mode_options.size():
+				var n: String = names[mode_options[i]]
+				row.append("▶ %s ◀" % n if i == mode_choice else n.to_lower())
+			title_label.text = "HOW DO YOU WANT IT?\n\n%s\n\n(the helper: when your last life goes, another for 2,000 of your score)\n\n%s" % [
+				"     ".join(row), _best_line()]
+		"offer":
+			var opts := ["YES", "NO"]
+			var row := []
+			for i in 2:
+				row.append("▶ %s ◀" % opts[i] if i == offer_choice else opts[i].to_lower())
+			title_label.text = "ANOTHER LIFE FOR %s?\n\n%s" % [_fmt(level.life_price()), "     ".join(row)]
+		"name":
+			var shown := ""
+			for i in 3:
+				var ch: String = char(65 + name_letters[i])
+				shown += ("[%s]" % ch if i == name_at else " %s " % ch)
+			title_label.text = "NOT A SCRATCH!\nYOUR NAME GOES UP IN NEON.\n\n%s\n\n↑ ↓ to change   ·   A  for the next letter" % shown
 		"pages":
 			title_label.text = (pages[0] if not pages.is_empty() else "") + "\n\n\n(A to go on)"
 
@@ -544,9 +611,53 @@ func _play_screen() -> void:
 				if pick == "continue":
 					_show_pages(story.get("before", {}).get(str(progress.level + 1), []), "level")
 				else:
-					progress.new_game(pick)
-					_show_pages([story.get("choose", {}).get("chosen", "")] + story.get("opening", []) +
-						story.get("before", {}).get("1", []), "level")
+					chosen_hero = pick
+					mode_choice = 0
+					_show_screen("mode")
+		"mode":
+			if mx != 0.0 and mx != title_mx:
+				mode_choice = wrapi(mode_choice + int(mx), 0, mode_options.size())
+				_draw_screen()
+			if go:
+				var m: String = mode_options[mode_choice]
+				if m == "helper":
+					helper_on = not helper_on
+					screen_ticks = 0
+					_draw_screen()
+				else:
+					progress.new_game(chosen_hero, m, helper_on)
+					rush_carry = BossRush.fresh_carry()
+					if m == "rush":
+						_show_pages(["THE BOSS RUSH.", "Nine of them, one after another. Three lives for the lot. Win their prizes as you go."], "level")
+					else:
+						_show_pages([story.get("choose", {}).get("chosen", "")] + story.get("opening", []) +
+							story.get("before", {}).get("1", []), "level")
+		"offer":
+			if mx != 0.0 and mx != title_mx:
+				offer_choice = 1 - offer_choice
+				_draw_screen()
+			if go:
+				screen = ""
+				title_label.visible = false
+				if offer_choice == 0:
+					level.buy_life()
+				else:
+					level.decline_life()
+		"name":
+			var mz: float = signf(inp.get("mz", 0.0))
+			if mz != 0.0 and mz != name_mz:
+				name_letters[name_at] = wrapi(name_letters[name_at] - int(mz), 0, 26)
+				_draw_screen()
+			name_mz = mz
+			if go:
+				name_at += 1
+				screen_ticks = 0
+				if name_at >= 3:
+					progress.set_name("".join(name_letters.map(func(n): return char(65 + n))))
+					neon_next = true
+					_show_pages(after_name[0], after_name[1])
+				else:
+					_draw_screen()
 		"pages":
 			if go or screen_ticks >= PAGE_TICKS:
 				pages.pop_front()
@@ -580,7 +691,18 @@ func _after_pages() -> void:
 
 ## A level from its file, fresh: the hero as chosen, at full health with no pain (it heals between levels).
 func _start_level(file: String, who: String) -> void:
-	level = Level.new(Level.load_data(file), tune, 1)
+	if progress != null and progress.mode == "rush":
+		level = BossRush.start(progress.level, rush_carry, tune, 1)  # the boss rush: the next boss, in his room
+	else:
+		level = Level.new(Level.load_data(file), tune, 1)
+	if progress != null:
+		level.harder = progress.mode == "harder"
+		level.helper = progress.helper
+		level.bank = progress.total
+		if neon_next and progress.name != "":  # the letters up in neon on this level's first screen (the team's list)
+			neon_next = false
+			var fl: Dictionary = level.plan["floors"][level.on]
+			fl["signs"] = fl.get("signs", []) + [[level.hero.x + 700.0, 360, progress.name]]
 	if progress != null and progress.cat:
 		level.cat_fed = true
 		level.cat = Vector2(level.hero.x - 90.0, 80.0)
@@ -604,6 +726,53 @@ func _start_level(file: String, who: String) -> void:
 	flips_seen = -1
 	ended_for = 0
 	bars["hero"][0].visible = true
+
+
+## A boss rush fight over: won, on to the next boss with his prize (or the end); lost, the run's over.
+func _after_rush_fight() -> void:
+	if level.lost:
+		progress.forget()
+		_show_pages(["The boss rush is over.", "Best: %s" % _best_line()], "title")
+		return
+	progress.total = level.bank
+	progress.add_score(level.score, level.helper_used)  # (each fight's end scores like a level won)
+	rush_carry = BossRush.carry_out(level)
+	progress.level += 1
+	var lines: Array = [_tally_text()] if SHOW_SCORE else []
+	if progress.level >= BossRush.fights().size():
+		progress.forget()
+		_show_pages(lines + ["ALL NINE. THE BOSS RUSH IS BEATEN.", "%s for the run." % _fmt(progress.total)], "title")
+	else:
+		_show_pages(lines + ["Next."], "level")
+
+
+## A number as the game writes it: 12,345.
+static func _fmt(n: int) -> String:
+	var t := str(absi(n))
+	var out := ""
+	while t.length() > 3:
+		out = "," + t.right(3) + out
+		t = t.left(t.length() - 3)
+	return ("-" if n < 0 else "") + t + out
+
+
+## The title's best scores, one per mode (a ✚ beside one made with the helper).
+func _best_line() -> String:
+	if progress == null:
+		return ""
+	var parts := []
+	for m in [["normal", "the game"], ["harder", "harder"], ["rush", "boss rush"]]:
+		var b: Dictionary = progress.best.get(m[0], {})
+		parts.append("%s %s%s" % [m[1], _fmt(int(b.get("score", 0))) if b.has("score") else "—", " ✚" if b.get("mark", false) else ""])
+	return "BEST:  " + "   ·   ".join(parts)
+
+
+## The level's end tally (the team's proposal; shown only with SHOW_SCORE): goons, finishers, finds, health, no-hit.
+func _tally_text() -> String:
+	var p: Dictionary = level.score_parts
+	return "GOONS %s   FINISHERS %s   BLOCKS %s   FINDS %s   HEALTH %s   NO HIT %s\nTHIS LEVEL %s   ·   RUN %s" % [
+		_fmt(p.get("goons", 0) + p.get("bosses", 0)), _fmt(p.get("finishers", 0)), _fmt(p.get("blocks", 0)), _fmt(p.get("finds", 0)),
+		_fmt(p.get("health", 0)), _fmt(p.get("no_hit", 0)), _fmt(level.score), _fmt(level.bank + level.score)]
 
 
 ## The sparring friend, drawn friendly green, and his lesson's hint near the top of the screen.
