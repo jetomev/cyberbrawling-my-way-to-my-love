@@ -191,6 +191,8 @@ func _draw_object(n: Node2D, o: Dictionary) -> void:
 			n.draw_rect(r, EDGE, false, 2.0)
 		return
 	var top: float = o["top"]
+	if o["kind"] == "bag":  # level 4's punching bag: drawn swinging every frame in main.gd's flying layer
+		return
 	if o["kind"] == "gap":  # a gap in the fire escape: the dark street far below shows through (jump it)
 		n.draw_rect(Rect2(o["x0"], far, w, near - far), Color(0.04, 0.04, 0.06))
 		n.draw_line(Vector2(o["x0"], far), Vector2(o["x0"], near), Color(0.5, 0.5, 0.55), 4.0)

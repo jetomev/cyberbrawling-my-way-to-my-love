@@ -147,6 +147,7 @@ func step_hits(fighters: Array) -> Array:
 				o["hit_team"] = f.team  # (the side and the move, not the fighter: no reference kept)
 				o["hit_move"] = f.state
 				o["hit_kick"] = f.from_kick
+				o["hit_x"] = f.x  # (where the blow came from: level 4's punching bag swings away from it)
 				o["strength"] -= blow["damage"]
 				if o["strength"] <= 0:
 					o["broken"] = true

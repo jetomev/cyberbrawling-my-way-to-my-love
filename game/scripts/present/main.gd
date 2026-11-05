@@ -772,6 +772,24 @@ func _draw_flying() -> void:
 					pts.append(Vector2(ex + side * give, Street.GROUND_Y + float(hit["z"]) - hgt))
 				pts.append(Vector2(ex, Street.GROUND_Y + depth - hgt))
 				flying_view.draw_polyline(pts, [Color(0.9, 0.2, 0.2), Color(0.95, 0.95, 0.95), Color(0.2, 0.35, 0.9)][k], 5.0)
+	for o in level.world.objects:  # level 4's punching bag on its chain, swinging when hit
+		if o["kind"] != "bag":
+			continue
+		var mid := Vector2((float(o["x0"]) + float(o["x1"])) * 0.5, Street.GROUND_Y + (float(o["z0"]) + float(o["z1"])) * 0.5)
+		var age: int = level.tick - int(o.get("swing_at", -9999))
+		var swing: float = 0.0
+		if age >= 0 and age < level.BAG_SWING:
+			swing = float(o.get("swing_dir", 1.0)) * 0.6 * sin(PI * float(age) / level.BAG_SWING)
+		var hook := mid + Vector2(0.0, -float(o["top"]) - 120.0)
+		var down := Vector2(sin(swing), cos(swing))
+		var bag_top := hook + down * 120.0
+		flying_view.draw_line(hook, bag_top, Color(0.35, 0.35, 0.38), 4.0)  # the chain
+		var across: Vector2 = Vector2(down.y, -down.x) * (float(o["x1"]) - float(o["x0"])) * 0.5
+		var bag_end: Vector2 = bag_top + down * (float(o["top"]) - 40.0)
+		var body := PackedVector2Array([bag_top - across, bag_top + across, bag_end + across, bag_end - across])
+		flying_view.draw_colored_polygon(body, Color(0.62, 0.16, 0.16))
+		flying_view.draw_polyline(body + PackedVector2Array([body[0]]), Color(0.08, 0.08, 0.1), 3.0)
+		flying_view.draw_line(bag_top + down * 30.0 - across, bag_top + down * 30.0 + across, Color(0.85, 0.85, 0.8), 4.0)  # its band
 	var fl_plan: Dictionary = level.plan["floors"][level.on]
 	if fl_plan.has("railing_gap"):  # level 4's balcony: a low railing along its front edge, broken by the gap
 		var g: Array = fl_plan["railing_gap"]

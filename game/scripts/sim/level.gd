@@ -114,6 +114,12 @@ const SHOVE_DROP := 260.0  # ...and down past the cab's floor as he goes over th
 ## Level 4's balcony gap (the team's page, Javier's yes 2026-11-04): a goon standing at the gap in the low railing, at the
 ## balcony's front edge, push-kicked or knocked down, tips over the bar and drops to the ring hall below: out of the
 ## fight, counted as beaten, nothing dropped. The hero never goes over (the street's edge holds him: for him it's a wall).
+## Level 4's punching bag (the team's page, screen 2): hit it and it swings away from the blow, into whoever stands behind
+## it, a knockdown; it never breaks.
+const BAG_SWING := 40  # a swing out and back, this long; a new blow only swings it again once it's back
+const BAG_HIT_AT := 9  # frames into the swing when it reaches whoever's behind it (about its widest)
+const BAG_REACH := 110.0  # how far behind it the swing reaches, past its edge
+const BAG_DAMAGE := 2.0
 const GAP_REACH := 45.0  # how near the front edge he must stand to be "at the gap"
 const GAP_TICKS := 40  # tipping over the bar and dropping out of sight
 const GAP_FORWARD := 60.0  # out past the railing...
@@ -519,6 +525,7 @@ func step(inp: Dictionary) -> void:
 	_through_the_gap()
 	_over_the_rail()
 	_vending()
+	_bag()
 	_stairs()
 	_switches()
 	_waves()
@@ -1124,6 +1131,32 @@ func _vending() -> void:
 						f.take_hit({"damage": VENDING_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "vending",
 							"from_above": true}, {"x": x, "y": 0.0})
 						events.append({"target": f, "result": "hit", "kind": "vending", "move": "vending"})
+
+
+## Level 4's punching bag: a blow swings it away from the one who hit it, and it knocks down whoever stands behind it.
+func _bag() -> void:
+	for o in world.objects:
+		if o["kind"] != "bag":
+			continue
+		if o.get("hits", 0) != o.get("hits_read", 0):
+			o["hits_read"] = o["hits"]
+			o["strength"] = 9999  # (it never breaks)
+			if tick >= o.get("swing_at", -BAG_SWING) + BAG_SWING:  # (still swinging from the last one: no new swing)
+				var mid: float = (o["x0"] + o["x1"]) * 0.5
+				o["swing_at"] = tick
+				o["swing_dir"] = 1.0 if mid >= o.get("hit_x", mid - 1.0) else -1.0
+				events.append({"target": null, "result": "bag_swing", "kind": "bag"})
+		if tick != o.get("swing_at", -9999) + BAG_HIT_AT:
+			continue
+		var dir: float = o["swing_dir"]  # out at its widest: whoever stands behind it now is hit
+		var near_edge: float = o["x1"] if dir > 0.0 else o["x0"]
+		for f in everyone():
+			var behind: float = (f.x - near_edge) * dir
+			if behind > -20.0 and behind < BAG_REACH and f.z > o["z0"] - 40.0 and f.z < o["z1"] + 40.0 and f.y < 60.0 \
+					and f.hittable():
+				f.take_hit({"damage": BAG_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "bag"},
+					{"x": (o["x0"] + o["x1"]) * 0.5, "y": 0.0})
+				events.append({"target": f, "result": "hit", "kind": "bag", "move": "bag"})
 
 
 ## The Crane Operator flying out of his cab (push-kicked): an arc out through its open side, over the edge, gone.

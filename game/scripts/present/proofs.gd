@@ -25,11 +25,12 @@ extends RefCounted
 ##                 shoves him out of the cab, over the side
 ## proof_gap       level 4's balcony: the hero walks into the railing gap and the edge holds him; then P P K on a Wrench
 ##                 Mechanic standing in the gap: over the low bar he goes, down to the ring hall, out of the fight
+## proof_bag       level 4's punching bag: a jab swings it into the Mechanic standing behind it, knocked down
 ## (The boss proofs start their boss part-worn where a whole fight would run to many pages: said so on screen.)
 
 const NAMES := ["proof_headbutt", "proof_doorman", "proof_dancer", "proof_enforcer", "proof_lookout", "proof_grabber",
 	"proof_swap", "proof_shove", "proof_climb", "proof_escape", "proof_coach", "proof_chrome", "proof_crane", "proof_static",
-	"proof_rook", "proof_ropes", "proof_cab", "proof_gap"]
+	"proof_rook", "proof_ropes", "proof_cab", "proof_gap", "proof_bag"]
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
@@ -159,6 +160,16 @@ func setup(level) -> void:
 			h.take_weapon("pipe")
 			zoom = 1.2
 			length = 2400
+		"proof_bag":
+			level.floors[0]["wave"] = level.floors[0]["waves"].size()  # the weights room's goons set aside
+			var bag: Dictionary = level.world.objects.filter(func(o): return o["kind"] == "bag")[0]
+			h.drop_weapon()  # (empty-handed: a plain jab)
+			h.x = bag["x0"] - 60.0
+			h.z = 40.0
+			h.facing = 1
+			foe = _bring(level, "wrench_mechanic", bag["x1"] + 50.0, 40.0)
+			zoom = 1.4
+			length = 400
 		"proof_gap":
 			level._go_to(1, 2700.0, 0.0, 120.0)
 			level.floors[1]["wave"] = level.floors[1]["waves"].size()  # the balcony's goons set aside: just the one in the gap
@@ -288,6 +299,21 @@ func inputs(level) -> Dictionary:
 					data["thrown"] = 0
 			if tick > 2300 and ended < 0:
 				_end("(he wasn't shoved out: the proof ran out of time)")
+		"proof_bag":
+			if tick == 9:
+				_start("the punching bag, a Mechanic standing behind it")
+			if tick > 20 and not data.has("swung"):
+				inp["punch"] = tick % 12 == 0
+			for ev in evs:
+				match ev.get("result", ""):
+					"bag_swing":
+						data["swung"] = tick
+						_say("the jab SWINGS the bag, away from him")
+					"hit":
+						if ev.get("kind", "") == "bag" and ev.get("target") == f:
+							_end("into the Mechanic behind it: KNOCKED DOWN (the bag doesn't break)")
+			if tick > 350 and ended < 0:
+				_end("(the bag never reached him: the proof ran out of time)")
 		"proof_gap":
 			if tick == 9:
 				_start("the balcony's railing gap: the hero (empty-handed) walks into it")
