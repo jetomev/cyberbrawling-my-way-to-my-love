@@ -1,5 +1,5 @@
 extends "res://tests/test_case.gd"
-## Level 4's punching bag (the team's agreed page, screen 2): hit it and it swings away from the blow, into whoever stands
+## Level 4's weights room (the team's agreed page, screen 2): the punching bag, hit, swings away from the blow, into whoever stands
 ## behind it, a knockdown; it never breaks.
 
 const Level := preload("res://scripts/sim/level.gd")
@@ -67,3 +67,12 @@ func test_nobody_behind_nobody_hit_and_the_hitter_is_safe() -> void:
 	for i in 60:  # many more blows: still hanging
 		l.step({"punch": i % 12 == 0})
 	check(not bag["broken"], "still hanging after a string of blows")
+
+
+func test_the_gym_sign_hangs_in_the_weights_room() -> void:
+	var d: Dictionary = Level.load_data("res://levels/level4.json")
+	var signs: Array = d["floors"][0].get("signs", [])
+	eq(signs.size(), 1, "one sign on the ground floor (Pippin's, art-in 2026-11-05-level4-gym-sign)")
+	check(float(signs[0][0]) >= 1920.0 and float(signs[0][0]) <= 3840.0, "on screen 2, the weights room")
+	eq(signs[0][2], "GYM: NO PAIN NO GAIN", "its words")
+	check(not (signs[0][3] as String).contains("GAIN"), "and it flickers to drop the GAIN")

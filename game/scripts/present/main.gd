@@ -106,6 +106,7 @@ var pages: Array = []  # the story lines still to show
 var then := ""  # after the pages: "level" (play the current level) or "title"
 var screen_ticks := 0
 var sound
+var sign_view: Node2D  # a level's signs on the wall behind the street (level 4's flickering gym sign), every frame
 var flying_view: Node2D  # thrown things (DJ Volt's records) and his bass wave, redrawn every frame
 var friend_view = null  # the sparring friend on level 1's first screen
 var hint_label: Label  # his lesson's hint
@@ -169,6 +170,11 @@ func _ready() -> void:
 	sound = Sound.new()
 	sound.name = "Sound"
 	add_child(sound)
+	sign_view = Node2D.new()
+	sign_view.name = "Signs"
+	sign_view.z_index = 1  # (on the wall: over the backdrop, under everything on the street)
+	sign_view.draw.connect(_draw_signs)
+	add_child(sign_view)
 	flying_view = Node2D.new()
 	flying_view.name = "Flying"
 	flying_view.z_index = 600
@@ -334,6 +340,7 @@ func _play_level() -> void:
 	hero_view.sync(hero, Street.GROUND_Y)
 	hero_view.z_index = world.draw_order(hero)
 	flying_view.queue_redraw()
+	sign_view.queue_redraw()
 	_show_friend()
 	var b: Vector2 = level.bounds()
 	$Camera.limit_left = int(b.x)
@@ -617,6 +624,26 @@ func _show_friend() -> void:
 
 
 ## DJ Volt's records, spinning black discs at their height, and his bass wave: rings rolling out from his speakers.
+## A level's signs (a floor's "signs": [x, height above the street, text, and the text it flickers to, if any]): neon
+## letters on a dark board high on the wall; one that flickers drops its last word now and then (Pippin's gym sign,
+## "GYM: NO PAIN NO GAIN" -> "NO PAIN NO").
+func _draw_signs() -> void:
+	if level == null:
+		return
+	var font := ThemeDB.fallback_font
+	for sg in level.plan["floors"][level.on].get("signs", []):
+		var text: String = sg[2]
+		if sg.size() > 3 and level.tick % 170 in [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]:
+			text = sg[3]  # (a stutter, then a long half-second dark: then lit again)
+		var size := 34
+		var w: float = font.get_string_size(sg[2], HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		var at := Vector2(float(sg[0]) - w * 0.5, Street.GROUND_Y - float(sg[1]))
+		sign_view.draw_rect(Rect2(at + Vector2(-18.0, -size - 10.0), Vector2(w + 36.0, size + 26.0)), Color(0.07, 0.06, 0.09))
+		sign_view.draw_rect(Rect2(at + Vector2(-18.0, -size - 10.0), Vector2(w + 36.0, size + 26.0)), Color(0.3, 0.1, 0.25), false, 3.0)
+		for k in [[Vector2(2, 2), Color(1.0, 0.24, 0.65, 0.35)], [Vector2.ZERO, Color(1.0, 0.55, 0.85)]]:  # the glow, then the tube
+			sign_view.draw_string(font, at + k[0], text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, k[1])
+
+
 func _draw_flying() -> void:
 	var flying: Array = level.projectiles.flying if level != null else (trial.projectiles.flying if trial != null else [])
 	var clock: int = level.tick if level != null else (trial.tick if trial != null else 0)
