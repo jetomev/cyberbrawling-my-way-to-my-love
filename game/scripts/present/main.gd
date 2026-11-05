@@ -800,6 +800,14 @@ func _draw_flying() -> void:
 			var c := g + Vector2(-30.0, -60.0 - left * 14.0)
 			flying_view.draw_rect(Rect2(c, Vector2(60, 60)), Color(0.58, 0.44, 0.28))
 			flying_view.draw_rect(Rect2(c, Vector2(60, 60)), Color(0.08, 0.08, 0.1), false, 3.0)
+	for r in level.rings:  # a hard Bruiser's shock ring, spreading along the floor from his slam (jump it)
+		var rad: float = (level.tick - r["at"]) * level.RING_SPEED
+		var g := Vector2(r["x"], Street.GROUND_Y + r["z"])
+		var fade: float = 1.0 - rad / level.RING_MAX
+		flying_view.draw_set_transform(g, 0.0, Vector2(1.0, 0.5))
+		flying_view.draw_arc(Vector2.ZERO, rad, 0.0, TAU, 48, Color(0.55, 0.85, 1.0, 0.85 * fade), 6.0)
+		flying_view.draw_arc(Vector2.ZERO, maxf(rad - 10.0, 1.0), 0.0, TAU, 48, Color(1.0, 1.0, 1.0, 0.5 * fade), 2.0)
+		flying_view.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	for d in level.from_above:  # a wrench thrown down from the balcony: its shadow grows, the wrench falls into it
 		var left: float = d["at"] - level.tick
 		var g := Vector2(d["x"], Street.GROUND_Y + d["z"])

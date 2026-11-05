@@ -93,6 +93,11 @@ const HUG_TICKS := 70  # the bear hug: this long without wriggling free, and he 
 const HARD_HEALTH := 1.25
 const HARD_GLINT := 2  # ticks off every blow's wind-up
 const HARD_HUG_TICKS := 40  # the hard Mauler: "only a heartbeat to jab free"
+const HARD_FAR := 90  # the hard Snick: this long out of her reach (or him up out of it), and she throws her knife
+const HARD_FEINT := 24  # the hard Dancer: her first skate-in each time pulls up and backs off this long, then the real one
+const RING_SPEED := 9.0  # the hard Bruiser's slam: a shock ring along the floor, this many px a frame...
+const RING_MAX := 260.0  # ...out to here (jump it)
+const RING_DAMAGE := 2.0
 const HARD_TWICE := {"glow_punk": "push_kick", "enforcer": "smash"}  # the hard Glow Punk shoves twice, the hard Enforcer
 # lunges twice: his combo's last blow again, straight after the first
 const HURL_DAMAGE := 3.0
@@ -221,6 +226,7 @@ var hugs_thrown := false
 var used_moves := {}  # the hero's moves used this level (a wave's hint about one he already knows is skipped)  # a bear hug has thrown him this level (the first is gentle where the level says)
 var from_above := []  # wrenches falling from a balcony at the hero below: [{x, z, at}] (level 4's screen 3)
 var from_above_next := -1
+var rings := []  # shock rings along the floor from a hard Bruiser's slam: [{x, z, at, hit}]
 var hero_rope := {}  # the hero thrown back off the ropes: {dir, t} (the team's level 4, Boromir: a safe moment)
 var rope_hit := {}  # the ropes he last slammed into (the view bends them a moment): side, z, tick
 var crossing := {}  # Twin Loans walking past each other mid-combo ("Interest"): who, from where, to where
@@ -325,6 +331,7 @@ func restart() -> void:
 	used_moves = {}
 	rope_hit = {}
 	hero_rope = {}
+	rings = []
 	from_above = []
 	from_above_next = -1
 	crossing = {}
@@ -456,6 +463,7 @@ func step(inp: Dictionary) -> void:
 					else e["brain"].think()
 			if e.get("arguing", false) and e["brain"].dormant_until_within > 0.0:
 				think = _argue(e)
+			think = _hard_think(e, think)  # (before the throws below: the hard Snick's knife goes the Mechanic's way)
 			# never more than two swinging at once, on every level, a boss's helpers included (the balance ruling)
 			var swinging: Array = enemies.filter(func(o): return not o["gone"] and o["f"].attack_phase() != "")
 			var kind: String = e.get("kind", "")
@@ -604,7 +612,7 @@ func _release(f) -> void:
 		f.hurling = false
 		_hurl(f)
 		for e in enemies:  # the hard Mechanic has two wrenches: the second, once, straight after
-			if e["f"] == f and e.get("hard", false) and not e.get("second_wrench", false):
+			if e["f"] == f and e.get("hard", false) and e.get("kind", "") == "wrench_mechanic" and not e.get("second_wrench", false):
 				e["second_wrench"] = true
 				f.take_weapon("wrench")
 		return
@@ -1337,9 +1345,47 @@ func shadow_cue() -> float:
 	return 0.0
 
 
+## The hard versions' choices: Snick out of reach too long throws her knife; the Dancer feints her first skate-in.
+func _hard_think(e: Dictionary, think: Dictionary) -> Dictionary:
+	if not e.get("hard", false):
+		return think
+	var f = e["f"]
+	match e.get("kind", ""):
+		"snick":
+			var far: bool = absf(hero.x - f.x) > 350.0 or hero.y > 40.0 or hero.state == "climb"
+			e["far_for"] = e.get("far_for", 0) + 1 if far else 0
+			if e["far_for"] >= HARD_FAR and f.weapon == "knife" and f.attack_phase() == "" and f.state in ["idle", "walk", "run"]:
+				e["far_for"] = 0
+				think["hurl"] = true  # she can't reach him: the knife flies (catch it with a perfect block)
+		"neon_dancer":
+			if tick < e.get("feint_until", -1):
+				return {"mx": -signf(hero.x - f.x)}  # the feint: pulled up short, backing off
+			var running: bool = think.get("run", false)
+			if running and not e.get("feinted", false) and f.too_quick:
+				e["feinted"] = true
+				e["feint_until"] = tick + HARD_FEINT
+				early.append({"target": f, "result": "feint", "kind": "feint"})
+				return {"run": true, "mx": signf(hero.x - f.x)}
+			if not running and e.get("was_running", false) and tick >= e.get("feint_until", -1) + 2:
+				e["feinted"] = false  # (her real skate-in done: the next one starts with a feint again)
+			e["was_running"] = running
+	return think
+
+
 ## The hard versions' tricks that live in the level: the finisher twice (Glow Punk, Enforcer); the Doorman's shield
 ## bouncing the hero back when a blow of his bounces off it.
 func _hard_tricks() -> void:
+	for r in rings.duplicate():  # the shock rings spread; one catches the hero on the floor as it passes him (jump it)
+		var rad: float = (tick - r["at"]) * RING_SPEED
+		if rad > RING_MAX:
+			rings.erase(r)
+			continue
+		var d: float = Vector2(hero.x - r["x"], (hero.z - r["z"]) * 2.0).length()
+		if not r["hit"] and absf(d - rad) < RING_SPEED + 6.0 and hero.y < 15.0 and hero.hittable():
+			r["hit"] = true
+			hero.take_hit({"damage": RING_DAMAGE, "effect": "stagger", "low": 0.0, "high": 60.0, "move": "shock_ring"},
+				{"x": r["x"], "y": 0.0})
+			events.append({"target": hero, "result": "hit", "kind": "shock_ring", "move": "shock_ring"})
 	for e in enemies:
 		if e["gone"] or not e.get("hard", false):
 			continue
@@ -1355,6 +1401,11 @@ func _hard_tricks() -> void:
 				else:
 					e["twice_done"] = false
 			e["last_state"] = f.state
+		if e.get("kind", "") == "bruiser" and f.state in ["power_punch", "smash"] and f.attack_phase() == "active" \
+				and e.get("ring_serial", -1) != f.attack_serial:  # his slam lands: a shock ring along the floor
+			e["ring_serial"] = f.attack_serial
+			rings.append({"x": f.x + f.facing * 50.0, "z": f.z, "at": tick, "hit": false})
+			events.append({"target": f, "result": "shock_ring", "kind": "shock_ring"})
 		if e.get("kind", "") == "doorman":
 			for ev in events:
 				if ev.get("attacker") == hero and ev.get("target") == f and ev.get("result", "") == "shielded" and hero.hittable():
