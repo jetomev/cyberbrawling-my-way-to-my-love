@@ -65,6 +65,8 @@ func step(fighters: Array, world = null) -> Array:
 			# knocked down he drops it too
 			if result == "hit" and (winding_up or d.state in ["knockdown", "launch"]) and d.weapon != "" and not d.keeps_weapon:
 				drop = _disarm(d, world, a.x)
+			var broke_combo: bool = result == "perfect" and (a.chain != "" or not a.queue.is_empty())  # (the score: a block
+			# that breaks a combo, the team's points)
 			if result == "perfect":
 				a.chain = ""  # a perfect block stops his combo: the presses he'd lined up are gone
 				a.queue.clear()
@@ -75,7 +77,7 @@ func step(fighters: Array, world = null) -> Array:
 			var worn := ""
 			if result == "hit":
 				worn = a.wear(blow.get("wear", 0)) if not a.keeps_weapon else ""  # a weapon wears only on a hit; kicks never wear it (the team's combos)
-			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "from_kick": a.from_kick, "drop": drop, "counter": winding_up and result == "hit",
+			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "from_kick": a.from_kick, "drop": drop, "counter": winding_up and result == "hit", "broke_combo": broke_combo,
 				"broke": d.just_broke, "worn": worn})
 		_hit[id] = seen
 	return events

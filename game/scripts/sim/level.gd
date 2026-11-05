@@ -208,8 +208,14 @@ var dice_seed := 1
 var dice := RandomNumberGenerator.new()  # the level's own chances (where the crane's crates land)
 var events := []  # this tick's fight events (for sounds and the view)
 var collected := []  # what the hero has found (a matchbook, the torn photo)
-var score := 0  # this level's score so far (placeholder points: sim/score.gd; counted, not shown yet)
-var hits_taken := 0  # blows that landed on the hero this level (a no-hit level scores extra)
+var score := 0  # this level's score so far (the team's points: sim/score.gd; counted, shown only with Javier's yes)
+var score_parts := {}  # the same, in parts: goons, bosses, finishers, blocks, finds, health, no_hit
+var hits_taken := 0  # blows that landed on the hero this level
+var health_lost := 0.0  # health he lost to anything this level (none: the no-hit bonus)
+var harder := false  # the harder mode: every enemy its hard version, bosses tougher, the score ×1.5
+var blocks_scored := {}  # fighter -> perfect blocks scored on him (at most PERFECT_BLOCKS_MAX)
+var was_dizzy := {}  # fighters dizzy as this tick's blows came (a finisher on one scores more)
+var hero_was := 0.0  # his health last tick
 var score_closed := false  # the level's end bonus added
 var projectiles  # what's flying (records)
 var held_guard := 0  # how long the hero has held his guard, for DJ Volt's Bass Drop
@@ -327,6 +333,9 @@ func restart() -> void:
 	events = []
 	collected = []
 	score = 0  # (a level restarted after the last life: its score starts again)
+	score_parts = {}
+	blocks_scored = {}
+	health_lost = 0.0
 	hits_taken = 0
 	score_closed = false
 	projectiles = Projectiles.new()
@@ -556,6 +565,10 @@ func step(inp: Dictionary) -> void:
 	# (he never blocks the street; and the twins crossing slip past each other, two lanes or one: the shop's counter)
 	var crossers: Array = [] if crossing.is_empty() else [crossing["a"]["f"], crossing["b"]["f"]]
 	Fight.separate(all.filter(func(f): return f != friend and not crossers.has(f)))
+	was_dizzy = {}
+	for f in all:
+		if f.state == "dizzy":
+			was_dizzy[f] = true
 	events = fight.step(all, world)
 	events.append_array(early)
 	early = []
@@ -1963,7 +1976,7 @@ func _collect() -> void:
 				and absf(it.get("y", 0.0) - hero.y) < 20.0:
 			world.items.erase(it)
 			collected.append(it["kind"])
-			score += Score.for_collectible(it["kind"])
+			_add_score("finds", Score.for_collectible(it["kind"]))
 
 
 func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave_index := -1) -> void:
@@ -2073,7 +2086,10 @@ func _waves() -> void:
 	for e in enemies:
 		if e["f"].defeated() and not e["dropped"]:
 			e["dropped"] = true
-			score += Score.BOSS if e["boss"] else Score.ENEMY
+			if e["boss"]:
+				_add_score("bosses", Score.GODFATHER if e.get("kind", "") == "godfather" else Score.BOSS)
+			else:
+				_add_score("goons", Score.ENEMY)
 			var drop: String = e.get("drops", KINDS.get(e["kind"], {}).get("drops", ""))  # (a layout can say: level 10's kit)
 			var at_y: float = world.floor_at(e["f"].x, e["f"].z, e["f"].y + 1.0)  # (up on a stack, it lies up there: level 6)
 			if drop != "":
@@ -2106,18 +2122,36 @@ func close_score() -> void:
 	if score_closed:
 		return
 	score_closed = true
-	score += int(hero.health) * Score.HEALTH_LEFT + (Score.NO_HIT if hits_taken == 0 else 0)
+	_add_score("health", mini(int(hero.health) * Score.HEALTH_LEFT, Score.HEALTH_MAX))
+	if health_lost <= 0.0:
+		_add_score("no_hit", Score.NO_HIT)
+
+
+## Points into the score, in their part (×1.5 in the harder mode).
+func _add_score(part: String, points: int) -> void:
+	var n: int = int(round(points * (Score.HARDER if harder else 1.0)))
+	score += n
+	score_parts[part] = score_parts.get(part, 0) + n
 
 
 ## The score's blows: a combo's last blow landing on someone; a blow landing on the hero (for the no-hit bonus).
 func _score_blows() -> void:
 	for ev in events:
-		if ev.get("result", "") != "hit":
+		var r: String = ev.get("result", "")
+		if r == "perfect" and ev.get("target") == hero and ev.get("broke_combo", false) and ev.get("projectile") == null:
+			var a = ev.get("attacker")
+			if blocks_scored.get(a, 0) < Score.PERFECT_BLOCKS_MAX:
+				blocks_scored[a] = blocks_scored.get(a, 0) + 1
+				_add_score("blocks", Score.PERFECT_BLOCK)
+		if r != "hit":
 			continue
 		if ev.get("attacker") == hero and ev.get("target") != hero and Moves.is_finisher(ev.get("move", "")):
-			score += Score.FINISHER
+			_add_score("finishers", Score.DIZZY_FINISHER if was_dizzy.has(ev.get("target")) else Score.FINISHER)
 		if ev.get("target") == hero:
 			hits_taken += 1
+	if hero.health < hero_was:
+		health_lost += hero_was - hero.health  # (lost to anything: blows, crates, the container, live floors, falls)
+	hero_was = hero.health
 
 
 ## Where the way on is, for a bot: the x of a doorway or ladder on this floor once its waves are beaten, or -1.

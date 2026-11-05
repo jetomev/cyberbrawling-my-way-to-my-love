@@ -6,6 +6,7 @@ extends SceneTree
 ## Usage: godot --headless --path game -s tools/balance.gd -- OUT.md level3 level4 ...
 
 const Level := preload("res://scripts/sim/level.gd")
+const Score := preload("res://scripts/sim/score.gd")
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 
 const SEEDS := [1, 2, 3]
@@ -108,7 +109,9 @@ func _level(n: String) -> Array:
 			hp = l.hero.health
 		whistled += called.size()
 		var result: String = "won" if l.won else ("lost on %s" % screen if l.lost else "not finished at %s" % screen)
-		result += ", score %d" % l.score  # (placeholder points, sim/score.gd: what the team's numbers would make of a run)
+		var parts: Array = Score.PARTS.filter(func(k): return l.score_parts.get(k, 0) != 0).map(func(k): return "%s %d" % [k.replace("_", "-"), l.score_parts[k]])
+		result += ", score %d%s" % [l.score, " (%s)" % ", ".join(parts) if not parts.is_empty() else ""]  # (the team's
+		# points, sim/score.gd, split: goons, bosses, finishers, blocks, finds, health, no-hit)
 		if got_there:
 			reached_last += 1
 		out.append("| %d | %s | %s | %s | %d |" % [s, result, ", ".join(marks + ["%s %.0f/%d" % [screen, l.hero.health, l.lives]]), ", ".join(lost_at) if not lost_at.is_empty() else "-", landed])
