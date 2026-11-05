@@ -173,6 +173,7 @@ func inputs(level) -> Dictionary:
 			bot.goal_hit = level.goal_is_switch
 			bot.jump_cue = level.crane_jump_cue()
 			bot.dodge_x = level.shadow_cue()
+			bot.climb = level.climb_cue()
 			var boss: Array = level.enemies.filter(func(e): return e["kind"] == "chrome")
 			if name == "chrome" and not boss.is_empty() and (not said.has("set") or tick < said["set"] + 120):
 				# set up for the picture, said so on screen: her memory holds his last combo, P P P; she holds still; he

@@ -180,6 +180,20 @@ func _draw_object(n: Node2D, o: Dictionary) -> void:
 	var near: float = ground_y + o["z1"]
 	var far: float = ground_y + o["z0"]
 	var w: float = o["x1"] - o["x0"]
+	if o["kind"] == "chandelier":  # (before the broken-door look: a dropped chandelier lies smashed on the floor)
+		var top: float = o["top"]
+		# crystal on a chain, high over the floor; dropped, it lies smashed below
+		var cx: float = (o["x0"] + o["x1"]) * 0.5
+		var hang: float = near - top if not o["broken"] else ground_y + 110.0 - 30.0
+		if not o["broken"]:
+			n.draw_line(Vector2(cx, near - top - 160.0), Vector2(cx, hang), Color(0.6, 0.6, 0.62), 3.0)  # the chain
+		for k in 5:
+			var a: float = PI * (0.15 + 0.175 * k)
+			var tip := Vector2(cx, hang) + Vector2(cos(a), sin(a)) * Vector2(w * 0.6, 40.0) * (1.0 if not o["broken"] else 1.4)
+			n.draw_line(Vector2(cx, hang), tip, Color(0.85, 0.9, 1.0), 3.0)
+			n.draw_circle(tip, 6.0, Color(0.8, 0.95, 1.0))
+		n.draw_circle(Vector2(cx, hang), 12.0, Color(0.95, 0.85, 0.4))
+		return
 	if o["broken"] and o["kind"] != "crate":  # an opened gate or door: only its posts are left
 		n.draw_rect(Rect2(o["x0"] - 6, near - 240, 10, 240), base.darkened(0.3))
 		n.draw_rect(Rect2(o["x1"] - 4, far - 240, 10, 240), base.darkened(0.3))
@@ -209,6 +223,16 @@ func _draw_object(n: Node2D, o: Dictionary) -> void:
 		while ry > near - top:
 			n.draw_line(Vector2(o["x0"], ry), Vector2(o["x1"], ry), Color(0.6, 0.47, 0.3), 4.0)
 			ry -= 34.0
+		return
+	if o["kind"] == "balcony":  # a deck across the back of the room on slim columns, a brass rail along its edge
+		n.draw_rect(Rect2(o["x0"], far - top, w, near - far), Color(0.42, 0.3, 0.35))  # the deck
+		n.draw_rect(Rect2(o["x0"], near - top, w, 18.0), Color(0.55, 0.4, 0.45))  # its front edge
+		n.draw_rect(Rect2(o["x0"], far - top, w, near - far + 18.0), EDGE, false, 3.0)
+		var px: float = o["x0"] + 20.0
+		while px < o["x1"]:
+			n.draw_rect(Rect2(px, near - top + 18.0, 10.0, top - 18.0), Color(0.3, 0.26, 0.3))  # the columns
+			px += 240.0
+		n.draw_line(Vector2(o["x0"], near - top - 50.0), Vector2(o["x1"], near - top - 50.0), Color(0.85, 0.7, 0.3), 4.0)  # the rail
 		return
 	if o["kind"] == "awning":  # a stall's striped canopy roof up high, the stall under it open
 		var roof := Rect2(o["x0"], far - top, w, near - far)

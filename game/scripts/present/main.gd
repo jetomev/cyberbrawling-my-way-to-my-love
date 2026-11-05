@@ -299,6 +299,7 @@ func _play_level() -> void:
 			bot.goal_hit = level.goal_is_switch
 			bot.jump_cue = level.crane_jump_cue()
 			bot.dodge_x = level.shadow_cue()
+			bot.climb = level.climb_cue()
 		level.step(scene.inputs(level) if scene != null else (bot.think(level.standing()) if bot != null else Controls.read()))
 		sound.fight_tick(level.everyone(), level.events)
 		_note_breaks(level.events)
@@ -630,6 +631,19 @@ func _show_friend() -> void:
 func _draw_signs() -> void:
 	if level == null:
 		return
+	var lift: Dictionary = level.plan["floors"][level.on].get("chrome_lift", {})
+	if not lift.is_empty():  # Madame Chrome's glass lift: a glass shaft from the floor up to her balcony, its car where she is
+		var lx: float = float(lift["x"])
+		var foot: float = Street.GROUND_Y + float(lift["z_down"])
+		var head: float = Street.GROUND_Y + float(lift["z_up"]) - float(lift["top"]) - 230.0
+		sign_view.draw_rect(Rect2(lx - 55.0, head, 110.0, foot - head), Color(0.6, 0.85, 0.95, 0.12))
+		sign_view.draw_rect(Rect2(lx - 55.0, head, 110.0, foot - head), Color(0.7, 0.9, 1.0, 0.6), false, 3.0)
+		var car_y: float = 0.0
+		for e in level.enemies:
+			if e.get("kind", "") == "chrome" and not e["gone"] and absf(e["f"].x - lx) < 60.0:
+				car_y = e["f"].y
+		var car_floor: float = Street.GROUND_Y + float(lift["z_down"]) - car_y
+		sign_view.draw_line(Vector2(lx - 55.0, car_floor), Vector2(lx + 55.0, car_floor), Color(0.85, 0.7, 0.3), 5.0)
 	var font := ThemeDB.fallback_font
 	for sg in level.plan["floors"][level.on].get("signs", []):
 		var text: String = sg[2]
@@ -785,6 +799,12 @@ func _draw_flying() -> void:
 		flying_view.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		var w := g + Vector2(0.0, -40.0 - left * 14.0)
 		var spin: float = left * 0.35
+		if d.get("kind", "wrench") == "card":  # Madame Chrome's card, tumbling down from her balcony
+			flying_view.draw_set_transform(w, spin, Vector2.ONE)
+			flying_view.draw_rect(Rect2(-12.0, -17.0, 24.0, 34.0), Color(0.97, 0.96, 0.92))
+			flying_view.draw_rect(Rect2(-12.0, -17.0, 24.0, 34.0), Color(0.75, 0.1, 0.2), false, 2.0)
+			flying_view.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+			continue
 		var arm := Vector2.from_angle(spin) * 30.0
 		flying_view.draw_line(w - arm, w + arm, Color(0.7, 0.72, 0.75), 8.0)
 		flying_view.draw_circle(w + arm, 9.0, Color(0.7, 0.72, 0.75))

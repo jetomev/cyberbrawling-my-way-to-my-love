@@ -68,6 +68,7 @@ func _level(n: String) -> Array:
 			bot.goal_hit = l.goal_is_switch
 			bot.jump_cue = l.crane_jump_cue()
 			bot.dodge_x = l.shadow_cue()
+			bot.climb = l.climb_cue()
 			l.step(bot.think(l.standing()))
 			var here := "F%d s%d" % [l.on, int(l.hero.x / SCREEN) + 1]
 			got_there = got_there or l.on == last_floor

@@ -28,6 +28,8 @@ extends RefCounted
 ## proof_bag       level 4's punching bag: a jab swings it into the Mechanic standing behind it, knocked down
 ## proof_above     level 4's ring hall under the balcony: a wrench thrown down lands on the hero standing still; he
 ##                 steps out of the next one's shadow and it clangs on the floor
+## proof_salon     level 5's salon: Madame Chrome rides her glass lift up and throws her cards down (shadow first), rides
+##                 down; the hero climbs the spiral stair and drops the chandelier on her: stunned
 ## proof_signs     a level's signs on its ground floor, one after another (the hero set under each, a second each)
 ## proof_run_F<f>s<s>   the robot's own run (the seed from --seed, as in the balance numbers), fast-forwarded unseen to
 ##                 floor f's screen s, then every frame of it there: from walking in till he leaves it or the level is
@@ -37,7 +39,7 @@ extends RefCounted
 
 const NAMES := ["proof_headbutt", "proof_doorman", "proof_dancer", "proof_enforcer", "proof_lookout", "proof_grabber",
 	"proof_swap", "proof_shove", "proof_climb", "proof_escape", "proof_coach", "proof_chrome", "proof_crane", "proof_static",
-	"proof_rook", "proof_ropes", "proof_cab", "proof_gap", "proof_bag", "proof_above", "proof_signs"]
+	"proof_rook", "proof_ropes", "proof_cab", "proof_gap", "proof_bag", "proof_above", "proof_signs", "proof_salon"]
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
@@ -170,6 +172,12 @@ func setup(level) -> void:
 			h.take_weapon("pipe")
 			zoom = 1.2
 			length = 2400
+		"proof_salon":
+			level._go_to(4, 1300.0, 0.0, 110.0)
+			level.step({})
+			foe = level.enemies.filter(func(e): return e["kind"] == "chrome")[0]
+			zoom = 1.0
+			length = 3000
 		"proof_signs":
 			level.floors[0]["wave"] = level.floors[0]["waves"].size()  # (no fights: just the walls)
 			data["signs"] = level.plan["floors"][0].get("signs", [])
@@ -322,6 +330,47 @@ func inputs(level) -> Dictionary:
 					data["thrown"] = 0
 			if tick > 2300 and ended < 0:
 				_end("(he wasn't shoved out: the proof ran out of time)")
+		"proof_salon":
+			if tick == 9:
+				_start("Madame Chrome's salon: her glass lift, the balcony, the spiral stair, the chandelier")
+			for ev in evs:
+				match ev.get("result", ""):
+					"lift_up": _say("she rides her glass LIFT up to the balcony")
+					"card_down": _say("a CARD thrown down at him: its shadow first")
+					"card_clang": _say("out of its shadow: it misses")
+					"lift_down":
+						data["down"] = tick
+						_say("she rides the lift DOWN: now up the spiral stair")
+					"chandelier_drop":
+						data["dropped"] = tick
+						_say("from the balcony: the CHANDELIER drops")
+				if ev.get("kind", "") == "card_from_above" and ev.get("result", "") == "hit":
+					_say("a card LANDS on him (health %.0f)" % h.health)
+			if data.has("dropped") and f.state == "dizzy" and not data.has("stunned"):
+				data["stunned"] = tick
+				_end("right on her: Madame Chrome STUNNED, open (the chandelier's never needed to win)")
+			if not data.has("down"):  # below: out of her cards' shadows, but stays under her
+				inp["mx"] = level.shadow_cue()
+				inp["block"] = absf(f.x - h.x) < 200.0 and f.y < 1.0
+			elif h.y < 1.0 and h.state != "climb":  # to the stair's foot, then up it
+				var to := Vector2(1720.0, 90.0)
+				if absf(h.x - to.x) > 8.0 or absf(h.z - to.y) > 8.0:
+					inp["mx"] = clampf((to.x - h.x) / 20.0, -1.0, 1.0)
+					inp["mz"] = clampf((to.y - h.z) / 16.0, -1.0, 1.0)
+				else:
+					inp["mz"] = -1.0
+			elif h.y > 1.0 and h.state != "climb" and not data.has("dropped"):  # along the balcony to the chandelier
+				var cx: float = 740.0
+				if h.x > cx - 70.0 and not data.has("spot"):
+					inp["mx"] = -1.0
+				elif not data.has("spot"):
+					data["spot"] = tick  # (there: he stays, and turns to the chain)
+				elif h.facing != 1:
+					inp["mx"] = 0.01
+				elif absf(f.x - cx) < 85.0 and f.y < 1.0:  # she's under it (its fall reaches 90 px): punch the chain
+					inp["punch"] = tick % 12 == 0
+			if tick > 2900 and ended < 0:
+				_end("(the proof ran out of time)")
 		"proof_signs":
 			var k: int = (tick - 10) / 70
 			if tick == 9:
@@ -483,6 +532,7 @@ func inputs(level) -> Dictionary:
 			bot.goal_hit = level.goal_is_switch
 			bot.jump_cue = level.crane_jump_cue()
 			bot.dodge_x = level.shadow_cue()
+			bot.climb = level.climb_cue()
 			inp = bot.think(level.standing())
 			var cab_op: Array = level.enemies.filter(func(e): return e["kind"] == "crane_operator" and not e["f"].defeated())
 			if level.plan["floors"][level.on].get("cab", false) and not cab_op.is_empty():
@@ -763,6 +813,7 @@ func _run_cues(level) -> void:
 	bot.goal_hit = level.goal_is_switch
 	bot.jump_cue = level.crane_jump_cue()
 	bot.dodge_x = level.shadow_cue()
+	bot.climb = level.climb_cue()
 
 
 func _run_setup(level) -> void:

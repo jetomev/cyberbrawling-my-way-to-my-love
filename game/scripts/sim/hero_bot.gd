@@ -19,6 +19,7 @@ var last_combo: Array = []  # the combo it threw last (against someone who reads
 var goal := -1.0  # a doorway or ladder to take when the street is clear (the level tells it: level.next_door())
 var goal_hit := false  # the goal is a switch to hit, not a way through (level.goal_is_switch)
 var jump_cue := false  # something low is about to sweep through him: jump (level.crane_jump_cue())
+var climb := {}  # where to climb to follow the fight up or down a ladder: {x, z, mz} (level.climb_cue())
 var dodge_x := 0.0  # a shadow on him, something falling: step this way along the street (level.shadow_cue())
 const COMBOS := [["punch", "punch", "punch"], ["kick", "kick", "kick"], ["punch", "kick", "punch"], ["punch", "punch", "kick"], ["sweep"]]
 
@@ -37,6 +38,13 @@ func think(enemies: Array) -> Dictionary:
 			foe = e
 	if jump_cue and me.state in ["idle", "walk", "block", "run"]:
 		inp["jump"] = true  # the crane's container, low across the floor
+		return inp
+	if not climb.is_empty() and me.state in ["idle", "walk", "block", "run"]:
+		if absf(me.x - climb["x"]) > 10.0 or absf(me.z - climb["z"]) > 10.0:  # to the ladder, then onto it
+			inp["mx"] = clampf((climb["x"] - me.x) / 20.0, -1.0, 1.0)
+			inp["mz"] = clampf((climb["z"] - me.z) / 16.0, -1.0, 1.0)
+		else:
+			inp["mz"] = climb["mz"]
 		return inp
 	if dodge_x != 0.0 and me.state in ["idle", "walk", "block", "run"]:
 		inp["mx"] = dodge_x  # out of the shadow before it lands (level 4's wrenches from the balcony)

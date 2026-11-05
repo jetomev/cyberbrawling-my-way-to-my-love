@@ -135,6 +135,10 @@ const CARD_SPEED := 12.0  # Madame Chrome's cards, three in a row at the chest a
 const CARD_DAMAGE := 1.0
 const CARDS := [[110.0, 180.0], [200.0, 270.0], [110.0, 180.0]]
 const CHROME_OPEN := 50  # after her cards she's open this long: no guard, no parry
+const LIFT_TICKS := 60  # her glass lift between the salon's floor and its balcony (level 5): a ride this long
+const ROUNDS_UP := 2  # up there with him below, she throws this many rounds of three before riding down (about 8 s:
+# time to walk to the spiral stair and climb it)
+const CARD_DROP_GAP := 10  # from the balcony, her three cards down at him: the next one's shadow this soon after one lands
 const CANE_KICKS := 3  # kicks into the cane's wind-up that snap it
 const KICKS := ["kick", "body_kick", "side_kick", "push_kick", "front_kick", "roundhouse", "spin_kick", "air_kick", "sweep"]
 const SLAM_WINDUP := 24  # Mr. Static raises the baton over his head, crackling, then slams the floor
@@ -435,7 +439,7 @@ func step(inp: Dictionary) -> void:
 	if friend != null and on == 0:
 		friend.step(tutor.think())
 	for e in enemies:
-		if not e["gone"] and not e.has("shoved") and not e.has("over_rail"):  # (the Crane Operator flying out of his cab, a goon
+		if not e["gone"] and not e.has("shoved") and not e.has("over_rail") and not e.has("ride"):  # (the Crane Operator flying out of his cab, a goon
 			# going over the balcony's railing: _out_of_the_cab and _over_the_rail carry them)
 			e["was"] = [e["f"].x, e["f"].y, e["f"].z]  # where he stood, should the stairs be full
 			var think: Dictionary = _crossing(e) if not crossing.is_empty() and (crossing["a"] == e or crossing["b"] == e) \
@@ -531,6 +535,8 @@ func step(inp: Dictionary) -> void:
 	_vending()
 	_bag()
 	_from_above()
+	_lift_ride()
+	_chandelier()
 	_stairs()
 	_switches()
 	_waves()
@@ -828,6 +834,28 @@ func _chrome(e: Dictionary, think: Dictionary) -> Dictionary:
 	f.parries = [hero.state] if again and not open else []
 	if open:
 		e["brain"].block_left = 0
+	var lift: Dictionary = plan["floors"][on].get("chrome_lift", {})
+	if e.get("kind", "") == "chrome" and not lift.is_empty():
+		var up: bool = f.y > 1.0
+		var hero_up: bool = hero.y > 1.0 or hero.state == "climb"
+		if think.get("cards", false) and not up and not hero_up:  # up in her glass lift, to throw them down at him
+			_ride(e, true)
+			return {}
+		if not up and e.has("down_after"):  # (off the balcony some other way: she just fights on down here)
+			e.erase("down_after")
+			e["brain"].wait = 0
+		if up and not hero_up:  # up there with him below: she stays by her lift (never off the edge)
+			if not e.has("cards_down") and not e.has("down_after"):  # her three cards down at him, shadow first
+				e["cards_down"] = 3
+				e["brain"].plan.clear()
+				e["brain"].wait = 9999
+			elif e.has("down_after") and tick >= e["down_after"]:  # open a moment after them; a second round up
+				e.erase("down_after")  # there (time to follow her up the stair), then down for the sweep and the jab
+				e["rounds_up"] = e.get("rounds_up", 0) + 1
+				if e["rounds_up"] >= ROUNDS_UP:
+					e["rounds_up"] = 0
+					_ride(e, false)
+			return {}
 	if think.get("cards", false):
 		e["volley"] = CARDS.duplicate()
 		e["volley_at"] = tick
@@ -841,6 +869,84 @@ func _chrome(e: Dictionary, think: Dictionary) -> Dictionary:
 		e["brain"].plan = ["sweep", "punch"]
 		e["brain"].wait = 0
 	return think
+
+
+## Madame Chrome's glass lift (level 5's salon): she rides it up to the balcony or down to the floor, out of reach
+## on the way (glass all round).
+func _ride(e: Dictionary, going_up: bool) -> void:
+	var lift: Dictionary = plan["floors"][on]["chrome_lift"]
+	var f = e["f"]
+	e["ride"] = {"t": 0, "up": going_up, "x0": f.x, "z0": f.z}
+	e["brain"].plan.clear()
+	e["brain"].wait = 9999
+	f._enter("idle")
+	f.safe_until = f.clock + LIFT_TICKS + 2
+	early.append({"target": f, "result": "lift_up" if going_up else "lift_down", "kind": "lift"})
+
+
+## The ride itself, and her cards down at him from the balcony (one at a time, each a shadow first).
+func _lift_ride() -> void:
+	var lift: Dictionary = plan["floors"][on].get("chrome_lift", {})
+	if lift.is_empty():
+		return
+	for e in enemies:
+		if e["gone"] or e.get("kind", "") != "chrome":
+			continue
+		var f = e["f"]
+		if e.has("ride"):
+			var r: Dictionary = e["ride"]
+			r["t"] += 1
+			var p: float = minf(float(r["t"]) / LIFT_TICKS, 1.0)
+			var walk: float = minf(p * 4.0, 1.0)  # she steps into the lift first, then it rises (or sinks)
+			var rise: float = clampf((p - 0.25) / 0.75, 0.0, 1.0)
+			f.x = lerpf(r["x0"], float(lift["x"]), walk)
+			if r["up"]:
+				f.z = lerpf(r["z0"], float(lift["z_down"]), walk) if rise <= 0.0 else lerpf(float(lift["z_down"]), float(lift["z_up"]), rise)
+				f.y = float(lift["top"]) * rise
+			else:
+				f.z = lerpf(float(lift["z_up"]), float(lift["z_down"]), rise)
+				f.y = float(lift["top"]) * (1.0 - rise)
+			if r["t"] >= LIFT_TICKS:
+				e.erase("ride")
+				f.y = float(lift["top"]) if r["up"] else 0.0
+				e["brain"].wait = 0 if not r["up"] else 9999
+				if not r["up"]:
+					e["brain"].plan = ["sweep", "punch"]  # down again: the sweep and the jab
+		elif e.get("cards_down", 0) > 0 and from_above.is_empty() and hero.state != "climb" \
+				and tick >= e.get("next_card", 0):
+			e["cards_down"] -= 1  # one more card down at him: its shadow first
+			from_above.append({"x": hero.x + dice.randf_range(-25.0, 25.0), "z": hero.z, "at": tick + CRATE_WARN,
+				"kind": "card", "damage": CARD_DAMAGE})
+			e["next_card"] = tick + CRATE_WARN + CARD_DROP_GAP
+			events.append({"target": f, "result": "card_down", "kind": "card"})
+			if e["cards_down"] == 0:
+				e.erase("cards_down")
+				e["down_after"] = tick + CRATE_WARN + CHROME_OPEN  # (the last one lands, then she's open a moment)
+				e["open_until"] = e["down_after"]
+
+
+## Level 5's chandelier (Merry's optional extra, on the agreed page): a blow at its chain from the balcony drops it on
+## whoever stands under it on the floor below; Madame Chrome under it is stunned a moment. Never needed to win.
+const CHANDELIER_DIZZY := 90
+func _chandelier() -> void:
+	for o in world.objects:
+		if o["kind"] != "chandelier" or o["broken"] or o.get("hits", 0) == o.get("hits_read", 0):
+			continue
+		o["hits_read"] = o["hits"]
+		o["strength"] = 9999
+		if o.get("hit_team", -1) != hero.team or o.get("hit_y", 0.0) < 100.0:
+			continue  # (from the floor it's out of reach: only from the balcony)
+		o["broken"] = true
+		events.append({"target": null, "result": "chandelier_drop", "kind": "chandelier"})
+		var cx: float = (o["x0"] + o["x1"]) * 0.5
+		for f in everyone():
+			if absf(f.x - cx) < 90.0 and f.y < 1.0 and f.z < 140.0 and f.hittable():
+				f.take_hit({"damage": 2.0, "effect": "hurt", "low": 0.0, "high": 300.0, "move": "chandelier",
+					"from_above": true}, {"x": cx, "y": 400.0})
+				if f != hero:
+					f.dizzy_left = CHANDELIER_DIZZY  # stunned a moment, open
+					f._enter("dizzy")
+				events.append({"target": f, "result": "hit", "kind": "chandelier", "move": "chandelier"})
 
 
 ## The presses a combo finisher ends (power_punch: "PPP"; the armed smash and rising swing as the punches they
@@ -1143,7 +1249,7 @@ func _vending() -> void:
 ## (step out of it), one in the air at a time (one thrower at a time, Boromir); the moment he grabs the ladder they stop.
 func _from_above() -> void:
 	var fa: Dictionary = plan["floors"][on].get("from_above", {})
-	if fa.is_empty() or hero.state == "climb":
+	if hero.state == "climb":
 		from_above = []  # (they stop the moment he grabs the ladder: nobody throws at a climbing man)
 		from_above_next = -1
 		return
@@ -1151,12 +1257,15 @@ func _from_above() -> void:
 		if tick < d["at"]:
 			continue
 		from_above.erase(d)
+		var what: String = d.get("kind", "wrench")
 		if absf(d["x"] - hero.x) < 45.0 and absf(d["z"] - hero.z) < 35.0 and hero.y < 60.0 and hero.hittable():
-			hero.take_hit({"damage": HURL_DAMAGE, "effect": "hurt", "low": 0.0, "high": 300.0, "move": "wrench_from_above"},
-				{"x": d["x"], "y": 300.0})
-			events.append({"target": hero, "result": "hit", "kind": "wrench_from_above", "move": "wrench_from_above"})
+			hero.take_hit({"damage": d.get("damage", HURL_DAMAGE), "effect": "hurt", "low": 0.0, "high": 300.0,
+				"move": what + "_from_above"}, {"x": d["x"], "y": 300.0})
+			events.append({"target": hero, "result": "hit", "kind": what + "_from_above", "move": what + "_from_above"})
 		else:
-			events.append({"target": hero, "result": "wrench_clang", "kind": "wrench_from_above"})
+			events.append({"target": hero, "result": what + "_clang", "kind": what + "_from_above"})
+	if fa.is_empty():
+		return
 	var inside: bool = hero.x >= float(fa["x0"]) and hero.x <= float(fa["x1"])
 	if not inside:
 		from_above_next = -1
@@ -1166,6 +1275,28 @@ func _from_above() -> void:
 	if from_above.is_empty() and tick >= from_above_next:
 		from_above.append({"x": hero.x + dice.randf_range(-30.0, 30.0), "z": hero.z, "at": tick + CRATE_WARN})
 		from_above_next = tick + int(fa.get("every", 120))
+
+
+## For the bot (a person would follow her): Madame Chrome up on her balcony, the hero below: to the spiral stair's foot
+## and up; she's back on the floor, he's up: to its top and down. {x, z, mz}, or {} when it's nothing to do with ladders.
+func climb_cue() -> Dictionary:
+	var lift: Dictionary = plan["floors"][on].get("chrome_lift", {})
+	if lift.is_empty() or hero.state == "climb":
+		return {}
+	var her: Array = enemies.filter(func(e): return e.get("kind", "") == "chrome" and not e["gone"] and not e["f"].defeated())
+	if her.is_empty() or her[0].has("ride"):
+		return {}
+	var lads: Array = world.objects.filter(func(o): return o["kind"] == "ladder")
+	if lads.is_empty():
+		return {}
+	var o: Dictionary = lads[0]
+	var cx: float = (o["x0"] + o["x1"]) * 0.5
+	var f = her[0]["f"]
+	if f.y > 1.0 and hero.y < 1.0:
+		return {"x": cx, "z": o["z1"] + 10.0, "mz": -1.0}
+	if f.y < 1.0 and hero.y > 1.0:
+		return {"x": cx, "z": maxf(0.0, o["z0"] - 25.0), "mz": 1.0}
+	return {}
 
 
 ## For the bot (a person sees it): a wrench's shadow on him, about to land: which way to step along the street to get

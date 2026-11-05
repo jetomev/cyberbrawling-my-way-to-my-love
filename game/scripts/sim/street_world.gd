@@ -22,7 +22,7 @@ var items: Array[Dictionary] = []
 func add(kind: String, x0: float, x1: float, z0: float, z1: float, top: float, climbable := true, strength := 0) -> Dictionary:
 	var o := {"id": objects.size(), "kind": kind, "x0": x0, "x1": x1, "z0": z0, "z1": z1, "top": top,
 		"climbable": climbable, "breakable": strength > 0, "strength": strength, "broken": false,
-		"solid": not kind in ["ladder", "stairs"]}
+		"solid": not kind in ["ladder", "stairs", "chandelier"]}  # (a chandelier hangs high: you walk under it)
 	objects.append(o)
 	return o
 
@@ -148,6 +148,7 @@ func step_hits(fighters: Array) -> Array:
 				o["hit_move"] = f.state
 				o["hit_kick"] = f.from_kick
 				o["hit_x"] = f.x  # (where the blow came from: level 4's punching bag swings away from it)
+				o["hit_y"] = f.y  # (and how high: level 5's chandelier falls only to a blow from the balcony)
 				o["strength"] -= blow["damage"]
 				if o["strength"] <= 0:
 					o["broken"] = true

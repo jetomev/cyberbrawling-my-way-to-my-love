@@ -17,7 +17,7 @@ for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy
     scene:proof_swap@level3 scene:proof_shove@tests/levels/stairs scene:proof_climb@tests/levels/twins \
     scene:proof_escape@tests/levels/twins scene:proof_coach@coach_gym scene:proof_chrome@chrome_casino \
     scene:proof_crane@crane_docks scene:proof_static@static_plant scene:proof_rook@rook_penthouse scene:proof_ropes@coach_gym scene:proof_cab@crane_docks \
-    scene:proof_gap@level4 scene:proof_bag@level4 scene:proof_above@level4 scene:proof_signs@level1 \
+    scene:proof_gap@level4 scene:proof_bag@level4 scene:proof_above@level4 scene:proof_signs@level1 scene:proof_salon@level5 \
     scene:proof_run_F1s2~2@level9 scene:proof_run_F2s2~1@level9 scene:proof_run_F3s1~1@level7 \
     scene:proof_run_F4s1~2@level7 scene:proof_run_F5s1~1@level8 scene:proof_run_F1s1~2@level10; do
   ARGS=(--trial "$T")
