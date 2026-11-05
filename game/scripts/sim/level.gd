@@ -17,6 +17,7 @@ extends RefCounted
 const Fighter := preload("res://scripts/sim/fighter.gd")
 const Fight := preload("res://scripts/sim/fight.gd")
 const Moves := preload("res://scripts/sim/moves.gd")
+const Score := preload("res://scripts/sim/score.gd")
 const Brain := preload("res://scripts/sim/brain.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Tuning := preload("res://scripts/sim/tuning.gd")
@@ -207,6 +208,9 @@ var dice_seed := 1
 var dice := RandomNumberGenerator.new()  # the level's own chances (where the crane's crates land)
 var events := []  # this tick's fight events (for sounds and the view)
 var collected := []  # what the hero has found (a matchbook, the torn photo)
+var score := 0  # this level's score so far (placeholder points: sim/score.gd; counted, not shown yet)
+var hits_taken := 0  # blows that landed on the hero this level (a no-hit level scores extra)
+var score_closed := false  # the level's end bonus added
 var projectiles  # what's flying (records)
 var held_guard := 0  # how long the hero has held his guard, for DJ Volt's Bass Drop
 var bass_at := -1  # the tick the last bass wave went out (for the view and the sound)
@@ -322,6 +326,9 @@ func restart() -> void:
 	hero_down_for = 0
 	events = []
 	collected = []
+	score = 0  # (a level restarted after the last life: its score starts again)
+	hits_taken = 0
+	score_closed = false
 	projectiles = Projectiles.new()
 	held_guard = 0
 	bass_at = -1
@@ -553,6 +560,7 @@ func step(inp: Dictionary) -> void:
 	events.append_array(early)
 	early = []
 	events.append_array(projectiles.step(all, 0.0, floors[on]["length"]))
+	_score_blows()
 	_moment_hints()
 	if tutor != null and on == 0:
 		tutor.saw(events)
@@ -1955,6 +1963,7 @@ func _collect() -> void:
 				and absf(it.get("y", 0.0) - hero.y) < 20.0:
 			world.items.erase(it)
 			collected.append(it["kind"])
+			score += Score.for_collectible(it["kind"])
 
 
 func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave_index := -1) -> void:
@@ -2064,6 +2073,7 @@ func _waves() -> void:
 	for e in enemies:
 		if e["f"].defeated() and not e["dropped"]:
 			e["dropped"] = true
+			score += Score.BOSS if e["boss"] else Score.ENEMY
 			var drop: String = e.get("drops", KINDS.get(e["kind"], {}).get("drops", ""))  # (a layout can say: level 10's kit)
 			var at_y: float = world.floor_at(e["f"].x, e["f"].z, e["f"].y + 1.0)  # (up on a stack, it lies up there: level 6)
 			if drop != "":
@@ -2087,6 +2097,27 @@ func _waves() -> void:
 	var win: Dictionary = plan.get("win", {})  # a level with no boss (level 9): won when he takes what it's for
 	if not win.is_empty() and on == int(win.get("floor", on)) and hero.weapon == win.get("weapon", "-"):
 		won = true
+	if won:
+		close_score()
+
+
+## The level's end in the score: health left, and a no-hit bonus (once).
+func close_score() -> void:
+	if score_closed:
+		return
+	score_closed = true
+	score += int(hero.health) * Score.HEALTH_LEFT + (Score.NO_HIT if hits_taken == 0 else 0)
+
+
+## The score's blows: a combo's last blow landing on someone; a blow landing on the hero (for the no-hit bonus).
+func _score_blows() -> void:
+	for ev in events:
+		if ev.get("result", "") != "hit":
+			continue
+		if ev.get("attacker") == hero and ev.get("target") != hero and Moves.is_finisher(ev.get("move", "")):
+			score += Score.FINISHER
+		if ev.get("target") == hero:
+			hits_taken += 1
 
 
 ## Where the way on is, for a bot: the x of a doorway or ladder on this floor once its waves are beaten, or -1.

@@ -108,6 +108,7 @@ func _level(n: String) -> Array:
 			hp = l.hero.health
 		whistled += called.size()
 		var result: String = "won" if l.won else ("lost on %s" % screen if l.lost else "not finished at %s" % screen)
+		result += ", score %d" % l.score  # (placeholder points, sim/score.gd: what the team's numbers would make of a run)
 		if got_there:
 			reached_last += 1
 		out.append("| %d | %s | %s | %s | %d |" % [s, result, ", ".join(marks + ["%s %.0f/%d" % [screen, l.hero.health, l.lives]]), ", ".join(lost_at) if not lost_at.is_empty() else "-", landed])
