@@ -26,11 +26,13 @@ extends RefCounted
 ## proof_gap       level 4's balcony: the hero walks into the railing gap and the edge holds him; then P P K on a Wrench
 ##                 Mechanic standing in the gap: over the low bar he goes, down to the ring hall, out of the fight
 ## proof_bag       level 4's punching bag: a jab swings it into the Mechanic standing behind it, knocked down
+## proof_above     level 4's ring hall under the balcony: a wrench thrown down lands on the hero standing still; he
+##                 steps out of the next one's shadow and it clangs on the floor
 ## (The boss proofs start their boss part-worn where a whole fight would run to many pages: said so on screen.)
 
 const NAMES := ["proof_headbutt", "proof_doorman", "proof_dancer", "proof_enforcer", "proof_lookout", "proof_grabber",
 	"proof_swap", "proof_shove", "proof_climb", "proof_escape", "proof_coach", "proof_chrome", "proof_crane", "proof_static",
-	"proof_rook", "proof_ropes", "proof_cab", "proof_gap", "proof_bag"]
+	"proof_rook", "proof_ropes", "proof_cab", "proof_gap", "proof_bag", "proof_above"]
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
@@ -160,6 +162,12 @@ func setup(level) -> void:
 			h.take_weapon("pipe")
 			zoom = 1.2
 			length = 2400
+		"proof_above":
+			level.floors[0]["wave"] = level.floors[0]["waves"].size()  # the ring hall's goon set aside
+			h.x = 4300.0
+			h.z = 80.0
+			zoom = 1.2
+			length = 500
 		"proof_bag":
 			level.floors[0]["wave"] = level.floors[0]["waves"].size()  # the weights room's goons set aside
 			var bag: Dictionary = level.world.objects.filter(func(o): return o["kind"] == "bag")[0]
@@ -299,6 +307,20 @@ func inputs(level) -> Dictionary:
 					data["thrown"] = 0
 			if tick > 2300 and ended < 0:
 				_end("(he wasn't shoved out: the proof ran out of time)")
+		"proof_above":
+			if tick == 9:
+				_start("under the balcony: the two Mechanics up there throw wrenches down (shadow first)")
+			if data.has("hit") and not level.from_above.is_empty() and absf(level.from_above[0]["x"] - h.x) < 70.0:
+				inp["mx"] = 1.0  # the second one: out of its shadow
+			for ev in evs:
+				if ev.get("kind", "") == "wrench_from_above":
+					if ev.get("result", "") == "hit" and not data.has("hit"):
+						data["hit"] = tick
+						_say("standing still: the wrench LANDS on him (health %.0f)" % h.health)
+					elif ev.get("result", "") == "wrench_clang" and data.has("hit"):
+						_end("out of its shadow: the next one CLANGS on the floor, missed")
+			if tick > 480 and ended < 0:
+				_end("(the proof ran out of time)")
 		"proof_bag":
 			if tick == 9:
 				_start("the punching bag, a Mechanic standing behind it")

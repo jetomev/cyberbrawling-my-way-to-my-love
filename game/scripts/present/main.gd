@@ -733,6 +733,18 @@ func _draw_flying() -> void:
 			var c := g + Vector2(-30.0, -60.0 - left * 14.0)
 			flying_view.draw_rect(Rect2(c, Vector2(60, 60)), Color(0.58, 0.44, 0.28))
 			flying_view.draw_rect(Rect2(c, Vector2(60, 60)), Color(0.08, 0.08, 0.1), false, 3.0)
+	for d in level.from_above:  # a wrench thrown down from the balcony: its shadow grows, the wrench falls into it
+		var left: float = d["at"] - level.tick
+		var g := Vector2(d["x"], Street.GROUND_Y + d["z"])
+		var grow: float = 1.0 - clampf(left / level.CRATE_WARN, 0.0, 1.0)
+		flying_view.draw_set_transform(g, 0.0, Vector2(1.0, 0.35))
+		flying_view.draw_circle(Vector2.ZERO, 14.0 + grow * 20.0, Color(0, 0, 0, 0.25 + grow * 0.35))
+		flying_view.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		var w := g + Vector2(0.0, -40.0 - left * 14.0)
+		var spin: float = left * 0.35
+		var arm := Vector2.from_angle(spin) * 30.0
+		flying_view.draw_line(w - arm, w + arm, Color(0.7, 0.72, 0.75), 8.0)
+		flying_view.draw_circle(w + arm, 9.0, Color(0.7, 0.72, 0.75))
 	for e in level.enemies:  # Mr. Static winding up his slam: sparks crackling over his head, growing till it lands
 		var f = e["f"]
 		if f.slam_in >= 0 and not e["gone"]:

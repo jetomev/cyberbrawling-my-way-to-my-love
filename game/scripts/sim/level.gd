@@ -205,6 +205,8 @@ var hint_until := -1
 var hints_shown := {}
 var hugs_thrown := false
 var used_moves := {}  # the hero's moves used this level (a wave's hint about one he already knows is skipped)  # a bear hug has thrown him this level (the first is gentle where the level says)
+var from_above := []  # wrenches falling from a balcony at the hero below: [{x, z, at}] (level 4's screen 3)
+var from_above_next := -1
 var hero_rope := {}  # the hero thrown back off the ropes: {dir, t} (the team's level 4, Boromir: a safe moment)
 var rope_hit := {}  # the ropes he last slammed into (the view bends them a moment): side, z, tick
 var crossing := {}  # Twin Loans walking past each other mid-combo ("Interest"): who, from where, to where
@@ -309,6 +311,8 @@ func restart() -> void:
 	used_moves = {}
 	rope_hit = {}
 	hero_rope = {}
+	from_above = []
+	from_above_next = -1
 	crossing = {}
 	live_until = -1
 	crane = {}
@@ -526,6 +530,7 @@ func step(inp: Dictionary) -> void:
 	_over_the_rail()
 	_vending()
 	_bag()
+	_from_above()
 	_stairs()
 	_switches()
 	_waves()
@@ -1131,6 +1136,36 @@ func _vending() -> void:
 						f.take_hit({"damage": VENDING_DAMAGE, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "vending",
 							"from_above": true}, {"x": x, "y": 0.0})
 						events.append({"target": f, "result": "hit", "kind": "vending", "move": "vending"})
+
+
+## Level 4's balcony Mechanics throwing down at the ring hall (the team's agreed page, screen 3): while the hero is on
+## the floor below, inside the floor's "from_above" stretch, a wrench falls at him every so often, its shadow first
+## (step out of it), one in the air at a time (one thrower at a time, Boromir); the moment he grabs the ladder they stop.
+func _from_above() -> void:
+	var fa: Dictionary = plan["floors"][on].get("from_above", {})
+	if fa.is_empty() or hero.state == "climb":
+		from_above = []  # (they stop the moment he grabs the ladder: nobody throws at a climbing man)
+		from_above_next = -1
+		return
+	for d in from_above.duplicate():
+		if tick < d["at"]:
+			continue
+		from_above.erase(d)
+		if absf(d["x"] - hero.x) < 45.0 and absf(d["z"] - hero.z) < 35.0 and hero.y < 60.0 and hero.hittable():
+			hero.take_hit({"damage": HURL_DAMAGE, "effect": "hurt", "low": 0.0, "high": 300.0, "move": "wrench_from_above"},
+				{"x": d["x"], "y": 300.0})
+			events.append({"target": hero, "result": "hit", "kind": "wrench_from_above", "move": "wrench_from_above"})
+		else:
+			events.append({"target": hero, "result": "wrench_clang", "kind": "wrench_from_above"})
+	var inside: bool = hero.x >= float(fa["x0"]) and hero.x <= float(fa["x1"])
+	if not inside:
+		from_above_next = -1
+		return
+	if from_above_next < 0:
+		from_above_next = tick + int(float(fa.get("every", 120)) * 0.5)  # (a moment after he walks in under them)
+	if from_above.is_empty() and tick >= from_above_next:
+		from_above.append({"x": hero.x + dice.randf_range(-30.0, 30.0), "z": hero.z, "at": tick + CRATE_WARN})
+		from_above_next = tick + int(fa.get("every", 120))
 
 
 ## Level 4's punching bag: a blow swings it away from the one who hit it, and it knocks down whoever stands behind it.
