@@ -30,6 +30,8 @@ extends RefCounted
 ##                 steps out of the next one's shadow and it clangs on the floor
 ## proof_salon     level 5's salon: Madame Chrome rides her glass lift up and throws her cards down (shadow first), rides
 ##                 down; the hero climbs the spiral stair and drops the chandelier on her: stunned
+## proof_ring      a hard Bruiser (darker) slams: a shock ring runs along the floor; standing, it catches the hero; the
+##                 next one he jumps
 ## proof_signs     a level's signs on its ground floor, one after another (the hero set under each, a second each)
 ## proof_run_F<f>s<s>   the robot's own run (the seed from --seed, as in the balance numbers), fast-forwarded unseen to
 ##                 floor f's screen s, then every frame of it there: from walking in till he leaves it or the level is
@@ -39,7 +41,7 @@ extends RefCounted
 
 const NAMES := ["proof_headbutt", "proof_doorman", "proof_dancer", "proof_enforcer", "proof_lookout", "proof_grabber",
 	"proof_swap", "proof_shove", "proof_climb", "proof_escape", "proof_coach", "proof_chrome", "proof_crane", "proof_static",
-	"proof_rook", "proof_ropes", "proof_cab", "proof_gap", "proof_bag", "proof_above", "proof_signs", "proof_salon"]
+	"proof_rook", "proof_ropes", "proof_cab", "proof_gap", "proof_bag", "proof_above", "proof_signs", "proof_salon", "proof_ring"]
 const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const StreetWorld := preload("res://scripts/sim/street_world.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
@@ -172,6 +174,13 @@ func setup(level) -> void:
 			h.take_weapon("pipe")
 			zoom = 1.2
 			length = 2400
+		"proof_ring":
+			level._arrive({"kind": "bruiser", "dx": 250.0, "z": h.z, "hard": true}, h.x, -1)
+			foe = level.enemies[-1]
+			foe["brain"].wait = 9999
+			foe["brain"].dormant_until_within = 1.0
+			zoom = 1.3
+			length = 300
 		"proof_salon":
 			level._go_to(4, 1300.0, 0.0, 110.0)
 			level.step({})
@@ -330,6 +339,23 @@ func inputs(level) -> Dictionary:
 					data["thrown"] = 0
 			if tick > 2300 and ended < 0:
 				_end("(he wasn't shoved out: the proof ran out of time)")
+		"proof_ring":
+			if tick == 9 or tick == 120:
+				if tick == 9:
+					_start("a HARD Bruiser (darker, a bit more health, a shorter glint): his slam sends a shock ring")
+				f.facing = -1
+				f._enter("power_punch")
+				f.attack_serial += 1
+			var r: Array = level.rings
+			if tick > 100 and not r.is_empty() and absf(absf(h.x - r[0]["x"]) - (level.tick - r[0]["at"]) * level.RING_SPEED) < 110.0 and h.y < 1.0:
+				inp["jump"] = true  # the second time: he jumps it
+			for ev in evs:
+				if ev.get("kind", "") == "shock_ring" and ev.get("result", "") == "hit":
+					_say("standing: the ring CATCHES him (health %.0f)" % h.health)
+				if ev.get("result", "") == "shock_ring":
+					_say("the slam lands: a SHOCK RING along the floor")
+			if tick == 200:
+				_end("the second ring: he JUMPS it, it passes under him (health %.0f)" % h.health)
 		"proof_salon":
 			if tick == 9:
 				_start("Madame Chrome's salon: her glass lift, the balcony, the spiral stair, the chandelier")

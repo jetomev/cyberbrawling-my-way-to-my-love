@@ -805,7 +805,7 @@ func _draw_flying() -> void:
 		var g := Vector2(r["x"], Street.GROUND_Y + r["z"])
 		var fade: float = 1.0 - rad / level.RING_MAX
 		flying_view.draw_set_transform(g, 0.0, Vector2(1.0, 0.5))
-		flying_view.draw_arc(Vector2.ZERO, rad, 0.0, TAU, 48, Color(0.55, 0.85, 1.0, 0.85 * fade), 6.0)
+		flying_view.draw_arc(Vector2.ZERO, rad, 0.0, TAU, 48, Color(0.55, 0.85, 1.0, minf(1.0, 1.2 * fade)), 9.0)
 		flying_view.draw_arc(Vector2.ZERO, maxf(rad - 10.0, 1.0), 0.0, TAU, 48, Color(1.0, 1.0, 1.0, 0.5 * fade), 2.0)
 		flying_view.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	for d in level.from_above:  # a wrench thrown down from the balcony: its shadow grows, the wrench falls into it
