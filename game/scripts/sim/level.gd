@@ -617,9 +617,9 @@ func _roster_tricks() -> void:
 				if standing().size() < MAX_ON_SCREEN:
 					if e.has("calls_x"):  # up the ladder where it comes out (the team's level 3: Mechanics climb at you)
 						_arrive({"kind": e.get("calls", "glow_punk"), "dx": e["calls_x"] - hero.x + (0.0 if side == "left" else 50.0),
-							"z": 30.0 if side == "left" else 70.0}, hero.x, e["wave"])
+							"z": 30.0 if side == "left" else 70.0, "whistled": true}, hero.x, e["wave"])
 					else:
-						_arrive({"kind": e.get("calls", "glow_punk"), "from": side, "z": 80.0}, hero.x, e["wave"])
+						_arrive({"kind": e.get("calls", "glow_punk"), "from": side, "z": 80.0, "whistled": true}, hero.x, e["wave"])
 			events.append({"target": f, "result": "whistle", "kind": "whistle"})
 	hero.held_by = hug["by"]["f"] if not hug.is_empty() and hero.state == "held" else null
 	if not hug.is_empty():
@@ -1509,7 +1509,8 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 				elif from == "left" and o["x1"] < at and x < o["x1"] + 60.0:
 					x = o["x1"] + 60.0
 	_spawn(e["kind"], x, z, e.get("weapon", ""), -1.0, wave_index)
-	for k in ["calls", "whistles", "hard"]:  # the lookout's: who he whistles in, and how many times; a hard version's tag
+	for k in ["calls", "whistles", "hard", "whistled"]:  # the lookout's: who he whistles in, and how many times; a hard
+		# version's tag; a goon he whistled in (the robot's numbers name him apart, the team's ask 11-05)
 		if e.has(k):
 			enemies[-1][k] = e[k]
 	if e.get("hidden", false):

@@ -208,6 +208,8 @@ func test_the_lookout_never_fights_and_whistles_in_two_more() -> void:
 	check(look["f"].x > start, "he backs off from the hero (%.0f, from %.0f)" % [look["f"].x, start])
 	eq(whistles, 2, "two whistles in that time")
 	eq(l.enemies.filter(func(e): return e["kind"] == "glow_punk").size(), 4, "two goons each time")
+	eq(l.enemies.filter(func(e): return e.get("whistled", false)).size(), 4, "each whistled-in goon is tagged so (the robot's numbers name him apart)")
+	check(not look.get("whistled", false), "the Whistler himself isn't")
 	# failing direction: the hero far off, no whistle
 	var l2 = street()
 	bring(l2, "lookout", Level.WHISTLE_RANGE + 400.0)

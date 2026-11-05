@@ -38,6 +38,8 @@ func _level(n: String) -> Array:
 	var per_screen := {}  # screen -> {kind -> health taken}, all runs
 	var reached_last := 0
 	var moments := {}  # a boss's set pieces seen (the twins' opening and swaps), all runs
+	var whistles := 0  # the Whistler's whistles, all runs, and the goons they brought in
+	var whistled := 0
 	var hard := []  # which enemies in this layout are the hard versions (the team's ask, third ruling)
 	for fl in d["floors"]:
 		for w in fl.get("waves", []):
@@ -70,6 +72,8 @@ func _level(n: String) -> Array:
 			for ev in l.events:
 				if ev.get("attacker") == l.hero and ev.get("result", "") == "hit":
 					landed += 1
+				if ev.get("result", "") == "whistle":
+					whistles += 1
 				if ev.get("result", "") in ["opening", "swap", "compound"]:
 					moments[ev["result"]] = moments.get(ev["result"], 0) + 1
 			if here != screen:
@@ -96,6 +100,7 @@ func _level(n: String) -> Array:
 						per_screen[here] = {}
 					per_screen[here][k] = per_screen[here].get(k, 0.0) + drop / who.size()
 			hp = l.hero.health
+		whistled += l.enemies.filter(func(e): return e.get("whistled", false)).size()
 		var result: String = "won" if l.won else ("lost on %s" % screen if l.lost else "not finished at %s" % screen)
 		if got_there:
 			reached_last += 1
@@ -113,6 +118,9 @@ func _level(n: String) -> Array:
 	out.append("**Hard versions** in this layout: %s" % (", ".join(hard) + " (tagged \"(hard)\" below)" if not hard.is_empty() \
 		else "none (no hard version of any enemy is built yet; when one is, it shows here and as \"(hard)\" below)"))
 	out.append("")
+	if whistles > 0:
+		out.append("**The Whistler**, all runs: %d whistles, %d goons whistled in (tagged \"(whistled in)\" below)" % [whistles, whistled])
+		out.append("")
 	if not moments.is_empty():
 		out.append("**Boss moments seen**, all runs: %s" % ", ".join(moments.keys().map(func(k): return "%s ×%d" % [
 			{"opening": "the twins' opening", "swap": "the twins' swap", "compound": "the twins' Compound (both at once)"}.get(k, k), moments[k]])))
@@ -140,7 +148,7 @@ func _kind_of(l, ev: Dictionary) -> String:
 	if a != null:
 		for e in l.enemies:
 			if e["f"] == a:
-				return e["kind"] + (" (hard)" if e.get("hard", false) else "")
+				return e["kind"] + (" (hard)" if e.get("hard", false) else "") + (" (whistled in)" if e.get("whistled", false) else "")
 	var p = ev.get("projectile")
 	if p != null and p.get("catchable", false) and p["team"] == 1:
 		return "wrench_mechanic (thrown %s)" % p["kind"]  # (his hurl: his wrench, or whatever he'd picked up)
