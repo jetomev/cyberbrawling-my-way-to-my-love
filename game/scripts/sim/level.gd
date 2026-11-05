@@ -93,6 +93,7 @@ const HUG_TICKS := 70  # the bear hug: this long without wriggling free, and he 
 ## trick each"), switched on by "hard": true on an enemy in a layout.
 const HARD_HEALTH := 1.25
 const HARD_GLINT := 2  # ticks off every blow's wind-up
+const HARDER_BOSS := 1.25  # the harder mode's bosses: this much more health
 const HARD_HUG_TICKS := 40  # the hard Mauler: "only a heartbeat to jab free"
 const HARD_FAR := 90  # the hard Snick: this long out of her reach (or him up out of it), and she throws her knife
 const HARD_FEINT := 24  # the hard Dancer: her first skate-in each time pulls up and backs off this long, then the real one
@@ -2045,7 +2046,9 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 	if e.has("y"):  # standing up on a container stack (level 6): on its top
 		enemies[-1]["f"].y = float(e["y"])
 		enemies[-1]["f"].air_from = float(e["y"])
-	if e.get("hard", false):  # the hard version: a bit more health and a shorter glint (the roster's level 9)
+	if harder:
+		enemies[-1]["hard"] = true  # the harder mode: every enemy is his hard version (the team's agreed list)
+	if e.get("hard", false) or harder:  # the hard version: a bit more health and a shorter glint (the roster's level 9)
 		var hf = enemies[-1]["f"]
 		hf.max_health *= HARD_HEALTH
 		hf.health = hf.max_health
@@ -2275,6 +2278,11 @@ func _maybe_boss() -> void:
 	for b in [boss] + boss.get("with", []):
 		_spawn(b.get("kind", "boss"), b.get("x", 1200.0), b.get("z", 80.0), b.get("weapon", ""), b.get("health", -1.0))
 		enemies[-1]["boss"] = true
+		if harder:  # the harder mode: a quarter more health and the shorter warning flash (the team's agreed list)
+			var bf = enemies[-1]["f"]
+			bf.max_health *= HARDER_BOSS
+			bf.health = bf.max_health
+			bf.tune["glint_cut"] = HARD_GLINT
 		for k in ["drops", "also_drops"]:  # (a layout's prize for him: Coach's first-aid kit and his whistle)
 			if b.has(k):
 				enemies[-1][k] = b[k]

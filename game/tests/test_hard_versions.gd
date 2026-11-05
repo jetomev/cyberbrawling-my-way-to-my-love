@@ -152,3 +152,22 @@ func test_the_hard_bruisers_slam_sends_a_ring_you_jump() -> void:
 			hit = hit or l.events.any(func(ev): return ev.get("kind", "") == "shock_ring" and ev.get("result", "") == "hit")
 		check(rang, "his slam sends a shock ring along the floor")
 		check(hit != jump, "%s: %s" % ["jumped" if jump else "standing", "it passes under him" if jump else "it catches him"])
+
+
+func test_the_harder_mode_makes_every_enemy_hard_and_bosses_tougher() -> void:
+	var l = street()
+	l.harder = true
+	var e: Dictionary = bring(l, "bruiser", false)
+	check(e.get("hard", false), "a plain layout's Bruiser comes as his hard version")
+	var plain = Level.new(Level.load_data("res://levels/coach_gym.json"), {}, 1)
+	var hard = Level.new(Level.load_data("res://levels/coach_gym.json"), {}, 1)
+	hard.harder = true
+	for lv in [plain, hard]:
+		for i in 400:
+			if lv.on == 1:
+				break
+			lv.step({"mx": 1.0})
+	var cp = plain.enemies.filter(func(x): return x["kind"] == "coach")[0]["f"]
+	var ch = hard.enemies.filter(func(x): return x["kind"] == "coach")[0]["f"]
+	eq(ch.max_health, cp.max_health * Level.HARDER_BOSS, "the boss: a quarter more health")
+	eq(int(ch.tune.get("glint_cut", 0)), Level.HARD_GLINT, "and the shorter warning flash")
