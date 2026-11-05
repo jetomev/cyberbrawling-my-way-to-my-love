@@ -51,7 +51,7 @@ const KIND_TINT := {"glow_punk": Color(1.45, 0.85, 1.25), "bruiser": Color(1.1, 
 	"coach": Color(0.7, 0.95, 1.35),  # Coach Crusher: an old blue tracksuit
 	"chrome": Color(1.35, 1.38, 1.5),  # Madame Chrome: a silver dress
 	"static": Color(0.85, 1.1, 1.45),  # Mr. Static: a rubber suit, crackling blue
-	"rook": Color(1.15, 0.45, 0.5),  # Velvet Rook: a dark red velvet suit
+	"rook": Color(0.85, 0.36, 0.56),  # Velvet Rook: deep wine-red velvet, a touch of purple, never bright red (character page v2)
 	"crane_operator": Color(1.45, 1.35, 0.4),  # the Crane Operator: a neon safety vest
 	"godfather": Color(1.5, 1.45, 1.4),  # the Godfather of Glow: a white armoured coat
 	# the rest of the roster, from the team's looks: the mechanic's blue overalls, the Doorman's black suit, the

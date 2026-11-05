@@ -40,6 +40,11 @@ Each layer is a wide strip made of **tiles no wider than 2048 px** (the GPU limi
   puffs out, an eye closes) → broken (the arm or leg hangs at a wrong angle, a bandage-free crack line). The game swaps
   the part's picture as health drops.
 - The two heroes (a man and a woman) and the enemies share one body plan, so every move fits every fighter.
+- **Settled looks** (the assistant team's character page v2, art-in 2026-11-05-character-references-v2; Javier's word
+  wins): the hero (the man) wears a **charcoal jacket, a mid-grey T-shirt and black sneakers with one cyan stripe**.
+  **Velvet Rook** wears **deep wine-red velvet**: dark, a touch of purple, never bright red, with a soft lighter sheen
+  on the folds so it still reads under level 10's red light. The grey boxes carry the colour as a tint until the art
+  lands.
 
 ## Colour by level (neon to grit)
 Working names for the places; Javier names them for real. Saturation drops level by level (100% → about 35%).
