@@ -122,6 +122,7 @@ const RING_IN := 150.0  # a ring's ropes stand this far inside the room's walls 
 const SWAP_LANE := 45.0  # crossing, the attacker passes this far in front of where they stood, his brother behind
 const SWAP_TICKS_MAX := 150  # a crossing that hasn't arrived by then (a prop in the way) ends where they stand
 const REBOUND_TICKS := 16  # off the ropes he bounces back this long (the team's level 4: "he bounces off the ropes")
+const ROPE_BOUNCE_STATES := ["hurt", "block_hit", "stagger", "push", "knockdown", "launch"]  # knocked into the ropes
 const REBOUND_SPEED := 11.0  # px a frame at the start of the bounce, easing to nothing (about 90 px in all)
 const TACKLE_WINDUP := 30  # first he backs off a few steps, head down, then charges: time to step aside (feel lab)
 const CARD_SPEED := 12.0  # Madame Chrome's cards, three in a row at the chest and the head
@@ -198,6 +199,7 @@ var hint_until := -1
 var hints_shown := {}
 var hugs_thrown := false
 var used_moves := {}  # the hero's moves used this level (a wave's hint about one he already knows is skipped)  # a bear hug has thrown him this level (the first is gentle where the level says)
+var hero_rope := {}  # the hero thrown back off the ropes: {dir, t} (the team's level 4, Boromir: a safe moment)
 var rope_hit := {}  # the ropes he last slammed into (the view bends them a moment): side, z, tick
 var crossing := {}  # Twin Loans walking past each other mid-combo ("Interest"): who, from where, to where
 var twins_opened := false  # Twin Loans have opened with their swap (the team's third ruling)
@@ -300,6 +302,7 @@ func restart() -> void:
 	hugs_thrown = false
 	used_moves = {}
 	rope_hit = {}
+	hero_rope = {}
 	crossing = {}
 	live_until = -1
 	crane = {}
@@ -470,7 +473,20 @@ func step(inp: Dictionary) -> void:
 	if plan["floors"][on].get("ring", false):  # inside the ropes, everyone
 		var r := ropes()
 		for f in all:
+			if f == hero and hero_rope.is_empty() and (f.x < r.x or f.x > r.y) and f.state in ROPE_BOUNCE_STATES:
+				# knocked into the ropes: they throw him back, and he gets the same safe moment as getting up from a
+				# knockdown, so Coach can't hit him on the rebound (the team's level 4, Boromir)
+				var side := 1.0 if f.x > r.y else -1.0
+				hero_rope = {"dir": -side, "t": 0}
+				rope_hit = {"side": side, "z": f.z, "at": tick}
+				f.safe_until = f.clock + REBOUND_TICKS + int(f.tune["get_up_ticks"])
+				early.append({"target": f, "result": "hero_ropes", "kind": "ropes"})
 			f.x = clampf(f.x, r.x, r.y)
+		if not hero_rope.is_empty():
+			hero_rope["t"] += 1
+			hero.x = clampf(hero.x + hero_rope["dir"] * REBOUND_SPEED * (1.0 - float(hero_rope["t"]) / REBOUND_TICKS), r.x, r.y)
+			if hero_rope["t"] >= REBOUND_TICKS:
+				hero_rope = {}
 	used_moves[hero.state] = true
 	for id in world.step_hits(all):  # something smashed: whatever was inside falls out
 		var o: Dictionary = world.objects[id]

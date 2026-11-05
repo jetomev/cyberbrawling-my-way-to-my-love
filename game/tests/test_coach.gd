@@ -149,3 +149,33 @@ func test_off_the_ropes_he_bounces_back_into_the_ring() -> void:
 	var mid: float = (l.bounds().x + l.bounds().y) * 0.5
 	check(absf(f.x - mid) < absf(at_ropes - mid) - 60.0, "thrown back toward the middle of the ring (%.0f px off the ropes)" % absf(at_ropes - f.x))
 	eq(f.state, "stagger", "then dazed, open")
+
+
+func test_knocked_into_the_ropes_the_hero_bounces_back_safe() -> void:
+	var l = gym()
+	var e: Dictionary = coach(l)
+	var f = e["f"]
+	e["brain"].wait = 9999  # (Coach stands back for this: the safe moment is checked by hand below)
+	var r: Vector2 = l.ropes()
+	var h = l.hero
+	h.x = r.y - 4.0
+	f.x = h.x - 120.0
+	h.take_hit({"damage": 1.0, "effect": "", "low": 0.0, "high": 300.0, "move": "punch"}, f)
+	var bounced := false
+	var safe_at := -1
+	for i in 10:
+		l.step({})
+		if l.events.any(func(ev): return ev.get("result", "") == "hero_ropes"):
+			bounced = true
+			safe_at = h.clock
+			break
+	check(bounced, "knocked back into the ropes: they throw him back")
+	check(not h.hittable(), "and nothing lands on him on the rebound (state %s)" % h.state)
+	for i in Level.REBOUND_TICKS:
+		l.step({})
+	check(h.x < r.y - 40.0, "carried back into the ring (%.0f px off the ropes)" % (r.y - h.x))
+	check(not h.hittable() or h.clock >= h.safe_until, "still safe till the moment's over")
+	while h.clock < h.safe_until:
+		l.step({})
+	check(h.hittable() or h.state in ["knockdown", "down", "get_up"], "then he can be hit again")
+	eq(h.safe_until - safe_at, Level.REBOUND_TICKS + int(h.tune["get_up_ticks"]) - 0, "the safe moment: the bounce plus a get-up's length")

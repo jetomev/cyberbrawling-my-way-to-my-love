@@ -48,6 +48,7 @@ var t := 0  # ticks spent in the current state
 var queue: Array[String] = []  # buttons pressed early, in order, waiting for the fighter to be free
 var buffer_left := 0  # once free, how long the waiting presses stay good
 var clock := 0  # ticks since this fighter was made
+var safe_until := -1  # no blow lands on him before this clock tick (thrown back off a ring's ropes: level 4)
 var last_press := -100  # the tick of the last attack button that counted
 var chain := ""  # the combo so far ("P", "PK", …); "" = none
 var chain_until := -1  # the last tick a press still continues the chain (the blow's end + combo_window_ticks)
@@ -594,7 +595,7 @@ func _recover() -> void:
 
 ## Can a blow land on him now? Not while falling, lying or getting up (no hitting a man when he's down).
 func hittable() -> bool:
-	return not state in ["knockdown", "down", "get_up", "ko", "tumble"]
+	return not state in ["knockdown", "down", "get_up", "ko", "tumble"] and clock >= safe_until
 
 
 func defeated() -> bool:
