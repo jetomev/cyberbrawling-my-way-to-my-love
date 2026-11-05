@@ -292,6 +292,7 @@ func _play_level() -> void:
 			bot.goal = level.next_door()
 			bot.goal_hit = level.goal_is_switch
 			bot.jump_cue = level.crane_jump_cue()
+			bot.dodge_x = level.shadow_cue()
 		level.step(scene.inputs(level) if scene != null else (bot.think(level.standing()) if bot != null else Controls.read()))
 		sound.fight_tick(level.everyone(), level.events)
 		_note_breaks(level.events)

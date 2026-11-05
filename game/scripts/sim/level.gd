@@ -1168,6 +1168,19 @@ func _from_above() -> void:
 		from_above_next = tick + int(fa.get("every", 120))
 
 
+## For the bot (a person sees it): a wrench's shadow on him, about to land: which way to step along the street to get
+## out of it (0.0 when nothing's coming).
+func shadow_cue() -> float:
+	for d in from_above:
+		if absf(d["x"] - hero.x) < 70.0 and absf(d["z"] - hero.z) < 35.0:
+			var b := bounds()
+			var away := 1.0 if hero.x >= d["x"] else -1.0
+			if (away > 0.0 and hero.x > b.y - 100.0) or (away < 0.0 and hero.x < b.x + 100.0):
+				away = -away  # (against the screen's edge: the other way)
+			return away
+	return 0.0
+
+
 ## Level 4's punching bag: a blow swings it away from the one who hit it, and it knocks down whoever stands behind it.
 func _bag() -> void:
 	for o in world.objects:

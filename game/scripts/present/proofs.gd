@@ -458,6 +458,7 @@ func inputs(level) -> Dictionary:
 			bot.goal = level.next_door()
 			bot.goal_hit = level.goal_is_switch
 			bot.jump_cue = level.crane_jump_cue()
+			bot.dodge_x = level.shadow_cue()
 			inp = bot.think(level.standing())
 			var cab_op: Array = level.enemies.filter(func(e): return e["kind"] == "crane_operator" and not e["f"].defeated())
 			if level.plan["floors"][level.on].get("cab", false) and not cab_op.is_empty():

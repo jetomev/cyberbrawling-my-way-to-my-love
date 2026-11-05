@@ -679,6 +679,7 @@ func test_the_bot_is_never_stuck_in_a_draft_level() -> void:
 			bot.goal = l.next_door()
 			bot.goal_hit = l.goal_is_switch
 			bot.jump_cue = l.crane_jump_cue()
+			bot.dodge_x = l.shadow_cue()
 			l.step(bot.think(l.standing()))
 		results.append("%s %s" % [n, "won" if l.won else ("lost on floor %d" % l.on if l.lost else "STUCK on floor %d at %.0f" % [l.on, l.hero.x])])
 	check(not results.any(func(r): return r.contains("STUCK")), "never stuck: %s" % [results])
