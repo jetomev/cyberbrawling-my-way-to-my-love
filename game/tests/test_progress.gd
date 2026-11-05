@@ -42,3 +42,31 @@ func test_every_listed_level_exists() -> void:
 	check(p.levels.size() >= 1, "the list has levels")
 	for name in p.levels:
 		check(FileAccess.file_exists("res://levels/%s.json" % name), "levels/%s.json is there" % name)
+
+
+func test_the_run_total_the_helper_mark_and_best_scores_per_mode() -> void:
+	var p = fresh()
+	if FileAccess.file_exists(p.records_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(p.records_path))
+	p = Progress.new(SAVE)
+	p.new_game("man", "harder", true)
+	eq([p.mode, p.helper, p.total], ["harder", true, 0], "the mode and the helper's switch, a fresh total")
+	p.add_score(5000, false)
+	p.add_score(3000, true)
+	eq(p.total, 8000, "the run's total")
+	check(p.marked, "a bought life marks the run")
+	eq(p.best.get("harder", {}).get("score", 0), 8000, "the harder mode's best")
+	check(p.best["harder"]["mark"], "with its mark")
+	p.set_name("abz")
+	var again = Progress.new(SAVE)
+	eq([again.mode, again.total, again.name], ["harder", 8000, "ABZ"], "kept: the mode, the total, the letters")
+	again.forget()
+	var later = Progress.new(SAVE)
+	eq(later.name, "ABZ", "a finished game forgets its save, not the letters")
+	eq(later.best.get("harder", {}).get("score", 0), 8000, "nor the best scores")
+	later.new_game("woman")
+	later.add_score(100, false)
+	eq(later.best.get("harder", {}).get("score", 0), 8000, "(a normal game's score is its own mode's)")
+	eq(later.best.get("normal", {}).get("score", 0), 100, "")
+	later.forget()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(later.records_path))
