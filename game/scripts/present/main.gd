@@ -351,6 +351,8 @@ func _play_level() -> void:
 	$Camera.limit_right = int(maxf(b.y, b.x + 1920.0))
 	$Camera.position.x = lerpf($Camera.position.x, hero.x + hero.facing * 160.0, 0.08)
 	$Camera.zoom = Vector2.ONE * tune["camera_zoom"]
+	# up a container stack (level 6), the camera rises with him so his head stays on screen; on the street it rests
+	$Camera.position.y = lerpf($Camera.position.y, 540.0 - maxf(0.0, hero.y - 120.0), 0.08)
 	if scene != null and scene.zoom != 1.0:  # a scripted scene in close (the cat is small)
 		$Camera.zoom = Vector2.ONE * scene.zoom
 		$Camera.position.x = lerpf($Camera.position.x, hero.x - hero.facing * 60.0, 0.2)

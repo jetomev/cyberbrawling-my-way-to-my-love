@@ -304,6 +304,7 @@ func restart() -> void:
 			"active_wave": -1, "enemies": [], "waiting": []})
 	on = 0
 	hero = Fighter.new(tune, 200.0, 80.0, world)
+	hero.falls_hurt = plan["floors"][0].get("stacks", false)
 	if plan.get("start_weapon", "") != "":
 		hero.take_weapon(plan["start_weapon"])  # (level 3: he walks in with the wrench from Big Mama)
 	fight = Fight.new()
@@ -466,6 +467,11 @@ func step(inp: Dictionary) -> void:
 			if e.get("arguing", false) and e["brain"].dormant_until_within > 0.0:
 				think = _argue(e)
 			think = _hard_think(e, think)  # (before the throws below: the hard Snick's knife goes the Mechanic's way)
+			if e.get("waits_below", false):  # fallen off a stack: he stays put till the hero is down here near him
+				if hero.y > 1.0 or hero.state == "climb" or absf(hero.x - e["f"].x) > FALLEN_WAKE:
+					think = {}
+				else:
+					e.erase("waits_below")
 			# never more than two swinging at once, on every level, a boss's helpers included (the balance ruling)
 			var swinging: Array = enemies.filter(func(o): return not o["gone"] and o["f"].attack_phase() != "")
 			var kind: String = e.get("kind", "")
@@ -554,6 +560,7 @@ func step(inp: Dictionary) -> void:
 	_over_the_rail()
 	_vending()
 	_bag()
+	_fallen()
 	_hard_tricks()
 	_from_above()
 	_lift_ride()
@@ -1315,23 +1322,30 @@ func _from_above() -> void:
 ## For the bot (a person would follow her): Madame Chrome up on her balcony, the hero below: to the spiral stair's foot
 ## and up; she's back on the floor, he's up: to its top and down. {x, z, mz}, or {} when it's nothing to do with ladders.
 func climb_cue() -> Dictionary:
-	var lift: Dictionary = plan["floors"][on].get("chrome_lift", {})
-	if lift.is_empty() or hero.state == "climb":
+	if hero.state == "climb":
 		return {}
-	var her: Array = enemies.filter(func(e): return e.get("kind", "") == "chrome" and not e["gone"] and not e["f"].defeated())
-	if her.is_empty() or her[0].has("ride"):
-		return {}
-	var lads: Array = world.objects.filter(func(o): return o["kind"] == "ladder")
-	if lads.is_empty():
-		return {}
-	var o: Dictionary = lads[0]
-	var cx: float = (o["x0"] + o["x1"]) * 0.5
-	var f = her[0]["f"]
-	if f.y > 1.0 and hero.y < 1.0:
-		return {"x": cx, "z": o["z1"] + 10.0, "mz": -1.0}
-	if f.y < 1.0 and hero.y > 1.0:
-		return {"x": cx, "z": maxf(0.0, o["z0"] - 25.0), "mz": 1.0}
-	return {}
+	# whoever he'd fight next: the nearest goon on his feet (Madame Chrome riding her lift: wait for her)
+	var foe = null
+	for e in enemies:
+		if e["gone"] or e["f"].defeated() or e.has("ride") or e.get("waits_below", false):
+			continue
+		if foe == null or absf(e["f"].x - hero.x) < absf(foe.x - hero.x):
+			foe = e["f"]
+	if foe == null or absf(foe.y - hero.y) < 60.0 or not foe.flight().is_empty() or not hero.flight().is_empty():
+		return {}  # (on his level, or on a flight of stairs: no ladders)
+	var up: bool = foe.y > hero.y
+	var best := {}
+	for o in world.objects:  # the nearest ladder that goes the right way from where he stands
+		if o["kind"] != "ladder":
+			continue
+		var from_y: float = float(o.get("base", 0.0)) if up else float(o["top"])
+		var to_y: float = float(o["top"]) if up else float(o.get("base", 0.0))
+		if absf(from_y - hero.y) > 2.0 or (up and to_y > foe.y + 30.0) or (not up and to_y < foe.y - 30.0):
+			continue  # (from where he stands, and not past where the foe is)
+		var cx: float = (o["x0"] + o["x1"]) * 0.5
+		if best.is_empty() or absf(cx - hero.x) < absf(best["x"] - hero.x):
+			best = {"x": cx, "z": o["z1"] + 10.0 if up else maxf(0.0, o["z0"] - 25.0), "mz": -1.0 if up else 1.0}
+	return best
 
 
 ## For the bot (a person sees it): a wrench's shadow on him, about to land: which way to step along the street to get
@@ -1376,6 +1390,24 @@ func _hard_think(e: Dictionary, think: Dictionary) -> Dictionary:
 
 ## The hard versions' tricks that live in the level: the finisher twice (Glow Punk, Enforcer); the Doorman's shield
 ## bouncing the hero back when a blow of his bounces off it.
+## A goon knocked off a container stack (level 6, the team's page): he lands hurt (about half his health) and waits
+## where he fell, not moving off his spot, till the hero comes down onto the quay near him.
+const FALLEN_HEALTH := 0.5
+const FALLEN_WAKE := 500.0
+func _fallen() -> void:
+	for e in enemies:
+		var f = e["f"]
+		if e["gone"] or f.fell <= 0.0 or f == hero:
+			continue
+		f.fell = 0.0
+		f.health = minf(f.health, f.max_health * FALLEN_HEALTH)
+		e["waits_below"] = true
+		events.append({"target": f, "result": "fell", "kind": "fell"})
+	if hero.fell > 0.0:
+		hero.fell = 0.0
+		events.append({"target": hero, "result": "hero_fell", "kind": "fell"})
+
+
 func _hard_tricks() -> void:
 	for r in rings.duplicate():  # the shock rings spread; one catches the hero on the floor as it passes him (jump it)
 		var rad: float = (tick - r["at"]) * RING_SPEED
@@ -1794,6 +1826,7 @@ func _spawn(kind: String, x: float, z: float, weapon := "", health := -1.0, wave
 	if not st.is_empty():
 		f.y = StreetWorld.step_height(st, x)  # placed on a flight of stairs (the team's Snick on the top step)
 	f.can_climb = false  # enemies don't climb ladders (level 2)
+	f.falls_hurt = plan["floors"][on].get("stacks", false)
 	f.facing = -1 if x > hero.x else 1
 	if weapon != "":
 		f.take_weapon(weapon)
@@ -1844,6 +1877,9 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 		# version's tag; a goon he whistled in (the robot's numbers name him apart, the team's ask 11-05)
 		if e.has(k):
 			enemies[-1][k] = e[k]
+	if e.has("y"):  # standing up on a container stack (level 6): on its top
+		enemies[-1]["f"].y = float(e["y"])
+		enemies[-1]["f"].air_from = float(e["y"])
 	if e.get("hard", false):  # the hard version: a bit more health and a shorter glint (the roster's level 9)
 		var hf = enemies[-1]["f"]
 		hf.max_health *= HARD_HEALTH
@@ -2001,6 +2037,7 @@ func _links() -> void:
 
 func _go_to(floor_index: int, x: float, at_y := 0.0, at_z := 80.0) -> void:
 	on = floor_index
+	hero.falls_hurt = plan["floors"][on].get("stacks", false)  # (container stacks: level 6's falls and edges)
 	visited[floor_index] = true
 	hero.world = world
 	hero.x = x
