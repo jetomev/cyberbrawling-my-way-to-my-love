@@ -649,6 +649,14 @@ func _draw_signs() -> void:
 				car_y = e["f"].y
 		var car_floor: float = Street.GROUND_Y + float(lift["z_down"]) - car_y
 		sign_view.draw_line(Vector2(lx - 55.0, car_floor), Vector2(lx + 55.0, car_floor), Color(0.85, 0.7, 0.3), 5.0)
+	for lip in level.plan["floors"][level.on].get("lit_lips", []):  # level 6: every gap's lip lit, fog or not (Boromir)
+		var top_y: float = Street.GROUND_Y - float(lip[1])
+		var lx: float = float(lip[0])
+		for k in 4:  # a hazard stripe down the lip's face
+			sign_view.draw_rect(Rect2(lx - 6.0, top_y + k * 22.0, 12.0, 11.0), Color(0.95, 0.8, 0.1))
+		sign_view.draw_line(Vector2(lx, top_y), Vector2(lx, top_y - 90.0), Color(0.3, 0.3, 0.32), 4.0)  # a lamp on a post
+		sign_view.draw_circle(Vector2(lx, top_y - 94.0), 9.0, Color(1.0, 0.75, 0.35))
+		sign_view.draw_circle(Vector2(lx, top_y - 94.0), 22.0, Color(1.0, 0.7, 0.3, 0.18))
 	for r in level.plan["floors"][level.on].get("smooth", []):  # a smooth shiny floor (level 5's slot floor): light streaks
 		var depth: float = level.tune["street_depth"]
 		var x: float = float(r[0])
