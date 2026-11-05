@@ -644,6 +644,13 @@ func _draw_signs() -> void:
 				car_y = e["f"].y
 		var car_floor: float = Street.GROUND_Y + float(lift["z_down"]) - car_y
 		sign_view.draw_line(Vector2(lx - 55.0, car_floor), Vector2(lx + 55.0, car_floor), Color(0.85, 0.7, 0.3), 5.0)
+	for r in level.plan["floors"][level.on].get("smooth", []):  # a smooth shiny floor (level 5's slot floor): light streaks
+		var depth: float = level.tune["street_depth"]
+		var x: float = float(r[0])
+		while x < float(r[1]):
+			sign_view.draw_colored_polygon(PackedVector2Array([Vector2(x, Street.GROUND_Y), Vector2(x + 30.0, Street.GROUND_Y),
+				Vector2(x - 30.0, Street.GROUND_Y + depth), Vector2(x - 60.0, Street.GROUND_Y + depth)]), Color(1.0, 0.95, 0.8, 0.07))
+			x += 140.0
 	var font := ThemeDB.fallback_font
 	for sg in level.plan["floors"][level.on].get("signs", []):
 		var text: String = sg[2]

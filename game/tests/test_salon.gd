@@ -93,3 +93,25 @@ func test_the_chandelier_drops_only_to_a_blow_from_the_balcony_and_stuns_her() -
 			break
 	check(dropped and ch["broken"], "from the balcony: it drops")
 	eq(f.state, "dizzy", "right on her: stunned")
+
+
+func test_on_a_smooth_floor_the_dancers_can_skate_quicker() -> void:
+	var d: Dictionary = Level.load_data("res://levels/level5.json")
+	check(d["floors"][0].has("smooth"), "level 5's slot floor is smooth (the shine)")
+	d["floors"][0]["smooth_skate"] = 1.25  # (how much quicker waits on the team: the rule itself, at a trial number)
+	var l = Level.new(d, {}, 1)
+	l.floors[0]["wave"] = l.floors[0]["waves"].size()
+	l._spawn("neon_dancer", 1000.0, 80.0)
+	var off: Dictionary = l.enemies[-1]
+	l._spawn("neon_dancer", 2800.0, 80.0)
+	var on: Dictionary = l.enemies[-1]
+	for e in [off, on]:
+		e["brain"].wait = 9999
+		e["brain"].dormant_until_within = 1.0
+	l.hero.x = 6000.0
+	l.step({})
+	check(on["f"].tune["run_speed"] > off["f"].tune["run_speed"] * 1.2, "on the slot floor (screen 2) she skates a quarter quicker (%.1f vs %.1f)" % [
+		on["f"].tune["run_speed"], off["f"].tune["run_speed"]])
+	on["f"].x = 1000.0
+	l.step({})
+	eq(on["f"].tune["run_speed"], off["f"].tune["run_speed"], "off it, the same as anywhere")

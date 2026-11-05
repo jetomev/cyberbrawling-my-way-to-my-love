@@ -95,6 +95,9 @@ const GENTLE_THROW := 1.5  # the first bear hug's throw where a level says so: a
 const TUMBLE_SPEED := 10.0  # px a tick down the flight
 const TUMBLE_DAMAGE := 1.5
 const TUMBLE_DOWN_EXTRA := 46  # on top of down_ticks and get_up_ticks: about 2 s on the street in all
+## A Neon Dancer on a smooth floor (a floor's "smooth" stretches: level 5's slot floor, "the Dancers' stage", the team's
+## page) skates the floor's "smooth_skate" times quicker: 1.0 (the look only) until the team says how much (1.25 cost
+## level 5 its two robot wins, 2026-11-05)
 const ONE_AT_A_TIME := ["enforcer", "neon_dancer"]  # of these kinds only one swings (or skates in) at a time (rulings two and three)
 const TWIN_OPEN_RANGE := 600.0  # how near he is when the brothers open with their swap
 const SWINGING_MAX := 2  # enemies throwing a blow at once (the team's balance ruling, 2026-11-04)
@@ -636,6 +639,14 @@ func _roster_tricks() -> void:
 		var f = e["f"]
 		if e["gone"] or f.defeated():
 			continue
+		if e.get("kind", "") == "neon_dancer" and f.too_quick:  # on a smooth floor (level 5's slot floor) she's quicker
+			if not e.has("skate_walk"):
+				e["skate_walk"] = f.tune["walk_speed"]
+				e["skate_run"] = f.tune["run_speed"]
+			var smooth: bool = plan["floors"][on].get("smooth", []).any(func(r): return f.x >= float(r[0]) and f.x <= float(r[1]))
+			var quick: float = float(plan["floors"][on].get("smooth_skate", 1.0)) if smooth else 1.0
+			f.tune["walk_speed"] = e["skate_walk"] * quick
+			f.tune["run_speed"] = e["skate_run"] * quick
 		if e.get("kind", "") == "neon_dancer" and f.state in ["launch", "knockdown", "down"] and f.too_quick:
 			f.too_quick = false  # off her skates for good: on foot, slow
 			f.tune["walk_speed"] = Tuning.DEFAULTS["walk_speed"] * 0.8
