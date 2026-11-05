@@ -327,7 +327,10 @@ func _play_level() -> void:
 		var id: int = e["f"].get_instance_id()
 		live[id] = true
 		if not level_views.has(id):
-			var v = HeroView.new(KIND_TINT.get(e["kind"], ENEMY_TINT))
+			var tint: Color = KIND_TINT.get(e["kind"], ENEMY_TINT)
+			if e.get("hard", false):
+				tint = tint.darkened(0.35)  # the hard version: darker (the roster's level 9)
+			var v = HeroView.new(tint)
 			v.kind = e["kind"]
 			v.scale = Vector2.ONE * KIND_SIZE.get(e["kind"], 1.0)  # (drawn from the feet: they stay on the street)
 			add_child(v)

@@ -88,6 +88,11 @@ const WHISTLE_EVERY := 360  # the lookout whistles in two more goons this often 
 # (about six seconds: the team's level 3 page, feel lab)
 const WHISTLE_RANGE := 1000.0
 const HUG_TICKS := 70  # the bear hug: this long without wriggling free, and he throws the hero down
+## The hard versions (Pippin's roster, level 9: "darker and harder: a shorter glint, a bit more health, and one extra
+## trick each"), switched on by "hard": true on an enemy in a layout.
+const HARD_HEALTH := 1.25
+const HARD_GLINT := 2  # ticks off every blow's wind-up
+const HARD_HUG_TICKS := 40  # the hard Mauler: "only a heartbeat to jab free"
 const HURL_DAMAGE := 3.0
 const GENTLE_THROW := 1.5  # the first bear hug's throw where a level says so: a plain knockdown's damage (feel lab)
 ## The stairs (the team's level 3 page): a push kick or any knockdown on the slope rolls him to the foot, bowling over
@@ -595,6 +600,10 @@ func _release(f) -> void:
 	if f.hurling:  # (the Wrench Mechanic's hurl, after its wind-up: his own throw, as before)
 		f.hurling = false
 		_hurl(f)
+		for e in enemies:  # the hard Mechanic has two wrenches: the second, once, straight after
+			if e["f"] == f and e.get("hard", false) and not e.get("second_wrench", false):
+				e["second_wrench"] = true
+				f.take_weapon("wrench")
 		return
 	var what: String = f.drop_weapon()
 	var dir := float(f.facing)
@@ -658,13 +667,15 @@ func _roster_tricks() -> void:
 				and e.get("whistles", 99) > 0:
 			e["next_whistle"] = tick + WHISTLE_EVERY
 			e["whistles"] = e.get("whistles", 99) - 1  # (a layout can give him only so many: level 3's has two)
-			for side in ["left", "right"]:
+			var sides := ["left", "right"] + (["right"] if e.get("hard", false) else [])  # (the hard Whistler calls three)
+			for i in sides.size():
+				var side: String = sides[i]
 				if standing().size() < MAX_ON_SCREEN:
 					if e.has("calls_x"):  # up the ladder where it comes out (the team's level 3: Mechanics climb at you)
 						_arrive({"kind": e.get("calls", "glow_punk"), "dx": e["calls_x"] - hero.x + (0.0 if side == "left" else 50.0),
-							"z": 30.0 if side == "left" else 70.0, "whistled": true}, hero.x, e["wave"])
+							"z": 30.0 if side == "left" else 70.0 + 30.0 * (i - 1), "whistled": true}, hero.x, e["wave"])
 					else:
-						_arrive({"kind": e.get("calls", "glow_punk"), "from": side, "z": 80.0, "whistled": true}, hero.x, e["wave"])
+						_arrive({"kind": e.get("calls", "glow_punk"), "from": side, "z": 80.0 + 40.0 * maxi(0, i - 1), "whistled": true}, hero.x, e["wave"])
 			events.append({"target": f, "result": "whistle", "kind": "whistle"})
 	hero.held_by = hug["by"]["f"] if not hug.is_empty() and hero.state == "held" else null
 	if not hug.is_empty():
@@ -674,7 +685,7 @@ func _roster_tricks() -> void:
 				g._enter("stagger")  # wriggled free: he's off balance
 			hug["by"]["brain"].wait = 40
 			hug = {}
-		elif tick - hug["at"] >= HUG_TICKS:
+		elif tick - hug["at"] >= (HARD_HUG_TICKS if hug["by"].get("hard", false) else HUG_TICKS):
 			hero._enter("idle")
 			# his very first grab is the lesson, not the punishment (the team's level 4): a plain knockdown's damage
 			var gentle: bool = plan.get("gentle_first_grab", false) and not hugs_thrown
@@ -1752,6 +1763,11 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 		# version's tag; a goon he whistled in (the robot's numbers name him apart, the team's ask 11-05)
 		if e.has(k):
 			enemies[-1][k] = e[k]
+	if e.get("hard", false):  # the hard version: a bit more health and a shorter glint (the roster's level 9)
+		var hf = enemies[-1]["f"]
+		hf.max_health *= HARD_HEALTH
+		hf.health = hf.max_health
+		hf.tune["glint_cut"] = HARD_GLINT
 	if e.get("hidden", false):
 		enemies[-1]["brain"].dormant_until_within = AMBUSH
 	if e.get("arguing", false):  # squaring off with another of his wave, slashing at him, till the hero comes close

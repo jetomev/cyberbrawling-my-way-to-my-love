@@ -96,7 +96,10 @@ static func is_air(name: String) -> bool:
 static func data(name: String, tune: Dictionary) -> Dictionary:
 	if Weapons.is_swing(name):
 		var held: String = tune.get("weapon", "")
-		return Weapons.swing_data(name, held if Weapons.is_weapon(held) else "stick")
+		var sw: Dictionary = Weapons.swing_data(name, held if Weapons.is_weapon(held) else "stick").duplicate()
+		if tune.has("glint_cut") and sw.has("startup"):  # a hard version's shorter warning (the roster's level 9)
+			sw["startup"] = maxi(2, int(sw["startup"]) - int(tune["glint_cut"]))
+		return sw
 	var d: Dictionary = TABLE[name].duplicate()
 	if name in TUNED:
 		for k in ["startup", "active", "recovery", "reach"]:
@@ -104,6 +107,8 @@ static func data(name: String, tune: Dictionary) -> Dictionary:
 				d[k] = tune[name + "_" + k]
 		if not d.has("recovery"):
 			d["recovery"] = 0  # the flying kick stays out until landing
+	if tune.has("glint_cut") and d.has("startup"):  # a hard version's shorter warning (the roster's level 9)
+		d["startup"] = maxi(2, int(d["startup"]) - int(tune["glint_cut"]))
 	return d
 
 
