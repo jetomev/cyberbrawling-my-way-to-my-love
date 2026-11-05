@@ -120,7 +120,7 @@ func inputs(level) -> Dictionary:
 					"crane_stopped": _say("a SWITCH thrown: the crane stops along this floor, for good")
 					"cab_open": _say("all three switches: the CAB door opens")
 					"horn": _say("in the cab: the HORN blast shoves him back")
-					"shoved_out": _say("P P K: SHOVED OUT of his cab"),
+					"shoved_out": _say("P P K: SHOVED OUT of his cab")
 					"climbs_back": _say("he CLIMBS BACK into his cab: a second round, and the next P P K ends it")
 					"crate_smash": _say("a crate smashes down beside him (its shadow warned him)")
 					"lift_arrives": _say("the glass lift's ridden down and its fight is won: the doors open")
