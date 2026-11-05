@@ -213,6 +213,10 @@ var score := 0  # this level's score so far (the team's points: sim/score.gd; co
 var score_parts := {}  # the same, in parts: goons, bosses, finishers, blocks, finds, health, no_hit
 var hits_taken := 0  # blows that landed on the hero this level
 var health_lost := 0.0  # health he lost to anything this level (none: the no-hit bonus)
+var helper := false  # the helper (a switch in the pause menu, off at the start): another life on the last one, for score
+var bank := 0  # the run's score from the levels before this one (the helper's price comes off the total)
+var helper_used := false  # a life bought this level (best scores made with the helper carry a mark)
+var life_offer := false  # the last life gone with the helper on: the level waits on "Another life?"
 var harder := false  # the harder mode: every enemy its hard version, bosses tougher, the score ×1.5
 var blocks_scored := {}  # fighter -> perfect blocks scored on him (at most PERFECT_BLOCKS_MAX)
 var was_dizzy := {}  # fighters dizzy as this tick's blows came (a finisher on one scores more)
@@ -470,7 +474,7 @@ func bounds() -> Vector2:
 
 ## One tick: the hero on this input, every enemy on its own mind, the blows settled, the waves, switches and floors.
 func step(inp: Dictionary) -> void:
-	if won or lost:
+	if won or lost or life_offer:
 		return
 	tick += 1
 	var b := bounds()
@@ -2120,6 +2124,37 @@ func _waves() -> void:
 		close_score()
 
 
+## The helper's price for another life: 2,000, 3,000 in the harder mode.
+func life_price() -> int:
+	return Score.LIFE_HARDER if harder else Score.LIFE
+
+
+## Yes to "Another life?": never refused; the price comes off the run's total (the earlier levels first, then this
+## level's), and a total short of it drops to zero; the level's score is kept; he's up again where he fell.
+func buy_life() -> void:
+	if not life_offer:
+		return
+	var price: int = life_price()
+	var from_bank: int = mini(bank, price)
+	bank -= from_bank
+	var rest: int = mini(score, price - from_bank)
+	score -= rest
+	score_parts["helper"] = score_parts.get("helper", 0) - rest
+	life_offer = false
+	helper_used = true
+	lives = 1
+	hero.health = hero.max_health
+	hero._enter("get_up")
+	events.append({"target": hero, "result": "life_bought", "kind": "helper", "price": price})
+
+
+## No to "Another life?": the level's lost, as without the helper.
+func decline_life() -> void:
+	if life_offer:
+		life_offer = false
+		lost = true
+
+
 ## The level's end in the score: health left, and a no-hit bonus (once).
 func close_score() -> void:
 	if score_closed:
@@ -2336,6 +2371,9 @@ func _downs() -> void:
 			hero_down_for = 0
 			lives -= 1
 			if lives <= 0:
+				if helper:
+					life_offer = true  # "Another life for 2,000?" (the level waits for the answer)
+					return
 				lost = true
 				return
 			hero.health = hero.max_health  # a life lost: up again, the fight goes on where it was

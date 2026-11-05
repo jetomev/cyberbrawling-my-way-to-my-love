@@ -84,3 +84,51 @@ func test_the_harder_mode_counts_half_again() -> void:
 	l.world.drop("matchbook", l.hero.x, l.hero.z)
 	l.step({})
 	eq(l.score, int(Score.for_collectible("matchbook") * Score.HARDER), "×1.5")
+
+
+## Puts the hero down for good on his last life (as a level would).
+func last_life_gone(l) -> void:
+	l.lives = 1
+	l.hero.health = 0.0
+	l.hero._enter("ko")
+	for i in Level.DOWN_TICKS + 2:
+		l.step({})
+
+
+func test_without_the_helper_the_last_life_loses_the_level() -> void:
+	var l = street()
+	last_life_gone(l)
+	check(l.lost and not l.life_offer, "lost, no offer")
+
+
+func test_the_helper_offers_a_life_and_takes_it_off_the_total() -> void:
+	var l = street()
+	l.helper = true
+	l.bank = 1500
+	l.score = 800
+	last_life_gone(l)
+	check(l.life_offer and not l.lost, "the last life gone: \"Another life for 2,000?\"")
+	eq(l.life_price(), 2000, "the price")
+	var t: int = l.tick
+	l.step({})
+	eq(l.tick, t, "(the level waits on the answer)")
+	l.buy_life()
+	eq(l.lives, 1, "a life")
+	eq(l.hero.health, l.hero.max_health, "up again, full")
+	eq(l.bank, 0, "the price off the earlier levels first...")
+	eq(l.score, 300, "...then this level's (its score otherwise kept)")
+	check(l.helper_used, "marked")
+
+
+func test_the_helper_is_never_refused_short_and_costs_more_in_the_harder_mode() -> void:
+	var l = street()
+	l.helper = true
+	l.harder = true
+	l.score = 500
+	last_life_gone(l)
+	eq(l.life_price(), 3000, "3,000 in the harder mode")
+	l.buy_life()
+	check(l.lives == 1 and l.score == 0, "short of the price: still a life, the total down to zero")
+	last_life_gone(l)
+	l.decline_life()
+	check(l.lost, "no thanks: the level's lost")
