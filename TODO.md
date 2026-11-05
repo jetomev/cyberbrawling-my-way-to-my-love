@@ -9,8 +9,8 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
   for the night in its trial clips, on purpose. Then look at armed/ (blocks at the chin, the knife up) and proof_gap.
 - [ ] Waiting on the team: level 6's shield question and its screen 3 numbers (art-in 2026-11-05-level6-docks-built); levels 7-10's settled pages; the score answers; smooth_skate
 - [ ] Testers' send-back on ea9e996: robot-run sequences of level 9's two crowded rooms, level 7's worst room, the robot's failed finishes on 7, 8, 10: built (66b5755), in the next build's trials
-- [ ] Game-wide (Merry's list, 2026-11-05; Javier's yes 11-04 to the fun-and-fair picks): a SCORE first, then the helper setting (lives bought with score), the no-hit name in neon, the harder mode and boss rush. Questions to the team in art-in 2026-11-05-answers-signs-and-gamewide. (The Godfather's round restart: done.)
-- [ ] Waiting on Javier: throw and switch keys, pad buttons for sweep and roll, installer, the CMU download.
+- [x] Game-wide (Merry and Pippin's agreed list, 2026-11-05 18:37): the real points, the harder mode, the helper (switch on the start screen until Javier names a pause key), the name in neon, the boss rush, best scores per mode on the title, the score number and tally built but OFF (SHOW_SCORE) till Javier's yes (966613c…fc3e130; art-in 2026-11-05-gamewide-built)
+- [ ] Waiting on Javier: throw and switch keys, pad buttons for sweep and roll, installer, the CMU download. Also: a pause key (for the helper's switch); yes or no to the score on screen (the team's proposal; SHOW_SCORE).
 
 ## Stage 0 · The kit (by Sun 8 Nov)
 - [x] Project folder, README, licence files, CLAUDE.md, TODO.md, design, plan, lessons, unattended plan
