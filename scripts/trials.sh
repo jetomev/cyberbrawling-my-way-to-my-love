@@ -17,24 +17,36 @@ for T in combo_edge injuries broken_arm weapon_wear weapons disarm counter dizzy
     scene:proof_swap@level3 scene:proof_shove@tests/levels/stairs scene:proof_climb@tests/levels/twins \
     scene:proof_escape@tests/levels/twins scene:proof_coach@coach_gym scene:proof_chrome@chrome_casino \
     scene:proof_crane@crane_docks scene:proof_static@static_plant scene:proof_rook@rook_penthouse scene:proof_ropes@coach_gym scene:proof_cab@crane_docks \
-    scene:proof_gap@level4 scene:proof_bag@level4 scene:proof_above@level4 scene:proof_signs@level1; do
+    scene:proof_gap@level4 scene:proof_bag@level4 scene:proof_above@level4 scene:proof_signs@level1 \
+    scene:proof_run_F1s2~2@level9 scene:proof_run_F2s2~1@level9 scene:proof_run_F3s1~1@level7 \
+    scene:proof_run_F4s1~2@level7 scene:proof_run_F5s1~1@level8 scene:proof_run_F1s1~2@level10; do
   ARGS=(--trial "$T")
   LIMIT=300
+  SEED=""
   if [[ "$T" == scene:* ]]; then
     L="${T#*@}"; T="${T#scene:}"; T="${T%@*}"
     [[ "$L" == */* ]] || L="levels/$L"  # (a showcase level, or a test layout by its path)
+    if [[ "$T" == *~* ]]; then  # a robot run: proof_run_<room>~<seed> (its files named with the level and the seed)
+      SEED="${T#*~}"; T="${T%~*}"
+    fi
     ARGS=(--level "res://$L.json" --scene "$T")
     [[ "$T" == proof_* ]] || LIMIT=600  # the boss scenes run 4800 frames: 3.5 min recorded on a quiet machine, past 5 on a busy one (6c908a7)
+    if [ -n "$SEED" ]; then
+      ARGS+=(--seed "$SEED")
+      LIMIT=1500  # (a whole encounter: up to a few thousand frames)
+    fi
   fi
-  TMP="$ROOT/scratch/trial-$T.$$"
+  NAME="$T"
+  [ -n "$SEED" ] && NAME="$T-${L##*/}-seed$SEED"
+  TMP="$ROOT/scratch/trial-$NAME.$$"
   mkdir -p "$TMP"
   timeout "$LIMIT" "$ROOT/scripts/capped.sh" godot --path "$ROOT/game" --write-movie "$TMP/f.png" --fixed-fps 60 \
-    --resolution 1280x720 -- "${ARGS[@]}" 2>&1 | grep -v '^Godot Engine' > "$OUT/$T.txt"
-  grep -q "^TRIAL DONE $T" "$OUT/$T.txt" || { cat "$OUT/$T.txt"; echo "FAILED trial $T never finished"; exit 1; }
-  if grep -q 'SCRIPT ERROR' "$OUT/$T.txt"; then echo "FAILED trial $T has a script error"; exit 1; fi
-  if grep -q 'dumped core' "$OUT/$T.txt"; then echo "FAILED Godot crashed as it quit (see the core dump: coredumpctl list godot)"; exit 1; fi
-  ffmpeg -loglevel error -y -framerate 60 -i "$TMP/f%08d.png" -c:v libx264 -pix_fmt yuv420p "$OUT/$T.mp4"
-  ffmpeg -loglevel error -y -framerate 60 -i "$TMP/f%08d.png" -vf "setpts=2*PTS" -r 60 -c:v libx264 -pix_fmt yuv420p "$OUT/$T-half.mp4"
+    --resolution 1280x720 -- "${ARGS[@]}" 2>&1 | grep -v '^Godot Engine' > "$OUT/$NAME.txt"
+  grep -q "^TRIAL DONE $T" "$OUT/$NAME.txt" || { cat "$OUT/$NAME.txt"; echo "FAILED trial $T never finished"; exit 1; }
+  if grep -q 'SCRIPT ERROR' "$OUT/$NAME.txt"; then echo "FAILED trial $T has a script error"; exit 1; fi
+  if grep -q 'dumped core' "$OUT/$NAME.txt"; then echo "FAILED Godot crashed as it quit (see the core dump: coredumpctl list godot)"; exit 1; fi
+  ffmpeg -loglevel error -y -framerate 60 -i "$TMP/f%08d.png" -c:v libx264 -pix_fmt yuv420p "$OUT/$NAME.mp4"
+  ffmpeg -loglevel error -y -framerate 60 -i "$TMP/f%08d.png" -vf "setpts=2*PTS" -r 60 -c:v libx264 -pix_fmt yuv420p "$OUT/$NAME-half.mp4"
   # a sheet for the testers, who read pictures: the frame of every moment the trial logged (and 4 frames after, to see
   # it land), filled out with evenly spaced frames, in order, 24 in all (the testers, 2026-11-04: a sampled sheet missed
   # the moments themselves)
@@ -50,30 +62,30 @@ for f in fill:
         break
     pick.add(f)
 print("+".join("eq(n\\,%d)" % f for f in sorted(pick)))
-' "$N" "$OUT/$T.txt")
+' "$N" "$OUT/$NAME.txt")
   ffmpeg -loglevel error -y -i "$TMP/f%08d.png" -vf "select='$PICK',scale=640:-1,tile=4x6:padding=4:color=black" \
-    -frames:v 1 "$OUT/$T.png"
+    -frames:v 1 "$OUT/$NAME.png"
   # the moments sheet (the testers, 2026-11-04: "the moment + the 4 frames after it"): a row for each key moment the
   # trial logged ("frame N: ..."): the frame before it (the blow landing), the moment and the 4 after it, up to 12 rows
   # (the picture of frame N is f<N-1>.png: the movie's first picture is frame 1)
-  ROWS=$(grep -cE '^frame [0-9]+:' "$OUT/$T.txt")
+  ROWS=$(grep -cE '^frame [0-9]+:' "$OUT/$NAME.txt")
   [ "$ROWS" -gt 12 ] && ROWS=12
   if [ "$ROWS" -gt 0 ]; then
-    for k in $(grep -oE '^frame [0-9]+:' "$OUT/$T.txt" | head -12 | grep -oE '[0-9]+'); do
+    for k in $(grep -oE '^frame [0-9]+:' "$OUT/$NAME.txt" | head -12 | grep -oE '[0-9]+'); do
       for d in -2 -1 0 1 2 3; do
         F=$((k + d)); [ "$F" -lt 0 ] && F=0; [ "$F" -ge "$N" ] && F=$((N - 1))
         printf "file '%s'\n" "$TMP/$(printf 'f%08d.png' "$F")"
       done
     done > "$TMP/moments.txt"
     ffmpeg -loglevel error -y -f concat -safe 0 -i "$TMP/moments.txt" -vf "scale=480:-1,tile=6x$ROWS:padding=4:color=black" \
-      -frames:v 1 "$OUT/$T-moments.png"
+      -frames:v 1 "$OUT/$NAME-moments.png"
   fi
   # a proof's unbroken sequence (the testers, 2026-11-04: "one unbroken sequence, start frame through the outcome"):
   # every frame from the one before its START to 4 after its END, in order, pages of 60 (6 across, 10 down)
-  S=$(grep -oE '^frame [0-9]+: START' "$OUT/$T.txt" | head -1 | grep -oE '[0-9]+')
-  E=$(grep -oE '^frame [0-9]+: END' "$OUT/$T.txt" | head -1 | grep -oE '[0-9]+')
+  S=$(grep -oE '^frame [0-9]+: START' "$OUT/$NAME.txt" | head -1 | grep -oE '[0-9]+')
+  E=$(grep -oE '^frame [0-9]+: END' "$OUT/$NAME.txt" | head -1 | grep -oE '[0-9]+')
   if [ -n "$S" ] && [ -n "$E" ]; then
-    rm -f "$OUT/$T"-sequence-*.png
+    rm -f "$OUT/$NAME"-sequence-*.png
     FIRST=$((S > 1 ? S - 2 : 0)); LAST=$((E + 3)); [ "$LAST" -ge "$N" ] && LAST=$((N - 1))
     PAGE=1; F=$FIRST
     while [ "$F" -le "$LAST" ]; do
@@ -81,7 +93,7 @@ print("+".join("eq(n\\,%d)" % f for f in sorted(pick)))
       for k in $(seq "$F" "$TO"); do printf "file '%s'\n" "$TMP/$(printf 'f%08d.png' "$k")"; done > "$TMP/seq.txt"
       ROWS=$(( (TO - F + 6) / 6 ))
       ffmpeg -loglevel error -y -f concat -safe 0 -i "$TMP/seq.txt" -vf "scale=320:-1,tile=6x$ROWS:padding=3:color=black" \
-        -frames:v 1 "$OUT/$T-sequence-$PAGE.png"
+        -frames:v 1 "$OUT/$NAME-sequence-$PAGE.png"
       PAGE=$((PAGE + 1)); F=$((TO + 1))
     done
   fi

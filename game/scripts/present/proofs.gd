@@ -29,6 +29,10 @@ extends RefCounted
 ## proof_above     level 4's ring hall under the balcony: a wrench thrown down lands on the hero standing still; he
 ##                 steps out of the next one's shadow and it clangs on the floor
 ## proof_signs     a level's signs on its ground floor, one after another (the hero set under each, a second each)
+## proof_run_F<f>s<s>   the robot's own run (the seed from --seed, as in the balance numbers), fast-forwarded unseen to
+##                 floor f's screen s, then every frame of it there: from walking in till he leaves it or the level is
+##                 lost, every enemy's health and the hero's lives on screen (the testers on ea9e996: "each whole
+##                 encounter, start to finish", and where the robot's failed finishes go wrong)
 ## (The boss proofs start their boss part-worn where a whole fight would run to many pages: said so on screen.)
 
 const NAMES := ["proof_headbutt", "proof_doorman", "proof_dancer", "proof_enforcer", "proof_lookout", "proof_grabber",
@@ -61,6 +65,9 @@ func _init(proof: String) -> void:
 
 func setup(level) -> void:
 	var h = level.hero
+	if name.begins_with("proof_run_"):
+		_run_setup(level)
+		return
 	match name:
 		"proof_headbutt":
 			foe = _bring(level, "wrench_mechanic", h.x + 120.0)
@@ -253,6 +260,8 @@ func inputs(level) -> Dictionary:
 	seen_tick = level.tick
 	var evs: Array = level.events if fresh else []
 	var f = foe.get("f")
+	if name.begins_with("proof_run_"):
+		return _run_inputs(level, evs)
 	match name:
 		"proof_ropes":
 			if tick == 9:
@@ -739,10 +748,77 @@ func _kkk(level, inp: Dictionary) -> void:
 
 
 ## The numbers on screen.
+## The robot's run: the seed (main.gd's --seed), the room it's headed for ("F1s2": floor 1, screen 2).
+const RUN_MAX := 45000  # (as the balance numbers: twelve minutes, then it's given up)
+const RUN_SCREEN := 1920.0
+
+
+func _run_where(level) -> String:
+	return "F%ds%d" % [level.on, int(level.hero.x / RUN_SCREEN) + 1]
+
+
+func _run_cues(level) -> void:
+	bot.me = level.hero
+	bot.goal = level.next_door()
+	bot.goal_hit = level.goal_is_switch
+	bot.jump_cue = level.crane_jump_cue()
+	bot.dodge_x = level.shadow_cue()
+
+
+func _run_setup(level) -> void:
+	var args := OS.get_cmdline_user_args()
+	var si := args.find("--seed")
+	data["seed"] = int(args[si + 1]) if si >= 0 and si + 1 < args.size() else 1
+	data["room"] = name.trim_prefix("proof_run_")
+	bot = HeroBot.new(level.hero, data["seed"])
+	zoom = 1.0
+	for i in RUN_MAX:  # unseen, exactly the balance numbers' loop, till he walks into the room
+		if level.won or level.lost or _run_where(level) == data["room"]:
+			break
+		_run_cues(level)
+		level.step(bot.think(level.standing()))
+	data["found"] = _run_where(level) == data["room"] and not level.lost
+	data["lives"] = level.lives
+	data["health"] = level.hero.health
+	length = RUN_MAX if data["found"] else 120
+
+
+func _run_inputs(level, evs: Array) -> Dictionary:
+	var h = level.hero
+	if tick == 1:
+		if data["found"]:
+			_start("the robot (seed %d) walks into %s: health %.0f, lives %d (it got here unseen, as in the balance numbers)" % [
+				data["seed"], data["room"], data["health"], data["lives"]])
+		else:
+			_start("(the robot, seed %d, never reached %s: %s)" % [data["seed"], data["room"], "the level was lost first" if level.lost else "the level was won first"])
+			_end("nothing to show")
+	if level.lives < data["lives"]:
+		data["lives"] = level.lives
+		_say("a LIFE LOST in %s (%d left)" % [data["room"], level.lives])
+	if ended < 0 and started >= 0 and tick > 1:
+		if level.lost:
+			_end("the level is LOST here (no lives left)")
+		elif level.won:
+			_end("the level is WON")
+		elif _run_where(level) != data["room"]:
+			_end("he walks out of %s into %s: health %.0f, lives %d" % [data["room"], _run_where(level), h.health, level.lives])
+	_run_cues(level)
+	return bot.think(level.standing())
+
+
 func overlay(level) -> String:
 	if note_left > 0:
 		note_left -= 1
 	var h = level.hero
+	if name.begins_with("proof_run_"):
+		var up: Array = level.enemies.filter(func(e): return not e["gone"] and not e["f"].defeated())
+		var line := "hero: %s, health %.0f of %.0f, lives %d, weapon %s  ·  %s, x %.0f" % [h.state, h.health, h.max_health,
+			level.lives, h.weapon if h.weapon != "" else "none", _run_where(level), h.x]
+		var who := up.map(func(e): return "%s %s %.0f%s" % [e["kind"], e["f"].state, e["f"].health,
+			" (whistled in)" if e.get("whistled", false) else ""])
+		line += "\nup: %s" % (", ".join(who) if not who.is_empty() else "nobody")
+		return ("PROOF: robot run %s, seed %d   ·   frame %d%s\n" % [data.get("room", ""), data.get("seed", 1), tick,
+			"   ·   sequence frame %d" % (tick - started) if started >= 0 and ended < 0 else ""]) + line + ("\n" + note if note_left > 0 else "")
 	var f = foe.get("f")
 	var line := "hero: %s, health %.1f, %.0f px up" % [h.state, h.health, h.y]
 	if f != null:
