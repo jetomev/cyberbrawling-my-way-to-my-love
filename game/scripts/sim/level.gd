@@ -475,7 +475,11 @@ func step(inp: Dictionary) -> void:
 				think = _argue(e)
 			think = _hard_think(e, think)  # (before the throws below: the hard Snick's knife goes the Mechanic's way)
 			if e.get("waits_below", false):  # fallen off a stack: he stays put till the hero is down at his level, near him
-				if absf(hero.y - e["f"].y) > 30.0 or hero.state == "climb" or absf(hero.x - e["f"].x) > FALLEN_WAKE:
+				var foot: float = float(e.get("gather_x", -1.0))
+				if foot >= 0.0 and absf(e["f"].x - foot) > 25.0 and e["f"].state in ["idle", "walk"]:
+					# out from between the stacks onto the open quay, then to the foot of the path down, to wait there (the page)
+					think = {"mz": 1.0} if e["f"].z < 100.0 else {"mx": signf(foot - e["f"].x)}
+				elif absf(hero.y - e["f"].y) > 30.0 or hero.state == "climb" or absf(hero.x - e["f"].x) > FALLEN_WAKE:
 					think = {}
 				else:
 					e.erase("waits_below")
@@ -1475,6 +1479,9 @@ func _fallen() -> void:
 		f.fell = 0.0
 		f.health = minf(f.health, f.max_health * FALLEN_HEALTH)
 		e["waits_below"] = true
+		var foot = plan["floors"][on].get("path_foot", null)  # (where the fallen gather: the foot of the path down)
+		if foot != null and f.y < 1.0:
+			e["gather_x"] = float(foot)
 		events.append({"target": f, "result": "fell", "kind": "fell"})
 	if hero.fell > 0.0:
 		hero.fell = 0.0

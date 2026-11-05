@@ -112,3 +112,25 @@ func test_knocked_out_in_the_gap_he_goes_over_too() -> void:
 	l.events = [{"attacker": l.hero, "target": d, "result": "hit", "move": "smash"}]
 	l._through_the_gap()
 	check(le[1].has("over_rail"), "knocked out cold in the gap: over he goes, nothing left behind")
+
+
+func test_on_the_docks_a_goon_knocked_off_a_stack_lands_hurt_and_waits_at_the_path() -> void:
+	var l = Level.new(Level.load_data("res://levels/level6.json"), {}, 1)
+	l.floors[0]["wave"] = l.floors[0]["waves"].size()
+	l.hero.x = 6600.0
+	l.hero.y = 200.0
+	l.hero.z = 30.0
+	l._arrive({"kind": "wrench_mechanic", "dx": 120.0, "z": 30.0, "y": 200.0}, l.hero.x, -1)
+	var e: Dictionary = l.enemies[-1]
+	var f = e["f"]
+	f.x = 6998.0  # right at the second gap's lip
+	f.facing = -1
+	f.take_hit({"damage": 1.0, "effect": "knockdown", "low": 0.0, "high": 300.0, "move": "push_kick"}, {"x": 6900.0, "y": 200.0})
+	var fell := false
+	for i in 400:
+		l.step({})
+		fell = fell or l.events.any(func(ev): return ev.get("result", "") == "fell")
+	check(fell and f.y < 1.0, "knocked off the stack: down on the quay")
+	check(f.health <= f.max_health * Level.FALLEN_HEALTH + 0.01, "hurt (%.0f of %.0f)" % [f.health, f.max_health])
+	check(absf(f.x - 7640.0) < 40.0, "gone to the foot of the path down and waiting there (x %.0f)" % f.x)
+	check(e.get("waits_below", false), "not coming at him while he's up there")
