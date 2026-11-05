@@ -474,8 +474,8 @@ func step(inp: Dictionary) -> void:
 			if e.get("arguing", false) and e["brain"].dormant_until_within > 0.0:
 				think = _argue(e)
 			think = _hard_think(e, think)  # (before the throws below: the hard Snick's knife goes the Mechanic's way)
-			if e.get("waits_below", false):  # fallen off a stack: he stays put till the hero is down here near him
-				if hero.y > 1.0 or hero.state == "climb" or absf(hero.x - e["f"].x) > FALLEN_WAKE:
+			if e.get("waits_below", false):  # fallen off a stack: he stays put till the hero is down at his level, near him
+				if absf(hero.y - e["f"].y) > 30.0 or hero.state == "climb" or absf(hero.x - e["f"].x) > FALLEN_WAKE:
 					think = {}
 				else:
 					e.erase("waits_below")
@@ -1362,8 +1362,10 @@ func climb_cue() -> Dictionary:
 	for e in enemies:
 		if e["gone"] or e["f"].defeated() or e.has("ride") or e.get("waits_below", false):
 			continue
-		if e.get("kind", "") == "lookout" and e["f"].y - hero.y >= 60.0:
-			foe = e["f"]  # a Whistler up above: him first, the way a person learns to (level 6's screen 3)
+		if e.get("kind", "") == "lookout" and e["f"].y - hero.y >= 60.0 and not enemies.any(func(o): return not o["gone"] \
+				and not o["f"].defeated() and not o.get("waits_below", false) and absf(o["f"].y - hero.y) < 60.0 \
+				and absf(o["f"].x - hero.x) < 250.0):
+			foe = e["f"]  # a Whistler up above, nobody on his own level close: him first (level 6's screen 3)
 			break
 		if absf(e["f"].y - hero.y) < 60.0 and e["f"].flight().is_empty() == hero.flight().is_empty():
 			return {}  # someone to fight on his own level: that first (no climbing away from a fight)
@@ -2027,10 +2029,11 @@ func _waves() -> void:
 		if e["f"].defeated() and not e["dropped"]:
 			e["dropped"] = true
 			var drop: String = e.get("drops", KINDS.get(e["kind"], {}).get("drops", ""))  # (a layout can say: level 10's kit)
+			var at_y: float = world.floor_at(e["f"].x, e["f"].z, e["f"].y + 1.0)  # (up on a stack, it lies up there: level 6)
 			if drop != "":
-				world.drop(drop, e["f"].x, e["f"].z)
+				world.drop(drop, e["f"].x, e["f"].z, at_y)
 			if e.get("also_drops", "") != "":
-				world.drop(e["also_drops"], e["f"].x + 50.0, e["f"].z)  # (a boss's second prize: Coach's whistle)
+				world.drop(e["also_drops"], e["f"].x + 50.0, e["f"].z, at_y)  # (a boss's second prize: Coach's whistle)
 	if fl["active_wave"] >= 0 and fl["waiting"].is_empty() and not enemies.any(func(e): return e["wave"] == fl["active_wave"] and not e["gone"] and not e["f"].defeated()):
 		# a locker that swings open by itself when its wave falls (the team's level 4: food before the Mauler)
 		for op in plan["floors"][on].get("opens", []):
