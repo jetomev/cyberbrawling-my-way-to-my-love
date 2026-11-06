@@ -783,3 +783,22 @@ func test_level_5s_balcony_doorman_starts_on_the_right_half_and_the_second_snick
 	first["f"]._enter("ko")
 	l.step({})
 	check(not waiting[0].has("waits_till_down"), "the first Snick down: he comes")
+
+
+func test_the_robot_hurt_by_level_5s_vending_machine_kicks_it_once_for_the_snack_and_eats_it() -> void:
+	var l = Level.new(Level.load_data("res://levels/level5.json"), {}, 1)
+	var fl: Dictionary = l.floors[0]
+	fl["wave"] = fl["waves"].size()  # (nobody about)
+	var h = l.hero
+	h.x = 5200.0
+	h.z = 80.0
+	h.health = 10.0
+	var bot = HeroBot.new(h, 1)
+	var vend: Dictionary = l.world.objects.filter(func(o): return o["kind"] == "vending")[0]
+	var ate := false
+	for i in 900:
+		var was: float = h.health
+		l.step(bot.think(l.standing()))
+		ate = ate or h.health > was
+	eq(int(vend.get("kicks", 0)), 1, "one kick, for the snack (never the second, the note, or the third, over onto him)")
+	check(ate, "and it ate the snack (health %.0f)" % h.health)

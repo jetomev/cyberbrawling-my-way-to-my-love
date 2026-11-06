@@ -228,7 +228,9 @@ func _go_eat(inp: Dictionary) -> bool:
 			best_d = absf(it["x"] - me.x)
 	for o in me.world.objects:
 		var cx: float = (o["x0"] + o["x1"]) * 0.5
-		if o["breakable"] and not o["broken"] and Fighter.HEALS.has(o.get("holds", "")) and absf(cx - me.x) < best_d:
+		var vending: bool = o["kind"] == "vending" and not o["broken"] and int(o.get("kicks", 0)) == 0  # (level 5: its first
+		# kick gives a snack; only the first: the second gives a note, the third tips it over onto whoever's in front)
+		if (vending or (o["breakable"] and not o["broken"] and Fighter.HEALS.has(o.get("holds", "")))) and absf(cx - me.x) < best_d:
 			var zc: float = (o["z0"] + o["z1"]) * 0.5
 			var near_side: float = o["x0"] - 50.0 if me.x < cx else o["x1"] + 50.0
 			var far_side: float = o["x1"] + 50.0 if me.x < cx else o["x0"] - 50.0
