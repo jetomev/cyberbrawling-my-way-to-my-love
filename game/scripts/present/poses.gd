@@ -265,6 +265,9 @@ const SHOTS := {
 	# in a tight ball (knees to the chest), never over the head; come up facing the same way, back to guard
 	"roll": [["start", {}],
 		["roll_down", {"turn": 50.0, "hip_y": 40.0, "torso": 75.0, "head": 120.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -85.0, "arm_f_lower": -20.0, "arm_b_upper": -75.0, "arm_b_lower": -20.0, "tumble": 0.0}],
+		# between the dip and upside down, the leading arm still reaching for the street and the chin tucked hard, so the hand
+		# then the back carry him and the tucked head never holds him off the street (it did, 4-26 px, for four frames)
+		["roll_tuck", {"turn": 43.8, "hip_y": 15.0, "torso": 100.0, "head": 90.0, "neck": 74.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -140.0, "arm_f_lower": -20.0, "arm_b_upper": -53.2, "arm_b_lower": -76.1, "leg_f_upper": -83.3, "leg_f_lower": 105.7, "leg_b_upper": -57.0, "leg_b_lower": 94.8, "tumble": 112.3}],
 		["roll_over", {"turn": 40.0, "torso": 115.0, "head": 120.0, "cover_f": 0.0, "cover_b": 0.0, "leg_f_upper": -105.0, "leg_f_lower": 140.0, "leg_b_upper": -105.0, "leg_b_lower": 140.0, "arm_f_upper": -110.0, "arm_f_lower": -20.0, "arm_b_upper": -40.0, "arm_b_lower": -110.0, "tumble": 180.0}],
 		["roll_up", {"turn": 15.0, "hip_y": 28.0, "torso": 26.0, "head": 10.0, "cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -30.0, "arm_f_lower": -70.0, "arm_b_upper": -20.0, "arm_b_lower": -70.0, "tumble": 340.0}],
 		["end", {"tumble": 360.0}]],
@@ -546,6 +549,8 @@ static func moment(state: String, name: String, tune: Dictionary) -> int:
 		# the roll: down, over (upside down, a tight ball), up into a crouch
 		"roll_down":
 			return int(tune["roll_ticks"] * 0.15)
+		"roll_tuck":
+			return int(tune["roll_ticks"] * 0.36)
 		"roll_over":
 			return int(tune["roll_ticks"] * 0.5)
 		"roll_up":

@@ -283,13 +283,14 @@ func test_the_roll_goes_hand_then_back() -> void:
 	# the testers asked to see the shoulder carrying the roll (00:57 on 66ce4c6); the close-up showed him hovering on
 	# the head's clearance with nothing touching. Now he is placed by his drawn outline: the guiding hand touches first,
 	# then the back carries him, upper back to lower back (whose surface is the hips' too), and he comes up onto his
-	# feet. Between the hand and the back the tucked head's clearance holds him a few px up for four frames (67 ms):
-	# held there
+	# feet. Between the hand and the back the tucked head's clearance used to hold him 4 to 26 px up for four frames; the
+	# roll's tuck (the arm still reaching, the chin tucked hard) brought it down to a pixel for two
 	var t := Tuning.fresh()
 	var v = HeroView.new()
 	var order: Array[String] = []
 	var back := 0
 	var on_head := 0
+	var worst := 0.0
 	for tick in t["roll_ticks"]:
 		var p := Poses.angles("roll", tick, t)
 		if p["tumble"] == 0.0:
@@ -302,11 +303,13 @@ func test_the_roll_goes_hand_then_back() -> void:
 			back += 1
 		if v.contact == "head" or v.contact == "neck":
 			on_head += 1
+			worst = maxf(worst, v.hover)
 		if part != "" and (order.is_empty() or order[-1] != part):
 			order.append(part)
 	eq(order, ["hand", "back"] as Array[String], "the guiding hand, then the back")
 	check(back >= 8, "the back carries him for more than a tenth of a second (%d frames)" % back)
-	check(on_head <= 4, "on the head's clearance for at most 4 frames (%d)" % on_head)
+	check(on_head <= 2, "on the head's clearance for at most 2 frames (%d)" % on_head)
+	check(worst <= 2.0, "and never more than 2 px off the street then (%.1f)" % worst)
 	v.free()
 
 

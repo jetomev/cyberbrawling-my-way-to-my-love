@@ -305,6 +305,7 @@ func points() -> Dictionary:
 
 ## Rolling, the part that sets his height on the street (the head counts with its clearance), for the tests.
 var contact := ""
+var hover := 0.0  # rolling: how far his lowest body part is above the street (the tucked head's clearance holding him)
 
 
 ## Where the shoulders are drawn (between the two shoulder joints), in the same space as points(): for the close-up of the
@@ -417,6 +418,7 @@ func apply(pose: Dictionary, grounded := true) -> void:
 		var hip: Vector2 = flip * (bones["hip"].position as Vector2)
 		var pos := Vector2(0.0, body_y) + hip - turn * hip
 		var lowest := -INF
+		var lowest_body := -INF  # (the lowest without the head's clearance: how far a head-held frame hovers, for the tests)
 		contact = ""
 		# by the drawn outline itself, every corner of every part (the testers, 00:57 on 66ce4c6: the close-up showed him
 		# hovering; placed by the bones' centre lines, his back's thickness was only guessed). He rolls on his back and
@@ -442,5 +444,8 @@ func apply(pose: Dictionary, grounded := true) -> void:
 					if y > lowest:
 						lowest = y
 						contact = name
+					if not name in ["head", "neck"] and y > lowest_body:
+						lowest_body = y
+		hover = lowest - lowest_body
 		body.rotation = turn.get_rotation()
 		body.position = pos - Vector2(0.0, lowest - body_y)
