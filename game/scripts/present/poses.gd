@@ -72,11 +72,11 @@ const BONES := {
 
 ## Keys a pose may hold besides bones: shared or automatic parts that bake() turns into bone angles.
 const SOFT_KEYS := ["hip_x", "hip_y", "hip_turn", "torso", "open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b",
-	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head", "relaxed", "tall", "tumble", "land_spread", "knees_out"]
+	"spin", "turn", "pivot_f", "pivot_b", "fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b", "spin_head", "relaxed", "tall", "tumble", "land_spread", "knees_out", "spin_long_b"]
 ## Keys that switch something on rather than bend it: a follow-through never carries them further.
 const SWITCH_KEYS := ["open_f", "open_b", "cover_f", "cover_b", "rise_f", "rise_b", "spin", "turn", "pivot_f", "pivot_b",
 	"fore_f", "fore_b", "feet", "step_f", "step_b", "lift_f", "lift_b", "spin_upper", "turn_upper", "upper_f", "upper_b",
-	"spin_head", "relaxed", "tall", "tumble", "land_spread", "knees_out"]
+	"spin_head", "relaxed", "tall", "tumble", "land_spread", "knees_out", "spin_long_b"]
 
 ## The whip (D-21): in a strike the hips move first and the fist or foot arrives last. Each key is read this many
 ## ticks ahead on the move's curve, so the hips lead, the spine follows, then the shoulder and the upper limb; the
@@ -119,7 +119,7 @@ const GUARD := {
 	"leg_f_upper": -47.3, "leg_f_lower": 48.9, "leg_b_upper": 22.6, "leg_b_lower": 19.9, "hip_y": 0.0,
 	"open_f": 0.0, "open_b": 0.0, "hip_x": 0.0, "hip_turn": 0.0, "cover_f": 1.0, "cover_b": 1.0, "rise_f": 0.0,
 	"rise_b": 0.15, "spin": 0.0, "turn": 0.0, "pivot_f": 0.0, "pivot_b": 45.0, "fore_f": 0.0, "fore_b": 0.0,
-	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0, "relaxed": 0.0, "tall": 0.0, "tumble": 0.0, "land_spread": 0.0, "knees_out": 0.0,
+	"feet": 0.0, "step_f": 0.0, "step_b": 0.0, "lift_f": 0.0, "lift_b": 0.0, "spin_upper": 0.0, "turn_upper": 0.0, "upper_f": 0.0, "upper_b": 0.0, "spin_head": 0.0, "relaxed": 0.0, "tall": 0.0, "tumble": 0.0, "land_spread": 0.0, "knees_out": 0.0, "spin_long_b": 0.0,
 }
 const HEAD_LEAD := 6  # on a spin the head looks round first: it reads the spin this many frames ahead
 ## Where the ankles stand in the guard, from the hip joint: the guard's legs are solved for these spots.
@@ -250,15 +250,15 @@ const SHOTS := {
 	# 00:57 on 66ce4c6: seen from above it cut through the middle and covered only part of the circle); it passes the
 	# enemy's ankles halfway round, his back to the enemy, the way a back sweep does
 	"sweep": [["start", {}],
-		["windup", {"tall": -1.0, "hip_y": 32.0, "step_b": -75.0, "step_f": 8.0, "torso": 26.0, "head": -8.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+		["windup", {"spin_long_b": 1.0, "tall": -1.0, "hip_y": 32.0, "step_b": -75.0, "step_f": 8.0, "torso": 26.0, "head": -8.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
 			"arm_f_upper": 30.0, "arm_f_lower": -20.0, "arm_b_upper": 20.0, "arm_b_lower": -20.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
-		["sweep", {"spin": 120.0, "pivot_f": 120.0, "tall": -1.0, "hip_y": 38.0, "torso": 34.0, "head": -10.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+		["sweep", {"spin": 120.0, "spin_long_b": 1.0, "pivot_f": 120.0, "tall": -1.0, "hip_y": 38.0, "torso": 34.0, "head": -10.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
 			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
-		["active", {"spin": 180.0, "pivot_f": 180.0, "tall": -1.0, "hip_y": 38.0, "torso": 28.0, "head": -6.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+		["active", {"spin": 180.0, "spin_long_b": 1.0, "pivot_f": 180.0, "tall": -1.0, "hip_y": 38.0, "torso": 28.0, "head": -6.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
 			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
-		["active_end", {"spin": 260.0, "pivot_f": 260.0, "tall": -1.0, "hip_y": 38.0, "torso": 24.0, "head": -4.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
+		["active_end", {"spin": 260.0, "spin_long_b": 1.0, "pivot_f": 260.0, "tall": -1.0, "hip_y": 38.0, "torso": 24.0, "head": -4.0, "cover_f": 0.0, "cover_b": 0.0, "open_f": 1.0, "open_b": 1.0,
 			"arm_f_upper": 20.0, "arm_f_lower": -10.0, "arm_b_upper": 10.0, "arm_b_lower": -10.0, "leg_b_upper": 68.0, "leg_b_lower": 0.0}],
-		["follow", {"spin": 360.0, "pivot_f": 360.0, "tall": -0.8, "hip_y": 30.0, "torso": 18.0, "cover_f": 0.0, "cover_b": 0.0,
+		["follow", {"spin_long_b": 1.0, "spin": 360.0, "pivot_f": 360.0, "tall": -0.8, "hip_y": 30.0, "torso": 18.0, "cover_f": 0.0, "cover_b": 0.0,
 			"arm_f_upper": 30.0, "arm_f_lower": -40.0, "arm_b_upper": 20.0, "arm_b_lower": -40.0, "leg_b_upper": 66.0, "leg_b_lower": 6.0}],
 		["end", {"spin": 360.0, "pivot_f": 360.0}]],
 	# C: the evasion roll (Javier, 2026-11-02 21:56). No recorded roll yet (CMU 128_09 "Run Roll Underneath" waits on
@@ -800,6 +800,7 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 	for b in BONES:
 		out[b] = pose.get(b, 0.0)
 	out["knees_out"] = pose.get("knees_out", 0.0)  # read by the leg solve
+	out["spin_long_b"] = pose.get("spin_long_b", 0.0)  # read by drawn_length
 	if pose.get("feet", 0.0) > 0.5:
 		# feet placed, legs bent to reach them (the hips are still level here; they shift and tip further down)
 		var joint: Vector2 = _end("hip", out)[0]
@@ -1007,7 +1008,35 @@ static func bake(pose: Dictionary, grounded := true) -> Dictionary:
 			_settle_foot(out, side, grounded)
 	_cover(out, pose)
 	_hold(out, pose)
+	_spin_project(out, pose)
 	return out
+
+
+## A long leg and the arms swung round in a spin (the back sweep: "spin_long_b"), seen from the side: as the body turns
+## past a quarter, each of those bones shows only the side-to-side part of its length, cos(spin) of it, while its height
+## stays (the hands stay down by the street, the foot low along it). So through the quarter turn where the drawing flips
+## to his back they come in close and go out again on the other side, moving on as evenly as in the frames around it
+## instead of leaping across in that one frame (the long leg's foot leapt about 250 px; the testers' open spin item).
+static func _spin_project(out: Dictionary, pose: Dictionary) -> void:
+	var w: float = clampf(pose.get("spin_long_b", 0.0), 0.0, 1.0)
+	if w <= 0.0:
+		return
+	var c: float = lerpf(1.0, maxf(absf(cos(deg_to_rad(pose.get("spin", 0.0)))), 0.08), w)
+	if c >= 0.999:
+		return
+	for pair in [["leg_b_upper", "leg_b_lower"], ["arm_f_upper", "arm_f_lower"], ["arm_b_upper", "arm_b_lower"]]:
+		var e1: Array = _end(pair[0], out)
+		var e2: Array = _end(pair[1], out)
+		var l1: float = BONES[pair[0]][3] * drawn_length(pair[0], out)
+		var start: Vector2 = (e1[0] as Vector2) - Vector2(l1, 0).rotated(e1[1])
+		var v1: Vector2 = (e1[0] as Vector2) - start
+		var v2: Vector2 = (e2[0] as Vector2) - (e1[0] as Vector2)
+		var p1 := Vector2(v1.x * c, v1.y)
+		var p2 := Vector2(v2.x * c, v2.y)
+		out[pair[0]] += rad_to_deg(p1.angle() - float(e1[1]))
+		out[pair[1]] += rad_to_deg((p2.angle() - p1.angle()) - (float(e2[1]) - float(e1[1])))
+		out["proj_" + pair[0]] = maxf(p1.length() / BONES[pair[0]][3], 0.05)
+		out["proj_" + pair[1]] = maxf(p2.length() / BONES[pair[1]][3], 0.05)
 
 
 ## The front fist guards a little further out, but tucks in to the cheek while the rear hand is out striking.
@@ -1484,6 +1513,8 @@ static func _end(bone: String, baked: Dictionary) -> Array:
 ## How long a bone draws, as a share of its length: a forearm pointing at the camera ("fore_") looks shorter, and
 ## so do the thigh and shin while a knee turns round past it ("knees_out").
 static func drawn_length(bone: String, baked: Dictionary) -> float:
+	if baked.has("proj_" + bone):
+		return baked["proj_" + bone]  # (a limb swung round in a spin, seen side-on: _spin_project)
 	if bone in ["arm_f_lower", "arm_b_lower"]:
 		return 1.0 - (1.0 - FORE_SHORT) * clampf(baked.get("fore_" + bone.substr(4, 1), 0.0), 0.0, 1.0)
 	if bone in ["arm_f_upper", "arm_b_upper"]:

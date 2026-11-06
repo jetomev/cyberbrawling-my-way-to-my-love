@@ -444,3 +444,24 @@ func test_the_long_fall_after_a_flying_kick_off_a_car_stays_tucked_then_unfolds_
 	check(late >= 4, "the legs unfold in the last 100 ms (%d frames)" % late)
 	check(worst <= steady + 12.0, "no hand or foot jumps much more than in a steady run (%.0f px, %s; run %.0f)" % [worst, at, steady])
 	v.free()
+
+
+func test_the_sweeps_long_leg_and_hands_dont_leap_where_the_spin_flips() -> void:
+	# the open spin item: where the drawing flips to his back (a quarter turn), the long leg's foot leapt about 250 px in
+	# one frame and the hands about 90. Seen side-on they show only the side-to-side part of their length as he turns
+	# (_spin_project), so through the flip they move on as evenly as around it
+	var t := Tuning.fresh()
+	var v = HeroView.new()
+	var prev = null
+	var foot := 0.0
+	var hand := 0.0
+	for tick in Moves.length("sweep", t):
+		v.apply(Poses.angles("sweep", tick, t))
+		var q: Dictionary = v.points()
+		if prev != null:
+			foot = maxf(foot, (q["foot_b"] - prev["foot_b"]).length())
+			hand = maxf(hand, maxf((q["hand_f"] - prev["hand_f"]).length(), (q["hand_b"] - prev["hand_b"]).length()))
+		prev = q
+	check(foot <= 110.0, "the long leg's foot never leaps (%.0f px in a frame at most, was ~250)" % foot)
+	check(hand <= 100.0, "nor the hands (%.0f px in a frame at most)" % hand)
+	v.free()
