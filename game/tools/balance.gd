@@ -12,6 +12,8 @@ const HeroBot := preload("res://scripts/sim/hero_bot.gd")
 const SEEDS := [1, 2, 3]
 const MAX_TICKS := 45000
 const SCREEN := 1920.0
+const BLADES := ["enforcer", "snick", "rook"]  # the sword and knife goons (the team's "one at a time", level 8)
+const Fighter := preload("res://scripts/sim/fighter.gd")
 
 
 func _init() -> void:
@@ -75,6 +77,7 @@ func _level(n: String) -> Array:
 		var mech_at := -9999  # the last frame a Mechanic's blow landed on him (the team, 11-05: the Bruiser and a pile-on)
 		var hop_at := -9999  # the last frame a Whistler hopped from lamp to lamp
 		var ys := []  # his height over the last two seconds (a fall: where from)
+		var last_pair := ""
 		for i in MAX_TICKS:
 			if l.won or l.lost:
 				break
@@ -84,6 +87,10 @@ func _level(n: String) -> Array:
 			bot.jump_cue = l.crane_jump_cue()
 			bot.dodge_x = l.shadow_cue()
 			bot.climb = l.climb_cue()
+			var food_was: Array = l.world.items.filter(func(it): return Fighter.HEALS.has(it["kind"])).map(func(it): return it["kind"])
+			var floor_was: int = l.on
+			var broken_was: Array = l.world.objects.filter(func(o): return o["broken"]).map(func(o): return o["id"])
+			var held_by = l.hero.held_by if l.hero.state == "held" else null
 			l.step(bot.think(l.standing()))
 			var sc: int = int(l.hero.x / SCREEN) + 1
 			ys.append(l.hero.y)
@@ -102,6 +109,30 @@ func _level(n: String) -> Array:
 					arrivals[key] = arrivals.get(key, 0) + 1
 			if l.hero.weapon == "shield":
 				shield[0] += 1
+			if l.on == floor_was:  # what he ate, and the props he broke (the team, 11-05: the vending machine, the shrimp)
+				var food_now: Array = l.world.items.filter(func(it): return Fighter.HEALS.has(it["kind"])).map(func(it): return it["kind"])
+				for k in food_was:
+					if food_was.count(k) > food_now.count(k):
+						_tally(things, "food the robot ate", "%s on %s" % [k, here], 1)
+						food_now.append(k)  # (count each kind once a frame)
+				for o in l.world.objects:
+					if o["broken"] and not o["id"] in broken_was and o.get("holds", "") != "":
+						_tally(things, "props broken for what they hold", "%s (%s) on %s" % [o.get("name", o["kind"]), o["holds"], here], 1)
+			var swinging_now: Array = l.enemies.filter(func(e): return not e["gone"] and e["f"].attack_phase() in ["startup", "active"] \
+					and absf(e["f"].x - l.hero.x) < 400.0 and e["kind"] in BLADES)
+			var pair := ""
+			if swinging_now.size() >= 2:
+				var ks: Array = swinging_now.map(func(e): return e["kind"])
+				ks.sort()
+				pair = " and ".join(ks)
+			if pair != "" and pair != last_pair:
+				_tally(things, "blades swinging at him at once (each time it starts)", "%s on %s" % [pair, here], 1)
+			last_pair = pair
+			if held_by != null:
+				for ev in l.events:
+					if ev.get("target") == l.hero and ev.get("attacker") != null and ev.get("attacker") != held_by \
+							and ev.get("result", "") in ["hit", "blocked"]:
+						_tally(things, "blows on him while someone held him", "%s on %s" % [_kind_of(l, ev), here], 1)
 			got_there = got_there or l.on == last_floor
 			for e in l.enemies:
 				if e.get("whistled", false):
@@ -188,6 +219,10 @@ func _level(n: String) -> Array:
 					per_screen[here][k] = per_screen[here].get(k, 0.0) + drop / who.size()
 			hp = l.hero.health
 		whistled += called.size()
+		for fl in l.floors:
+			for o in fl["world"].objects:
+				if o["kind"] == "vending":
+					_tally(things, "the vending machine", "kicked %d times (seed %d)" % [int(o.get("kicks", 0)), s], 1)
 		if shield[0] > 0:
 			shield_runs.append("seed %d: held %.0f s, %d blows landed with it" % [s, shield[0] / 60.0, shield[1]])
 		var result: String = "won" if l.won else ("lost on %s" % screen if l.lost else "not finished at %s" % screen)
