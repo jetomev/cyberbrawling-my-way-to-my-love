@@ -41,6 +41,8 @@ func _level(n: String) -> Array:
 	var moments := {}  # a boss's set pieces seen (the twins' opening and swaps), all runs
 	var whistles := 0  # the Whistler's whistles, all runs, and the goons they brought in
 	var whistled := 0
+	var arrivals := {}  # where the whistled goons came in, against the hero (the team's 11-04 rule: ahead or down a ladder)
+	var shield_runs := []  # the robot with a picked-up shield, per run
 	var hard := []  # which enemies in this layout are the hard versions (the team's ask, third ruling)
 	for fl in d["floors"]:
 		for w in fl.get("waves", []):
@@ -61,6 +63,12 @@ func _level(n: String) -> Array:
 		var landed := 0
 		var got_there := false
 		var called := {}  # the goons whistled in this run, counted as each one arrives (a floor left behind drops its list)
+		var furthest := [0, 0]  # the furthest floor and screen he's reached (the team, 11-05: was a life lost back there?)
+		var was_down := false
+		var down_at := ""  # where he went down for the life about to be lost, who did it, and how far he'd got
+		var down_here := ""
+		var last_hit := "?"
+		var shield := [0, 0]  # ticks he held a Doorman's shield he'd picked up, blows he landed with it
 		for i in MAX_TICKS:
 			if l.won or l.lost:
 				break
@@ -71,7 +79,20 @@ func _level(n: String) -> Array:
 			bot.dodge_x = l.shadow_cue()
 			bot.climb = l.climb_cue()
 			l.step(bot.think(l.standing()))
-			var here := "F%d s%d" % [l.on, int(l.hero.x / SCREEN) + 1]
+			var sc: int = int(l.hero.x / SCREEN) + 1
+			var here := "F%d s%d" % [l.on, sc]
+			if l.on > furthest[0] or (l.on == furthest[0] and sc > furthest[1]):
+				furthest = [l.on, sc]
+			for e in l.enemies:
+				if e.get("whistled", false) and not called.has(e["f"]):  # where each whistled goon came in, against him
+					var esc: int = int(e["f"].x / SCREEN) + 1
+					var how: String = "up on a stack" if e["f"].y > 1.0 else "on the ground"
+					var side: String = "ahead" if e["f"].x > l.hero.x else "behind"
+					var cleared_screen: bool = l.on == furthest[0] and esc < furthest[1]
+					var key := "%s, %s%s" % [side, how, ", on a screen he'd already passed (s%d; he'd reached s%d)" % [esc, furthest[1]] if cleared_screen else ""]
+					arrivals[key] = arrivals.get(key, 0) + 1
+			if l.hero.weapon == "shield":
+				shield[0] += 1
 			got_there = got_there or l.on == last_floor
 			for e in l.enemies:
 				if e.get("whistled", false):
@@ -79,6 +100,10 @@ func _level(n: String) -> Array:
 			for ev in l.events:
 				if ev.get("attacker") == l.hero and ev.get("result", "") == "hit":
 					landed += 1
+					if l.hero.weapon == "shield":
+						shield[1] += 1
+				if ev.get("target") == l.hero and ev.get("result", "") in ["hit", "blocked", "shocked", "guard_broken"]:
+					last_hit = _kind_of(l, ev)
 				if ev.get("result", "") == "whistle":
 					whistles += 1
 				if ev.get("result", "") in ["opening", "swap", "compound"]:
@@ -90,17 +115,29 @@ func _level(n: String) -> Array:
 			# health lost this frame, shared out over whoever hit him (food or a new life raises it: nothing lost)
 			var now: float = l.hero.health
 			var drop: float = maxf(0.0, hp - now)
-			if l.lives < lives:
-				lost_at.append(here)
-				deaths[here] = deaths.get(here, 0) + 1
+			if l.hero.defeated() and not was_down:  # the moment he goes down: that's where the life is lost
+				down_here = here
+				down_at = "%s (x %d, by %s; furthest so far F%d s%d)" % [here, int(l.hero.x), last_hit, furthest[0], furthest[1]]
+			was_down = l.hero.defeated()
+			if l.lives < lives or (l.lost and lives > 0 and down_here != ""):
+				lost_at.append(down_at if down_at != "" else here)
+				deaths[down_here if down_here != "" else here] = deaths.get(down_here if down_here != "" else here, 0) + 1
 				lives = l.lives
+				down_at = ""
+				down_here = ""
 			if drop > 0.0:
 				var who := []
 				for ev in l.events:
 					if ev.get("target") == l.hero and ev.get("result", "") in ["hit", "blocked", "shocked", "guard_broken"]:
 						who.append(_kind_of(l, ev))
-				if who.is_empty():
-					who.append("other")
+				if who.is_empty():  # nothing hit him: say what it was (a fall, a shove, the floor) from this frame's events
+					var what: Array = l.events.filter(func(ev): return ev.get("target") == l.hero).map(func(ev): return str(ev.get("result", "?")))
+					if "hero_fell" in what:
+						who.append("a fall through a gap (a missed jump)")
+					elif l.enemies.any(func(e): return e["kind"] == "crane_operator" and not e["gone"] and l.plan["floors"][l.on].get("cab", false)):
+						who.append("crane_operator (his horn's shove)")
+					else:
+						who.append("other (%s)" % (", ".join(what) if not what.is_empty() else l.hero.state))
 				for k in who:
 					taken[k] = taken.get(k, 0.0) + drop / who.size()
 					if not per_screen.has(here):
@@ -108,6 +145,8 @@ func _level(n: String) -> Array:
 					per_screen[here][k] = per_screen[here].get(k, 0.0) + drop / who.size()
 			hp = l.hero.health
 		whistled += called.size()
+		if shield[0] > 0:
+			shield_runs.append("seed %d: held %.0f s, %d blows landed with it" % [s, shield[0] / 60.0, shield[1]])
 		var result: String = "won" if l.won else ("lost on %s" % screen if l.lost else "not finished at %s" % screen)
 		var parts: Array = Score.PARTS.filter(func(k): return l.score_parts.get(k, 0) != 0).map(func(k): return "%s %d" % [k.replace("_", "-"), l.score_parts[k]])
 		result += ", score %d%s" % [l.score, " (%s)" % ", ".join(parts) if not parts.is_empty() else ""]  # (the team's
@@ -130,6 +169,11 @@ func _level(n: String) -> Array:
 	out.append("")
 	if whistles > 0:
 		out.append("**The Whistler**, all runs: %d whistles, %d goons whistled in (tagged \"(whistled in)\" below)" % [whistles, whistled])
+		out.append("")
+		out.append("Where they came in: %s" % ", ".join(arrivals.keys().map(func(k): return "%s ×%d" % [k, arrivals[k]])))
+		out.append("")
+	if not shield_runs.is_empty():
+		out.append("**A picked-up shield**: %s" % "; ".join(shield_runs))
 		out.append("")
 	if not moments.is_empty():
 		out.append("**Boss moments seen**, all runs: %s" % ", ".join(moments.keys().map(func(k): return "%s ×%d" % [
