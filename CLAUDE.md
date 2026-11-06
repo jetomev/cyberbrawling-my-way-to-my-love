@@ -12,6 +12,9 @@ KognogOS 1.0 (week of 19 April 2027). Public and open source. Javier & Claude, a
 - **D-4** Engine: **Godot 4**, from `nog`. Characters are **2D cut-out parts on bones**; backgrounds flat, in layers.
 - **D-5** Art: **ChatGPT first**. OpenArt or Runway only with Javier's yes **per batch**, with the count and the
   expected cost written before the run and the real cost after. No standing credit budget.
+  **Tightened (Javier, 2026-11-05 20:23, through the assistant team; his yes here 2026-11-05):** no more money spent
+  on making the game's pictures. ChatGPT, at whatever pace it allows. Runway and OpenArt only up to the credits already
+  on the accounts: no top-ups, no new plans. Even with a per-batch yes, nothing that costs new money.
 - **D-6** Dates (Javier, 2026-11-01): level 1 playable mid-December 2026 (target Sun 13 Dec), finished
   **Sun 21 Mar 2027**. Milestones in `docs/PLAN.md`.
 - **D-7** The title is **"Cyberbrawling my way to my love!"** (Javier, 2026-11-01; his name-clash check is running). Folder and repo:

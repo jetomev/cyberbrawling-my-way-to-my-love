@@ -2,7 +2,8 @@
 
 *Javier & Claude, 2026-11-03. The words we give ChatGPT for each batch of pictures, written so every batch follows
 `docs/STYLE.md`. **No batch runs without Javier's yes**, with the count and the cost written below before it runs and
-what it really cost after (D-5). ChatGPT is first; OpenArt or Runway only with his yes per batch.*
+what it really cost after (D-5). ChatGPT is first; OpenArt or Runway only with his yes per batch, and since
+2026-11-05 only up to the credits already on those accounts: no new money for pictures, no top-ups, no new plans.*
 
 Cost note: ChatGPT pictures come out of Javier's ChatGPT Plus plan, so a batch costs **$0 extra**; the only limit is
 the plan's picture allowance. One chat per batch, in a ChatGPT project called "Cyberbrawling", so the style carries
