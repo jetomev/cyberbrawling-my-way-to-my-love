@@ -93,7 +93,7 @@ file. Nothing here needs you to know how the game is built: **EXPECT** says what
 | ID | Task | EXPECT | Result | Notes |
 |---|---|---|---|---|
 | 7.1 | The end of the street | he goes up the club's back stairs by himself to the room upstairs | | |
-| 7.2 | DJ Volt from range | he throws records like frisbees, low, middle and high: jump the low ones, block or step up or down the street for the rest | | |
+| 7.2 | DJ Volt from range | he throws records like frisbees, low, middle and high: jump the low ones, step up or down the street or roll for the rest; a perfect block sends one back at him | | |
 | 7.3 | Close in | he swings the mic stand | | |
 | 7.4 | The speakers | hold your guard for about two seconds while his speakers stand and the Bass Drop's wave pushes you back; break the speakers to stop it | | |
 | 7.5 | Beat him | the level's won; he drops a bat, the prize | | |

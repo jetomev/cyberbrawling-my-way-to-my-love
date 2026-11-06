@@ -5,7 +5,7 @@ extends RefCounted
 ## lays out every frame between them, in order, pages of 60. main.gd plays one with --level <file> --scene proof_<name>.
 ##
 ## proof_headbutt  the Wrench Mechanic ducks the side kick (K K K's end) and comes up with a headbutt
-## proof_doorman   a jab off the riot shield, then a low kick into his bash knocks the shield aside and lands
+## proof_doorman   a jab off the riot shield, then a low kick into his bash knocks the shield away, broken, and lands
 ## proof_dancer    a pipe swing she slips on her skates; K K K knocks her off them; the same swing then lands
 ## proof_enforcer  the jab caught on his blade, and his cut straight back
 ## proof_lookout   the lookout whistles, and the two goons he calls walk in to the hero
@@ -610,9 +610,9 @@ func inputs(level) -> Dictionary:
 				inp["kick"] = true  # the low kick, into the bash as it winds up
 			for ev in evs:
 				if ev.get("target") == f and ev.get("attacker") == h:
-					_say("the %s: %s%s" % [ev.get("move", ""), ev["result"].to_upper(), "  ·  the SHIELD knocked aside" if ev.get("drop", "") == "shield" or f.weapon == "" else ""])
+					_say("the %s: %s%s" % [ev.get("move", ""), ev["result"].to_upper(), "  ·  the SHIELD clatters away and BREAKS" if ev.get("drop", "") == "shield" or f.weapon == "" else ""])
 					if ev["move"] == "kick" and f.weapon == "":
-						_end("the low kick into his bash: the shield's knocked aside and the kick %s" % ev["result"].to_upper())
+						_end("the low kick into his bash: the shield clatters away and BREAKS (nothing left to pick up), the kick %s" % ev["result"].to_upper())
 			if tick > 200 and ended < 0:
 				_end("the shield held (the proof failed)")
 		"proof_dancer":

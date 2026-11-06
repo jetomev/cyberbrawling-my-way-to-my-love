@@ -132,7 +132,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [ ] Level 1 layers in the game (solo)
 - [x] First music cue (level 1, a minute, loops) and 8 sound effects × 3 takes, free drafts on the Dailies page (solo)
 - [ ] Javier listens: music and effects approved or sent back
-- [ ] Level 1 boss upstairs (solo)
+- [x] Level 1 boss upstairs (solo) (2026-11-03: DJ Volt, 784e711, with his records, mic stand and Bass Drop; ticked 2026-11-05)
 - [ ] Linux build he can install; test matrix in testing/ (solo) (2026-11-03: scripts/export.sh exports it and the exported program plays level 1 through by itself; scripts/install.sh / uninstall.sh, user-only, a menu entry, passed on a bench home folder; left: the test matrix, the team's real icon) (2026-11-05: the level 1 test matrix written, testing/20261105 - Test Matrix for Cyberbrawling v0-1-0-level1.md, every row checked against the code; left: the team's real icon)
 - [ ] Javier plays level 1 with the matrix
 
