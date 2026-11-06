@@ -43,6 +43,8 @@ func _level(n: String) -> Array:
 	var whistled := 0
 	var arrivals := {}  # where the whistled goons came in, against the hero (the team's 11-04 rule: ahead or down a ladder)
 	var shield_runs := []  # the robot with a picked-up shield, per run
+	var bruiser_fight := {}  # screen -> {what -> count or health}: the robot against the Bruiser (the team, 11-05)
+	var falls := []  # each fall through a gap: where, from how high, the Whistler near or not
 	var hard := []  # which enemies in this layout are the hard versions (the team's ask, third ruling)
 	for fl in d["floors"]:
 		for w in fl.get("waves", []):
@@ -69,6 +71,9 @@ func _level(n: String) -> Array:
 		var down_here := ""
 		var last_hit := "?"
 		var shield := [0, 0]  # ticks he held a Doorman's shield he'd picked up, blows he landed with it
+		var mech_at := -9999  # the last frame a Mechanic's blow landed on him (the team, 11-05: the Bruiser and a pile-on)
+		var hop_at := -9999  # the last frame a Whistler hopped from lamp to lamp
+		var ys := []  # his height over the last two seconds (a fall: where from)
 		for i in MAX_TICKS:
 			if l.won or l.lost:
 				break
@@ -80,6 +85,9 @@ func _level(n: String) -> Array:
 			bot.climb = l.climb_cue()
 			l.step(bot.think(l.standing()))
 			var sc: int = int(l.hero.x / SCREEN) + 1
+			ys.append(l.hero.y)
+			if ys.size() > 120:
+				ys.pop_front()
 			var here := "F%d s%d" % [l.on, sc]
 			if l.on > furthest[0] or (l.on == furthest[0] and sc > furthest[1]):
 				furthest = [l.on, sc]
@@ -104,6 +112,25 @@ func _level(n: String) -> Array:
 						shield[1] += 1
 				if ev.get("target") == l.hero and ev.get("result", "") in ["hit", "blocked", "shocked", "guard_broken"]:
 					last_hit = _kind_of(l, ev)
+					if last_hit.begins_with("wrench_mechanic"):
+						mech_at = i
+				if ev.get("result", "") == "hop":
+					hop_at = i
+				var a_kind: String = _kind_of(l, {"attacker": ev.get("attacker")}) if ev.get("attacker") != null else ""
+				var t_kind: String = _kind_of(l, {"attacker": ev.get("target")}) if ev.get("target") != null and ev.get("target") != l.hero else ""
+				if t_kind.begins_with("bruiser") and ev.get("attacker") == l.hero:
+					_tally(bruiser_fight, here, "his blows at the Bruiser: %s" % ev.get("result", "?"), 1)
+					if ev.get("counter", false):
+						_tally(bruiser_fight, here, "of them caught as the Bruiser wound up (his swing broken)", 1)
+				if a_kind.begins_with("bruiser") and ev.get("target") == l.hero:
+					_tally(bruiser_fight, here, "the Bruiser's swings at him: %s" % ev.get("result", "?"), 1)
+				if ev.get("target") == l.hero and ev.get("result", "") == "hero_fell":
+					var whistler := "no Whistler near"
+					for e in l.enemies:
+						if e["kind"] == "lookout" and not e["gone"] and absf(e["f"].x - l.hero.x) < 600.0:
+							whistler = "the Whistler %d px away, %s" % [int(absf(e["f"].x - l.hero.x)),
+								"he'd hopped %.1f s before" % ((i - hop_at) / 60.0) if i - hop_at < 600 else "no hop in the last 10 s"]
+					falls.append("seed %d, %s (x %d, from up to %d px up in the 2 s before; %s)" % [s, here, int(l.hero.x), int(ys.max()), whistler])
 				if ev.get("result", "") == "whistle":
 					whistles += 1
 				if ev.get("result", "") in ["opening", "swap", "compound"]:
@@ -140,6 +167,9 @@ func _level(n: String) -> Array:
 						who.append("other (%s)" % (", ".join(what) if not what.is_empty() else l.hero.state))
 				for k in who:
 					taken[k] = taken.get(k, 0.0) + drop / who.size()
+					if k.begins_with("bruiser"):
+						_tally(bruiser_fight, here, "health he took from the Bruiser with a Mechanic's blow landing too (within a second)" if i - mech_at <= 60 \
+							else "health he took from the Bruiser alone", drop / who.size())
 					if not per_screen.has(here):
 						per_screen[here] = {}
 					per_screen[here][k] = per_screen[here].get(k, 0.0) + drop / who.size()
@@ -171,6 +201,16 @@ func _level(n: String) -> Array:
 		out.append("**The Whistler**, all runs: %d whistles, %d goons whistled in (tagged \"(whistled in)\" below)" % [whistles, whistled])
 		out.append("")
 		out.append("Where they came in: %s" % ", ".join(arrivals.keys().map(func(k): return "%s ×%d" % [k, arrivals[k]])))
+		out.append("")
+	if not bruiser_fight.is_empty():
+		out.append("**The Bruiser against the robot**, all runs, by screen:")
+		var bs: Array = bruiser_fight.keys()
+		bs.sort()
+		for sc in bs:
+			out.append("- %s: %s" % [sc, "; ".join(bruiser_fight[sc].keys().map(func(k): return "%s %s" % [k, str(snappedf(bruiser_fight[sc][k], 0.1))]))])
+		out.append("")
+	if not falls.is_empty():
+		out.append("**Falls through a gap**: %s" % "; ".join(falls))
 		out.append("")
 	if not shield_runs.is_empty():
 		out.append("**A picked-up shield**: %s" % "; ".join(shield_runs))
@@ -210,3 +250,9 @@ func _kind_of(l, ev: Dictionary) -> String:
 		return {"wrench": "wrench_mechanic (thrown wrench)", "record": "dj_volt (records)", "card": "chrome (cards)",
 			"ball": "coach (medicine ball)", "soup": "big_mama (soup)"}.get(p["kind"], "thrown " + str(p["kind"]))
 	return str(ev.get("kind", ev.get("move", "other")))
+
+
+func _tally(d: Dictionary, screen: String, what: String, n: float) -> void:
+	if not d.has(screen):
+		d[screen] = {}
+	d[screen][what] = d[screen].get(what, 0.0) + n
