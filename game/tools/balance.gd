@@ -45,6 +45,7 @@ func _level(n: String) -> Array:
 	var shield_runs := []  # the robot with a picked-up shield, per run
 	var bruiser_fight := {}  # screen -> {what -> count or health}: the robot against the Bruiser (the team, 11-05)
 	var falls := []  # each fall through a gap: where, from how high, the Whistler near or not
+	var things := {}  # what happened, counted (the team's level 7 questions, 11-05): counters, parries, tanks, shocks
 	var hard := []  # which enemies in this layout are the hard versions (the team's ask, third ruling)
 	for fl in d["floors"]:
 		for w in fl.get("waves", []):
@@ -116,6 +117,18 @@ func _level(n: String) -> Array:
 						mech_at = i
 				if ev.get("result", "") == "hop":
 					hop_at = i
+				var r: String = str(ev.get("result", ""))
+				if ev.get("attacker") == l.hero and ev.get("counter", false):
+					_tally(things, "the robot's blows that caught a wind-up (its glint)", str(ev.get("move", "?")), 1)
+				if ev.get("attacker") == l.hero and r in ["parried", "dodged", "evaded"] and ev.get("target") != null:
+					_tally(things, "%s %s the robot's" % [_kind_of(l, {"attacker": ev["target"]}), r], str(ev.get("move", "?")), 1)
+				if r in ["into_the_tank", "shorts_out"]:
+					_tally(things, "the tanks", r.replace("_", " "), 1)
+				if r == "shocked":
+					var who_s: String = "the robot" if ev.get("target") == l.hero else _kind_of(l, {"attacker": ev.get("target")})
+					_tally(things, "shocks", "%s by %s on %s" % [who_s, {"live_floor": "a live floor", "shock": "blocking Static's baton"}.get(str(ev.get("kind", "")), str(ev.get("kind", ""))), here], 1)
+				if r == "live" and ev.get("kind", "") == "live":
+					_tally(things, "Mr. Static", "floor slams", 1)
 				var a_kind: String = _kind_of(l, {"attacker": ev.get("attacker")}) if ev.get("attacker") != null else ""
 				var t_kind: String = _kind_of(l, {"attacker": ev.get("target")}) if ev.get("target") != null and ev.get("target") != l.hero else ""
 				if t_kind.begins_with("bruiser") and ev.get("attacker") == l.hero:
@@ -209,6 +222,13 @@ func _level(n: String) -> Array:
 		for sc in bs:
 			out.append("- %s: %s" % [sc, "; ".join(bruiser_fight[sc].keys().map(func(k): return "%s %s" % [k, str(snappedf(bruiser_fight[sc][k], 0.1))]))])
 		out.append("")
+	if not things.is_empty():
+		out.append("**What happened, counted**, all runs:")
+		var tk: Array = things.keys()
+		tk.sort()
+		for k in tk:
+			out.append("- %s: %s" % [k, ", ".join(things[k].keys().map(func(m): return "%s ×%d" % [m, int(things[k][m])]))])
+		out.append("")
 	if not falls.is_empty():
 		out.append("**Falls through a gap**: %s" % "; ".join(falls))
 		out.append("")
@@ -225,8 +245,8 @@ func _level(n: String) -> Array:
 	for sc in screens:
 		var ks: Array = per_screen[sc].keys()
 		ks.sort_custom(func(a, b): return per_screen[sc][a] > per_screen[sc][b])
-		out.append("- %s: %.0f (%s)" % [sc, per_screen[sc].values().reduce(func(a, b): return a + b, 0.0),
-			", ".join(ks.map(func(k): return "%s %.0f" % [k, per_screen[sc][k]]))])
+		out.append("- %s: %.1f (%s)" % [sc, per_screen[sc].values().reduce(func(a, b): return a + b, 0.0),
+			", ".join(ks.map(func(k): return "%s %.1f" % [k, per_screen[sc][k]]))])  # (one decimal: the parts add up, the team 11-05)
 	if not deaths.is_empty():
 		var where: Array = deaths.keys()
 		where.sort_custom(func(a, b): return deaths[a] > deaths[b])
