@@ -494,3 +494,34 @@ func test_a_whistled_goon_never_comes_from_behind_onto_a_screen_already_cleared(
 		l2.step({})
 	var behind: Array = l2.enemies.filter(func(e): return e.get("whistled", false) and e["f"].x < l2.hero.x)
 	eq(behind.size(), 1, "with room behind him on the same screen, the ambush from behind still happens")
+
+
+func test_a_whistler_told_to_wait_keeps_quiet_till_the_bruiser_of_his_wave_is_down() -> void:
+	var l = street()
+	l._arrive({"kind": "bruiser", "dx": 200.0, "z": l.hero.z}, l.hero.x, 0)
+	var bruiser = l.enemies[-1]
+	bruiser["brain"].wait = 9999
+	bruiser["brain"].dormant_until_within = 1.0  # (he stands where he's put)
+	l._arrive({"kind": "lookout", "dx": 500.0, "z": 20.0, "quiet_until_down": "bruiser"}, l.hero.x, 0)
+	var whistles := 0
+	for i in Level.WHISTLE_EVERY + 30:
+		l.step({})
+		whistles += l.events.filter(func(ev): return ev.get("result", "") == "whistle").size()
+	eq(whistles, 0, "the Bruiser standing: not a whistle (level 6 screen 3, the testers' ruling)")
+	bruiser["f"].health = 0.0
+	bruiser["f"]._enter("ko")
+	for i in 30:
+		l.step({})
+		whistles += l.events.filter(func(ev): return ev.get("result", "") == "whistle").size()
+	eq(whistles, 1, "the Bruiser down: he whistles, and from then on his usual pace")
+	# failing direction: the same Whistler without the order whistles with the Bruiser standing
+	var l2 = street()
+	l2._arrive({"kind": "bruiser", "dx": 200.0, "z": l2.hero.z}, l2.hero.x, 0)
+	l2.enemies[-1]["brain"].wait = 9999
+	l2.enemies[-1]["brain"].dormant_until_within = 1.0
+	l2._arrive({"kind": "lookout", "dx": 500.0, "z": 20.0}, l2.hero.x, 0)
+	var w2 := 0
+	for i in 30:
+		l2.step({})
+		w2 += l2.events.filter(func(ev): return ev.get("result", "") == "whistle").size()
+	eq(w2, 1, "(no order: he whistles straight away)")

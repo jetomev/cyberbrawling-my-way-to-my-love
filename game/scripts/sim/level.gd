@@ -747,6 +747,9 @@ func _roster_tricks() -> void:
 			if (e["called"] as Array).all(func(c): return c.defeated() or absf(c.x - hero.x) < 300.0):
 				e["next_whistle"] = tick + WHISTLE_EVERY
 				e["next_whistle_set"] = true
+		if e.get("kind", "") == "lookout" and e.has("quiet_until_down") and enemies.any(func(o): return o["wave"] == e["wave"] \
+				and o["kind"] == e["quiet_until_down"] and not o["f"].defeated()):
+			continue  # he keeps quiet while that one's still standing (the team, level 6 screen 3: the Bruiser fights alone)
 		if e.get("kind", "") == "lookout" and absf(hero.x - f.x) < WHISTLE_RANGE and tick >= e.get("next_whistle", 0) \
 				and e.get("whistles", 99) > 0 and not (paced and (hero.state == "climb" or (e.has("called") and not e.has("next_whistle_set")))):
 			e["next_whistle"] = tick + WHISTLE_EVERY
@@ -2054,7 +2057,7 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 				elif from == "left" and o["x1"] < at and x < o["x1"] + 60.0:
 					x = o["x1"] + 60.0
 	_spawn(e["kind"], x, z, e.get("weapon", ""), -1.0, wave_index)
-	for k in ["calls", "whistles", "hard", "whistled", "calls_x", "calls_y", "paced"]:  # the lookout's: who he whistles in, and how many times; a hard
+	for k in ["calls", "whistles", "hard", "whistled", "calls_x", "calls_y", "paced", "quiet_until_down"]:  # the lookout's: who he whistles in, and how many times; a hard
 		# version's tag; a goon he whistled in (the robot's numbers name him apart, the team's ask 11-05)
 		if e.has(k):
 			enemies[-1][k] = e[k]
