@@ -474,3 +474,23 @@ func test_the_mechanic_winds_up_his_throw() -> void:
 			flew = i
 	check(wound >= 0, "he winds up (the throw pose: the wrench cranked back)")
 	check(flew > wound, "and only then it flies (%d frames on)" % (flew - wound))
+
+
+func test_a_whistled_goon_never_comes_from_behind_onto_a_screen_already_cleared() -> void:
+	var l = street()
+	l.hero.x = Level.SCREEN_W + 150.0  # just into screen 2: "from the left" would be back on screen 1
+	var look = bring(l, "lookout", 500.0)
+	for i in 20:
+		l.step({})
+	var called: Array = l.enemies.filter(func(e): return e.get("whistled", false))
+	eq(called.size(), 2, "(he whistled two in)")
+	for c in called:
+		check(c["f"].x >= Level.SCREEN_W, "each one on the screen being fought or ahead (x %.0f)" % c["f"].x)
+	# failing direction: deep in a screen, one still comes in from behind on that screen's own fight
+	var l2 = street()
+	l2.hero.x = Level.SCREEN_W + 1300.0
+	bring(l2, "lookout", 300.0)
+	for i in 20:
+		l2.step({})
+	var behind: Array = l2.enemies.filter(func(e): return e.get("whistled", false) and e["f"].x < l2.hero.x)
+	eq(behind.size(), 1, "with room behind him on the same screen, the ambush from behind still happens")

@@ -182,6 +182,7 @@ const MAX_ON_SCREEN := 5  # never more than five enemies at once; the rest wait 
 const OFF_SCREEN := 1150.0  # "from the left/right": they walk in from this far beyond the wave's spot
 const AMBUSH := 260.0  # a hidden enemy jumps out when the hero comes this close
 const LIVES := 3
+const SCREEN_W := 1920.0  # a screen, as the team's pages and the robot's numbers count them
 const LOCK_MARGIN := 700.0  # a floor "locks" this far either side of a wave until it's beaten
 const ATTACKERS := 2  # at most this many enemies attack at once; the rest wait their turn (a fair fight in a crowd)
 const DOWN_TICKS := 150  # a fighter put down for good lies this long before he's gone (an enemy) or respawns (the hero)
@@ -755,6 +756,8 @@ func _roster_tricks() -> void:
 			var sides := ["left", "right"] + (["right"] if e.get("hard", false) else [])  # (the hard Whistler calls three)
 			for i in sides.size():
 				var side: String = sides[i]
+				if side == "left" and not e.has("calls_x") and floorf(maxf(hero.x - LOCK_MARGIN + 40.0, 0.0) / SCREEN_W) < floorf(hero.x / SCREEN_W):
+					side = "right"  # from behind would be onto a screen he's already cleared: ahead instead (the team's 11-04 rule)
 				if standing().size() < MAX_ON_SCREEN:
 					if e.has("calls_x"):  # up the ladder where it comes out (the team's level 3: Mechanics climb at you)
 						var called := {"kind": e.get("calls", "glow_punk"), "dx": e["calls_x"] - hero.x + (0.0 if side == "left" else 50.0),
