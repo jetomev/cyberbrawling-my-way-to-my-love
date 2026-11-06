@@ -4,7 +4,7 @@
 Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 
 ## Next: Thu 2026-11-05, 6:00 (Javier stopped the day 11-04 evening)
-- [ ] A fresh build on 1fd64fc: the last full build (bf63f0b) is from before the chin blocks, the knife, the balcony gap
+- [ ] The evening build (9237834, started 18:18) finishing its trials; then a fresh one on 99cfc8f with the roll, the long fall and the sweep's flip (2026-11-05). Done earlier: a fresh build on 1fd64fc: the last full build (bf63f0b) is from before the chin blocks, the knife, the balcony gap
   and roster v7. The 11-04 ~17:30 build stopped on a too-short clip fence (fixed, 1d6fdc0); the 17:29 one was stopped
   for the night in its trial clips, on purpose. Then look at armed/ (blocks at the chin, the knife up) and proof_gap.
 - [ ] Waiting on the team: level 6's shield question and its screen 3 numbers (art-in 2026-11-05-level6-docks-built); levels 7-10's settled pages; the score answers; smooth_skate
