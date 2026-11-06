@@ -87,6 +87,7 @@ func _level(n: String) -> Array:
 			bot.jump_cue = l.crane_jump_cue()
 			bot.dodge_x = l.shadow_cue()
 			bot.climb = l.climb_cue()
+			var seen_before: int = l.enemies.size()
 			var food_was: Array = l.world.items.filter(func(it): return Fighter.HEALS.has(it["kind"])).map(func(it): return it["kind"])
 			var floor_was: int = l.on
 			var broken_was: Array = l.world.objects.filter(func(o): return o["broken"]).map(func(o): return o["id"])
@@ -109,6 +110,10 @@ func _level(n: String) -> Array:
 					arrivals[key] = arrivals.get(key, 0) + 1
 			if l.hero.weapon == "shield":
 				shield[0] += 1
+			for k in range(seen_before, l.enemies.size()):  # where each enemy came in (the team, 11-05: the balcony Doorman)
+				var ne: Dictionary = l.enemies[k]
+				_tally(things, "where they came in (x, against the robot's)", "%s at x %d on F%d (robot at x %d)" % [ne["kind"],
+					int(ne["f"].x), l.on, int(l.hero.x)], 1)
 			if l.on == floor_was:  # what he ate, and the props he broke (the team, 11-05: the vending machine, the shrimp)
 				var food_now: Array = l.world.items.filter(func(it): return Fighter.HEALS.has(it["kind"])).map(func(it): return it["kind"])
 				for k in food_was:
@@ -188,7 +193,13 @@ func _level(n: String) -> Array:
 			var drop: float = maxf(0.0, hp - now)
 			if l.hero.defeated() and not was_down:  # the moment he goes down: that's where the life is lost
 				down_here = here
-				down_at = "%s (x %d, by %s; furthest so far F%d s%d)" % [here, int(l.hero.x), last_hit, furthest[0], furthest[1]]
+				var doing: String = "on a food errand to x %d" % int(bot.eat_x) if bot.eat_x > -1.0e8 else "fighting"
+				var near := []
+				for e in l.enemies:
+					if not e["gone"] and not e["f"].defeated() and absf(e["f"].x - l.hero.x) < 500.0:
+						near.append("%s x %d" % [e["kind"], int(e["f"].x)])
+				down_at = "%s (x %d, by %s; furthest so far F%d s%d; the robot %s; near him: %s)" % [here, int(l.hero.x), last_hit,
+					furthest[0], furthest[1], doing, ", ".join(near) if not near.is_empty() else "nobody"]
 			was_down = l.hero.defeated()
 			if l.lives < lives or (l.lost and lives > 0 and down_here != ""):
 				lost_at.append(down_at if down_at != "" else here)
