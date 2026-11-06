@@ -2108,10 +2108,11 @@ func _waves() -> void:
 			if int(e.get("after_down", 0)) <= down:
 				fl["waiting"].erase(e)
 				_arrive(e, at, fl["active_wave"])
-	# one waiting his turn holds still till that many of his wave are down, or till he's hit
+	# one waiting his turn holds still till that many of his kind in his wave are down, or till he's hit
 	for e in enemies:
 		if e.has("waits_till_down"):
-			var gone_of_wave: int = enemies.filter(func(o): return o["wave"] == e["wave"] and o != e and o["f"].defeated()).size()
+			var gone_of_wave: int = enemies.filter(func(o): return o["wave"] == e["wave"] and o != e and o["kind"] == e["kind"] \
+					and o["f"].defeated()).size()  # (his own kind: the second Snick waits for the first, not the Doorman)
 			if gone_of_wave >= e["waits_till_down"] or e["f"].health < e["f"].max_health:
 				e.erase("waits_till_down")
 				e["brain"].dormant_until_within = 0.0

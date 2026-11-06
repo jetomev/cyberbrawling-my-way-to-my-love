@@ -760,3 +760,26 @@ func test_level_5s_second_escalator_snick_waits_at_the_top_till_the_first_is_dow
 	check(not second.has("waits_till_down"), "the first down: the second comes down")
 	var b: Array = Level.load_data("res://levels/level5.json")["floors"][1]["obstacles"].filter(func(o): return o[0] == "buffet")
 	check(b[0][2] <= 300.0, "the shrimp plate at the balcony's left end, at the top of the escalator (x %d-%d)" % [b[0][1], b[0][2]])
+
+
+func test_level_5s_balcony_doorman_starts_on_the_right_half_and_the_second_snick_waits_by_the_tables() -> void:
+	var l = Level.new(Level.load_data("res://levels/level5.json"), {}, 1)
+	l._go_to(1, 300.0)
+	l.hero.x = 650.0  # (just past the wave's line)
+	l.step({})
+	var door: Array = l.enemies.filter(func(e): return e["kind"] == "doorman")
+	check(not door.is_empty() and door[0]["f"].x >= 960.0, "the Doorman starts on the balcony's right half (x %.0f), never at the top of the escalator" % (door[0]["f"].x if not door.is_empty() else -1.0))
+	var sn: Array = l.enemies.filter(func(e): return e["kind"] == "snick")
+	eq(sn.size(), 2, "both Snicks in sight")
+	var waiting: Array = sn.filter(func(e): return e.has("waits_till_down"))
+	eq(waiting.size(), 1, "one waits his turn")
+	check(waiting[0]["f"].x > 760.0 and waiting[0]["f"].x < 1000.0, "by the card tables (x %.0f)" % waiting[0]["f"].x)
+	door[0]["f"].health = 0.0
+	door[0]["f"]._enter("ko")
+	l.step({})
+	check(waiting[0].has("waits_till_down"), "the Doorman down doesn't send him: he waits for the first Snick")
+	var first: Dictionary = sn.filter(func(e): return e != waiting[0])[0]
+	first["f"].health = 0.0
+	first["f"]._enter("ko")
+	l.step({})
+	check(not waiting[0].has("waits_till_down"), "the first Snick down: he comes")
