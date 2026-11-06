@@ -65,7 +65,7 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Javier's play of a7c202b: a flying side kick (not the crane), a brisker walk (1.5 legs/s), a real run (0.6 s strides, 2.4 legs, runs tall) (D-30)
 - [x] S: the kick (Javier's final keys, 21:56)
 - [ ] Each day with work: write or rewrite that day's report on the shelf (the build says if it's missing)
-- [ ] From the recordings: the long fall after a flying kick from the car hangs stiff (D-30); "Wushu Basics" (Commons, CC BY-SA 3.0, studied 11-02): knees stay tucked high, arms spread wide, legs unfold only ~100 ms before touchdown
+- [x] From the recordings: the long fall after a flying kick from the car hangs stiff (D-30) (2026-11-05: knees tucked, arms wide, legs unfold in the last 100 ms, timed, 0d4aa8f); "Wushu Basics" (Commons, CC BY-SA 3.0, studied 11-02): knees stay tucked high, arms spread wide, legs unfold only ~100 ms before touchdown
 - [x] From the recordings: the kicks (round kick high and straight on a tall standing leg, snap kicks chambered and snapping, side kick faster and tall); the punches checked, already matching (D-30)
 - [x] Side-by-sides for the punches and kicks too, seen along each blow (D-30)
 - [ ] The power punch leans far more than the recorded lunge punch (9-14 degrees); the sheet asks ~60% weight forward: the testers' call
@@ -86,11 +86,11 @@ Items marked (solo) can run in an unattended session (docs/UNATTENDED.md).*
 - [x] Pictures: a running flying kick shown whole; the sweep seen from above
 - [x] The testers' session on 66ce4c6 (00:57): power punch load measured (2.3 shoulder widths already; the fault was the hips over the front foot and the back knee near the street) and made a horse stance, hips centred, knees out; the sweep's foot goes a full circle; measurements in the build notes; the roll's shoulders up close; every frame sheet checked whole
 - [x] The roll's close-up showed him hovering over the top: now placed by his drawn outline, hand then back then hips (46be0b9)
-- [ ] The roll: four frames between the hand and the back where the tucked head holds him a few px up
+- [x] The roll: four frames between the hand and the back where the tucked head holds him a few px up (2026-11-05: the arm reaching and the chin tucked; 1 px for two frames now, 0c5fab2)
 - [x] The testers' session on 46be0b9 (01:56): power punch load, roll's shoulder support and head clearance, the full sweep drawing all PASS; nothing sent back
 - [x] The testers' session at 02:29: the sweep turns on a planted forefoot, hips carried over it (bfe0316); sweep reach 195 (was 120), Javier to judge in play; the spin frame by frame with its circle (sweep-spin)
 - [x] The testers' session at 04:00: the sweep PASSES (planted pivot foot, broad body, long sweeping leg, the full circle drawn); nothing sent back; everything judgeable from pictures has now passed
-- [ ] Still jumping in the frame a spin flips: the sweep's long leg, head and hands (kept long and broad as asked); the spinning kick's pivot foot (not on the hero's keys)
+- [ ] Still jumping in the frame a spin flips: the sweep's long leg, head and hands (kept long and broad as asked); the spinning kick's pivot foot (not on the hero's keys) (2026-11-05: the leg and hands fixed, dc9cae6; the head's 60-90 px waits on the testers: lean him over the planted foot?)
 - [ ] Waits for Javier's own play (pictures can't show it): smooth movement and natural pace at full and half speed, whole moves, the sweep's circle moving, the spinning kick, the sweep's reach 195
 - [x] The run's first steps no longer snap: starting and stopping blend from the last drawn pose (was a 131 px jump)
 - [ ] Kung-fu patterns: front, side, round kicks low/mid/high; punch strings ending in a power punch (D-21; after the team's research)
