@@ -150,3 +150,19 @@ func test_on_the_docks_the_whistler_hops_from_lamp_to_lamp() -> void:
 		hopped = hopped or l.events.any(func(ev): return ev.get("result", "") == "hop")
 	check(hopped, "cornered at his lamp's lip, he hops the short gap")
 	check(f.x > 5380.0 and absf(f.y - 400.0) < 1.0, "onto the next lamp's stack (x %.0f, %.0f up)" % [f.x, f.y])
+
+
+func test_on_the_docks_climbing_down_a_ladder_onto_a_stack_sets_him_on_the_stack() -> void:
+	var l = Level.new(Level.load_data("res://levels/level6.json"), {}, 1)
+	l.floors[0]["wave"] = l.floors[0]["waves"].size()  # (nobody about)
+	var h = l.hero
+	h.x = 4980.0  # at the top of screen 3's ladder, up on floor 3
+	h.y = 400.0
+	h.z = 15.0
+	var hp: float = h.health
+	var fell := false
+	for i in 120:
+		l.step({"mz": 1.0} if i < 5 else {})
+		fell = fell or l.events.any(func(ev): return ev.get("result", "") == "hero_fell")
+	eq(h.y, 200.0, "down the ladder onto floor 2's stack (y %.0f, z %.0f)" % [h.y, h.z])
+	check(not fell and h.health == hp, "and nothing fell (health %.0f of %.0f)" % [h.health, hp])

@@ -294,6 +294,11 @@ func _ground(mx: float, mz: float, run := false) -> void:
 			climb_from = Vector2(x, y)
 			climb_to = Vector2(cx, o["top"] if lad["at"] == "foot" else float(o.get("base", 0.0)))
 			climb_z = Vector2(z, maxf(0.0, o["z0"] - 25.0) if lad["at"] == "foot" else o["z1"] + 30.0)
+			if lad["at"] == "top" and float(o.get("base", 0.0)) > 0.0:
+				# a ladder standing on a stack (level 6): step off it onto the stack, never off the stack's front edge
+				var base: float = float(o["base"])
+				while climb_z.y > o["z1"] + 2.0 and world.floor_at(cx, climb_z.y, base + 1.0) < base - 1.0:
+					climb_z.y -= 2.0
 			on_ladder = true
 			vx = 0.0
 			_enter("climb")
