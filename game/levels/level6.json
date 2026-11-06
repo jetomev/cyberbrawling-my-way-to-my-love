@@ -1,6 +1,6 @@
 {
   "name": "Level 6 · The Docks",
-  "about": "SETTLED (art-in 2026-11-05-level6-docks-agreed: Merry's second draft, agreed by Boromir and Pippin). One long quay in fog with container stacks you climb (floor 2 at 200, floor 3 at 400), ladders between them; falls only through the gaps by your own missed jump (never worse than a knockdown, never your last life), goons pushed off land hurt and wait at the foot of the path down (screen 4, right) till you come down. Screen 1: two Mechanics and their toolbox, the big white cat asleep on the switch up on the ledge (stand by it and it strolls off; stand at the locked door and the hint comes). Screen 2: the steel corridor, two lanes deep, a Doorman and two Mechanics. Screen 3: a Bruiser below, the Whistler up on floor 3, running from lamp to lamp over its short gap (two whistles of two Mechanics, paced from their arrival, never while you climb; a pork bun). Screen 4: floor 2 with two gaps, two Doormen and a Mechanic at the second (no wrench at you mid-jump), oranges. Screen 5: the shed, tea and the matchbook. Screen 6: the gate needs two switches (floor 2, floor 3); a pipe Bruiser, a Mauler and a Mechanic below, then a second Whistler and two Doormen at the floor 3 switch; the first-aid kit; the torn photo. 16 placed (6 Mechanics, 5 Doormen, 2 Bruisers, 2 Whistlers, 1 Mauler). Then the crane yard: the crane's container and crates, a switch a floor each (thrown, it calms its floor for good), the sandwich, the cab. NOT BUILT YET: the oil-drum lid to throw (the throw key waits on Javier), the Whistler running lamp to lamp, the cat on the cab roof.",
+  "about": "SETTLED (art-in 2026-11-05-level6-docks-agreed: Merry's second draft, agreed by Boromir and Pippin). One long quay in fog with container stacks you climb (floor 2 at 200, floor 3 at 400), ladders between them; falls only through the gaps by your own missed jump (never worse than a knockdown, never your last life), goons pushed off land hurt and wait at the foot of the path down (screen 4, right) till you come down. Screen 1: two Mechanics and their toolbox, the big white cat asleep on the switch up on the ledge (stand by it and it strolls off; stand at the locked door and the hint comes). Screen 2: the steel corridor, two lanes deep, a Doorman and two Mechanics. Screen 3: a Bruiser below, the Whistler up on floor 3, running from lamp to lamp over its short gap (two whistles of two Mechanics, paced from their arrival, never while you climb; a pork bun). Screen 4: floor 2 with two gaps, two Doormen and a Mechanic at the second (no wrench at you mid-jump), oranges. Screen 5: the shed, tea and the matchbook. Screen 6: the gate needs two switches (floor 2, floor 3); a pipe Bruiser, a Mauler and a Mechanic below, then a second Whistler and two Doormen at the floor 3 switch; the first-aid kit; the torn photo. 16 placed (6 Mechanics, 5 Doormen, 2 Bruisers, 2 Whistlers, 1 Mauler). Then the crane yard: the crane's container and crates, a switch a floor each (thrown, it calms its floor for good), the sandwich, the cab. NOT BUILT YET: the oil-drum lid to throw (the throw key waits on Javier).",
   "floors": [
     {
       "name": "The Docks: the quay, the stacks and the gate yard",
@@ -482,7 +482,8 @@
       "obstacles": [],
       "items": [],
       "waves": [],
-      "cab": true
+      "cab": true,
+      "roof_cat": true
     }
   ],
   "links": [

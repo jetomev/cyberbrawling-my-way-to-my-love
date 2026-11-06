@@ -1025,6 +1025,8 @@ func _draw_flying() -> void:
 		for px in [cb.y - 8.0, cb.y + 8.0]:  # the open door's frame, on the far side
 			flying_view.draw_line(Vector2(px, top), Vector2(px, low), cc, 5.0)
 		flying_view.draw_line(Vector2(cb.y, low), Vector2(cb.y + 60.0, low + 40.0), Color(0.5, 0.5, 0.55), 4.0)  # the sill, and the drop
+		if level.cab_cat():  # the white cat from the first switch, up on the roof by the door: a wink (the team's page)
+			ObstaclesView.white_cat(flying_view, Vector2(cb.y - 90.0, top - 18.0), "wink")
 	if level.plan["floors"][level.on].get("ring", false):  # a boxing ring: corner posts and three ropes at each side
 		var b: Vector2 = level.ropes()
 		var depth: float = tune["street_depth"]

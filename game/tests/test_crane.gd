@@ -151,3 +151,22 @@ func test_the_bot_beats_the_crane_operator() -> void:
 		results.append("won" if l.won else ("lost" if l.lost else "stuck at %s %.0f" % [l.where, l.hero.x]))
 	check(not results.any(func(r): return r.begins_with("stuck")), "never stuck: %s" % [results])
 	check(results.count("won") >= 2, "and wins on most seeds: %s" % [results])
+
+
+func test_on_level_6_the_white_cat_sits_on_the_cab_roof_once_he_is_out_for_good() -> void:
+	var l = Level.new(Level.load_data("res://levels/level6.json"), {}, 1)
+	l._go_to(4, 150.0)
+	l.step({})
+	var ops: Array = l.enemies.filter(func(e): return e["kind"] == "crane_operator")
+	check(not ops.is_empty(), "(he's in his cab)")
+	check(not l.cab_cat(), "while he's in it: no cat")
+	ops[0]["f"].health = 0.0
+	ops[0]["f"]._enter("ko")
+	check(l.cab_cat(), "out for good: the cat from the first switch is on the roof (the team's page: a wink)")
+	var s = docks()
+	s._go_to(3, 150.0)
+	s.step({})
+	var op2: Array = s.enemies.filter(func(e): return e["kind"] == "crane_operator")
+	op2[0]["f"].health = 0.0
+	op2[0]["f"]._enter("ko")
+	check(not s.cab_cat(), "(the showcase docks have no cat: it belongs to level 6)")

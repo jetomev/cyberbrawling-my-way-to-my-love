@@ -1504,6 +1504,14 @@ func _cat_on_switch() -> void:
 				_show_hint(hs["locked"])
 
 
+## Level 6's last wink (the team's page): the big white cat from the first switch sits on the crane cab's roof once the
+## Crane Operator is out for good. Nothing to do; it's just there.
+func cab_cat() -> bool:
+	if not plan["floors"][on].get("roof_cat", false):
+		return false
+	return enemies.any(func(e): return e["kind"] == "crane_operator" and e["f"].defeated())
+
+
 ## The Whistler's hop from one lamp's stack to the next (level 6): a short arc over the gap.
 const HOP_TICKS := 22
 func _hops() -> void:

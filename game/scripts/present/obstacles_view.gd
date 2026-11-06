@@ -104,17 +104,7 @@ func _draw_loose() -> void:
 			loose.draw_rect(Rect2(x - 22, gy - 130, 44, 60), EDGE, false, 3.0)
 			loose.draw_circle(Vector2(x, gy - 112), 8.0, Color(0.3, 0.9, 0.4) if m["on"] else Color(0.9, 0.3, 0.3))
 			if m.get("cat", "") != "":  # level 6's big white cat with a gold collar: asleep on the panel, or strolled off it
-				var c := Vector2(x, gy - 136) if m["cat"] == "asleep" else Vector2(x - 110, gy - 8)
-				loose.draw_set_transform(c, 0.0, Vector2(1.0, 0.55))
-				loose.draw_circle(Vector2.ZERO, 28.0, Color(0.97, 0.97, 0.95))
-				loose.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-				loose.draw_circle(c + Vector2(24, -8), 13.0, Color(0.97, 0.97, 0.95))  # the head
-				loose.draw_colored_polygon(PackedVector2Array([c + Vector2(16, -18), c + Vector2(20, -30), c + Vector2(26, -19)]), Color(0.97, 0.97, 0.95))
-				loose.draw_colored_polygon(PackedVector2Array([c + Vector2(26, -19), c + Vector2(32, -30), c + Vector2(34, -15)]), Color(0.97, 0.97, 0.95))
-				loose.draw_arc(c + Vector2(24, -8), 13.0, 1.2, 2.2, 6, Color(0.95, 0.75, 0.15), 3.0)  # the gold collar
-				if m["cat"] == "asleep":
-					loose.draw_line(c + Vector2(19, -9), c + Vector2(23, -8), EDGE, 2.0)  # eyes shut
-					loose.draw_line(c + Vector2(26, -8), c + Vector2(30, -9), EDGE, 2.0)
+				white_cat(loose, Vector2(x, gy - 136) if m["cat"] == "asleep" else Vector2(x - 110, gy - 8), m["cat"])
 	for it in world.items:
 		var at := Vector2(it["x"], ground_y + it["z"] - it.get("y", 0.0))  # up on a roof, it's drawn up there
 		if it["kind"] == "pipe":
@@ -316,3 +306,21 @@ func _draw_stairs(n: Node2D, o: Dictionary, near: float, far: float) -> void:
 		var h: float = StreetWorld.step_height(o, px)
 		n.draw_line(Vector2(px, near - h), Vector2(px, near - h - rail), EDGE, 3.0)
 		px += STEP_W * 3.0
+
+
+## Level 6's big white cat with a gold collar, lying at c: "asleep" (eyes shut), "up" (strolled off) or "wink" (on the
+## crane cab's roof at the end, one eye shut).
+static func white_cat(canvas: CanvasItem, c: Vector2, look: String) -> void:
+	canvas.draw_set_transform(c, 0.0, Vector2(1.0, 0.55))
+	canvas.draw_circle(Vector2.ZERO, 28.0, Color(0.97, 0.97, 0.95))
+	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	canvas.draw_circle(c + Vector2(24, -8), 13.0, Color(0.97, 0.97, 0.95))  # the head
+	canvas.draw_colored_polygon(PackedVector2Array([c + Vector2(16, -18), c + Vector2(20, -30), c + Vector2(26, -19)]), Color(0.97, 0.97, 0.95))
+	canvas.draw_colored_polygon(PackedVector2Array([c + Vector2(26, -19), c + Vector2(32, -30), c + Vector2(34, -15)]), Color(0.97, 0.97, 0.95))
+	canvas.draw_arc(c + Vector2(24, -8), 13.0, 1.2, 2.2, 6, Color(0.95, 0.75, 0.15), 3.0)  # the gold collar
+	if look in ["asleep", "wink"]:
+		canvas.draw_line(c + Vector2(19, -9), c + Vector2(23, -8), EDGE, 2.0)  # an eye shut
+	if look == "asleep":
+		canvas.draw_line(c + Vector2(26, -8), c + Vector2(30, -9), EDGE, 2.0)  # both
+	elif look == "wink":
+		canvas.draw_circle(c + Vector2(28, -9), 2.5, EDGE)  # the other open
