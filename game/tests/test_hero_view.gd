@@ -392,3 +392,55 @@ func test_the_flying_kick_lands_into_a_balanced_guard() -> void:
 			deepest = i
 	check(hips[deepest] - hips[0] >= 8.0 and deepest >= 2, "the knees take it: the hips sink (%.0f px, deepest %d frames in)" % [hips[deepest] - hips[0], deepest])
 	v.free()
+
+
+func test_the_long_fall_after_a_flying_kick_off_a_car_stays_tucked_then_unfolds_late() -> void:
+	# D-30, from the recordings ("Wushu Basics"): off a car the fall after a flying kick hung stiff. The knees stay tucked
+	# high and the arms wide on the way down; the legs unfold only in the last ~100 ms before touchdown; no hand or foot
+	# jumps more than in a steady run
+	var steady: float = _worst_jump([[60, {"mx": 1.0, "run": true}]], 20)[0]
+	var w = StreetWorld.grey_street()
+	var f = Fighter.new(Tuning.fresh(), 2000.0, 80.0, w)
+	f.y = 130.0  # up on the car's roof
+	var v = HeroView.new()
+	var frames := []  # [ticks to touchdown, knee lift (thigh from hanging), drawn points]
+	var script := [[1, {"jump": true, "mx": 1.0}], [8, {"mx": 1.0}], [1, {"kick": true}], [60, {}]]
+	var touch := -1
+	var n := 0
+	for st in script:
+		for i in st[0]:
+			var was_air: bool = not f.on_ground()
+			f.step(st[1])
+			v.sync(f, w.floor_at(f.x, f.z, f.y))
+			var b: Dictionary = Poses.bake(Poses.angles(f.state, f.t, f.tune), false)
+			frames.append({"n": n, "air": not f.on_ground(), "pts": v.points(), "y": f.y})
+			if was_air and f.on_ground() and touch < 0:
+				touch = n
+			n += 1
+	check(touch > 0, "it lands")
+	var tucked := 0
+	var late := 0
+	var worst := 0.0
+	for fr in frames:
+		var left: int = touch - fr["n"]
+		var hip: Vector2 = fr["pts"]["hip"]
+		var knee_up: float = hip.y - fr["pts"]["foot_f"].y  # (feet far below the hips: hanging; near them: tucked)
+		if fr["air"] and left > 8 and left < 30:
+			tucked += 1 if knee_up > -95.0 else 0
+		if fr["air"] and left >= 0 and left <= 6:
+			late += 1
+	var at := ""
+	for i in range(1, frames.size()):
+		if touch - frames[i]["n"] > 24 or frames[i]["n"] - touch > 10:
+			continue  # (the fall and the landing: the kick's own start and its leg folding back aren't this test's)
+		var a: Dictionary = frames[i - 1]["pts"]
+		var c: Dictionary = frames[i]["pts"]
+		for k in ["foot_f", "foot_b", "hand_f", "hand_b"]:
+			var d: float = ((c[k] - c["hip"]) - (a[k] - a["hip"])).length()
+			if d > worst:
+				worst = d
+				at = "%s, %d frames before touchdown" % [k, touch - frames[i]["n"]]
+	check(tucked >= 10, "on the way down the feet stay tucked up under him (%d frames)" % tucked)
+	check(late >= 4, "the legs unfold in the last 100 ms (%d frames)" % late)
+	check(worst <= steady + 12.0, "no hand or foot jumps much more than in a steady run (%.0f px, %s; run %.0f)" % [worst, at, steady])
+	v.free()

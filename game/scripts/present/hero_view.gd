@@ -3,6 +3,7 @@ extends Node2D
 ## spot on the street under the fighter's feet; a soft shadow stays there when the fighter jumps.
 
 const Poses := preload("res://scripts/present/poses.gd")
+const Tuning := preload("res://scripts/sim/tuning.gd")
 
 const SHADES := [Color(0.62, 0.63, 0.68), Color(0.40, 0.41, 0.47)]  # front parts lighter, back parts darker
 const OUTLINE := Color(0.08, 0.08, 0.10)
@@ -176,7 +177,11 @@ func sync(f, ground_y: float) -> void:
 	var floor_y: float = f.world.floor_at(f.x, f.z, f.y) if f.world != null else 0.0
 	shadow.position.y = -floor_y / scale.y  # under his feet on whatever he stands on (a crate, a step, a landing)
 	shadow.scale = Vector2.ONE * (1.0 - clampf((f.y - floor_y) / 200.0, 0.0, 1.0) * 0.45)  # smaller the higher above it
-	var pose := Poses.landing(Poses.angles(f.state, f.t, f.tune), since_touch if grounded else -1, f.y - floor_y, f.vy < 0.0)
+	# how long till his feet touch, from his height and his speed down (a fall's legs unfold in its last 100 ms)
+	var g: float = Tuning.gravity(f.tune)
+	var h: float = maxf(0.0, f.y - floor_y)
+	var ticks_left: float = (f.vy + sqrt(f.vy * f.vy + 2.0 * g * h)) / g if g > 0.0 else -1.0
+	var pose := Poses.landing(Poses.angles(f.state, f.t, f.tune), since_touch if grounded else -1, f.y - floor_y, f.vy < 0.0, ticks_left)
 	pose = Poses.armed(pose, f.state, f.weapon, f.t, f.tune, kind)  # a weapon held as it's really used (the team's grips and pose sheets)
 	pose["tumble_dir"] = float(f.roll_dir)
 	# a broken arm hangs, bent wrong at the elbow, unless he's throwing a blow with it

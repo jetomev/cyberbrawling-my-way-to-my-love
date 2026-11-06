@@ -238,9 +238,11 @@ const SHOTS := {
 		["recoil", {"land_spread": 1.0, "turn": 35.0, "torso": -10.0, "head": 10.0, "hip_turn": -8.0, "hip_y": 0.0,
 			"leg_f_upper": -75.0, "leg_f_lower": 115.0, "leg_b_upper": -45.0, "leg_b_lower": 120.0,
 			"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -75.0, "arm_f_lower": -15.0, "arm_b_upper": 80.0, "arm_b_lower": -15.0}],
-		["tuck", {"land_spread": 1.0, "turn": 0.0, "torso": 0.0, "head": 6.0, "hip_turn": 0.0, "hip_y": 0.0,
-			"leg_f_upper": -60.0, "leg_f_lower": 90.0, "leg_b_upper": -40.0, "leg_b_lower": 95.0,
-			"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -70.0, "arm_f_lower": -15.0, "arm_b_upper": 75.0, "arm_b_lower": -15.0}]],
+		# (the long fall after a flying kick off a car, D-30 from the recordings: knees tucked high, arms spread wide; the
+		# legs unfold only about 100 ms before touchdown, landing())
+		["tuck", {"land_spread": 1.0, "turn": 0.0, "torso": 4.0, "head": 6.0, "hip_turn": 0.0, "hip_y": 0.0,
+			"leg_f_upper": -92.0, "leg_f_lower": 120.0, "leg_b_upper": -72.0, "leg_b_lower": 118.0,
+			"cover_f": 0.0, "cover_b": 0.0, "arm_f_upper": -95.0, "arm_f_lower": -10.0, "arm_b_upper": 100.0, "arm_b_lower": -10.0}]],
 	# Z: the back sweep (the posture sheet; no recorded sweep exists in the libraries we use): sink low into the bow
 	# stance with the hands going down; spin on the front foot, the back leg straight and low along the street, the
 	# hands on or near the floor; the leg comes round to the ankles in front; finish the circle; rise to guard. The leg
@@ -687,21 +689,25 @@ static func angles(state: String, t: int, tune: Dictionary) -> Dictionary:
 const REACH_HEIGHT := 48.0
 const LAND_REACH := {"leg_f_upper": -22.0, "leg_f_lower": 22.0, "leg_b_upper": -18.0, "leg_b_lower": 24.0}  # CMU 16_05 at touchdown
 const STAGGER_HEIGHT := 90.0
+const UNFOLD_TICKS := 6.0  # 100 ms
 const LAND_STAGGER := {"leg_f_upper": -47.3, "leg_f_lower": 48.9, "leg_b_upper": 22.6, "leg_b_lower": 19.9}  # the guard's legs
 const SINK := 14.0
 const LAND_PEAK := 4
 const LAND_SETTLE := 14
 
 
-static func landing(pose: Dictionary, since: int, height: float, falling: bool) -> Dictionary:
+static func landing(pose: Dictionary, since: int, height: float, falling: bool, ticks_left := -1.0) -> Dictionary:
 	var out := pose.duplicate()
 	if since < 0:
 		# a flying kick lands staggered: its feet spread into the guard stance in the air, so they don't jump into it at
-		# touchdown (the testers, f744019: the landing was abrupt; the back foot jumped 70 px in one frame)
+		# touchdown (the testers, f744019: the landing was abrupt; the back foot jumped 70 px in one frame). The legs
+		# unfold in the last UNFOLD_TICKS before touchdown, however far he falls (the long fall off a car: D-30, from the
+		# recordings: they stay tucked till about 100 ms before)
 		var stagger: bool = out.get("land_spread", 0.0) > 0.5
 		var reach_from := STAGGER_HEIGHT if stagger else REACH_HEIGHT
-		if falling and height < reach_from:
-			var k := clampf(1.0 - height / reach_from, 0.0, 1.0)
+		var timed: bool = stagger and ticks_left >= 0.0
+		if falling and ((timed and ticks_left < UNFOLD_TICKS) or (not timed and height < reach_from)):
+			var k := clampf(1.0 - (ticks_left / UNFOLD_TICKS if timed else height / reach_from), 0.0, 1.0)
 			k = k * k * (3.0 - 2.0 * k)
 			var to: Dictionary = LAND_STAGGER if stagger else LAND_REACH
 			for key in to:
