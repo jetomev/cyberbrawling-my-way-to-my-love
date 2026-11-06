@@ -715,7 +715,7 @@ func test_level_5_as_the_team_settled_it() -> void:
 		for w in f.get("waves", []):
 			for e in w["enemies"]:
 				kinds[e["kind"]] = kinds.get(e["kind"], 0) + 1
-	eq(kinds, {"doorman": 5, "snick": 10, "neon_dancer": 5}, "20 enemies: 10 Snicks, 5 Doormen, 5 Dancers")
+	eq(kinds, {"doorman": 5, "snick": 9, "neon_dancer": 5}, "19 enemies: 9 Snicks, 5 Doormen, 5 Dancers (the testers' ruling after the shield rule, 2026-11-05)")
 	eq(d["floors"][0]["waves"][0]["enemies"].map(func(e): return e["kind"]), ["doorman"], "the Doorman, first time, alone")
 	check(not d["floors"].any(func(f): return f.get("items", []).any(func(i): return i[0] == "pipe")), "no pipe on the street")
 	eq(d["boss"].get("drops", ""), "pipe", "the pipe is Madame Chrome's prize")
@@ -736,3 +736,27 @@ func test_level_5_as_the_team_settled_it() -> void:
 	eq(drops, ["snack", "note"], "first kick a snack, second an apology note")
 	check(vend["broken"], "the third tips it over")
 	eq(doorman.state, "knockdown", "onto the Doorman in front of it, shield or no shield")
+
+
+func test_level_5s_second_escalator_snick_waits_at_the_top_till_the_first_is_down() -> void:
+	var l = Level.new(Level.load_data("res://levels/level5.json"), {}, 1)
+	var fl: Dictionary = l.floors[0]
+	var w: int = fl["waves"].map(func(x): return x["at"]).find(6750.0)
+	check(w >= 0, "(screen 4's wave)")
+	fl["wave"] = w
+	l.hero.x = 6750.0
+	l.step({})
+	var sn: Array = l.enemies.filter(func(e): return e["wave"] == w)
+	eq(sn.size(), 2, "both Snicks in sight on the escalator")
+	var second: Dictionary = sn.filter(func(e): return e.has("waits_till_down"))[0]
+	var x0: float = second["f"].x
+	for i in 120:
+		l.step({})
+	check(absf(second["f"].x - x0) < 1.0 and second["f"].attack_phase() == "", "the second waits at the top, still, while the first fights")
+	var first: Dictionary = sn.filter(func(e): return e != second)[0]
+	first["f"].health = 0.0
+	first["f"]._enter("ko")
+	l.step({})
+	check(not second.has("waits_till_down"), "the first down: the second comes down")
+	var b: Array = Level.load_data("res://levels/level5.json")["floors"][1]["obstacles"].filter(func(o): return o[0] == "buffet")
+	check(b[0][2] <= 300.0, "the shrimp plate at the balcony's left end, at the top of the escalator (x %d-%d)" % [b[0][1], b[0][2]])

@@ -1,6 +1,6 @@
 {
   "name": "Level 5 · Casino Glitter",
-  "about": "SETTLED (art-in 2026-11-04-level5-layout-final: Merry's second draft, Pippin's yes and his three changes, Boromir's final yes with one fix). Two floors: the front door, the slot floor, the far end of the slots, the broken escalator up (floor 1); the high-roller balcony (floor 2); down in the glass lift with two Snicks taking turns in it; the big fight on the main floor; Madame Chrome's salon on two levels: the floor and a balcony across the back, her glass lift between them (she rides up and throws her cards down at you, shadow first), the spiral stair up to her (a ladder: nobody fights on it, no cards at you on it), the chandelier over the floor that drops on her from the balcony. The hero walks in with the stick. 20 enemies: 10 Snicks, 5 Doormen, 5 Neon Dancers. The Doorman met alone first; the hints word for word at their moment, one at a time (\"Low kick his shield aside!\" at his first bash glint: Boromir); the slot floor's smooth shiny footing (the Dancers' stage; how much quicker they skate on it waits on the team: \"smooth_skate\"), the vending machine's three kicks (a snack, an apology note, then it tips over onto whoever is in front); Doormen and Dancers stay off the escalator; no pipe on the street (Madame Chrome's prize, with the casino key).",
+  "about": "SETTLED (art-in 2026-11-04-level5-layout-final: Merry's second draft, Pippin's yes and his three changes, Boromir's final yes with one fix). Two floors: the front door, the slot floor, the far end of the slots, the broken escalator up (floor 1); the high-roller balcony (floor 2); down in the glass lift with two Snicks taking turns in it; the big fight on the main floor; Madame Chrome's salon on two levels: the floor and a balcony across the back, her glass lift between them (she rides up and throws her cards down at you, shadow first), the spiral stair up to her (a ladder: nobody fights on it, no cards at you on it), the chandelier over the floor that drops on her from the balcony. The hero walks in with the stick. 19 enemies: 9 Snicks, 5 Doormen, 5 Neon Dancers (the testers' ruling 2026-11-05 after the shield rule: screen 3 one Snick fewer, screen 4's two Snicks down the escalator one at a time, the shrimp plate at the balcony's left end, at the top of the escalator). The Doorman met alone first; the hints word for word at their moment, one at a time (\"Low kick his shield aside!\" at his first bash glint: Boromir); the slot floor's smooth shiny footing (the Dancers' stage; how much quicker they skate on it waits on the team: \"smooth_skate\"), the vending machine's three kicks (a snack, an apology note, then it tips over onto whoever is in front); Doormen and Dancers stay off the escalator; no pipe on the street (Madame Chrome's prize, with the casino key).",
   "floors": [
     {
       "name": "Casino Glitter: the casino floor",
@@ -130,11 +130,6 @@
               "z": 60
             },
             {
-              "kind": "snick",
-              "from": "right",
-              "z": 110
-            },
-            {
               "kind": "doorman",
               "from": "right",
               "z": 80
@@ -154,7 +149,8 @@
             {
               "kind": "snick",
               "dx": 500,
-              "z": 15
+              "z": 15,
+              "waits_till_down": 1
             }
           ]
         }
@@ -205,8 +201,8 @@
         ],
         [
           "buffet",
-          1500,
-          1600,
+          100,
+          200,
           0,
           30,
           90,

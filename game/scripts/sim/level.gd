@@ -2076,6 +2076,8 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 		hf.tune["glint_cut"] = HARD_GLINT
 	if e.get("hidden", false):
 		enemies[-1]["brain"].dormant_until_within = AMBUSH
+	if e.has("waits_till_down"):  # in plain sight, waiting his turn (the team's level 5: the second Snick at the escalator's top)
+		enemies[-1]["waits_till_down"] = int(e["waits_till_down"])
 	if e.get("arguing", false):  # squaring off with another of his wave, slashing at him, till the hero comes close
 		enemies[-1]["arguing"] = true
 		enemies[-1]["brain"].dormant_until_within = e.get("wake", 420.0)
@@ -2106,6 +2108,15 @@ func _waves() -> void:
 			if int(e.get("after_down", 0)) <= down:
 				fl["waiting"].erase(e)
 				_arrive(e, at, fl["active_wave"])
+	# one waiting his turn holds still till that many of his wave are down, or till he's hit
+	for e in enemies:
+		if e.has("waits_till_down"):
+			var gone_of_wave: int = enemies.filter(func(o): return o["wave"] == e["wave"] and o != e and o["f"].defeated()).size()
+			if gone_of_wave >= e["waits_till_down"] or e["f"].health < e["f"].max_health:
+				e.erase("waits_till_down")
+				e["brain"].dormant_until_within = 0.0
+			else:
+				e["brain"].dormant_until_within = 1.0
 	# what the put-down leave behind (the Glow Punk his food, the Bruiser his bat)
 	for e in enemies:
 		if e["f"].defeated() and not e["dropped"]:
