@@ -525,3 +525,17 @@ func test_a_whistler_told_to_wait_keeps_quiet_till_the_bruiser_of_his_wave_is_do
 		l2.step({})
 		w2 += l2.events.filter(func(ev): return ev.get("result", "") == "whistle").size()
 	eq(w2, 1, "(no order: he whistles straight away)")
+
+
+func test_a_whistler_whose_first_whistle_brings_one_brings_one_then_two() -> void:
+	var l = street()
+	l._arrive({"kind": "lookout", "dx": 500.0, "z": 20.0, "first_calls": 1}, l.hero.x, 0)
+	var counts := []
+	for i in Level.WHISTLE_EVERY * 2 + 10:
+		var before: int = l.enemies.filter(func(e): return e.get("whistled", false)).size()
+		l.step({})
+		if l.events.any(func(ev): return ev.get("result", "") == "whistle"):
+			counts.append(l.enemies.filter(func(e): return e.get("whistled", false)).size() - before)
+	check(counts.size() >= 2, "(two whistles: %s)" % str(counts))
+	eq(counts[0], 1, "the first brings one (the team's fallback for level 6 screen 3)")
+	eq(counts[1], 2, "the next, two as usual")

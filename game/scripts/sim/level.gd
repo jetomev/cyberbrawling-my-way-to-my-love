@@ -757,6 +757,9 @@ func _roster_tricks() -> void:
 			e["called"] = []
 			e["whistles"] = e.get("whistles", 99) - 1  # (a layout can give him only so many: level 3's has two)
 			var sides := ["left", "right"] + (["right"] if e.get("hard", false) else [])  # (the hard Whistler calls three)
+			if e.has("first_calls") and not e.get("whistled_once", false):
+				sides = sides.slice(sides.size() - int(e["first_calls"]))  # his first whistle brings fewer (a layout's choice)
+			e["whistled_once"] = true
 			for i in sides.size():
 				var side: String = sides[i]
 				if side == "left" and not e.has("calls_x") and floorf(maxf(hero.x - LOCK_MARGIN + 40.0, 0.0) / SCREEN_W) < floorf(hero.x / SCREEN_W):
@@ -2057,7 +2060,7 @@ func _arrive(e: Dictionary, at: float, wave_index: int) -> void:
 				elif from == "left" and o["x1"] < at and x < o["x1"] + 60.0:
 					x = o["x1"] + 60.0
 	_spawn(e["kind"], x, z, e.get("weapon", ""), -1.0, wave_index)
-	for k in ["calls", "whistles", "hard", "whistled", "calls_x", "calls_y", "paced", "quiet_until_down"]:  # the lookout's: who he whistles in, and how many times; a hard
+	for k in ["calls", "whistles", "hard", "whistled", "calls_x", "calls_y", "paced", "quiet_until_down", "first_calls"]:  # the lookout's: who he whistles in, and how many times; a hard
 		# version's tag; a goon he whistled in (the robot's numbers name him apart, the team's ask 11-05)
 		if e.has(k):
 			enemies[-1][k] = e[k]
