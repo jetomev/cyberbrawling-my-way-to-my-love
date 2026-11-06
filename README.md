@@ -6,14 +6,15 @@ sticks, knives, swords — keep it, switch between what you've collected, and sa
 
 It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 
-> **Status: all ten levels playable in grey boxes (2026-11-04).** A grey hero built from cut-out parts on 21 bones
+> **Status: all ten levels playable in grey boxes (2026-11-05).** A grey hero built from cut-out parts on 21 bones
 > fights in a low stance, walks, runs, jumps, climbs and fights on stairs, blocks, and chains three-hit **combos** into
-> finishers. Every level is in, from two floors up to nine: levels 1 to 5 built from the design team's agreed pages, levels
-> 6 to 10 from their drafts. The enemies each have their own tricks and their own way to be beaten (a riot shield you
+> finishers. Every level is in, from two floors up to nine: levels 1 to 6 built from the design team's agreed pages (the docks
+> of level 6 with container stacks to climb and gaps to fall through), levels 7 to 10 from their drafts. The enemies each have their own tricks and their own way to be beaten (a riot shield you
 > walk round, a skater who dodges slow weapons, a grabber you punch your way out of, a knife fighter who parries), and
 > every boss is in with their own fight (level 9 is the tower gauntlet, no boss), from DJ Volt and Big Mama Noodle up to the Godfather of Glow. Weapons are
-> picked up, held the way they're really used and swung with the punch button; they wear out. A computer player
-> plays every level in each build to check it can be won, and 378 automated tests guard the rest. No art yet: the
+> picked up, held the way they're really used and swung with the punch button; they wear out. Three ways to play (the game, a harder mode, a boss rush through
+> all nine bosses), an optional helper that sells you another life for points, and best scores on the title screen. A
+> computer player plays every level in each build to check it can be won, and 421 automated tests guard the rest. No art yet: the
 > look comes next.
 > First level playable: mid-December 2026. Whole game: by 21 March 2027 at the latest. It ships with **KognogOS 1.0** (April 2027).
 
@@ -43,6 +44,9 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
   cut-out parts the game moves itself, so every frame is consistent and smooth, and the weapon is always in hand.
 - **No blood, but it hurts:** bruises, black eyes, swollen mouths, broken arms and legs, screams and cracks, on
   the hero and the enemies alike.
+- **Three ways to play:** the game; a harder mode (every enemy his tougher version, bosses with a quarter more
+  health); and a boss rush, all nine bosses in a row on three lives. An optional **helper** offers another life for
+  2,000 of your score when your last one goes. Finish a level without a scratch and your three letters go up in neon.
 - Music and sound effects, all original.
 
 ## How it is made
@@ -63,6 +67,12 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
   A jump, hold Y or RB to block, hold LB to run, click the left stick to switch stance). **F1 opens the feel lab**: change walk and run speed, jump, punch and kick timing and more
   while you play; F8 saves your changes for next time. `scripts/record.sh` records the scripted demo to a contact
   sheet and a clip.
+- `scripts/export.sh` makes the Linux program and checks it plays level 1 through by itself; `scripts/install.sh`
+  installs it for your user only (a `cyberbrawling` command and a menu entry, no sudo) and `scripts/uninstall.sh`
+  takes it away again.
+- `scripts/balance.sh` — the computer player's numbers for the design team: per level and run, health and lives
+  screen by screen, where each life went down and to whom, which enemies hurt most.
+- `testing/` — the test matrices Javier plays from, and their results.
 - `scripts/build.sh` is a build: the tests, the recorded demo, stills, close-ups and timed strips of every move,
   moving clips at full and half speed, the hero side by side with the recorded motion, and a note, handed to the
   reviewers first.
