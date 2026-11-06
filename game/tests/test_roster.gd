@@ -147,7 +147,7 @@ func test_a_low_kick_into_his_bash_knocks_the_shield_aside() -> void:
 		door.step({})
 	eq(door.weapon, "", "the shield is knocked out of his hands")
 	eq(landed, "hit", "and the kick lands on him")
-	eq(w.items.filter(func(it): return it["kind"] == "shield").size(), 1, "the shield lies on the street")
+	eq(w.items.filter(func(it): return it["kind"] == "shield").size(), 0, "it clatters away and breaks: nothing on the street to pick up (level 6's send-back)")
 
 
 func test_the_dancer_is_too_quick_for_slow_weapons_until_shes_off_her_skates() -> void:

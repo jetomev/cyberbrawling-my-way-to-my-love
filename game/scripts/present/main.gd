@@ -436,6 +436,10 @@ func _start_trial(trial_name: String) -> void:
 ## Notes every weapon that wore out this tick, so it's drawn snapping in two at the hand.
 func _note_breaks(events: Array) -> void:
 	for e in events:
+		if e.get("drop", "") in Fight.BREAK_LOOSE and e.get("target") != null:  # a shield knocked loose clatters away, breaks
+			var d = e["target"]
+			var away: float = 1.0 if e.get("attacker") == null or d.x >= e["attacker"].x else -1.0
+			breaks.append({"x": d.x + away * 60.0, "y": Street.GROUND_Y + d.z - d.y - 110.0, "kind": e["drop"], "t": 0, "dir": away})
 		if e.get("worn", "") != "" and e.get("attacker") != null:
 			var a = e["attacker"]
 			breaks.append({"x": a.x + a.facing * 70.0, "y": Street.GROUND_Y + a.z - a.y - 190.0, "kind": e["worn"], "t": 0,

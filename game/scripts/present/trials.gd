@@ -27,6 +27,7 @@ extends RefCounted
 ## each key moment out with the 4 frames after it, a row apiece (the testers, 2026-11-04). The weapons trials keep
 ## every swing in the log but only each weapon's breaking hit is key.
 
+const Fight := preload("res://scripts/sim/fight.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
 const Weapons := preload("res://scripts/sim/weapons.gd")
 const Moves := preload("res://scripts/sim/moves.gd")
@@ -280,7 +281,7 @@ func saw(events: Array) -> void:
 			if name == "broken_arm" and e["attacker"] == hero:
 				t += " (whole: %s; his lead arm is BROKEN)" % str(Moves.data(e["move"], hero.tune)["damage"])
 		if e["drop"] != "":
-			t += "  ·  the %s leaves his hand, onto the street" % e["drop"]
+			t += ("  ·  the %s clatters away and BREAKS" if e["drop"] in Fight.BREAK_LOOSE else "  ·  the %s leaves his hand, onto the street") % e["drop"]
 		if e["broke"] != "":
 			t += "  ·  %s BROKEN" % e["broke"]
 		if e["worn"] != "":

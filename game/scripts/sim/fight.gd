@@ -48,8 +48,9 @@ func step(fighters: Array, world = null) -> Array:
 				continue
 			var winding_up: bool = d.attack_phase() == "startup"  # caught as he starts a blow: a counter
 			# a low kick into the Doorman's bash knocks his shield aside, and he spins round, open (the team's roster)
+			var shield_off := ""
 			if winding_up and d.weapon == "shield" and blow["move"] == "kick":
-				_disarm(d, world, a.x)
+				shield_off = _disarm(d, world, a.x)
 				d.facing = -d.facing
 			blow["counter"] = winding_up  # (the Godfather's second round: only these land)
 			var result: String = d.take_hit(blow, a)
@@ -77,6 +78,8 @@ func step(fighters: Array, world = null) -> Array:
 			var worn := ""
 			if result == "hit":
 				worn = a.wear(blow.get("wear", 0)) if not a.keeps_weapon else ""  # a weapon wears only on a hit; kicks never wear it (the team's combos)
+			if shield_off != "":
+				drop = shield_off
 			events.append({"attacker": a, "target": d, "result": result, "move": a.state, "from_kick": a.from_kick, "drop": drop, "counter": winding_up and result == "hit", "broke_combo": broke_combo,
 				"broke": d.just_broke, "worn": worn})
 		_hit[id] = seen
@@ -86,11 +89,14 @@ func step(fighters: Array, world = null) -> Array:
 ## Knocks his weapon out of his hand: it flies a step away from whoever knocked it loose (from_x) and lands on the
 ## street, out from under his feet (the disarm trial, 2026-11-03: dropped at his feet, he picked it straight back up).
 const FLY := 80.0
+## Weapons that break when they're knocked loose, whoever held them: the Doorman's shield clatters away and breaks
+## (Pippin and Boromir on level 6, 2026-11-05: nobody picks it up, he never gets it back).
+const BREAK_LOOSE := ["shield"]
 
 
 static func _disarm(f, world, from_x: float) -> String:
 	var what: String = f.drop_weapon()
-	if f.weapon_snaps:
+	if f.weapon_snaps or what in BREAK_LOOSE:
 		return what  # it bends and breaks as it lands: nothing to pick up
 	if world != null:
 		var away := 1.0 if f.x >= from_x else -1.0
