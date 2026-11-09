@@ -164,3 +164,7 @@ branch, never pushed, fenced, timed, one report in `reports/`. Not scheduled unt
 - README accurate top to bottom; roadmap and changelog newest first.
 - Every push gets its Vault entry in `Cyberbrawling my way to my love/`, numbered `(N) YYYY-MM-DD — title.md`.
 - Findings from Javier's plays: `F-n`, a GitHub issue each, results in `testing/`.
+
+## Rules with their words (moved from memory, 2026-11-09)
+- **The game goes non-stop** (Javier, 2026-11-05 09:46): "Can we fully resume, again, non-stop?" In practice: never end a turn just to wait for a build; take the next agreed item in the side copy and commit each piece. **Paused as of 2026-11-09**, on his word (2026-11-06 23:23): "stop all other projects, and only work with the team on mindFoge." Non-stop applies again only when he restarts the game.
+- **The team does the team's work** (Javier, 2026-11-03 20:26): "because I am under the impression that you do extremely much for them" In practice: before starting a piece, ask whether the team can do it; Claude does only what needs this machine and the code.
