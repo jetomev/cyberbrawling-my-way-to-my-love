@@ -14,7 +14,7 @@ It starts bright, neon and fun, and gets darker and grittier the deeper you go.
 > every boss is in with their own fight (level 9 is the tower gauntlet, no boss), from DJ Volt and Big Mama Noodle up to the Godfather of Glow. Weapons are
 > picked up, held the way they're really used and swung with the punch button; they wear out. Three ways to play (the game, a harder mode, a boss rush through
 > all nine bosses), an optional helper that sells you another life for points, and best scores on the title screen. A
-> computer player plays every level in each build to check it can be won, and 421 automated tests guard the rest. No art yet: the
+> computer player plays every level in each build to check it can be won, and 427 automated tests guard the rest. No art yet: the
 > look comes next.
 > First level playable: mid-December 2026. Whole game: by 21 March 2027 at the latest. It ships with **KognogOS 1.0** (April 2027).
 
