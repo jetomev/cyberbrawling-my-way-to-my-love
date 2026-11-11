@@ -1,6 +1,6 @@
 {
   "name": "Level 7 · The Power Plant",
-  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the turbine hall (floor 1, a live strip, up the ladder), the catwalk (floor 2, the Enforcer alone), the top catwalks over the water tanks (floor 3, a push kick by a tank and a goon's out), the control room, back down to the plant floor (floor 1, a live strip in the middle), Mr. Static's tank room (dry edges). NOT BUILT YET: passing behind the wall pipes, the warning stripes drawn before a strip goes live, the Enforcer's parry of the whole P P P (he parries the jab), Mr. Static down after two tank shorts (here: dizzy, and hurt). Balance ruling 2026-11-04: Dancers and the live floor never share a screen (F0's strip moved to screen 3; the plant floor's two Dancers became Mechanics), a Dancer on a strip gets zapped, food at the end of F0 s1. Second ruling: one Dancer fewer on F0 s2, food at the foot of the catwalk ladder, a dry path along the live strip (the back of the street). Third ruling (2026-11-04): all three of the second ruling's changes stay; a soda where the top catwalks start; a dry path along the plant floor's live strip; one Mechanic fewer on the plant floor (three, not four). Fourth ruling (2026-11-04): the top catwalks' first screen without its Dancer; a soda at the foot of the catwalk before the Enforcer (he stays as he is).",
+  "about": "DRAFT from Merry's levels 2-10 page (art-in 2026-11-04-levels-2-10-v3) and Pippin's roster v3, built so nothing waits; reworked when the team's settled page for this level lands. Floors in walking order: the turbine hall (floor 1, a live strip, up the ladder), the catwalk (floor 2, the Enforcer alone), the top catwalks over the water tanks (floor 3, a push kick by a tank and a goon's out), the control room, back down to the plant floor (floor 1, a live strip in the middle), Mr. Static's tank room (dry edges). NOT BUILT YET: passing behind the wall pipes, the warning stripes drawn before a strip goes live, Mr. Static down after two tank shorts (here: dizzy, and hurt). Balance ruling 2026-11-04: Dancers and the live floor never share a screen (F0's strip moved to screen 3; the plant floor's two Dancers became Mechanics), a Dancer on a strip gets zapped, food at the end of F0 s1. Second ruling: one Dancer fewer on F0 s2, food at the foot of the catwalk ladder, a dry path along the live strip (the back of the street). Third ruling (2026-11-04): all three of the second ruling's changes stay; a soda where the top catwalks start; a dry path along the plant floor's live strip; one Mechanic fewer on the plant floor (three, not four). Fourth ruling (2026-11-04): the top catwalks' first screen without its Dancer; a soda at the foot of the catwalk before the Enforcer (he stays as he is).",
   "draft": true,
   "floors": [
     {
@@ -100,7 +100,7 @@
               "z": 80
             }
           ],
-          "hint": "The Enforcer parries the jab: mix it up; perfect-block his cut and the sword is yours."
+          "hint": "The Enforcer parries P P P: mix it up; perfect-block his cut and the sword is yours."
         }
       ]
     },

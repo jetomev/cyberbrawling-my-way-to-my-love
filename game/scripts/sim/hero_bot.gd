@@ -5,6 +5,7 @@ extends RefCounted
 
 const Brain := preload("res://scripts/sim/brain.gd")
 const Fighter := preload("res://scripts/sim/fighter.gd")
+const Moves := preload("res://scripts/sim/moves.gd")
 
 var me
 var dice := RandomNumberGenerator.new()
@@ -183,6 +184,9 @@ func _think(enemies: Array) -> Dictionary:
 		combo = (COMBOS[dice.randi_range(0, COMBOS.size() - 1)] as Array).duplicate()
 		while "punch" in foe.shrugs and combo[0] == "punch":  # (he shrugs off punches, the Bruiser: kicks)
 			combo = (COMBOS[dice.randi_range(0, COMBOS.size() - 1)] as Array).duplicate()
+		while _finisher(combo) in foe.parries and not foe.keeps_weapon:  # he parries that finisher (the Enforcer's P P P):
+			# another (not Rook, who keeps his sword: the robot's route through him runs through his parries)
+			combo = (COMBOS[dice.randi_range(0, COMBOS.size() - 1)] as Array).duplicate()
 		while foe.reads_combos and combo == last_combo:  # he'd read it: mix it up
 			combo = (COMBOS[dice.randi_range(0, COMBOS.size() - 1)] as Array).duplicate()
 		last_combo = combo.duplicate()
@@ -262,3 +266,11 @@ func _go_eat(inp: Dictionary) -> bool:
 		elif not o.is_empty():
 			Brain.around(me, inp["mx"], inp)  # round a prop (not over it: a jump lands him the other side of his aim)
 	return true
+
+
+## The move a combo of presses ends on (P P P: the power punch).
+static func _finisher(presses: Array) -> String:
+	var key := ""
+	for p in presses:
+		key += "P" if p == "punch" else ("K" if p == "kick" else "?")
+	return Moves.COMBOS.get(key, "")

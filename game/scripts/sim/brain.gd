@@ -93,7 +93,7 @@ const NEON_DANCER := {
 	"keep": 200.0, "strike": 120.0, "wait_min": 30, "wait_max": 70, "block_chance": 0.0, "block_ticks": 0,
 	"combos": [["kick", "punch", "kick"], ["kick", "kick"]], "dash_from": 250.0, "dash_to": 700.0,
 }
-## Enforcer: "Three Cuts", cut, cut, a long lunging cut; parries the jab.
+## Enforcer: "Three Cuts", cut, cut, a long lunging cut; parries P P P (its third punch).
 const ENFORCER := {
 	"keep": 180.0, "strike": 140.0, "wait_min": 45, "wait_max": 90, "block_chance": 0.3, "block_ticks": 22,
 	"combos": [["punch", "punch", "punch"], ["punch", "punch"]],

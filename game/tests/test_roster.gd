@@ -2,7 +2,7 @@ extends "res://tests/test_case.gd"
 ## The rest of the team's roster (art-in 2026-11-03, enemy roster v2), each with its own trick: the Wrench Mechanic
 ## ducks the high kicks, hurls his wrench (block it just right and it's yours) and fetches a spare from his toolbox;
 ## the Doorman's riot shield stops everything from the front, but a low kick into his bash knocks it aside; the Neon
-## Dancer on skates is too quick for slow weapons until she's launched off them; the Enforcer parries the jab and
+## Dancer on skates is too quick for slow weapons until she's launched off them; the Enforcer parries P P P and
 ## strikes straight back; the lookout never fights, he whistles in two more goons; the Grabber grabs right through the
 ## guard, and it takes three quick punches (or a roll) to wriggle free before he throws you down.
 
@@ -177,14 +177,17 @@ func test_the_dancer_is_too_quick_for_slow_weapons_until_shes_off_her_skates() -
 	eq(f.take_hit(slow, l.hero), "hit", "now the slow weapon lands")
 
 
-func test_the_enforcer_parries_the_jab_and_strikes_straight_back() -> void:
+func test_the_enforcer_parries_p_p_p_and_strikes_straight_back() -> void:
 	var l = street()
 	var e = bring(l, "enforcer", 100.0)
 	var f = e["f"]
 	f.facing = -1
 	f._enter("idle")
+	for mv in ["punch", "cross", "knee", "uppercut", "push_kick"]:  # the openers, P P K and P K P get through
+		eq(f.take_hit(blow(mv, 1.0), l.hero), "hit", "%s lands" % mv)
+		f._enter("idle")
 	var hp: float = f.health
-	eq(f.take_hit(blow("punch", 1.0), l.hero), "parried", "the jab: caught on his blade")
+	eq(f.take_hit(blow("power_punch", 1.0), l.hero), "parried", "P P P's third punch: caught on his blade")
 	eq(f.health, hp, "no harm done")
 	eq(f.take_hit(blow("kick", 2.0, 0.0, 110.0), l.hero), "hit", "a kick gets through")
 	f._enter("idle")

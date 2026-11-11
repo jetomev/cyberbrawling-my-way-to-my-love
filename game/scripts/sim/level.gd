@@ -67,7 +67,8 @@ const KINDS := {
 	"doorman": {"health": 18.0, "brain": "DOORMAN", "weapon": "shield", "no_stairs": true},  # (off the stairs: his only weak side
 	# is his back, and nobody walks round anyone on a flight; the team's level 5)
 	"neon_dancer": {"health": 12.0, "brain": "NEON_DANCER", "too_quick": true, "speed": 1.8, "drops": "stick", "no_stairs": true},  # (skates on flat floor only)
-	"enforcer": {"health": 20.0, "brain": "ENFORCER", "weapon": "sword", "parries": ["punch"]},
+	"enforcer": {"health": 20.0, "brain": "ENFORCER", "weapon": "sword", "parries": ["power_punch"]},  # (P P P only: P P K
+	# and P K P get through; the testers' level 7 check, 11-11)
 	"lookout": {"health": 1.0, "brain": "LOOKOUT", "drops": "takeaway"},
 	"grabber": {"health": 22.0, "brain": "GRABBER", "drops": "takeaway"},
 }
