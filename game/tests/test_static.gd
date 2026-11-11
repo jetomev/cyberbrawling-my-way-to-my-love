@@ -24,7 +24,7 @@ func test_he_carries_his_baton() -> void:
 	eq(static_of(plant())["f"].weapon, "baton", "the crackling baton")
 
 
-func test_a_perfect_block_shocks_the_hero_unless_he_wears_rubber_gloves() -> void:
+func test_any_block_shocks_the_hero_unless_he_wears_rubber_gloves() -> void:
 	var l = plant()
 	var e = static_of(l)
 	var hp: float = l.hero.health
@@ -40,7 +40,11 @@ func test_a_perfect_block_shocks_the_hero_unless_he_wears_rubber_gloves() -> voi
 	var l3 = plant()
 	l3.events = [{"attacker": static_of(l3)["f"], "target": l3.hero, "result": "blocked", "move": "swing"}]
 	l3._static_after()
-	eq(l3.hero.health, l3.hero.max_health, "a plain block isn't a perfect one: no shock from it")
+	check(l3.hero.health < l3.hero.max_health, "a plain block too: shocked (the agreed level 7 page, any block)")
+	var l4 = plant()
+	l4.events = [{"attacker": static_of(l4)["f"], "target": l4.hero, "result": "hit", "move": "swing"}]
+	l4._static_after()
+	eq(l4.hero.health, l4.hero.max_health, "failing direction: a blow that simply lands is no block shock")
 
 
 func slammed(jump_at: int):

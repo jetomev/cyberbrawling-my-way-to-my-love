@@ -46,7 +46,7 @@ const KINDS := {
 	# level 5's boss, Madame Chrome (the team's roster): her chrome cane snaps after three kicks into its wind-up, and
 	# then she's done; the pipe is her prize (and the casino key, with level 5)
 	"chrome": {"health": 40.0, "brain": "CHROME", "weapon": "cane", "drops": "pipe", "reads": true, "keeps_weapon": true, "grip": true},
-	# level 7's boss, Mr. Static (the team's roster): a perfect block on his baton shocks the HERO; rubber gloves his prize
+	# level 7's boss, Mr. Static (the team's roster): any block on his baton shocks the HERO; rubber gloves his prize
 	"static": {"health": 40.0, "brain": "STATIC", "weapon": "baton", "drops": "rubber_gloves", "grip": true},
 	# level 8's boss, Velvet Rook (the team's roster): the sword from his cane, held through perfect blocks till the
 	# third on his last cut breaks it; parries the plain combos' finishers (P P P, K K K; the armed smash too)
@@ -1134,7 +1134,8 @@ func _static(e: Dictionary, think: Dictionary) -> Dictionary:
 	return think
 
 
-## Mr. Static after the blows: a perfect block on his baton shocks the hero (unless he wears rubber gloves); P P K'd by
+## Mr. Static after the blows: any block on his baton, plain or perfect, shocks the hero (unless he wears rubber
+## gloves; the agreed level 7 page, 11-11); P P K'd by
 ## the water tank he shorts out, dizzy at once; and the live floor bites whoever's on it.
 func _static_after() -> void:
 	for e in enemies:
@@ -1142,7 +1143,7 @@ func _static_after() -> void:
 			continue
 		var f = e["f"]
 		for ev in events:
-			if ev.get("attacker") == f and ev.get("target") == hero and ev["result"] == "perfect" and f.weapon == "baton" and not hero.rubber:
+			if ev.get("attacker") == f and ev.get("target") == hero and ev["result"] in ["perfect", "blocked"] and f.weapon == "baton" and not hero.rubber:
 				hero.health = maxf(0.0, hero.health - SHOCK_DAMAGE)
 				hero._enter("hurt")
 				events.append({"target": hero, "result": "shocked", "kind": "shock"})
