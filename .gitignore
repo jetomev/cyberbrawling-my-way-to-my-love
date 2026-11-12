@@ -12,3 +12,6 @@ __pycache__/
 
 # The Dailies page as built (scripts/build_dailies.py); made fresh from the scripts
 approvals/site/
+
+# The picture-review page's source for the team's artifact (11-10), kept on this computer
+review/
